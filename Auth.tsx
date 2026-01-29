@@ -109,7 +109,7 @@ export const Auth = () => {
     }
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 font-serif">
+        <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 font-sans">
             <div className="w-full max-w-md p-8 bg-white border border-slate-200 shadow-sm rounded-xl">
                 <div className="flex flex-col items-center mb-10">
                     <div className="text-slate-900 mb-4">
@@ -120,7 +120,7 @@ export const Auth = () => {
                     <h1 className="text-4xl font-bold tracking-tighter text-slate-900 mb-2 font-serif">
                         410pages
                     </h1>
-                    <p className="text-slate-500 text-sm font-sans italic">
+                    <p className="text-slate-500 text-sm italic font-serif opacity-80">
                         {isSignUp ? 'Start your knowledge journey today.' : 'Welcome back to your second brain.'}
                     </p>
                 </div>
@@ -151,7 +151,7 @@ export const Auth = () => {
                                     setEmailCheckResult(null);
                                 }}
                                 required
-                                className={`flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white ${emailCheckResult ? (emailCheckResult.available ? 'border-emerald-300' : 'border-red-300') : 'border-slate-300'
+                                className={`flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white ${isSignUp && emailCheckResult ? (emailCheckResult.available ? 'border-emerald-300' : 'border-red-300') : 'border-slate-300'
                                     }`}
                                 placeholder="name@example.com"
                             />
@@ -165,7 +165,7 @@ export const Auth = () => {
                                 </button>
                             )}
                         </div>
-                        {emailCheckResult && (
+                        {isSignUp && emailCheckResult && (
                             <p className={`text-[11px] mt-1 ${emailCheckResult.available ? 'text-emerald-600' : 'text-red-600'}`}>
                                 {emailCheckResult.message}
                             </p>

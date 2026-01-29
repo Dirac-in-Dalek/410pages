@@ -255,7 +255,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               <path d="M7 6 L12 3 H18 V18 L13 21 H7 V6" />
             </svg>
           </div>
-          <h1 className="font-bold text-xl tracking-tight text-slate-900">
+          <h1 className="font-bold text-xl tracking-tighter text-slate-900 font-serif">
             410pages
           </h1>
         </div>

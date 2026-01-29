@@ -145,3 +145,17 @@ do $$ begin
     create policy "Users can crud their own notes" on notes for all using (auth.uid() = user_id);
   end if;
 end $$;
+
+-- 11. 이메일 중복 확인 함수
+CREATE OR REPLACE FUNCTION public.check_email_exists(email_to_check text)
+RETURNS boolean AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1
+    FROM auth.users
+    WHERE email = email_to_check
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+GRANT EXECUTE ON FUNCTION public.check_email_exists(text) TO anon, authenticated;
