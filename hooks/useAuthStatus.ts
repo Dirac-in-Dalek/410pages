@@ -20,6 +20,8 @@ export const useAuthStatus = () => {
             }
         } catch (error) {
             console.error('Error fetching profile:', error);
+        } finally {
+            setLoading(false);
         }
     };
 

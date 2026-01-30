@@ -38,7 +38,7 @@ const App: React.FC = () => {
   const {
     searchTerm, setSearchTerm, selectedProjectId, handleProjectSelect,
     handleTreeItemClick, treeData, filteredCitations, viewTitle,
-    editorPrefill
+    editorPrefill, filter
   } = useArchiveFilter(citations, projects, username);
 
   const {
@@ -55,7 +55,7 @@ const App: React.FC = () => {
     if (session) {
       fetchData();
     }
-  }, [session, fetchData]);
+  }, [session?.user.id, fetchData]);
 
   // --- RENDER ---
   if (isMobile) return <MobileLanding />;
@@ -78,6 +78,7 @@ const App: React.FC = () => {
       onSignOut={handleSignOut}
       onSearch={setSearchTerm}
       searchTerm={searchTerm}
+      selectedFilter={filter}
     >
       <div className="h-full overflow-y-auto bg-slate-50">
         <ArchiveHeader

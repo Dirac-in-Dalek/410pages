@@ -19,6 +19,7 @@ interface MainLayoutProps {
   onSignOut?: () => void;
   onSearch?: (term: string) => void;
   searchTerm?: string;
+  selectedFilter?: { type: 'author' | 'book'; value: string; author?: string; } | null;
 }
 
 export const MainLayout: React.FC<MainLayoutProps> = ({
@@ -37,7 +38,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   onUpdateUsername,
   onSignOut,
   onSearch,
-  searchTerm = ''
+  searchTerm = '',
+  selectedFilter = null
 }) => {
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set(['benjamin']));
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, projectId: string } | null>(null);
@@ -188,11 +190,19 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           <div
             className={`
               flex items-center py-1.5 px-2 text-sm cursor-pointer select-none
-              hover:bg-slate-100 text-slate-600 rounded-md my-0.5
+              ${(selectedFilter?.type === item.type && selectedFilter?.value === (item.type === 'book' ? item.data?.book : item.data?.author) && (item.type !== 'book' || selectedFilter?.author === item.data?.author))
+                ? 'bg-slate-200 text-slate-900 font-medium'
+                : 'hover:bg-slate-100 text-slate-600'}
+              rounded-md my-0.5
               transition-colors duration-150 group
             `}
             style={{ paddingLeft: `${paddingLeft}px` }}
-            onClick={() => onTreeItemClick(item)}
+            onClick={() => {
+              onTreeItemClick(item);
+              if (item.children && !expandedNodes.has(item.id)) {
+                setExpandedNodes(prev => new Set([...prev, item.id]));
+              }
+            }}
             draggable
             onDragStart={(e) => handleDragStartRef(e, item.data)}
           >
@@ -274,18 +284,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             }
           }}
         >
-          <div
-            className={`
-              flex items-center p-2 rounded-md cursor-pointer mb-1 text-sm font-medium
-              ${selectedProjectId === null ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'}
-            `}
-            onClick={() => onProjectSelect(null)}
-          >
-            <FolderOpen size={16} className="mr-2" />
-            All Citations
-          </div>
-
-          <div className="mt-4 mb-2 px-2 flex items-center justify-between text-xs font-semibold text-slate-400 uppercase tracking-wider">
+          <div className="mt-2 mb-2 px-2 flex items-center justify-between text-xs font-semibold text-slate-400 uppercase tracking-wider">
             <span>Folders</span>
             <button
               onClick={() => { setIsManageMode(!isManageMode); setDeletingProjectId(null); }}
@@ -496,6 +495,17 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         </div>
 
         <div className="flex-1 overflow-y-auto p-3">
+          <div
+            className={`
+              flex items-center p-2 rounded-md cursor-pointer mb-4 text-sm font-medium
+              ${selectedProjectId === null ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'}
+            `}
+            onClick={() => onProjectSelect(null)}
+          >
+            <FolderOpen size={16} className="mr-2" />
+            All Citations
+          </div>
+
           <div className="mb-2 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
             Authors & Books
           </div>
