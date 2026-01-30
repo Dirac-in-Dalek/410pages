@@ -641,35 +641,20 @@ const App: React.FC = () => {
                         <Trash2 size={18} />
                       </button>
 
-                      {(filter || searchTerm) && (
-                        <>
-                          <div className="h-4 w-[1px] bg-slate-300 mx-1"></div>
-                          <button
-                            onClick={() => { setFilter(null); setSearchTerm(''); setEditorPrefill(undefined); }}
-                            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-colors"
-                            title="Clear Filters"
-                          >
-                            <X size={18} />
-                          </button>
-                        </>
-                      )}
+                      <div className="h-4 w-[1px] bg-slate-200 mx-1"></div>
+
+                      <button
+                        onClick={() => setSelectedCitationIds(new Set())}
+                        className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-colors"
+                        title="Cancel Selection"
+                      >
+                        <X size={18} />
+                      </button>
                     </div>
                   </div>
                 </div>
               )}
             </div>
-
-            {/* Clear Results Button (When nothing selected but filtered) */}
-            {selectedCitationIds.size === 0 && (filter || searchTerm) && (
-              <div className="flex justify-end mb-4">
-                <button
-                  onClick={() => { setFilter(null); setSearchTerm(''); setEditorPrefill(undefined); }}
-                  className="text-xs px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-600 rounded-full transition-colors font-medium"
-                >
-                  Clear search results
-                </button>
-              </div>
-            )}
 
 
             {/* Delete Confirmation Modal */}
