@@ -321,8 +321,17 @@ const App: React.FC = () => {
     }).join('\n\n');
 
     try {
-      await navigator.clipboard.writeText(copyText);
-      // Optional: show a mini toast instead of alert
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(copyText);
+      } else {
+        // Fallback for non-secure contexts
+        const textArea = document.createElement("textarea");
+        textArea.value = copyText;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+      }
       setTimeout(() => setIsBatchCopying(false), 2000);
     } catch (err) {
       console.error('Failed to copy text: ', err);

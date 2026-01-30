@@ -120,9 +120,23 @@ export const CitationCard: React.FC<CitationCardProps> = ({
       if (citation.page) copyText += `, p.${citation.page}`;
     }
 
-    await navigator.clipboard.writeText(copyText);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(copyText);
+      } else {
+        // Fallback for non-secure contexts
+        const textArea = document.createElement("textarea");
+        textArea.value = copyText;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
   };
 
   // Text selection for highlighting
