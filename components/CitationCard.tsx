@@ -116,7 +116,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
 
     if (!isSelf && citation.author) {
       copyText += ` — ${citation.author}`;
-      if (citation.book) copyText += `, 《${citation.book}》`;
+      if (citation.book) copyText += `, 『${citation.book}』`;
       if (citation.page) copyText += `, p.${citation.page}`;
     }
 

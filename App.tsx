@@ -314,7 +314,7 @@ const App: React.FC = () => {
       const isSelf = citation.isSelf ?? (citation.author === username || !citation.author || citation.author === 'Self');
       if (!isSelf && citation.author) {
         text += ` — ${citation.author}`;
-        if (citation.book) text += `, 《${citation.book}》`;
+        if (citation.book) text += `, 『${citation.book}』`;
         if (citation.page) text += `, p.${citation.page}`;
       }
       return text;
