@@ -40,6 +40,7 @@ export const api = {
                     content: n.content,
                     createdAt: new Date(n.created_at).getTime()
                 })),
+                highlights: c.highlights || [],
                 tags: []
             } as Citation;
         });
@@ -169,6 +170,7 @@ export const api = {
         const updateData: any = {};
         if (data.text !== undefined) updateData.text = data.text;
         if (data.page !== undefined) updateData.page = data.page;
+        if (data.highlights !== undefined) updateData.highlights = data.highlights;
 
         const { error } = await supabase
             .from('citations')
@@ -276,6 +278,21 @@ export const api = {
         const { error } = await supabase
             .from('project_citations')
             .upsert({ project_id: projectId, citation_id: citationId });
+
+        if (error) throw error;
+    },
+
+    async addCitationsToProject(userId: string, projectId: string, citationIds: string[]) {
+        if (citationIds.length === 0) return;
+
+        const records = citationIds.map(cid => ({
+            project_id: projectId,
+            citation_id: cid
+        }));
+
+        const { error } = await supabase
+            .from('project_citations')
+            .upsert(records, { onConflict: 'project_id, citation_id', ignoreDuplicates: true });
 
         if (error) throw error;
     }

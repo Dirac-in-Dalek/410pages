@@ -4,6 +4,13 @@ export interface Note {
   createdAt: number;
 }
 
+export interface Highlight {
+  id: string;
+  start: number;  // 시작 인덱스
+  end: number;    // 끝 인덱스 (exclusive)
+  color?: string; // 선택적 색상 (기본: yellow)
+}
+
 export interface Citation {
   id: string;
   text: string;
@@ -13,6 +20,7 @@ export interface Citation {
   page?: number;
   notes: Note[];
   tags: string[];
+  highlights?: Highlight[];
   createdAt: number;
 }
 

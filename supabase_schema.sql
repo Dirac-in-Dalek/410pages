@@ -91,6 +91,9 @@ do $$ begin
   end if;
 end $$;
 
+-- CITATIONS highlights 컬럼 추가
+ALTER TABLE citations ADD COLUMN IF NOT EXISTS highlights JSONB DEFAULT '[]';
+
 -- 8. PROJECTS 테이블
 create table if not exists projects (
   id uuid default uuid_generate_v4() primary key,

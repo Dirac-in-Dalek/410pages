@@ -7,6 +7,7 @@ import { supabase } from './lib/supabase';
 import { api } from './lib/api';
 import { Auth } from './Auth';
 import { MobileLanding } from './components/MobileLanding';
+import { FolderPlus, CheckSquare, Square, Trash2, Plus, X, Folder, Check, Copy } from 'lucide-react';
 
 interface FilterState {
   type: 'author' | 'book';
@@ -255,6 +256,127 @@ const App: React.FC = () => {
     }
   };
 
+  // --- Batch State ---
+  const [selectedCitationIds, setSelectedCitationIds] = useState<Set<string>>(new Set());
+  const [showBatchFolderMenu, setShowBatchFolderMenu] = useState(false);
+  const [isCreatingBatchFolder, setIsCreatingBatchFolder] = useState(false);
+  const [newBatchFolderName, setNewBatchFolderName] = useState('');
+  const [showBatchDeleteModal, setShowBatchDeleteModal] = useState(false);
+  const [isBatchCopying, setIsBatchCopying] = useState(false);
+
+  // --- Handlers ---
+  const handleToggleSelect = (id: string, selected: boolean) => {
+    setSelectedCitationIds(prev => {
+      const next = new Set(prev);
+      if (selected) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
+
+  const handleSelectAll = (select: boolean) => {
+    if (select) {
+      setSelectedCitationIds(new Set(filteredCitations.map(c => c.id)));
+    } else {
+      setSelectedCitationIds(new Set());
+    }
+  };
+
+  const handleBatchAddToProject = async (projectId: string) => {
+    if (!session || selectedCitationIds.size === 0) return;
+    try {
+      await api.addCitationsToProject(session.user.id, projectId, Array.from(selectedCitationIds));
+
+      // Update local state to reflect changes
+      setProjects(prev => prev.map(p => {
+        if (p.id === projectId) {
+          // Add only new IDs
+          const newIds = Array.from(selectedCitationIds).filter(cid => !p.citationIds.includes(cid));
+          return { ...p, citationIds: [...p.citationIds, ...newIds] };
+        }
+        return p;
+      }));
+
+      setSelectedCitationIds(new Set());
+      setShowBatchFolderMenu(false);
+    } catch (error) {
+      console.error('Error batch adding to project:', error);
+    }
+  };
+
+  const handleBatchCopy = async () => {
+    if (selectedCitationIds.size === 0) return;
+    setIsBatchCopying(true);
+
+    const selectedCitationsList = filteredCitations.filter(c => selectedCitationIds.has(c.id));
+    const copyText = selectedCitationsList.map(citation => {
+      let text = `"${citation.text}"`;
+      const isSelf = citation.isSelf ?? (citation.author === username || !citation.author || citation.author === 'Self');
+      if (!isSelf && citation.author) {
+        text += ` — ${citation.author}`;
+        if (citation.book) text += `, 《${citation.book}》`;
+        if (citation.page) text += `, p.${citation.page}`;
+      }
+      return text;
+    }).join('\n\n');
+
+    try {
+      await navigator.clipboard.writeText(copyText);
+      // Optional: show a mini toast instead of alert
+      setTimeout(() => setIsBatchCopying(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+      setIsBatchCopying(false);
+    }
+  };
+
+  const handleBatchCreateAndAddToProject = async () => {
+    if (!session || !newBatchFolderName.trim() || selectedCitationIds.size === 0) return;
+    try {
+      // 1. Create Project
+      const newProject = await api.createProject(session.user.id, newBatchFolderName);
+      setProjects(prev => [...prev, newProject]);
+
+      // 2. Add Citations
+      await api.addCitationsToProject(session.user.id, newProject.id, Array.from(selectedCitationIds));
+
+      // 3. Update Project State with citations
+      setProjects(prev => prev.map(p => {
+        if (p.id === newProject.id) {
+          return { ...p, citationIds: Array.from(selectedCitationIds) };
+        }
+        return p;
+      }));
+
+      setNewBatchFolderName('');
+      setIsCreatingBatchFolder(false);
+      setShowBatchFolderMenu(false);
+      setSelectedCitationIds(new Set());
+    } catch (error) {
+      console.error('Error creating batch folder:', error);
+    }
+  };
+
+  const handleBatchDelete = async () => {
+    if (!session || selectedCitationIds.size === 0) return;
+
+    try {
+      const idsToDelete = Array.from(selectedCitationIds);
+      await Promise.all(idsToDelete.map((id: string) => api.deleteCitation(session.user.id, id)));
+
+      setCitations(prev => prev.filter(c => !selectedCitationIds.has(c.id)));
+      setProjects(prev => prev.map(p => ({
+        ...p,
+        citationIds: p.citationIds.filter(cid => !selectedCitationIds.has(cid))
+      })));
+
+      setSelectedCitationIds(new Set());
+      setShowBatchDeleteModal(false);
+    } catch (error) {
+      console.error('Error batch deleting:', error);
+    }
+  };
+
   const handleTreeItemClick = (item: SidebarItem) => {
     if (item.data) {
       setEditorPrefill({
@@ -401,27 +523,13 @@ const App: React.FC = () => {
       searchTerm={searchTerm}
     >
       <div className="h-full overflow-y-auto bg-slate-50">
-        <div className="p-8 pb-4">
-          <div className="max-w-3xl mx-auto">
-            <h2 className="font-serif text-3xl text-slate-800 mb-2 truncate">
+        <div className="pt-10 pb-0">
+          <div className="max-w-3xl mx-auto px-8">
+            <h2 className="font-serif text-3xl text-slate-800 mb-6 truncate">
               {viewTitle}
             </h2>
-            <div className="flex items-center gap-2 mb-6">
-              <span className="text-slate-500 text-sm">
-                {filteredCitations.length} {filteredCitations.length === 1 ? 'citation' : 'citations'} {searchTerm ? 'matched' : 'collected'}
-              </span>
-              {(filter || searchTerm) && (
-                <button
-                  onClick={() => { setFilter(null); setSearchTerm(''); setEditorPrefill(undefined); }}
-                  className="text-xs px-2 py-0.5 bg-slate-200 hover:bg-slate-300 text-slate-600 rounded-full transition-colors"
-                >
-                  Clear Results
-                </button>
-              )}
-            </div>
-
             {!searchTerm && !selectedProjectId && (
-              <div className="mb-10">
+              <div className="mb-4">
                 <CitationEditor onAddCitation={handleAddCitation} prefillData={editorPrefill} username={username} />
               </div>
             )}
@@ -430,36 +538,198 @@ const App: React.FC = () => {
 
         <div className="px-8 pb-20">
           <div className="max-w-3xl mx-auto">
-            {loading ? (
-              <div className="text-center py-20 text-slate-400">Loading your citations...</div>
-            ) : filteredCitations.length > 0 ? (
-              filteredCitations.map((citation, index) => {
-                const citationProjects = projects
-                  .filter(p => p.citationIds.includes(citation.id))
-                  .map(p => p.name);
+            {/* Toolbar Area - Reserved space to prevent jumping */}
+            <div className="sticky top-0 z-20 bg-slate-50/95 backdrop-blur-sm mb-2 h-14 flex items-center">
+              {selectedCitationIds.size > 0 && filteredCitations.length > 0 && (
+                <div className="w-full flex items-center justify-between bg-white p-2 rounded-lg border border-slate-200/60 shadow-sm animate-in fade-in slide-in-from-top-1 duration-200 transition-all">
+                  <div className="w-full flex items-center justify-between">
+                    <div className="flex items-center gap-3 pl-1">
+                      <button
+                        onClick={() => handleSelectAll(selectedCitationIds.size < filteredCitations.length)}
+                        className="flex items-center text-slate-400 hover:text-indigo-600 transition-colors"
+                        title="Select All"
+                      >
+                        {selectedCitationIds.size > 0 && selectedCitationIds.size === filteredCitations.length ? (
+                          <CheckSquare size={18} className="text-indigo-600" />
+                        ) : (
+                          <Square size={18} />
+                        )}
+                      </button>
+                      <div className="h-4 w-[1px] bg-slate-300 mx-1"></div>
+                      <span className="text-sm font-bold text-indigo-600">
+                        {selectedCitationIds.size} Selected
+                      </span>
+                    </div>
 
-                return (
-                  <CitationCard
-                    key={citation.id}
-                    index={index}
-                    citation={citation}
-                    username={username}
-                    projectNames={citationProjects}
-                    onAddNote={handleAddNote}
-                    onUpdateNote={handleUpdateNote}
-                    onDeleteNote={handleDeleteNote}
-                    onDelete={handleDeleteCitation}
-                    onUpdate={handleUpdateCitation}
-                    onReorder={() => { }} // No local reordering for now during sync
-                  />
-                );
-              })
-            ) : (
-              <div className="text-center py-20 text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">
-                <p>{searchTerm ? 'No matches found.' : 'No citations found in this view.'}</p>
-                <p className="text-xs mt-2">{searchTerm ? 'Try another keyword.' : 'Drag items from the right or type above.'}</p>
+                    <div className="flex items-center gap-1 pr-1">
+                      {/* Folder Menu */}
+                      <div className="relative">
+                        <button
+                          onClick={() => setShowBatchFolderMenu(!showBatchFolderMenu)}
+                          className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-slate-50 rounded-full transition-all"
+                          title="Move to Folder"
+                        >
+                          <Folder size={18} />
+                        </button>
+
+                        {showBatchFolderMenu && (
+                          <div className="absolute top-full right-0 mt-1 w-56 bg-white text-slate-800 border border-slate-200 rounded-xl shadow-2xl z-[110] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                            <div className="p-2 border-b border-slate-100 bg-slate-50">
+                              {isCreatingBatchFolder ? (
+                                <div className="flex items-center gap-1">
+                                  <input
+                                    autoFocus
+                                    type="text"
+                                    placeholder="Folder Name..."
+                                    value={newBatchFolderName}
+                                    onChange={(e) => setNewBatchFolderName(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') handleBatchCreateAndAddToProject();
+                                      if (e.key === 'Escape') setIsCreatingBatchFolder(false);
+                                    }}
+                                    className="flex-1 text-xs px-2 py-1.5 border border-indigo-200 rounded-md focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 outline-none"
+                                  />
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => setIsCreatingBatchFolder(true)}
+                                  className="w-full flex items-center gap-2 px-2 py-1.5 text-xs text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors font-bold"
+                                >
+                                  <Plus size={14} /> New Folder
+                                </button>
+                              )}
+                            </div>
+                            <div className="max-h-56 overflow-y-auto py-1">
+                              {projects.length === 0 && <div className="px-4 py-3 text-xs text-slate-400 text-center">No existing folders</div>}
+                              {projects.map(p => (
+                                <button
+                                  key={p.id}
+                                  onClick={() => handleBatchAddToProject(p.id)}
+                                  className="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors"
+                                >
+                                  <Folder size={14} className="text-slate-400" />
+                                  <span className="truncate">{p.name}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={handleBatchCopy}
+                        className={`p-2 rounded-full transition-all ${isBatchCopying ? 'text-emerald-600 bg-emerald-50' : 'text-slate-500 hover:text-indigo-600 hover:bg-slate-50'}`}
+                        title="Copy to Clipboard"
+                      >
+                        {isBatchCopying ? <Check size={18} /> : <Copy size={18} />}
+                      </button>
+
+                      <button
+                        onClick={() => setShowBatchDeleteModal(true)}
+                        className="p-2 text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
+                        title="Delete Selected"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+
+                      {(filter || searchTerm) && (
+                        <>
+                          <div className="h-4 w-[1px] bg-slate-300 mx-1"></div>
+                          <button
+                            onClick={() => { setFilter(null); setSearchTerm(''); setEditorPrefill(undefined); }}
+                            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-colors"
+                            title="Clear Filters"
+                          >
+                            <X size={18} />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Clear Results Button (When nothing selected but filtered) */}
+            {selectedCitationIds.size === 0 && (filter || searchTerm) && (
+              <div className="flex justify-end mb-4">
+                <button
+                  onClick={() => { setFilter(null); setSearchTerm(''); setEditorPrefill(undefined); }}
+                  className="text-xs px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-600 rounded-full transition-colors font-medium"
+                >
+                  Clear search results
+                </button>
               </div>
             )}
+
+
+            {/* Delete Confirmation Modal */}
+            {showBatchDeleteModal && (
+              <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                <div
+                  className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300"
+                ></div>
+                <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 fade-in duration-200">
+                  <div className="p-6 pt-8 text-center">
+                    <div className="mx-auto w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4">
+                      <Trash2 size={24} />
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-800 mb-2">삭제하시겠습니까?</h3>
+                    <p className="text-sm text-slate-500">
+                      선택한 <span className="font-bold text-slate-700">{selectedCitationIds.size}</span>개의 인용구가 영구히 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
+                    </p>
+                  </div>
+                  <div className="flex border-t border-slate-100">
+                    <button
+                      onClick={() => setShowBatchDeleteModal(false)}
+                      className="flex-1 px-4 py-4 text-sm font-semibold text-slate-500 hover:bg-slate-50 transition-colors"
+                    >
+                      취소
+                    </button>
+                    <button
+                      onClick={handleBatchDelete}
+                      className="flex-1 px-4 py-4 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors"
+                    >
+                      삭제하기
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="max-w-3xl mx-auto">
+              {loading ? (
+                <div className="text-center py-20 text-slate-400">Loading your citations...</div>
+              ) : filteredCitations.length > 0 ? (
+                filteredCitations.map((citation, index) => {
+                  const citationProjects = projects
+                    .filter(p => p.citationIds.includes(citation.id))
+                    .map(p => p.name);
+
+                  return (
+                    <CitationCard
+                      key={citation.id}
+                      index={index}
+                      citation={citation}
+                      username={username}
+                      projectNames={citationProjects}
+                      isSelected={selectedCitationIds.has(citation.id)}
+                      onToggleSelect={handleToggleSelect}
+                      onAddNote={handleAddNote}
+                      onUpdateNote={handleUpdateNote}
+                      onDeleteNote={handleDeleteNote}
+                      onDelete={handleDeleteCitation}
+                      onUpdate={handleUpdateCitation}
+                    />
+                  );
+                })
+              ) : (
+                <div className="text-center py-20 text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">
+                  <p>{searchTerm ? 'No matches found.' : 'No citations found in this view.'}</p>
+                  <p className="text-xs mt-2">{searchTerm ? 'Try another keyword.' : 'Drag items from the right or type above.'}</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
