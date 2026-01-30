@@ -1,6 +1,12 @@
 import { supabase } from './supabase';
 import { Citation, Project, Note } from '../types';
 
+const extractPageSort = (page: string | undefined): number | undefined => {
+    if (!page) return undefined;
+    const match = page.match(/\d+/);
+    return match ? parseInt(match[0], 10) : undefined;
+};
+
 export const api = {
     // Profiles
     async updateProfile(userId: string, username: string) {
@@ -33,7 +39,8 @@ export const api = {
                 author: authorObj?.name || '',
                 isSelf: authorObj?.is_self || false,
                 book: c.book?.title || '',
-                page: c.page ? Number(c.page) : undefined,
+                page: c.page || undefined,
+                pageSort: c.page_sort || undefined,
                 createdAt: new Date(c.created_at).getTime(),
                 notes: (c.notes || []).map((n: any) => ({
                     id: n.id,
@@ -135,8 +142,9 @@ export const api = {
             .insert({
                 text: data.text,
                 book_id: bookId,
-                author_id: authorId, // <--- New field
+                author_id: authorId,
                 page: data.page,
+                page_sort: extractPageSort(data.page),
                 user_id: userId
             })
             .select(`
@@ -158,6 +166,7 @@ export const api = {
             isSelf: citation.author?.is_self || isSelf,
             book: citation.book?.title || bookTitle,
             page: citation.page,
+            pageSort: citation.page_sort,
             createdAt: new Date(citation.created_at).getTime(),
             notes: [],
             tags: []
@@ -169,7 +178,10 @@ export const api = {
     async updateCitation(userId: string, id: string, data: Partial<Citation>) {
         const updateData: any = {};
         if (data.text !== undefined) updateData.text = data.text;
-        if (data.page !== undefined) updateData.page = data.page;
+        if (data.page !== undefined) {
+            updateData.page = data.page;
+            updateData.page_sort = extractPageSort(data.page);
+        }
         if (data.highlights !== undefined) updateData.highlights = data.highlights;
 
         const { error } = await supabase

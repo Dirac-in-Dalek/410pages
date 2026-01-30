@@ -17,7 +17,8 @@ export interface Citation {
   author: string; // If empty, treated as "Self"
   isSelf?: boolean;
   book: string;
-  page?: number;
+  page?: string;      // Changed from number to string to support "30-31"
+  pageSort?: number;  // Added for numeric sorting (e.g., 30)
   notes: Note[];
   tags: string[];
   highlights?: Highlight[];

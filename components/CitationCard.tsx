@@ -97,7 +97,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
       text: editText,
       author: editAuthor,
       book: editBook,
-      page: editPage ? parseInt(editPage, 10) : undefined
+      page: editPage || undefined
     });
     setIsEditing(false);
   };

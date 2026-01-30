@@ -33,7 +33,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({ onAddCitation, p
       text,
       author,
       book,
-      page: page ? parseInt(page, 10) : undefined,
+      page: page || undefined,
       tags: [],
     });
 
