@@ -386,7 +386,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
             <>
               {/* Quote Content */}
               <blockquote
-                className="font-serif text-lg leading-relaxed text-slate-700 mb-4 relative z-10 select-text"
+                className="font-serif text-lg leading-relaxed text-slate-700 mb-4 relative z-10 select-text whitespace-pre-wrap"
                 onMouseUp={handleTextSelection}
               >
                 {!isSelf && <span className="text-slate-300 text-2xl absolute -top-2 -left-2 select-none">"</span>}
