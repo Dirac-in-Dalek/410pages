@@ -12,9 +12,10 @@
     --border-main: #e2e8f0;
     --accent: #4f46e5;
     --accent-hover: #4338ca;
-    --sidebar-hover: #e2e8f0;
     --sidebar-active: #ffffff;
     --bg-input: #ffffff;
+    --accent-active: #4f46e5;
+    --accent-active-text: #ffffff;
   }
 
   .dark {
@@ -29,6 +30,8 @@
     --sidebar-hover: #1e293b;
     --sidebar-active: #334155;
     --bg-input: #0f172a;
+    --accent-active: #4338ca;
+    --accent-active-text: #ffffff;
   }
 
   body {

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, ChevronDown, ChevronUp, Plus, Quote, User, Edit2, Trash2, X, Check, Folder, Copy, Highlighter, Trash } from 'lucide-react';
+import { MessageSquare, ChevronDown, ChevronUp, Plus, Quote, User, Edit2, Trash2, X, Check, Folder, Copy, Trash } from 'lucide-react';
 import { Citation, Note, Highlight } from '../types';
 
 interface CitationCardProps {
@@ -50,16 +50,12 @@ export const CitationCard: React.FC<CitationCardProps> = ({
 
   // Highlight state
   const [localHighlights, setLocalHighlights] = useState<Highlight[]>(citation.highlights || []);
-  const [selectionPopover, setSelectionPopover] = useState<{ x: number, y: number, show: boolean }>({ x: 0, y: 0, show: false });
-  const [pendingHighlight, setPendingHighlight] = useState<{ start: number, end: number } | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
   // Close popover when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (cardRef.current && !cardRef.current.contains(event.target as Node)) {
-        setSelectionPopover(prev => ({ ...prev, show: false }));
-        setPendingHighlight(null);
         window.getSelection()?.removeAllRanges();
       }
     };
@@ -142,28 +138,22 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   // Text selection for highlighting
   const handleTextSelection = () => {
     const selection = window.getSelection();
-    if (!selection || selection.isCollapsed) {
-      // Don't hide popover if we clicked on the Popover itself (handled by outside click)
-      return;
-    };
+    if (!selection || selection.isCollapsed || !cardRef.current) return;
 
     const range = selection.getRangeAt(0);
-    const rect = range.getBoundingClientRect();
-    const cardRect = cardRef.current?.getBoundingClientRect();
+    const blockquote = cardRef.current.querySelector('blockquote');
 
-    if (!cardRect) return;
+    if (!blockquote || !blockquote.contains(range.commonAncestorContainer)) return;
 
-    const selectedText = selection.toString().trim();
-    if (!selectedText) return;
+    const selectedText = selection.toString();
+    if (!selectedText.trim()) return;
 
-    // Find absolute position relative to the card
-    const relativeX = rect.left - cardRect.left + (rect.width / 2);
-    const relativeY = rect.top - cardRect.top;
+    // Calculate the accurate start index relative to the entire blockquote text
+    const preSelectionRange = range.cloneRange();
+    preSelectionRange.selectNodeContents(blockquote);
+    preSelectionRange.setEnd(range.startContainer, range.startOffset);
 
-    // Find the start index in the citation text
-    const start = citation.text.indexOf(selectedText);
-    if (start === -1) return;
-
+    const start = preSelectionRange.toString().length;
     const end = start + selectedText.length;
 
     // Check for overlapping highlights
@@ -175,22 +165,11 @@ export const CitationCard: React.FC<CitationCardProps> = ({
       return;
     }
 
-    // Show Popover
-    setPendingHighlight({ start, end });
-    setSelectionPopover({
-      x: relativeX,
-      y: relativeY - 10, // slightly above text
-      show: true
-    });
-  };
-
-  const confirmHighlight = () => {
-    if (!pendingHighlight) return;
-
+    // Automatically confirm highlight
     const newHighlight: Highlight = {
       id: `hl-${Date.now()}`,
-      start: pendingHighlight.start,
-      end: pendingHighlight.end,
+      start: start,
+      end: end,
       color: 'yellow'
     };
 
@@ -198,9 +177,8 @@ export const CitationCard: React.FC<CitationCardProps> = ({
     setLocalHighlights(updatedHighlights);
     onUpdate(citation.id, { highlights: updatedHighlights });
 
-    setSelectionPopover({ ...selectionPopover, show: false });
-    setPendingHighlight(null);
-    window.getSelection()?.removeAllRanges();
+    // Clear selection
+    selection.removeAllRanges();
   };
 
   // Remove a highlight
@@ -438,41 +416,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                 </button>
               </div>
 
-              {/* Popover for Highlight Confirmation */}
-              {selectionPopover.show && (
-                <div
-                  className="absolute z-50 bg-slate-800 text-white rounded-md shadow-xl flex items-center gap-1 p-1 animate-in fade-in zoom-in duration-200"
-                  style={{
-                    left: selectionPopover.x,
-                    top: selectionPopover.y,
-                    transform: 'translate(-50%, -100%)' // Center horizontally, place above
-                  }}
-                  onMouseDown={(e) => e.stopPropagation()} // Prevent card drag start
-                >
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      confirmHighlight();
-                    }}
-                    className="flex items-center gap-1 px-2 py-1 hover:bg-slate-700 rounded text-xs font-medium transition-colors"
-                  >
-                    <Highlighter size={12} className="text-yellow-300" />
-                    하이라이트
-                  </button>
-                  <div className="w-[1px] h-3 bg-slate-600 mx-0.5"></div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectionPopover({ ...selectionPopover, show: false });
-                      setPendingHighlight(null);
-                      window.getSelection()?.removeAllRanges();
-                    }}
-                    className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-white transition-colors"
-                  >
-                    <X size={12} />
-                  </button>
-                </div>
-              )}
+
             </>
           )}
         </div>

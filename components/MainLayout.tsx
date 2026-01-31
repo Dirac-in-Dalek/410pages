@@ -383,7 +383,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                         </button>
                       </div>
                     ) : (
-                      <span className="ml-auto text-xs bg-slate-100 text-slate-400 py-0.5 px-1.5 rounded-full group-hover:hidden">
+                      <span className="ml-auto text-[10px] bg-[var(--sidebar-active)] text-[var(--text-muted)] py-0.5 px-1.5 rounded-full border border-[var(--border-main)] group-hover:hidden transition-colors">
                         {project.citationIds.length}
                       </span>
                     )}
@@ -509,7 +509,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           <div
             className={`
               flex items-center p-2 rounded-md cursor-pointer mb-4 text-sm font-medium
-              ${selectedProjectId === null ? 'bg-[var(--sidebar-active)] text-indigo-700 shadow-sm border border-[var(--border-main)]' : 'text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]'}
+              ${selectedProjectId === null ? 'bg-[var(--accent-active)] text-[var(--accent-active-text)] shadow-md border-transparent' : 'text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]'}
             `}
             onClick={() => onProjectSelect(null)}
           >
