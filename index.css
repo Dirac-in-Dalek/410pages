@@ -3,8 +3,40 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --bg-main: #f8fafc;
+    --bg-sidebar: #f1f5f9;
+    --bg-card: #ffffff;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --border-main: #e2e8f0;
+    --accent: #4f46e5;
+    --accent-hover: #4338ca;
+    --sidebar-hover: #e2e8f0;
+    --sidebar-active: #ffffff;
+    --bg-input: #ffffff;
+  }
+
+  .dark {
+    --bg-main: #020617;
+    --bg-sidebar: #0f172a;
+    --bg-card: #1e293b;
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
+    --border-main: #334155;
+    --accent: #6366f1;
+    --accent-hover: #818cf8;
+    --sidebar-hover: #1e293b;
+    --sidebar-active: #334155;
+    --bg-input: #0f172a;
+  }
+
   body {
-    @apply antialiased text-slate-900 bg-gray-50 h-screen overflow-hidden;
+    @apply antialiased transition-colors duration-200;
+    color: var(--text-main);
+    background-color: var(--bg-main);
+    height: 100vh;
+    overflow: hidden;
   }
 }
 
@@ -13,13 +45,24 @@
   width: 6px;
   height: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 3px;
 }
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
 }

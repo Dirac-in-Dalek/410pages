@@ -20,7 +20,7 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
     return (
         <div className="pt-10 pb-0">
             <div className="max-w-3xl mx-auto px-8">
-                <h2 className="font-serif text-3xl text-slate-800 mb-6 truncate">
+                <h2 className="font-serif text-3xl text-[var(--text-main)] mb-6 truncate">
                     {title}
                 </h2>
                 {showEditor && (

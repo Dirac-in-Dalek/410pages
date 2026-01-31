@@ -256,9 +256,9 @@ export const CitationCard: React.FC<CitationCardProps> = ({
       ref={cardRef}
       className={`
         group relative rounded-lg border mb-4 transition-all duration-200 flex items-start gap-2
-        ${isSelected ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-slate-200 hover:shadow-md'}
-        ${isEditing ? 'cursor-default ring-2 ring-indigo-400 border-transparent shadow-lg bg-white' : ''}
-        ${isSelf && !isSelected ? 'border-emerald-100' : ''}
+        ${isSelected ? 'bg-indigo-50/50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800' : 'bg-[var(--bg-card)] border-[var(--border-main)] hover:shadow-md'}
+        ${isEditing ? 'cursor-default ring-2 ring-indigo-400 border-transparent shadow-lg bg-[var(--bg-card)]' : ''}
+        ${isSelf && !isSelected ? 'border-emerald-100 dark:border-emerald-900/30' : ''}
       `}
     >
       {/* Checkbox */}
@@ -386,12 +386,10 @@ export const CitationCard: React.FC<CitationCardProps> = ({
             <>
               {/* Quote Content */}
               <blockquote
-                className="font-serif text-lg leading-relaxed text-slate-700 mb-4 relative z-10 select-text whitespace-pre-wrap"
+                className="font-serif text-lg leading-relaxed text-[var(--text-main)] mb-4 relative z-10 select-text whitespace-pre-wrap"
                 onMouseUp={handleTextSelection}
               >
-                {!isSelf && <span className="text-slate-300 text-2xl absolute -top-2 -left-2 select-none">"</span>}
                 {renderHighlightedText()}
-                {!isSelf && <span className="text-slate-300 text-2xl absolute -bottom-4 -right-0 select-none">"</span>}
               </blockquote>
 
               {/* Metadata Tags */}
@@ -402,26 +400,26 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                     <User size={10} className="mr-1" /> {username}
                   </span>
                 ) : (
-                  <span className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-md border border-indigo-100 font-medium">
+                  <span className="px-2 py-1 bg-[var(--sidebar-active)] text-indigo-700 dark:text-indigo-400 rounded-md border border-[var(--border-main)] font-medium">
                     {citation.author}
                   </span>
                 )}
 
                 {/* Book & Page Tags (Always show if exist) */}
                 {citation.book && (
-                  <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-md border border-slate-200">
+                  <span className="px-2 py-1 bg-[var(--bg-sidebar)] text-[var(--text-muted)] rounded-md border border-[var(--border-main)]">
                     {citation.book}
                   </span>
                 )}
                 {citation.page && (
-                  <span className="px-2 py-1 bg-slate-50 text-slate-500 rounded-md border border-slate-100 font-mono">
+                  <span className="px-2 py-1 bg-[var(--bg-input)] text-[var(--text-muted)] rounded-md border border-[var(--border-main)] font-mono">
                     p. {citation.page}
                   </span>
                 )}
 
                 {/* Project Tags */}
                 {projectNames.map(name => (
-                  <span key={name} className="px-2 py-1 bg-indigo-50 text-indigo-600 rounded-md border border-indigo-100 flex items-center gap-1 font-medium italic">
+                  <span key={name} className="px-2 py-1 bg-[var(--sidebar-active)] text-indigo-600 dark:text-indigo-400 rounded-md border border-[var(--border-main)] flex items-center gap-1 font-medium italic">
                     <Folder size={10} /> {name}
                   </span>
                 ))}
@@ -431,7 +429,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                   onClick={() => setIsNotesExpanded(!isNotesExpanded)}
                   className={`
                   ml-auto flex items-center gap-1 px-2 py-1 rounded-full transition-colors
-                  ${citation.notes.length > 0 ? 'text-indigo-600 bg-indigo-50 hover:bg-indigo-100' : 'text-slate-400 hover:text-slate-600'}
+                  ${citation.notes.length > 0 ? 'text-indigo-600 dark:text-indigo-400 bg-[var(--sidebar-active)] border border-[var(--border-main)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}
                 `}
                 >
                   <MessageSquare size={12} />
@@ -482,7 +480,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
         {/* Collapsible Notes Section */}
         {
           isNotesExpanded && !isEditing && (
-            <div className="border-t border-slate-100 bg-slate-50/50 rounded-b-lg p-4">
+            <div className="border-t border-[var(--border-main)] bg-[var(--bg-sidebar)]/30 rounded-b-lg p-4">
 
               {/* List of Existing Notes */}
               <div className="space-y-3 mb-4">

@@ -11,7 +11,10 @@ import { ConfirmModal } from './components/ConfirmModal';
 import { ArchiveHeader } from './components/ArchiveHeader';
 import { CitationList } from './components/CitationList';
 
+import { useDarkMode } from './hooks/useDarkMode';
+
 const App: React.FC = () => {
+  const { isDarkMode, toggleDarkMode } = useDarkMode();
   // --- Responsive Check ---
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -79,8 +82,10 @@ const App: React.FC = () => {
       onSearch={setSearchTerm}
       searchTerm={searchTerm}
       selectedFilter={filter}
+      isDarkMode={isDarkMode}
+      toggleDarkMode={toggleDarkMode}
     >
-      <div className="h-full overflow-y-auto bg-slate-50">
+      <div className="h-full overflow-y-auto">
         <ArchiveHeader
           title={viewTitle}
           showEditor={!searchTerm && !selectedProjectId}

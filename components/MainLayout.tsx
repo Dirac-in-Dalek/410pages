@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Folder, FolderOpen, Plus, Search, User, Book, ChevronRight, ChevronDown, Layers, Edit2, Trash2, Check, X, Settings, GripVertical, LogOut } from 'lucide-react';
+import { Folder, FolderOpen, Plus, Search, User, Book, ChevronRight, ChevronDown, Layers, Edit2, Trash2, Check, X, Settings, GripVertical, LogOut, Sun, Moon } from 'lucide-react';
 import { Project, SidebarItem } from '../types';
 
 interface MainLayoutProps {
@@ -20,6 +20,8 @@ interface MainLayoutProps {
   onSearch?: (term: string) => void;
   searchTerm?: string;
   selectedFilter?: { type: 'author' | 'book'; value: string; author?: string; } | null;
+  isDarkMode: boolean;
+  toggleDarkMode: () => void;
 }
 
 export const MainLayout: React.FC<MainLayoutProps> = ({
@@ -39,7 +41,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   onSignOut,
   onSearch,
   searchTerm = '',
-  selectedFilter = null
+  selectedFilter = null,
+  isDarkMode,
+  toggleDarkMode
 }) => {
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set(['benjamin']));
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, projectId: string } | null>(null);
@@ -191,8 +195,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             className={`
               flex items-center py-1.5 px-2 text-sm cursor-pointer select-none
               ${(selectedFilter?.type === item.type && selectedFilter?.value === (item.type === 'book' ? item.data?.book : item.data?.author) && (item.type !== 'book' || selectedFilter?.author === item.data?.author))
-                ? 'bg-slate-200 text-slate-900 font-medium'
-                : 'hover:bg-slate-100 text-slate-600'}
+                ? 'bg-[var(--sidebar-active)] text-[var(--text-main)] font-medium shadow-sm'
+                : 'hover:bg-[var(--sidebar-hover)] text-[var(--text-muted)]'}
               rounded-md my-0.5
               transition-colors duration-150 group
             `}
@@ -233,17 +237,17 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   };
 
   return (
-    <div className="flex h-screen w-full bg-white overflow-hidden font-sans">
+    <div className="flex h-screen w-full bg-[var(--bg-main)] overflow-hidden font-sans text-[var(--text-main)] transition-colors duration-200">
 
       {/* Context Menu Popup */}
       {contextMenu && (
         <div
           ref={contextMenuRef}
-          className="fixed z-50 bg-white border border-slate-200 shadow-xl rounded-md py-1 w-32"
+          className="fixed z-50 bg-[var(--bg-card)] border border-[var(--border-main)] shadow-xl rounded-md py-1 w-32"
           style={{ top: contextMenu.y, left: contextMenu.x }}
         >
           <button
-            className="w-full text-left px-4 py-2 text-xs hover:bg-slate-50 text-slate-700 flex items-center"
+            className="w-full text-left px-4 py-2 text-xs hover:bg-[var(--sidebar-hover)] text-[var(--text-main)] flex items-center"
             onClick={() => startRename(contextMenu.projectId, projects.find(p => p.id === contextMenu.projectId)?.name || '')}
           >
             <Edit2 size={12} className="mr-2" /> Rename
@@ -258,14 +262,14 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       )}
 
       {/* Left Sidebar: Projects */}
-      <aside className="w-64 flex-shrink-0 border-r border-slate-200 bg-slate-50 flex flex-col z-20 shadow-sm">
-        <div className="h-16 flex items-center px-4 border-b border-slate-200 bg-white gap-3">
-          <div className="text-slate-900">
+      <aside className="w-64 flex-shrink-0 border-r border-[var(--border-main)] bg-[var(--bg-sidebar)] flex flex-col z-20 shadow-sm transition-colors duration-200">
+        <div className="h-16 flex items-center px-4 border-b border-[var(--border-main)] bg-[var(--bg-card)] gap-3">
+          <div className="text-[var(--text-main)]">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M7 6 L12 3 H18 V18 L13 21 H7 V6" />
             </svg>
           </div>
-          <h1 className="font-bold text-xl tracking-tighter text-slate-900 font-serif">
+          <h1 className="font-bold text-xl tracking-tighter text-[var(--text-main)] font-serif">
             410pages
           </h1>
         </div>
@@ -325,7 +329,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                   group flex items-center p-2 rounded-md cursor-pointer mb-1 text-sm relative
                   transition-all duration-200 border
                   ${dragOverProjectId === project.id ? 'bg-indigo-100 border-indigo-300 scale-[1.02] shadow-md z-10' : ''}
-                  ${selectedProjectId === project.id && dragOverProjectId !== project.id ? 'bg-white shadow-sm border-slate-200 text-indigo-700' : 'border-transparent text-slate-600 hover:bg-slate-200'}
+                  ${selectedProjectId === project.id && dragOverProjectId !== project.id ? 'bg-[var(--bg-card)] shadow-sm border-[var(--border-main)] text-indigo-700 font-medium' : 'border-transparent text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]'}
                 `}
                 onClick={() => !isManageMode && onProjectSelect(project.id)}
                 onContextMenu={(e) => handleContextMenu(e, project.id)}
@@ -409,7 +413,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           ) : (
             <button
               onClick={() => setIsCreating(true)}
-              className="w-full mt-2 flex items-center p-2 text-sm text-slate-500 hover:text-indigo-600 bg-white hover:bg-slate-50 rounded-md border border-slate-200 shadow-sm transition-all"
+              className="w-full mt-2 flex items-center p-2 text-sm text-[var(--text-muted)] hover:text-indigo-600 bg-[var(--bg-card)] hover:bg-[var(--sidebar-hover)] rounded-md border border-[var(--border-main)] shadow-sm transition-all"
             >
               <Plus size={16} className="mr-2" />
               New Project
@@ -418,7 +422,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         </div>
 
         {/* User Profile Footer */}
-        <div className="p-4 border-t border-slate-200 bg-slate-50 mt-auto">
+        <div className="p-4 border-t border-[var(--border-main)] bg-[var(--bg-sidebar)] mt-auto transition-colors duration-200">
           <div className="flex items-center">
             <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs mr-3 border border-indigo-200 flex-shrink-0">
               {username.slice(0, 2).toUpperCase()}
@@ -444,6 +448,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               <p className="text-[10px] text-slate-400 truncate">Synced</p>
             </div>
             <button
+              onClick={toggleDarkMode}
+              className="text-slate-400 hover:text-indigo-500 p-1 rounded hover:bg-slate-200 transition-colors ml-2"
+              title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+            <button
               onClick={onSignOut}
               className="text-slate-400 hover:text-red-500 p-1 rounded hover:bg-slate-200 transition-colors ml-2"
               title="Log out"
@@ -455,15 +466,15 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       </aside>
 
       {/* Center: Content */}
-      <main className="flex-1 flex flex-col min-w-0 bg-white">
+      <main className="flex-1 flex flex-col min-w-0 bg-[var(--bg-main)] transition-colors duration-200">
         {children}
       </main>
 
       {/* Right Sidebar: Library */}
-      <aside className="w-80 border-l border-slate-200 bg-white flex flex-col h-full sticky top-0 overflow-hidden">
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+      <aside className="w-80 border-l border-[var(--border-main)] bg-[var(--bg-card)] flex flex-col h-full sticky top-0 overflow-hidden transition-colors duration-200">
+        <div className="p-4 border-b border-[var(--border-main)] flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-slate-800">Library</span>
+            <span className="font-semibold text-[var(--text-main)]">Library</span>
           </div>
           {!isSearchExpanded ? (
             <button
@@ -498,7 +509,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           <div
             className={`
               flex items-center p-2 rounded-md cursor-pointer mb-4 text-sm font-medium
-              ${selectedProjectId === null ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'}
+              ${selectedProjectId === null ? 'bg-[var(--sidebar-active)] text-indigo-700 shadow-sm border border-[var(--border-main)]' : 'text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]'}
             `}
             onClick={() => onProjectSelect(null)}
           >
@@ -512,7 +523,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           {renderTree(treeData)}
         </div>
 
-        <div className="p-4 bg-slate-100 text-xs text-slate-500 border-t border-slate-200">
+        <div className="p-4 bg-[var(--bg-sidebar)] text-xs text-[var(--text-muted)] border-t border-[var(--border-main)]">
           <p>Drag or Click an Author/Book to auto-fill metadata.</p>
         </div>
       </aside >

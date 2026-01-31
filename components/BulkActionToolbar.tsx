@@ -34,8 +34,8 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
     if (selectedCount === 0) return null;
 
     return (
-        <div className="sticky top-0 z-20 bg-slate-50/95 backdrop-blur-sm mb-2 h-14 flex items-center">
-            <div className="w-full flex items-center justify-between bg-white p-2 rounded-lg border border-slate-200/60 shadow-sm animate-in fade-in slide-in-from-top-1 duration-200 transition-all">
+        <div className="sticky top-0 z-20 bg-[var(--bg-main)]/95 backdrop-blur-sm mb-2 h-14 flex items-center">
+            <div className="w-full flex items-center justify-between bg-[var(--bg-card)] p-2 rounded-lg border border-[var(--border-main)] shadow-sm animate-in fade-in slide-in-from-top-1 duration-200 transition-all">
                 <div className="w-full flex items-center justify-between">
                     <div className="flex items-center gap-3 pl-1">
                         <button
@@ -67,8 +67,8 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
                             </button>
 
                             {showFolderMenu && (
-                                <div className="absolute top-full right-0 mt-1 w-56 bg-white text-slate-800 border border-slate-200 rounded-xl shadow-2xl z-[110] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
-                                    <div className="p-2 border-b border-slate-100 bg-slate-50">
+                                <div className="absolute top-full right-0 mt-1 w-56 bg-[var(--bg-card)] text-[var(--text-main)] border border-[var(--border-main)] rounded-xl shadow-2xl z-[110] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                                    <div className="p-2 border-b border-[var(--border-main)] bg-[var(--bg-sidebar)]">
                                         {isCreatingFolder ? (
                                             <div className="flex items-center gap-1">
                                                 <input
@@ -107,7 +107,7 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
                                                     onAddToProject(p.id);
                                                     setShowFolderMenu(false);
                                                 }}
-                                                className="w-full text-left px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors"
+                                                className="w-full text-left px-4 py-2.5 text-xs text-[var(--text-main)] hover:bg-[var(--sidebar-hover)] flex items-center gap-2 transition-colors"
                                             >
                                                 <Folder size={14} className="text-slate-400" />
                                                 <span className="truncate">{p.name}</span>
