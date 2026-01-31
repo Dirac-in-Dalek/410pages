@@ -208,7 +208,8 @@ export const CitationCard: React.FC<CitationCardProps> = ({
       segments.push(
         <mark
           key={hl.id}
-          className="bg-yellow-200 hover:bg-yellow-300 cursor-pointer relative group/hl rounded px-0.5"
+          className="cursor-pointer relative group/hl rounded px-0.5 transition-colors"
+          style={{ backgroundColor: 'var(--highlight-bg)' }}
           onClick={(e) => {
             e.stopPropagation();
             handleRemoveHighlight(hl.id);

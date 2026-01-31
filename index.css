@@ -16,6 +16,7 @@
     --bg-input: #ffffff;
     --accent-active: #4f46e5;
     --accent-active-text: #ffffff;
+    --highlight-bg: #fef08a;
   }
 
   .dark {
@@ -32,6 +33,7 @@
     --bg-input: #0f172a;
     --accent-active: #4338ca;
     --accent-active-text: #ffffff;
+    --highlight-bg: rgba(251, 191, 36, 0.9);
   }
 
   body {
