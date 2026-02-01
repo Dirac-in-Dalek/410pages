@@ -88,7 +88,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({ onAddCitation, p
     >
       {/* Visual Cue for Drop */}
       {isDraggingOver && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 rounded-lg backdrop-blur-sm pointer-events-none">
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-[var(--bg-card)]/80 rounded-lg backdrop-blur-sm pointer-events-none">
           <div className="text-indigo-600 font-medium flex items-center animate-bounce">
             <BookIcon className="mr-2" />
             Drop to auto-fill metadata
@@ -170,7 +170,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({ onAddCitation, p
           disabled={!text.trim()}
           className={`
             ml-auto p-2 rounded-md transition-all
-            ${text.trim() ? 'bg-indigo-600 text-white shadow-md hover:bg-indigo-700 hover:scale-105 active:scale-95' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}
+            ${text.trim() ? 'bg-indigo-600 text-white shadow-md hover:bg-indigo-700 hover:scale-105 active:scale-95' : 'bg-[var(--bg-sidebar)] text-[var(--text-muted)] cursor-not-allowed'}
           `}
         >
           <Send size={16} />

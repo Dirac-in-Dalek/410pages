@@ -259,8 +259,8 @@ export const CitationCard: React.FC<CitationCardProps> = ({
             <button
               onClick={handleCopy}
               className={`p-1.5 rounded-md transition-colors ${copied
-                ? 'text-emerald-600 bg-emerald-50'
-                : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50'
+                ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20'
+                : 'text-[var(--text-muted)] hover:text-indigo-600 hover:bg-[var(--bg-sidebar)]'
                 }`}
               title={copied ? '복사됨!' : '복사하기'}
             >
@@ -275,7 +275,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
             </button>
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+              className="p-1.5 text-[var(--text-muted)] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
               title="Delete"
             >
               <Trash2 size={14} />
@@ -285,13 +285,13 @@ export const CitationCard: React.FC<CitationCardProps> = ({
 
         {/* Delete Confirmation */}
         {showDeleteConfirm && (
-          <div className="absolute inset-0 z-30 bg-white/95 backdrop-blur-sm rounded-lg flex items-center justify-center p-6 text-center">
+          <div className="absolute inset-0 z-30 bg-[var(--bg-card)]/95 backdrop-blur-sm rounded-lg flex items-center justify-center p-6 text-center">
             <div>
-              <p className="text-slate-700 font-medium mb-4">정말로 이 인용구를 삭제하시겠습니까?</p>
+              <p className="text-[var(--text-main)] font-medium mb-4">정말로 이 인용구를 삭제하시겠습니까?</p>
               <div className="flex gap-3 justify-center">
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="px-4 py-1.5 text-sm font-medium text-slate-500 hover:bg-slate-100 rounded-md"
+                  className="px-4 py-1.5 text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--bg-sidebar)] rounded-md"
                 >
                   취소
                 </button>
@@ -313,43 +313,43 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                 autoFocus
                 value={editText}
                 onChange={(e) => setEditText(e.target.value)}
-                className="w-full text-lg font-serif p-2 border border-indigo-200 rounded-md focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 min-h-[100px] resize-none overflow-hidden"
+                className="w-full text-lg font-serif p-2 bg-[var(--bg-input)] text-[var(--text-main)] border border-[var(--border-main)] rounded-md focus:ring-2 focus:ring-indigo-100/20 focus:border-indigo-400 min-h-[100px] resize-none overflow-hidden"
                 style={{ height: 'auto' }}
               />
               <div className="grid grid-cols-3 gap-2">
                 <div className="col-span-1">
-                  <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1 ml-1">Author</label>
+                  <label className="text-[10px] uppercase font-bold text-[var(--text-muted)] block mb-1 ml-1">Author</label>
                   <input
                     type="text"
                     value={editAuthor}
                     onChange={(e) => setEditAuthor(e.target.value)}
                     placeholder="Self"
-                    className="w-full text-xs p-2 border border-slate-200 rounded-md focus:border-indigo-300"
+                    className="w-full text-xs p-2 bg-[var(--bg-input)] text-[var(--text-main)] border border-[var(--border-main)] rounded-md focus:border-indigo-300"
                   />
                 </div>
                 <div className="col-span-1">
-                  <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1 ml-1">Source</label>
+                  <label className="text-[10px] uppercase font-bold text-[var(--text-muted)] block mb-1 ml-1">Source</label>
                   <input
                     type="text"
                     value={editBook}
                     onChange={(e) => setEditBook(e.target.value)}
-                    className="w-full text-xs p-2 border border-slate-200 rounded-md focus:border-indigo-300"
+                    className="w-full text-xs p-2 bg-[var(--bg-input)] text-[var(--text-main)] border border-[var(--border-main)] rounded-md focus:border-indigo-300"
                   />
                 </div>
                 <div className="col-span-1">
-                  <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1 ml-1">Page</label>
+                  <label className="text-[10px] uppercase font-bold text-[var(--text-muted)] block mb-1 ml-1">Page</label>
                   <input
                     type="text"
                     value={editPage}
                     onChange={(e) => setEditPage(e.target.value)}
-                    className="w-full text-xs p-2 border border-slate-200 rounded-md focus:border-indigo-300"
+                    className="w-full text-xs p-2 bg-[var(--bg-input)] text-[var(--text-main)] border border-[var(--border-main)] rounded-md focus:border-indigo-300"
                   />
                 </div>
               </div>
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-50">
+              <div className="flex justify-end gap-2 pt-2 border-t border-[var(--border-main)]">
                 <button
                   onClick={handleCancel}
-                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 rounded-md transition-colors"
+                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-[var(--text-muted)] hover:bg-[var(--bg-sidebar)] rounded-md transition-colors"
                 >
                   <X size={14} /> 취소
                 </button>
@@ -375,7 +375,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
               <div className="flex flex-wrap items-center gap-2 text-xs font-sans mt-4">
                 {/* Author Tag */}
                 {isSelf ? (
-                  <span className="px-2 py-1 bg-emerald-50 text-emerald-700 rounded-md border border-emerald-100 font-medium flex items-center">
+                  <span className="px-2 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-md border border-emerald-100 dark:border-emerald-900/30 font-medium flex items-center">
                     <User size={10} className="mr-1" /> {username}
                   </span>
                 ) : (
@@ -392,7 +392,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                 )}
                 {citation.page && (
                   <span className="px-2 py-1 bg-[var(--bg-input)] text-[var(--text-muted)] rounded-md border border-[var(--border-main)] font-mono">
-                    p. {citation.page}
+                    p.{citation.page}
                   </span>
                 )}
 
@@ -428,13 +428,13 @@ export const CitationCard: React.FC<CitationCardProps> = ({
             <div className="border-t border-[var(--border-main)] bg-[var(--bg-sidebar)]/30 rounded-b-lg p-4">
 
               {/* List of Existing Notes */}
-              <div className="space-y-3 mb-4">
+              <div className={`${citation.notes.length > 0 ? 'space-y-3 mb-4' : ''}`}>
                 {citation.notes.map(note => (
                   <div
                     key={note.id}
                     className={`
-                  group/note relative text-sm text-slate-600 bg-white rounded border transition-all overflow-hidden
-                  ${editingNoteId === note.id ? 'border-indigo-500 shadow-md ring-1 ring-indigo-500/10' : 'p-2 border-slate-200 hover:border-indigo-300 cursor-pointer'}
+                  group/note relative text-sm text-[var(--text-main)] bg-[var(--bg-card)] rounded border transition-all overflow-hidden
+                  ${editingNoteId === note.id ? 'border-indigo-500 shadow-md ring-1 ring-indigo-500/10' : 'p-2 border-[var(--border-main)] hover:border-indigo-300 cursor-pointer'}
                 `}
                     onClick={() => {
                       if (editingNoteId !== note.id) {
@@ -449,12 +449,12 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                           autoFocus
                           value={editNoteContent}
                           onChange={(e) => setEditNoteContent(e.target.value)}
-                          className="w-full text-sm border-none p-3 focus:ring-0 focus:outline-none min-h-[80px] resize-none"
+                          className="w-full text-sm bg-transparent text-[var(--text-main)] border-none p-3 focus:ring-0 focus:outline-none min-h-[80px] resize-none"
                         />
-                        <div className="flex justify-end gap-3 p-2 bg-slate-50/50 border-t border-slate-100">
+                        <div className="flex justify-end gap-3 p-2 bg-[var(--bg-sidebar)]/50 border-t border-[var(--border-main)]">
                           <button
                             onClick={(e) => { e.stopPropagation(); setEditingNoteId(null); }}
-                            className="text-xs text-slate-400 hover:text-slate-600"
+                            className="text-xs text-[var(--text-muted)] hover:text-[var(--text-main)]"
                           >
                             취소
                           </button>
@@ -471,18 +471,15 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                     )}
                   </div>
                 ))}
-                {citation.notes.length === 0 && (
-                  <div className="text-xs text-slate-400 italic text-center py-2">No memos yet.</div>
-                )}
               </div>
 
               {/* Direct New Note Input */}
-              <div className="bg-white rounded-md border border-slate-200 shadow-sm focus-within:border-indigo-400 focus-within:ring-1 focus-within:ring-indigo-100 transition-all">
+              <div className="bg-[var(--bg-card)] rounded-md border border-[var(--border-main)] shadow-sm focus-within:border-indigo-400 focus-within:ring-1 focus-within:ring-indigo-100/20 transition-all">
                 <textarea
                   value={newNote}
                   onChange={(e) => setNewNote(e.target.value)}
                   placeholder="새로운 메모를 입력하세요..."
-                  className="w-full text-sm border-none p-3 focus:ring-0 focus:outline-none min-h-[60px] resize-none"
+                  className="w-full text-sm bg-transparent text-[var(--text-main)] border-none p-3 focus:ring-0 focus:outline-none min-h-[60px] resize-none"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
@@ -490,13 +487,13 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                     }
                   }}
                 />
-                <div className="flex justify-end p-2 bg-slate-50/50 border-t border-slate-50">
+                <div className="flex justify-end p-2 bg-[var(--bg-sidebar)]/50 border-t border-[var(--border-main)]">
                   <button
                     onClick={submitNote}
                     disabled={!newNote.trim()}
                     className={`
                   px-3 py-1 text-xs font-bold rounded transition-colors
-                  ${newNote.trim() ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-slate-100 text-slate-300 cursor-not-allowed'}
+                  ${newNote.trim() ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-[var(--bg-sidebar)] text-[var(--text-muted)] cursor-not-allowed'}
                 `}
                   >
                     메모 저장
