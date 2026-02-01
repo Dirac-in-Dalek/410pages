@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Send, User, Book as BookIcon, Hash, Type } from 'lucide-react';
 import { Citation } from '../types';
 
@@ -14,6 +14,17 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({ onAddCitation, p
   const [book, setBook] = useState('');
   const [page, setPage] = useState('');
   const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-expand textarea
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      const newHeight = Math.min(textarea.scrollHeight, 400); // Max height 400px
+      textarea.style.height = `${newHeight}px`;
+    }
+  }, [text]);
 
   // Update inputs when prefillData changes
   useEffect(() => {
@@ -99,6 +110,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({ onAddCitation, p
       {/* Main Text Input */}
       <div className="p-4">
         <textarea
+          ref={textareaRef}
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
@@ -109,7 +121,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({ onAddCitation, p
             }
           }}
           placeholder="Start typing a citation or quote..."
-          className="w-full text-lg font-serif placeholder:font-sans placeholder:text-[var(--text-muted)] text-[var(--text-main)] border-none resize-none focus:ring-0 bg-transparent p-0 min-h-[80px]"
+          className="w-full text-lg font-serif placeholder:font-sans placeholder:text-[var(--text-muted)] text-[var(--text-main)] border-none resize-none focus:ring-0 bg-transparent p-0 min-h-[80px] overflow-y-auto"
         />
       </div>
 

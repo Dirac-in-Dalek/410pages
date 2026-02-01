@@ -51,6 +51,30 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   // Highlight state
   const [localHighlights, setLocalHighlights] = useState<Highlight[]>(citation.highlights || []);
   const cardRef = useRef<HTMLDivElement>(null);
+  const editTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const editNoteTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const newNoteTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-expand helper
+  const adjustHeight = (ref: React.RefObject<HTMLTextAreaElement>) => {
+    if (ref.current) {
+      ref.current.style.height = 'auto';
+      const newHeight = Math.min(ref.current.scrollHeight, 400); // Max height 400px
+      ref.current.style.height = `${newHeight}px`;
+    }
+  };
+
+  useEffect(() => {
+    if (isEditing) adjustHeight(editTextareaRef);
+  }, [isEditing, editText]);
+
+  useEffect(() => {
+    if (editingNoteId) adjustHeight(editNoteTextareaRef);
+  }, [editingNoteId, editNoteContent]);
+
+  useEffect(() => {
+    if (isNotesExpanded) adjustHeight(newNoteTextareaRef);
+  }, [isNotesExpanded, newNote]);
 
   // Close popover when clicking outside
   useEffect(() => {
@@ -310,10 +334,11 @@ export const CitationCard: React.FC<CitationCardProps> = ({
           {isEditing ? (
             <div className="space-y-4">
               <textarea
+                ref={editTextareaRef}
                 autoFocus
                 value={editText}
                 onChange={(e) => setEditText(e.target.value)}
-                className="w-full text-lg font-serif p-2 bg-[var(--bg-input)] text-[var(--text-main)] border border-[var(--border-main)] rounded-md focus:ring-2 focus:ring-indigo-100/20 focus:border-indigo-400 min-h-[100px] resize-none overflow-hidden"
+                className="w-full text-lg font-serif p-2 bg-[var(--bg-input)] text-[var(--text-main)] border border-[var(--border-main)] rounded-md focus:ring-2 focus:ring-indigo-100/20 focus:border-indigo-400 min-h-[100px] resize-none overflow-y-auto"
                 style={{ height: 'auto' }}
               />
               <div className="grid grid-cols-3 gap-2">
@@ -446,10 +471,11 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                     {editingNoteId === note.id ? (
                       <div className="flex flex-col">
                         <textarea
+                          ref={editNoteTextareaRef}
                           autoFocus
                           value={editNoteContent}
                           onChange={(e) => setEditNoteContent(e.target.value)}
-                          className="w-full text-sm bg-transparent text-[var(--text-main)] border-none p-3 focus:ring-0 focus:outline-none min-h-[80px] resize-none"
+                          className="w-full text-sm bg-transparent text-[var(--text-main)] border-none p-3 focus:ring-0 focus:outline-none min-h-[80px] resize-none overflow-y-auto"
                         />
                         <div className="flex justify-end gap-3 p-2 bg-[var(--bg-sidebar)]/50 border-t border-[var(--border-main)]">
                           <button
@@ -476,10 +502,11 @@ export const CitationCard: React.FC<CitationCardProps> = ({
               {/* Direct New Note Input */}
               <div className="bg-[var(--bg-card)] rounded-md border border-[var(--border-main)] shadow-sm focus-within:border-indigo-400 focus-within:ring-1 focus-within:ring-indigo-100/20 transition-all">
                 <textarea
+                  ref={newNoteTextareaRef}
                   value={newNote}
                   onChange={(e) => setNewNote(e.target.value)}
                   placeholder="새로운 메모를 입력하세요..."
-                  className="w-full text-sm bg-transparent text-[var(--text-main)] border-none p-3 focus:ring-0 focus:outline-none min-h-[60px] resize-none"
+                  className="w-full text-sm bg-transparent text-[var(--text-main)] border-none p-3 focus:ring-0 focus:outline-none min-h-[60px] resize-none overflow-y-auto"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();

@@ -94,8 +94,8 @@ const App: React.FC = () => {
           onAddCitation={handleAddCitation}
         />
 
-        <div className="px-8 pb-20">
-          <div className="max-w-3xl mx-auto">
+        <div className="pb-20 mt-4">
+          <div className="max-w-5xl mx-auto px-8">
             <BulkActionToolbar
               selectedCount={selectedIds.size}
               totalCount={filteredCitations.length}

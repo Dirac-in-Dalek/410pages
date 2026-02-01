@@ -51,7 +51,7 @@ export const CitationList: React.FC<CitationListProps> = ({
     }
 
     return (
-        <div className="max-w-3xl mx-auto">
+        <div className="w-full">
             {citations.map((citation, index) => {
                 const citationProjects = projects
                     .filter(p => p.citationIds.includes(citation.id))

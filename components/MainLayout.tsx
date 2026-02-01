@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Folder, FolderOpen, Plus, Search, User, Book, ChevronRight, ChevronDown, Layers, Edit2, Trash2, Check, X, Settings, GripVertical, LogOut, Sun, Moon } from 'lucide-react';
 import { Project, SidebarItem } from '../types';
 
@@ -57,6 +57,18 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [newUsername, setNewUsername] = useState(username);
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+  const [leftWidth, setLeftWidth] = useState(() => {
+    const saved = localStorage.getItem('leftSidebarWidth');
+    const width = saved ? parseInt(saved, 10) : 264;
+    return Math.min(Math.max(width, 160), 264);
+  });
+  const [rightWidth, setRightWidth] = useState(() => {
+    const saved = localStorage.getItem('rightSidebarWidth');
+    const width = saved ? parseInt(saved, 10) : 320;
+    return Math.min(Math.max(width, 180), 320);
+  });
+  const [isResizingLeft, setIsResizingLeft] = useState(false);
+  const [isResizingRight, setIsResizingRight] = useState(false);
 
   const contextMenuRef = useRef<HTMLDivElement>(null);
 
@@ -184,6 +196,52 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     setIsEditingUsername(false);
   };
 
+  // --- Resize Logic ---
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (isResizingLeft) {
+      const newWidth = e.clientX;
+      if (newWidth >= 160 && newWidth <= 264) {
+        setLeftWidth(newWidth);
+      }
+    } else if (isResizingRight) {
+      const newWidth = window.innerWidth - e.clientX;
+      if (newWidth >= 200 && newWidth <= 320) {
+        setRightWidth(newWidth);
+      }
+    }
+  }, [isResizingLeft, isResizingRight]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsResizingLeft(false);
+    setIsResizingRight(false);
+  }, []);
+
+  // Save widths when resizing stops
+  useEffect(() => {
+    if (!isResizingLeft && !isResizingRight) {
+      localStorage.setItem('leftSidebarWidth', leftWidth.toString());
+      localStorage.setItem('rightSidebarWidth', rightWidth.toString());
+    }
+  }, [isResizingLeft, isResizingRight, leftWidth, rightWidth]);
+
+  useEffect(() => {
+    if (isResizingLeft || isResizingRight) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    } else {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'default';
+      document.body.style.userSelect = 'auto';
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizingLeft, isResizingRight, handleMouseMove, handleMouseUp]);
+
   const renderTree = (items: SidebarItem[], depth = 0) => {
     return items.map(item => {
       const isExpanded = expandedNodes.has(item.id);
@@ -262,7 +320,17 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       )}
 
       {/* Left Sidebar: Projects */}
-      <aside className="w-64 flex-shrink-0 border-r border-[var(--border-main)] bg-[var(--bg-sidebar)] flex flex-col z-20 shadow-sm transition-colors duration-200">
+      <aside
+        style={{ width: `${leftWidth}px` }}
+        className="flex-shrink-0 border-r border-[var(--border-main)] bg-[var(--bg-sidebar)] flex flex-col z-20 shadow-sm transition-colors duration-200 relative"
+      >
+        {/* Resize Handle Left */}
+        <div
+          onMouseDown={() => setIsResizingLeft(true)}
+          className={`absolute top-0 -right-1 w-2 h-full cursor-col-resize z-30 group`}
+        >
+          <div className={`w-[2px] h-full mx-auto transition-colors ${isResizingLeft ? 'bg-indigo-500' : 'group-hover:bg-indigo-400/50'}`} />
+        </div>
         <div className="h-16 flex items-center px-4 border-b border-[var(--border-main)] bg-[var(--bg-card)] gap-3">
           <div className="text-[var(--text-main)]">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -471,7 +539,17 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       </main>
 
       {/* Right Sidebar: Library */}
-      <aside className="w-80 border-l border-[var(--border-main)] bg-[var(--bg-card)] flex flex-col h-full sticky top-0 overflow-hidden transition-colors duration-200">
+      <aside
+        style={{ width: `${rightWidth}px` }}
+        className="border-l border-[var(--border-main)] bg-[var(--bg-card)] flex flex-col h-full sticky top-0 overflow-hidden transition-colors duration-200 relative"
+      >
+        {/* Resize Handle Right */}
+        <div
+          onMouseDown={() => setIsResizingRight(true)}
+          className={`absolute top-0 -left-1 w-2 h-full cursor-col-resize z-30 group`}
+        >
+          <div className={`w-[2px] h-full mx-auto transition-colors ${isResizingRight ? 'bg-indigo-500' : 'group-hover:bg-indigo-400/50'}`} />
+        </div>
         <div className="p-4 border-b border-[var(--border-main)] flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-[var(--text-main)]">Library</span>
