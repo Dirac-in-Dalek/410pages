@@ -91,7 +91,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({ onAddCitation, p
     <div
       className={`
         relative rounded-xl border-2 transition-all duration-300 p-1
-        ${isDraggingOver ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 ring-4 ring-indigo-100 dark:ring-indigo-900/30' : 'border-[var(--border-main)] bg-[var(--bg-card)] shadow-sm'}
+        ${isDraggingOver ? 'border-[var(--accent-border)] bg-[var(--accent-soft)] ring-4 ring-[var(--accent-ring)]' : 'border-[var(--border-main)] bg-[var(--bg-card)] shadow-sm'}
       `}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -100,7 +100,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({ onAddCitation, p
       {/* Visual Cue for Drop */}
       {isDraggingOver && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-[var(--bg-card)]/80 rounded-lg backdrop-blur-sm pointer-events-none">
-          <div className="text-indigo-600 font-medium flex items-center animate-bounce">
+          <div className="text-[var(--accent)] font-medium flex items-center animate-bounce">
             <BookIcon className="mr-2" />
             Drop to auto-fill metadata
           </div>
@@ -120,7 +120,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({ onAddCitation, p
               handleSubmit();
             }
           }}
-          placeholder="Start typing a citation or quote..."
+          placeholder="Write a quote, sentence, or field note..."
           className="w-full text-base md:text-lg font-serif placeholder:font-sans placeholder:text-[var(--text-muted)] text-[var(--text-main)] border-none resize-none focus:ring-0 bg-transparent p-0 min-h-[80px] overflow-y-auto"
         />
       </div>
@@ -129,8 +129,8 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({ onAddCitation, p
       <div className="bg-[var(--bg-sidebar)] rounded-b-lg border-t border-[var(--border-main)] p-2 flex flex-wrap gap-2 items-center">
 
         {/* Author Input */}
-        <div className="flex items-center bg-[var(--bg-card)] border border-[var(--border-main)] rounded-md px-2 py-1 flex-1 min-w-[140px] focus-within:border-indigo-400 focus-within:ring-1 focus-within:ring-indigo-100 transition-all">
-          <User size={12} className={`mr-2 ${isSelf ? 'text-[var(--text-muted)]' : 'text-indigo-500'}`} />
+        <div className="flex items-center bg-[var(--bg-card)] border border-[var(--border-main)] rounded-md px-2 py-1 flex-1 min-w-[140px] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] transition-all">
+          <User size={12} className={`mr-2 ${isSelf ? 'text-[var(--text-muted)]' : 'text-[var(--accent)]'}`} />
           <input
             type="text"
             value={author}
@@ -139,13 +139,13 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({ onAddCitation, p
               if (e.nativeEvent.isComposing) return;
               if (e.key === 'Enter') handleSubmit();
             }}
-            placeholder="Author (Empty = Self)"
+            placeholder="Author (Leave blank for Self)"
             className="w-full text-xs border-none p-0 focus:ring-0 text-[var(--text-main)] placeholder:text-[var(--text-muted)] bg-transparent"
           />
         </div>
 
         {/* Book Input */}
-        <div className="flex items-center bg-[var(--bg-input)] border border-[var(--border-main)] rounded-md px-2 py-1 flex-1 min-w-[140px] focus-within:border-indigo-400 focus-within:ring-1 focus-within:ring-indigo-100 transition-all">
+        <div className="flex items-center bg-[var(--bg-input)] border border-[var(--border-main)] rounded-md px-2 py-1 flex-1 min-w-[140px] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] transition-all">
           <BookIcon size={12} className="mr-2 text-[var(--text-muted)]" />
           <input
             type="text"
@@ -155,13 +155,13 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({ onAddCitation, p
               if (e.nativeEvent.isComposing) return;
               if (e.key === 'Enter') handleSubmit();
             }}
-            placeholder="Book / Source"
+            placeholder="Book or Source"
             className="w-full text-xs border-none p-0 focus:ring-0 text-[var(--text-main)] placeholder:text-[var(--text-muted)] bg-transparent"
           />
         </div>
 
         {/* Page Input */}
-        <div className="flex items-center bg-[var(--bg-input)] border border-[var(--border-main)] rounded-md px-2 py-1 w-24 focus-within:border-indigo-400 focus-within:ring-1 focus-within:ring-indigo-100 transition-all">
+        <div className="flex items-center bg-[var(--bg-input)] border border-[var(--border-main)] rounded-md px-2 py-1 w-24 focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] transition-all">
           <Hash size={12} className="mr-2 text-[var(--text-muted)]" />
           <input
             type="text"
@@ -182,7 +182,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({ onAddCitation, p
           disabled={!text.trim()}
           className={`
             ml-auto p-2 rounded-md transition-all
-            ${text.trim() ? 'bg-indigo-600 text-white shadow-md hover:bg-indigo-700 hover:scale-105 active:scale-95' : 'bg-[var(--bg-sidebar)] text-[var(--text-muted)] cursor-not-allowed'}
+            ${text.trim() ? 'bg-[var(--accent)] text-white shadow-md hover:bg-[var(--accent-strong)] hover:scale-105 active:scale-95' : 'bg-[var(--bg-sidebar)] text-[var(--text-muted)] cursor-not-allowed'}
           `}
         >
           <Send size={16} />

@@ -177,7 +177,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
       {(isProjectsOpen || isLibraryOpen) && (
         <button
           type="button"
-          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm"
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
           onClick={closeSheets}
           aria-label="Close panels"
         />
@@ -260,7 +260,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
               />
               <button
                 onClick={submitCreateProject}
-                className="p-2 rounded-md bg-indigo-600 text-white"
+                className="p-2 rounded-md bg-[var(--accent)] hover:bg-[var(--accent-strong)] text-white transition-colors"
                 title="Create"
               >
                 <Plus size={14} />

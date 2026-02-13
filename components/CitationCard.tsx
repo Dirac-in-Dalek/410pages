@@ -259,9 +259,9 @@ export const CitationCard: React.FC<CitationCardProps> = ({
       ref={cardRef}
       className={`
         group relative rounded-lg border mb-4 transition-all duration-200 flex items-start gap-2
-        ${isSelected ? 'bg-indigo-50/50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800' : 'bg-[var(--bg-card)] border-[var(--border-main)] hover:shadow-md'}
-        ${isEditing ? 'cursor-default ring-2 ring-indigo-400 border-transparent shadow-lg bg-[var(--bg-card)]' : ''}
-        ${isSelf && !isSelected ? 'border-emerald-100 dark:border-emerald-900/30' : ''}
+        ${isSelected ? 'bg-[var(--accent-soft)] border-[var(--accent-border)]' : 'bg-[var(--bg-card)] border-[var(--border-main)] hover:shadow-md'}
+        ${isEditing ? 'cursor-default ring-2 ring-[var(--accent-ring)] border-transparent shadow-lg bg-[var(--bg-card)]' : ''}
+        ${isSelf && !isSelected ? 'border-[var(--accent-border)]/60' : ''}
       `}
     >
       {/* Checkbox */}
@@ -271,7 +271,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
             type="checkbox"
             checked={isSelected}
             onChange={(e) => onToggleSelect(citation.id, e.target.checked)}
-            className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+            className="w-4 h-4 rounded border-[var(--border-main)] text-[var(--accent)] focus:ring-[var(--accent-ring)] cursor-pointer"
           />
         </div>
       )}
@@ -284,7 +284,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
               onClick={handleCopy}
               className={`p-1.5 rounded-md transition-colors ${copied
                 ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20'
-                : 'text-[var(--text-muted)] hover:text-indigo-600 hover:bg-[var(--bg-sidebar)]'
+                : 'text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--bg-sidebar)]'
                 }`}
               title={copied ? '복사됨!' : '복사하기'}
             >
@@ -292,7 +292,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
             </button>
             <button
               onClick={() => setIsEditing(true)}
-              className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
+              className="p-1.5 text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] rounded-md transition-colors"
               title="Edit"
             >
               <Edit2 size={14} />
@@ -338,7 +338,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                 autoFocus
                 value={editText}
                 onChange={(e) => setEditText(e.target.value)}
-                className="w-full text-base md:text-lg font-serif p-2 bg-[var(--bg-input)] text-[var(--text-main)] border border-[var(--border-main)] rounded-md focus:ring-2 focus:ring-indigo-100/20 focus:border-indigo-400 min-h-[100px] resize-none overflow-y-auto"
+                className="w-full text-base md:text-lg font-serif p-2 bg-[var(--bg-input)] text-[var(--text-main)] border border-[var(--border-main)] rounded-md focus:ring-2 focus:ring-[var(--accent-ring)] focus:border-[var(--accent-border)] min-h-[100px] resize-none overflow-y-auto"
                 style={{ height: 'auto' }}
               />
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -349,7 +349,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                     value={editAuthor}
                     onChange={(e) => setEditAuthor(e.target.value)}
                     placeholder="Self"
-                    className="w-full text-xs p-2 bg-[var(--bg-input)] text-[var(--text-main)] border border-[var(--border-main)] rounded-md focus:border-indigo-300"
+                    className="w-full text-xs p-2 bg-[var(--bg-input)] text-[var(--text-main)] border border-[var(--border-main)] rounded-md focus:border-[var(--accent-border)]"
                   />
                 </div>
                 <div className="col-span-1">
@@ -358,7 +358,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                     type="text"
                     value={editBook}
                     onChange={(e) => setEditBook(e.target.value)}
-                    className="w-full text-xs p-2 bg-[var(--bg-input)] text-[var(--text-main)] border border-[var(--border-main)] rounded-md focus:border-indigo-300"
+                    className="w-full text-xs p-2 bg-[var(--bg-input)] text-[var(--text-main)] border border-[var(--border-main)] rounded-md focus:border-[var(--accent-border)]"
                   />
                 </div>
                 <div className="col-span-1">
@@ -367,7 +367,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                     type="text"
                     value={editPage}
                     onChange={(e) => setEditPage(e.target.value)}
-                    className="w-full text-xs p-2 bg-[var(--bg-input)] text-[var(--text-main)] border border-[var(--border-main)] rounded-md focus:border-indigo-300"
+                    className="w-full text-xs p-2 bg-[var(--bg-input)] text-[var(--text-main)] border border-[var(--border-main)] rounded-md focus:border-[var(--accent-border)]"
                   />
                 </div>
               </div>
@@ -380,7 +380,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                 </button>
                 <button
                   onClick={handleSave}
-                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md shadow-sm transition-colors"
+                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-[var(--accent)] hover:bg-[var(--accent-strong)] rounded-md shadow-sm transition-colors"
                 >
                   <Check size={14} /> 저장하기
                 </button>
@@ -400,11 +400,11 @@ export const CitationCard: React.FC<CitationCardProps> = ({
               <div className="flex flex-wrap items-center gap-2 text-xs font-sans mt-4">
                 {/* Author Tag */}
                 {isSelf ? (
-                  <span className="px-2 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-md border border-emerald-100 dark:border-emerald-900/30 font-medium flex items-center">
+                  <span className="px-2 py-1 bg-[var(--accent-soft)] text-[var(--accent-strong)] rounded-md border border-[var(--accent-border)] font-medium flex items-center">
                     <User size={10} className="mr-1" /> {username}
                   </span>
                 ) : (
-                  <span className="px-2 py-1 bg-[var(--sidebar-active)] text-indigo-700 dark:text-indigo-400 rounded-md border border-[var(--border-main)] font-medium">
+                  <span className="px-2 py-1 bg-[var(--sidebar-active)] text-[var(--accent-strong)] dark:text-[var(--accent)] rounded-md border border-[var(--border-main)] font-medium">
                     {citation.author}
                   </span>
                 )}
@@ -423,7 +423,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
 
                 {/* Project Tags */}
                 {projectNames.map(name => (
-                  <span key={name} className="px-2 py-1 bg-[var(--sidebar-active)] text-indigo-600 dark:text-indigo-400 rounded-md border border-[var(--border-main)] flex items-center gap-1 font-medium italic">
+                  <span key={name} className="px-2 py-1 bg-[var(--sidebar-active)] text-[var(--accent)] dark:text-[var(--accent)] rounded-md border border-[var(--border-main)] flex items-center gap-1 font-medium italic">
                     <Folder size={10} /> {name}
                   </span>
                 ))}
@@ -433,7 +433,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                   onClick={() => setIsNotesExpanded(!isNotesExpanded)}
                   className={`
                   ml-auto flex items-center gap-1 px-2 py-1 rounded-full transition-colors
-                  ${citation.notes.length > 0 ? 'text-indigo-600 dark:text-indigo-400 bg-[var(--sidebar-active)] border border-[var(--border-main)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}
+                  ${citation.notes.length > 0 ? 'text-[var(--accent)] dark:text-[var(--accent)] bg-[var(--sidebar-active)] border border-[var(--border-main)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}
                 `}
                 >
                   <MessageSquare size={12} />
@@ -459,7 +459,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                     key={note.id}
                     className={`
                   group/note relative text-sm text-[var(--text-main)] bg-[var(--bg-card)] rounded border transition-all overflow-hidden
-                  ${editingNoteId === note.id ? 'border-indigo-500 shadow-md ring-1 ring-indigo-500/10' : 'p-2 border-[var(--border-main)] hover:border-indigo-300 cursor-pointer'}
+                  ${editingNoteId === note.id ? 'border-[var(--accent-border)] shadow-md ring-1 ring-[var(--accent-ring)]' : 'p-2 border-[var(--border-main)] hover:border-[var(--accent-border)] cursor-pointer'}
                 `}
                     onClick={() => {
                       if (editingNoteId !== note.id) {
@@ -486,7 +486,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); handleSaveNoteEdit(note.id); }}
-                            className="text-xs text-indigo-600 font-bold hover:text-indigo-800"
+                            className="text-xs text-[var(--accent)] font-bold hover:text-[var(--accent-strong)]"
                           >
                             저장
                           </button>
@@ -500,7 +500,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
               </div>
 
               {/* Direct New Note Input */}
-              <div className="bg-[var(--bg-card)] rounded-md border border-[var(--border-main)] shadow-sm focus-within:border-indigo-400 focus-within:ring-1 focus-within:ring-indigo-100/20 transition-all">
+              <div className="bg-[var(--bg-card)] rounded-md border border-[var(--border-main)] shadow-sm focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] transition-all">
                 <textarea
                   ref={newNoteTextareaRef}
                   value={newNote}
@@ -520,7 +520,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                     disabled={!newNote.trim()}
                     className={`
                   px-3 py-1 text-xs font-bold rounded transition-colors
-                  ${newNote.trim() ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-[var(--bg-sidebar)] text-[var(--text-muted)] cursor-not-allowed'}
+                  ${newNote.trim() ? 'bg-[var(--accent)] text-white hover:bg-[var(--accent-strong)]' : 'bg-[var(--bg-sidebar)] text-[var(--text-muted)] cursor-not-allowed'}
                 `}
                   >
                     메모 저장

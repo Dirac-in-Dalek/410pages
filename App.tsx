@@ -35,13 +35,15 @@ const App: React.FC = () => {
     fetchData, handleAddCitation, handleAddNote, handleUpdateNote,
     handleDeleteNote, handleDeleteCitation, handleUpdateCitation,
     handleCreateProject, handleRenameProject, handleDeleteProject,
-    handleDropCitationToProject
+    handleDropCitationToProject, handleReorderProjects
   } = useArchiveData(session);
 
   const {
     searchTerm, setSearchTerm, selectedProjectId, handleProjectSelect,
     handleTreeItemClick, treeData, filteredCitations, viewTitle,
-    editorPrefill, filter
+    editorPrefill, filter, sortField, dateDirection, pageDirection,
+    handleDateSortClick, handlePageSortClick,
+    handleReorderAuthorAt, handleReorderBookAt
   } = useArchiveFilter(citations, projects, username);
 
   const {
@@ -71,6 +73,11 @@ const App: React.FC = () => {
         username={username}
         editorPrefill={editorPrefill}
         onAddCitation={handleAddCitation}
+        sortField={sortField}
+        dateDirection={dateDirection}
+        pageDirection={pageDirection}
+        onDateSortClick={handleDateSortClick}
+        onPageSortClick={handlePageSortClick}
       />
 
       <div className="pb-20 mt-4">
@@ -93,7 +100,7 @@ const App: React.FC = () => {
             title="삭제하시겠습니까?"
             message={
               <>
-                선택한 <span className="font-bold text-slate-700">{selectedIds.size}</span>개의 인용구가 영구히 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
+                선택한 <span className="font-bold text-[var(--text-main)]">{selectedIds.size}</span>개의 인용구가 영구히 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
               </>
             }
             onConfirm={() => {
@@ -154,7 +161,7 @@ const App: React.FC = () => {
       onCreateProject={handleCreateProject}
       onRenameProject={handleRenameProject}
       onDeleteProject={handleDeleteProject}
-      onReorderProjects={() => { }}
+      onReorderProjects={handleReorderProjects}
       treeData={treeData}
       onTreeItemClick={handleTreeItemClick}
       username={username}
@@ -163,6 +170,8 @@ const App: React.FC = () => {
       onSearch={setSearchTerm}
       searchTerm={searchTerm}
       selectedFilter={filter}
+      onReorderAuthorAt={handleReorderAuthorAt}
+      onReorderBookAt={handleReorderBookAt}
       isDarkMode={isDarkMode}
       toggleDarkMode={toggleDarkMode}
     >

@@ -27,12 +27,12 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
     return (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
             <div
-                className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300"
+                className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300"
                 onClick={onCancel}
             ></div>
             <div className="relative bg-[var(--bg-card)] rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 fade-in duration-200">
                 <div className="p-6 pt-8 text-center">
-                    <div className={`mx-auto w-12 h-12 ${type === 'danger' ? 'bg-red-50 dark:bg-red-900/20 text-red-500' : 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-500'} rounded-full flex items-center justify-center mb-4`}>
+                    <div className={`mx-auto w-12 h-12 ${type === 'danger' ? 'bg-red-50 dark:bg-red-900/20 text-red-500' : 'bg-[var(--accent-soft)] text-[var(--accent)]'} rounded-full flex items-center justify-center mb-4`}>
                         {type === 'danger' ? <Trash2 size={24} /> : null}
                     </div>
                     <h3 className="text-lg font-bold text-[var(--text-main)] mb-2">{title}</h3>
@@ -49,7 +49,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
                     </button>
                     <button
                         onClick={onConfirm}
-                        className={`flex-1 px-4 py-4 text-sm font-semibold text-white ${type === 'danger' ? 'bg-red-500 hover:bg-red-600' : 'bg-indigo-500 hover:bg-indigo-600'} transition-colors`}
+                        className={`flex-1 px-4 py-4 text-sm font-semibold text-white ${type === 'danger' ? 'bg-red-500 hover:bg-red-600' : 'bg-[var(--accent)] hover:bg-[var(--accent-strong)]'} transition-colors`}
                     >
                         {confirmText}
                     </button>

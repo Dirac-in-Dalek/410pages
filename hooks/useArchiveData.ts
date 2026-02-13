@@ -6,6 +6,33 @@ export const useArchiveData = (session: any) => {
     const [projects, setProjects] = useState<Project[]>([]);
     const [citations, setCitations] = useState<Citation[]>([]);
     const [loading, setLoading] = useState(false);
+    const projectOrderKey = session?.user?.id ? `citationGraph.projectOrder.${session.user.id}` : null;
+
+    const applyStoredProjectOrder = useCallback((incoming: Project[]) => {
+        if (typeof window === 'undefined' || !projectOrderKey) return incoming;
+        try {
+            const raw = localStorage.getItem(projectOrderKey);
+            const ids: string[] = raw ? JSON.parse(raw) : [];
+            if (!Array.isArray(ids) || ids.length === 0) return incoming;
+
+            const rank = new Map(ids.map((id, idx) => [id, idx]));
+            return [...incoming].sort((a, b) => {
+                const aRank = rank.get(a.id);
+                const bRank = rank.get(b.id);
+                if (aRank !== undefined && bRank !== undefined) return aRank - bRank;
+                if (aRank !== undefined) return -1;
+                if (bRank !== undefined) return 1;
+                return 0;
+            });
+        } catch {
+            return incoming;
+        }
+    }, [projectOrderKey]);
+
+    const persistProjectOrder = useCallback((nextProjects: Project[]) => {
+        if (typeof window === 'undefined' || !projectOrderKey) return;
+        localStorage.setItem(projectOrderKey, JSON.stringify(nextProjects.map(p => p.id)));
+    }, [projectOrderKey]);
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -15,13 +42,15 @@ export const useArchiveData = (session: any) => {
                 api.fetchProjects()
             ]);
             setCitations(citationsData);
-            setProjects(projectsData);
+            const orderedProjects = applyStoredProjectOrder(projectsData);
+            setProjects(orderedProjects);
+            persistProjectOrder(orderedProjects);
         } catch (error) {
             console.error('Error fetching data:', error);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [applyStoredProjectOrder, persistProjectOrder]);
 
     const handleAddCitation = async (data: Omit<Citation, 'id' | 'createdAt' | 'notes'>) => {
         if (!session) return;
@@ -112,7 +141,11 @@ export const useArchiveData = (session: any) => {
         if (!session) return;
         try {
             const newProject = await api.createProject(session.user.id, name);
-            setProjects(prev => [...prev, newProject]);
+            setProjects(prev => {
+                const next = [...prev, newProject];
+                persistProjectOrder(next);
+                return next;
+            });
         } catch (error) {
             console.error('Error creating project:', error);
         }
@@ -132,10 +165,31 @@ export const useArchiveData = (session: any) => {
         if (!session) return;
         try {
             await api.deleteProject(session.user.id, id);
-            setProjects(prev => prev.filter(p => p.id !== id));
+            setProjects(prev => {
+                const next = prev.filter(p => p.id !== id);
+                persistProjectOrder(next);
+                return next;
+            });
         } catch (error) {
             console.error('Error deleting project:', error);
         }
+    };
+
+    const handleReorderProjects = (dragIndex: number, dropIndex: number) => {
+        setProjects(prev => {
+            if (dragIndex < 0 || dragIndex >= prev.length) return prev;
+
+            const next = [...prev];
+            const [moved] = next.splice(dragIndex, 1);
+            if (!moved) return prev;
+
+            const adjustedIndex = dragIndex < dropIndex ? dropIndex - 1 : dropIndex;
+            const safeIndex = Math.max(0, Math.min(adjustedIndex, next.length));
+            next.splice(safeIndex, 0, moved);
+
+            persistProjectOrder(next);
+            return next;
+        });
     };
 
     const handleDropCitationToProject = async (projectId: string, citationId: string) => {
@@ -169,6 +223,7 @@ export const useArchiveData = (session: any) => {
         handleCreateProject,
         handleRenameProject,
         handleDeleteProject,
+        handleReorderProjects,
         handleDropCitationToProject
     };
 };

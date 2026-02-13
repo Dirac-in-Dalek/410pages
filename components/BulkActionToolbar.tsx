@@ -40,17 +40,17 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
                     <div className="flex items-center gap-2 sm:gap-3 pl-1">
                         <button
                             onClick={() => onSelectAll(selectedCount < totalCount)}
-                            className="flex items-center text-slate-400 hover:text-indigo-600 transition-colors"
+                            className="flex items-center text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors"
                             title="Select All"
                         >
                             {selectedCount > 0 && selectedCount === totalCount ? (
-                                <CheckSquare size={18} className="text-indigo-600" />
+                                <CheckSquare size={18} className="text-[var(--accent)]" />
                             ) : (
                                 <Square size={18} />
                             )}
                         </button>
-                        <div className="h-4 w-[1px] bg-slate-300 mx-1"></div>
-                        <span className="text-xs sm:text-sm font-bold text-indigo-600">
+                        <div className="h-4 w-[1px] bg-[var(--border-main)] mx-1"></div>
+                        <span className="text-xs sm:text-sm font-bold text-[var(--accent)]">
                             {selectedCount} Selected
                         </span>
                     </div>
@@ -60,7 +60,7 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
                         <div className="relative">
                             <button
                                 onClick={() => setShowFolderMenu(!showFolderMenu)}
-                                className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-slate-50 rounded-full transition-all"
+                                className="p-2 text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--sidebar-hover)] rounded-full transition-all"
                                 title="Move to Folder"
                             >
                                 <Folder size={18} />
@@ -86,20 +86,20 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
                                                         }
                                                         if (e.key === 'Escape') setIsCreatingFolder(false);
                                                     }}
-                                                    className="flex-1 text-xs px-2 py-1.5 border border-indigo-200 rounded-md focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 outline-none"
+                                                    className="flex-1 text-xs px-2 py-1.5 border border-[var(--accent-border)] rounded-md focus:ring-2 focus:ring-[var(--accent-ring)] focus:border-[var(--accent-border)] outline-none"
                                                 />
                                             </div>
                                         ) : (
                                             <button
                                                 onClick={() => setIsCreatingFolder(true)}
-                                                className="w-full flex items-center gap-2 px-2 py-1.5 text-xs text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors font-bold"
+                                                className="w-full flex items-center gap-2 px-2 py-1.5 text-xs text-[var(--accent)] hover:bg-[var(--accent-soft)] rounded-md transition-colors font-bold"
                                             >
                                                 <Plus size={14} /> New Folder
                                             </button>
                                         )}
                                     </div>
                                     <div className="max-h-56 overflow-y-auto py-1">
-                                        {projects.length === 0 && <div className="px-4 py-3 text-xs text-slate-400 text-center">No existing folders</div>}
+                                        {projects.length === 0 && <div className="px-4 py-3 text-xs text-[var(--text-muted)] text-center">No existing folders</div>}
                                         {projects.map(p => (
                                             <button
                                                 key={p.id}
@@ -109,7 +109,7 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
                                                 }}
                                                 className="w-full text-left px-4 py-2.5 text-xs text-[var(--text-main)] hover:bg-[var(--sidebar-hover)] flex items-center gap-2 transition-colors"
                                             >
-                                                <Folder size={14} className="text-slate-400" />
+                                                <Folder size={14} className="text-[var(--text-muted)]" />
                                                 <span className="truncate">{p.name}</span>
                                             </button>
                                         ))}
@@ -120,7 +120,7 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
 
                         <button
                             onClick={onCopy}
-                            className={`p-2 rounded-full transition-all ${isCopying ? 'text-emerald-600 bg-emerald-50' : 'text-slate-500 hover:text-indigo-600 hover:bg-slate-50'}`}
+                            className={`p-2 rounded-full transition-all ${isCopying ? 'text-emerald-600 bg-emerald-50' : 'text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--sidebar-hover)]'}`}
                             title="Copy to Clipboard"
                         >
                             {isCopying ? <Check size={18} /> : <Copy size={18} />}
@@ -128,17 +128,17 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
 
                         <button
                             onClick={onDeleteRequest}
-                            className="p-2 text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
+                            className="p-2 text-[var(--text-muted)] hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
                             title="Delete Selected"
                         >
                             <Trash2 size={18} />
                         </button>
 
-                        <div className="h-4 w-[1px] bg-slate-200 mx-0.5 sm:mx-1"></div>
+                        <div className="h-4 w-[1px] bg-[var(--sidebar-hover)] mx-0.5 sm:mx-1"></div>
 
                         <button
                             onClick={onCancel}
-                            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-colors"
+                            className="p-2 text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--sidebar-hover)] rounded-full transition-colors"
                             title="Cancel Selection"
                         >
                             <X size={18} />

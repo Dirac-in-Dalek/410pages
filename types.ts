@@ -31,17 +31,6 @@ export interface Project {
   citationIds: string[]; // References to citations
 }
 
-export interface DragSourceRef {
-  type: 'reference';
-  author: string;
-  book?: string;
-}
-
-export interface DragSourceCitation {
-  type: 'citation';
-  id: string;
-}
-
 export type SidebarItem = {
   id: string;
   label: string;

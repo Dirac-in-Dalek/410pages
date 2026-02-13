@@ -33,7 +33,7 @@ export const CitationList: React.FC<CitationListProps> = ({
 }) => {
     if (loading) {
         return (
-            <div className="text-center py-20 text-slate-400">
+            <div className="text-center py-20 text-[var(--text-muted)]">
                 Loading your citations...
             </div>
         );
@@ -41,7 +41,7 @@ export const CitationList: React.FC<CitationListProps> = ({
 
     if (citations.length === 0) {
         return (
-            <div className="text-center py-20 text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">
+            <div className="text-center py-20 text-[var(--text-muted)] border-2 border-dashed border-[var(--border-main)] rounded-xl">
                 <p>{searchTerm ? 'No matches found.' : 'No citations found in this view.'}</p>
                 <p className="text-xs mt-2">
                     {searchTerm ? 'Try another keyword.' : 'Drag items from the right or type above.'}

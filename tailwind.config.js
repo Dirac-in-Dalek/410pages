@@ -1,18 +1,23 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
-    "./index.html",
-    "./**/*.{js,ts,jsx,tsx}",
+    './index.html',
+    './App.tsx',
+    './Auth.tsx',
+    './index.tsx',
+    './components/**/*.{js,ts,jsx,tsx}',
+    './hooks/**/*.{js,ts,jsx,tsx}',
+    './lib/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        serif: ['Merriweather', 'serif'],
+        sans: ['IBM Plex Sans', 'Noto Sans KR', 'Avenir Next', 'Segoe UI', 'sans-serif'],
+        serif: ['Newsreader', 'Noto Serif KR', 'Iowan Old Style', 'Times New Roman', 'serif'],
       },
       colors: {
-        primary: '#4F46E5',
-        secondary: '#64748B',
+        primary: '#1D5A72',
+        secondary: '#6F675C',
       }
     },
   },
