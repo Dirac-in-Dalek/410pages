@@ -453,7 +453,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
                     `}
                     onClick={() => !isManageMode && onProjectSelect(project.id)}
                     onContextMenu={(e) => handleContextMenu(e, project.id)}
-                    draggable={isManageMode && editingProjectId !== project.id}
+                    draggable={editingProjectId !== project.id}
                     onDragStart={(e) => handleProjectDragStart(e, index)}
                     onDragOver={(e) => {
                       if (hasProjectSortType(e) || activeProjectDragIndex !== null) {

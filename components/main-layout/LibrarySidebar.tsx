@@ -15,8 +15,8 @@ type SelectedFilter = { type: 'author' | 'book'; value: string; author?: string 
 type TreeDragMeta = {
   type: 'library-tree';
   itemType: 'author' | 'book';
-  label: string;
-  author?: string;
+  id: string;
+  authorId?: string;
 };
 
 type TreeDropIndicator = {
@@ -113,7 +113,7 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
       const parsed = JSON.parse(raw);
       if (parsed?.type !== 'library-tree') return null;
       if (parsed?.itemType !== 'author' && parsed?.itemType !== 'book') return null;
-      if (!parsed?.label) return null;
+      if (!parsed?.id) return null;
       return parsed as TreeDragMeta;
     } catch {
       return null;
@@ -129,10 +129,10 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
   const canDropInTreeList = (
     dragMeta: TreeDragMeta,
     listType: 'author' | 'book',
-    parentAuthor?: string
+    parentAuthorId?: string
   ) => {
     if (listType === 'author') return dragMeta.itemType === 'author';
-    if (listType === 'book') return dragMeta.itemType === 'book' && dragMeta.author === parentAuthor;
+    if (listType === 'book') return dragMeta.itemType === 'book' && dragMeta.authorId === parentAuthorId;
     return false;
   };
 
@@ -218,9 +218,9 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
     const dropIndex = position === 'before' ? row.index : row.index + 1;
 
     if (row.listType === 'author') {
-      onReorderAuthorAt?.(dragMeta.label, dropIndex);
+      onReorderAuthorAt?.(dragMeta.id, dropIndex);
     } else if (row.listType === 'book' && row.parentAuthor) {
-      onReorderBookAt?.(row.parentAuthor, dragMeta.label, dropIndex);
+      onReorderBookAt?.(row.parentAuthor, dragMeta.id, dropIndex);
     }
 
     setTreeDropIndicator(null);
@@ -255,20 +255,20 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
 
   const applyTreeReorder = (dragMeta: TreeDragMeta, indicator: TreeDropIndicator) => {
     if (indicator.listType === 'author') {
-      onReorderAuthorAt?.(dragMeta.label, indicator.dropIndex);
+      onReorderAuthorAt?.(dragMeta.id, indicator.dropIndex);
       return;
     }
 
     if (indicator.listType === 'book' && indicator.parentAuthor) {
-      onReorderBookAt?.(indicator.parentAuthor, dragMeta.label, indicator.dropIndex);
+      onReorderBookAt?.(indicator.parentAuthor, dragMeta.id, indicator.dropIndex);
     }
   };
 
-  const getBookItemsForAuthor = (author: string): SidebarItem[] => {
+  const getBookItemsForAuthor = (authorId: string): SidebarItem[] => {
     const ownerNode = treeData.find(
       item =>
         (item.type === 'author' || item.type === 'root') &&
-        item.label === author
+        item.data?.authorId === authorId
     );
     return (ownerNode?.children || []).filter(child => child.type === 'book');
   };
@@ -282,10 +282,10 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
       return getBoundaryIndicator(authorItems, 'author', boundary);
     }
 
-    if (dragMeta.itemType === 'book' && dragMeta.author) {
-      const books = getBookItemsForAuthor(dragMeta.author);
+    if (dragMeta.itemType === 'book' && dragMeta.authorId) {
+      const books = getBookItemsForAuthor(dragMeta.authorId);
       if (books.length === 0) return null;
-      return getBoundaryIndicator(books, 'book', boundary, dragMeta.author);
+      return getBoundaryIndicator(books, 'book', boundary, dragMeta.authorId);
     }
 
     return null;
@@ -364,9 +364,9 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
     }
 
     if (indicator.listType === 'author') {
-      onReorderAuthorAt?.(dragMeta.label, indicator.dropIndex);
+      onReorderAuthorAt?.(dragMeta.id, indicator.dropIndex);
     } else if (indicator.listType === 'book' && indicator.parentAuthor) {
-      onReorderBookAt?.(indicator.parentAuthor, dragMeta.label, indicator.dropIndex);
+      onReorderBookAt?.(indicator.parentAuthor, dragMeta.id, indicator.dropIndex);
     }
 
     setTreeDropIndicator(null);
@@ -380,9 +380,11 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
     const isExpanded = expandedNodes.has(item.id);
     const paddingLeft = depth * 12 + 12;
     const treeMeta: TreeDragMeta | undefined = item.type === 'author'
-      ? { type: 'library-tree', itemType: 'author', label: item.label }
+      ? (item.data?.authorId ? { type: 'library-tree', itemType: 'author', id: item.data.authorId } : undefined)
       : item.type === 'book'
-        ? { type: 'library-tree', itemType: 'book', label: item.label, author: item.data?.author }
+        ? (item.data?.bookId && item.data?.authorId
+          ? { type: 'library-tree', itemType: 'book', id: item.data.bookId, authorId: item.data.authorId }
+          : undefined)
         : undefined;
 
     const showBefore =
@@ -464,7 +466,7 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
 
         {item.children && isExpanded && (
           <div>
-            {renderTree(item.children, depth + 1, item.data?.author || item.label)}
+            {renderTree(item.children, depth + 1, item.data?.authorId)}
           </div>
         )}
 

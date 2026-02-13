@@ -44,7 +44,7 @@ const App: React.FC = () => {
     editorPrefill, filter, sortField, dateDirection, pageDirection,
     handleDateSortClick, handlePageSortClick,
     handleReorderAuthorAt, handleReorderBookAt
-  } = useArchiveFilter(citations, projects, username);
+  } = useArchiveFilter(citations, projects, username, session?.user?.id);
 
   const {
     selectedIds, isCopying, handleToggleSelect, handleSelectAll,

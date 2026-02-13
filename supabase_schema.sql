@@ -43,6 +43,8 @@ create trigger on_auth_user_created
 create table if not exists authors (
   id uuid default uuid_generate_v4() primary key,
   name text not null,
+  is_self boolean default false not null,
+  sort_index integer default 0 not null,
   user_id uuid references auth.users not null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
@@ -60,6 +62,7 @@ create table if not exists books (
   id uuid default uuid_generate_v4() primary key,
   title text not null,
   author_id uuid references authors(id) on delete cascade not null,
+  sort_index integer default 0 not null,
   user_id uuid references auth.users not null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
@@ -98,9 +101,16 @@ ALTER TABLE citations ADD COLUMN IF NOT EXISTS highlights JSONB DEFAULT '[]';
 create table if not exists projects (
   id uuid default uuid_generate_v4() primary key,
   name text not null,
+  sort_index integer default 0 not null,
   user_id uuid references auth.users not null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
+
+-- 기존 스키마 호환용 컬럼 보정
+alter table authors add column if not exists is_self boolean default false not null;
+alter table authors add column if not exists sort_index integer default 0 not null;
+alter table books add column if not exists sort_index integer default 0 not null;
+alter table projects add column if not exists sort_index integer default 0 not null;
 
 alter table projects enable row level security;
 

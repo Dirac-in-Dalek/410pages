@@ -6,34 +6,6 @@ export const useArchiveData = (session: any) => {
     const [projects, setProjects] = useState<Project[]>([]);
     const [citations, setCitations] = useState<Citation[]>([]);
     const [loading, setLoading] = useState(false);
-    const projectOrderKey = session?.user?.id ? `citationGraph.projectOrder.${session.user.id}` : null;
-
-    const applyStoredProjectOrder = useCallback((incoming: Project[]) => {
-        if (typeof window === 'undefined' || !projectOrderKey) return incoming;
-        try {
-            const raw = localStorage.getItem(projectOrderKey);
-            const ids: string[] = raw ? JSON.parse(raw) : [];
-            if (!Array.isArray(ids) || ids.length === 0) return incoming;
-
-            const rank = new Map(ids.map((id, idx) => [id, idx]));
-            return [...incoming].sort((a, b) => {
-                const aRank = rank.get(a.id);
-                const bRank = rank.get(b.id);
-                if (aRank !== undefined && bRank !== undefined) return aRank - bRank;
-                if (aRank !== undefined) return -1;
-                if (bRank !== undefined) return 1;
-                return 0;
-            });
-        } catch {
-            return incoming;
-        }
-    }, [projectOrderKey]);
-
-    const persistProjectOrder = useCallback((nextProjects: Project[]) => {
-        if (typeof window === 'undefined' || !projectOrderKey) return;
-        localStorage.setItem(projectOrderKey, JSON.stringify(nextProjects.map(p => p.id)));
-    }, [projectOrderKey]);
-
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
@@ -42,15 +14,13 @@ export const useArchiveData = (session: any) => {
                 api.fetchProjects()
             ]);
             setCitations(citationsData);
-            const orderedProjects = applyStoredProjectOrder(projectsData);
-            setProjects(orderedProjects);
-            persistProjectOrder(orderedProjects);
+            setProjects(projectsData);
         } catch (error) {
             console.error('Error fetching data:', error);
         } finally {
             setLoading(false);
         }
-    }, [applyStoredProjectOrder, persistProjectOrder]);
+    }, []);
 
     const handleAddCitation = async (data: Omit<Citation, 'id' | 'createdAt' | 'notes'>) => {
         if (!session) return;
@@ -141,11 +111,7 @@ export const useArchiveData = (session: any) => {
         if (!session) return;
         try {
             const newProject = await api.createProject(session.user.id, name);
-            setProjects(prev => {
-                const next = [...prev, newProject];
-                persistProjectOrder(next);
-                return next;
-            });
+            setProjects(prev => [...prev, newProject]);
         } catch (error) {
             console.error('Error creating project:', error);
         }
@@ -165,31 +131,35 @@ export const useArchiveData = (session: any) => {
         if (!session) return;
         try {
             await api.deleteProject(session.user.id, id);
-            setProjects(prev => {
-                const next = prev.filter(p => p.id !== id);
-                persistProjectOrder(next);
-                return next;
-            });
+            setProjects(prev => prev.filter(p => p.id !== id));
         } catch (error) {
             console.error('Error deleting project:', error);
         }
     };
 
-    const handleReorderProjects = (dragIndex: number, dropIndex: number) => {
-        setProjects(prev => {
-            if (dragIndex < 0 || dragIndex >= prev.length) return prev;
+    const handleReorderProjects = async (dragIndex: number, dropIndex: number) => {
+        if (!session) return;
+        const userId = session.user.id;
+        if (dragIndex < 0 || dragIndex >= projects.length) return;
 
-            const next = [...prev];
-            const [moved] = next.splice(dragIndex, 1);
-            if (!moved) return prev;
+        const next = [...projects];
+        const [moved] = next.splice(dragIndex, 1);
+        if (!moved) return;
 
-            const adjustedIndex = dragIndex < dropIndex ? dropIndex - 1 : dropIndex;
-            const safeIndex = Math.max(0, Math.min(adjustedIndex, next.length));
-            next.splice(safeIndex, 0, moved);
+        const adjustedIndex = dragIndex < dropIndex ? dropIndex - 1 : dropIndex;
+        const safeIndex = Math.max(0, Math.min(adjustedIndex, next.length));
+        next.splice(safeIndex, 0, moved);
+        setProjects(next);
 
-            persistProjectOrder(next);
-            return next;
-        });
+        try {
+            const orderedIds = next.map(p => p.id);
+            if (orderedIds.length > 0) {
+                await api.reorderProjects(userId, orderedIds);
+            }
+        } catch (error) {
+            console.error('Error reordering projects:', error);
+            await fetchData();
+        }
     };
 
     const handleDropCitationToProject = async (projectId: string, citationId: string) => {

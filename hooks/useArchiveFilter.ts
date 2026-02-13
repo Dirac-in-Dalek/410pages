@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Citation, Project, SidebarItem } from '../types';
+import { api } from '../lib/api';
 
 interface FilterState {
     type: 'author' | 'book';
@@ -18,49 +19,32 @@ const getPageNumber = (citation: Citation): number | undefined => {
     return Number(match[0]);
 };
 
-const reorderByTarget = (source: string[], dragLabel: string, dropLabel: string): string[] => {
+const reorderByIndex = (source: string[], dragId: string, dropIndex: number): string[] => {
     const unique = Array.from(new Set(source));
-    if (!unique.includes(dragLabel)) unique.push(dragLabel);
-    if (!unique.includes(dropLabel)) unique.push(dropLabel);
+    if (!unique.includes(dragId)) unique.push(dragId);
 
-    const fromIndex = unique.indexOf(dragLabel);
-    const targetIndex = unique.indexOf(dropLabel);
-    if (fromIndex < 0 || targetIndex < 0 || fromIndex === targetIndex) return unique;
-
-    unique.splice(fromIndex, 1);
-    const insertIndex = unique.indexOf(dropLabel);
-    unique.splice(insertIndex, 0, dragLabel);
-    return unique;
-};
-
-const reorderByIndex = (source: string[], dragLabel: string, dropIndex: number): string[] => {
-    const unique = Array.from(new Set(source));
-    if (!unique.includes(dragLabel)) unique.push(dragLabel);
-
-    const fromIndex = unique.indexOf(dragLabel);
+    const fromIndex = unique.indexOf(dragId);
     if (fromIndex < 0) return unique;
 
     unique.splice(fromIndex, 1);
     const adjustedIndex = fromIndex < dropIndex ? dropIndex - 1 : dropIndex;
     const safeIndex = Math.max(0, Math.min(adjustedIndex, unique.length));
-    unique.splice(safeIndex, 0, dragLabel);
+    unique.splice(safeIndex, 0, dragId);
     return unique;
 };
 
-const applyCustomOrder = (labels: string[], order: string[]): string[] => {
-    const rank = new Map(order.map((label, index) => [label, index]));
-    return [...labels].sort((a, b) => {
-        const aRank = rank.get(a);
-        const bRank = rank.get(b);
-
-        if (aRank !== undefined && bRank !== undefined) return aRank - bRank;
-        if (aRank !== undefined) return -1;
-        if (bRank !== undefined) return 1;
-        return a.localeCompare(b, 'ko');
+const sortByIndexThenLabel = <T extends { sortIndex?: number | null; label: string }>(items: T[]) => {
+    return [...items].sort((a, b) => {
+        const aSort = a.sortIndex;
+        const bSort = b.sortIndex;
+        if (typeof aSort === 'number' && typeof bSort === 'number' && aSort !== bSort) return aSort - bSort;
+        if (typeof aSort === 'number') return -1;
+        if (typeof bSort === 'number') return 1;
+        return a.label.localeCompare(b.label, 'ko');
     });
 };
 
-export const useArchiveFilter = (citations: Citation[], projects: Project[], username: string) => {
+export const useArchiveFilter = (citations: Citation[], projects: Project[], username: string, userId?: string) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState<FilterState | null>(null);
     const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
@@ -71,38 +55,44 @@ export const useArchiveFilter = (citations: Citation[], projects: Project[], use
     const [authorOrder, setAuthorOrder] = useState<string[]>([]);
     const [bookOrderByAuthor, setBookOrderByAuthor] = useState<Record<string, string[]>>({});
 
-    const authorOrderKey = `citationGraph.authorOrder.${username}`;
-    const bookOrderKey = `citationGraph.bookOrderByAuthor.${username}`;
+    useEffect(() => {
+        const authorRows = sortByIndexThenLabel(
+            Array.from(
+                new Map(
+                    citations
+                        .filter(c => c.authorId && (c.isSelf ? username : c.author) !== username)
+                        .map(c => [c.authorId!, {
+                            id: c.authorId!,
+                            label: c.isSelf ? username : c.author,
+                            sortIndex: c.authorSortIndex
+                        }])
+                ).values()
+            )
+        );
+        setAuthorOrder(authorRows.map(row => row.id));
+    }, [citations, username]);
 
     useEffect(() => {
-        if (typeof window === 'undefined') return;
-        try {
-            const rawAuthorOrder = localStorage.getItem(authorOrderKey);
-            const parsedAuthorOrder = rawAuthorOrder ? JSON.parse(rawAuthorOrder) : [];
-            setAuthorOrder(Array.isArray(parsedAuthorOrder) ? parsedAuthorOrder : []);
-        } catch {
-            setAuthorOrder([]);
-        }
+        const grouped: Record<string, string[]> = {};
+        const byAuthor = new Map<string, Map<string, { id: string; label: string; sortIndex?: number | null }>>();
 
-        try {
-            const rawBookOrder = localStorage.getItem(bookOrderKey);
-            const parsedBookOrder = rawBookOrder ? JSON.parse(rawBookOrder) : {};
-            const normalized = parsedBookOrder && typeof parsedBookOrder === 'object' ? parsedBookOrder : {};
-            setBookOrderByAuthor(normalized);
-        } catch {
-            setBookOrderByAuthor({});
-        }
-    }, [authorOrderKey, bookOrderKey]);
+        citations.forEach(c => {
+            if (!c.authorId || !c.bookId || !c.book) return;
+            const existing = byAuthor.get(c.authorId) || new Map<string, { id: string; label: string; sortIndex?: number | null }>();
+            existing.set(c.bookId, {
+                id: c.bookId,
+                label: c.book,
+                sortIndex: c.bookSortIndex
+            });
+            byAuthor.set(c.authorId, existing);
+        });
 
-    useEffect(() => {
-        if (typeof window === 'undefined') return;
-        localStorage.setItem(authorOrderKey, JSON.stringify(authorOrder));
-    }, [authorOrderKey, authorOrder]);
+        byAuthor.forEach((books, authorId) => {
+            grouped[authorId] = sortByIndexThenLabel(Array.from(books.values())).map(book => book.id);
+        });
 
-    useEffect(() => {
-        if (typeof window === 'undefined') return;
-        localStorage.setItem(bookOrderKey, JSON.stringify(bookOrderByAuthor));
-    }, [bookOrderKey, bookOrderByAuthor]);
+        setBookOrderByAuthor(grouped);
+    }, [citations]);
 
     const handleDateSortClick = () => {
         if (sortField === 'date') {
@@ -146,59 +136,86 @@ export const useArchiveFilter = (citations: Citation[], projects: Project[], use
     };
 
     const getCurrentOrderedAuthors = useCallback(() => {
-        const labels = Array.from(new Set(
-            citations
-                .map(c => (c.isSelf ? username : c.author))
-                .filter(author => author && author !== username)
-        ));
-        return applyCustomOrder(labels, authorOrder);
+        const map = new Map<string, { id: string; label: string; sortIndex?: number | null }>();
+        citations.forEach(c => {
+            if (!c.authorId) return;
+            const label = c.isSelf ? username : c.author;
+            if (!label || label === username) return;
+            if (!map.has(c.authorId)) {
+                map.set(c.authorId, { id: c.authorId, label, sortIndex: c.authorSortIndex });
+            }
+        });
+
+        const sorted = sortByIndexThenLabel(Array.from(map.values()));
+        if (authorOrder.length === 0) return sorted.map(row => row.id);
+        const rank = new Map(authorOrder.map((id, index) => [id, index]));
+        return [...sorted]
+            .sort((a, b) => {
+                const aRank = rank.get(a.id);
+                const bRank = rank.get(b.id);
+                if (aRank !== undefined && bRank !== undefined) return aRank - bRank;
+                if (aRank !== undefined) return -1;
+                if (bRank !== undefined) return 1;
+                return 0;
+            })
+            .map(row => row.id);
     }, [citations, username, authorOrder]);
 
-    const getCurrentOrderedBooks = useCallback((author: string) => {
-        const labels = Array.from(new Set(
-            citations
-                .map(c => ({
-                    author: c.isSelf ? username : c.author,
-                    book: c.book
-                }))
-                .filter(row => row.author === author && row.book)
-                .map(row => row.book)
-        ));
-        return applyCustomOrder(labels, bookOrderByAuthor[author] || []);
-    }, [citations, username, bookOrderByAuthor]);
+    const getCurrentOrderedBooks = useCallback((authorId: string) => {
+        const map = new Map<string, { id: string; label: string; sortIndex?: number | null }>();
+        citations.forEach(c => {
+            if (!c.authorId || c.authorId !== authorId || !c.bookId || !c.book) return;
+            if (!map.has(c.bookId)) {
+                map.set(c.bookId, { id: c.bookId, label: c.book, sortIndex: c.bookSortIndex });
+            }
+        });
 
-    const handleReorderAuthor = useCallback((dragAuthor: string, dropAuthor: string) => {
-        if (!dragAuthor || !dropAuthor || dragAuthor === dropAuthor) return;
-        setAuthorOrder(prev => reorderByTarget(prev, dragAuthor, dropAuthor));
-    }, []);
+        const sorted = sortByIndexThenLabel(Array.from(map.values()));
+        const order = bookOrderByAuthor[authorId] || [];
+        if (order.length === 0) return sorted.map(row => row.id);
+        const rank = new Map(order.map((id, index) => [id, index]));
+        return [...sorted]
+            .sort((a, b) => {
+                const aRank = rank.get(a.id);
+                const bRank = rank.get(b.id);
+                if (aRank !== undefined && bRank !== undefined) return aRank - bRank;
+                if (aRank !== undefined) return -1;
+                if (bRank !== undefined) return 1;
+                return 0;
+            })
+            .map(row => row.id);
+    }, [citations, bookOrderByAuthor]);
 
-    const handleReorderAuthorAt = useCallback((dragAuthor: string, dropIndex: number) => {
-        if (!dragAuthor) return;
+    const handleReorderAuthorAt = useCallback(async (dragAuthorId: string, dropIndex: number) => {
+        if (!dragAuthorId || !userId) return;
         const orderedAuthors = getCurrentOrderedAuthors();
-        setAuthorOrder(reorderByIndex(orderedAuthors, dragAuthor, dropIndex));
-    }, [getCurrentOrderedAuthors]);
+        const next = reorderByIndex(orderedAuthors, dragAuthorId, dropIndex);
+        setAuthorOrder(next);
+        try {
+            await api.reorderAuthors(userId, next);
+        } catch (error) {
+            console.error('Error reordering authors:', error);
+        }
+    }, [getCurrentOrderedAuthors, userId]);
 
-    const handleReorderBook = useCallback((author: string, dragBook: string, dropBook: string) => {
-        if (!author || !dragBook || !dropBook || dragBook === dropBook) return;
-        setBookOrderByAuthor(prev => {
-            const existing = prev[author] ?? [];
-            return {
+    const handleReorderBookAt = useCallback(async (authorId: string, dragBookId: string, dropIndex: number) => {
+        if (!authorId || !dragBookId || !userId) return;
+        const orderedBooks = getCurrentOrderedBooks(authorId);
+        const next = reorderByIndex(orderedBooks, dragBookId, dropIndex);
+        setBookOrderByAuthor(prev => ({
+            ...prev,
+            [authorId]: next
+        }));
+        try {
+            await api.reorderBooks(userId, authorId, next);
+        } catch (error) {
+            console.error('Error reordering books:', error);
+            setBookOrderByAuthor(prev => ({
                 ...prev,
-                [author]: reorderByTarget(existing, dragBook, dropBook)
-            };
-        });
-    }, []);
-
-    const handleReorderBookAt = useCallback((author: string, dragBook: string, dropIndex: number) => {
-        if (!author || !dragBook) return;
-        const orderedBooks = getCurrentOrderedBooks(author);
-        setBookOrderByAuthor(prev => {
-            return {
-                ...prev,
-                [author]: reorderByIndex(orderedBooks, dragBook, dropIndex)
-            };
-        });
-    }, [getCurrentOrderedBooks]);
+                [authorId]: orderedBooks
+            }));
+        }
+    }, [getCurrentOrderedBooks, userId]);
 
     const treeData = useMemo(() => {
         const rootID = 'root-user';
@@ -211,52 +228,81 @@ export const useArchiveFilter = (citations: Citation[], projects: Project[], use
             }
         ];
 
-        const authorsMap = new Map<string, Set<string>>();
+        const authorsMap = new Map<string, {
+            id: string;
+            label: string;
+            sortIndex?: number | null;
+            books: Map<string, { id: string; label: string; sortIndex?: number | null }>;
+        }>();
+
         citations.forEach(c => {
+            if (!c.authorId) return;
             const effectiveAuthor = c.isSelf ? username : c.author;
-            if (effectiveAuthor) {
-                if (!authorsMap.has(effectiveAuthor)) authorsMap.set(effectiveAuthor, new Set());
-                if (c.book) authorsMap.get(effectiveAuthor)?.add(c.book);
+            if (!effectiveAuthor) return;
+
+            if (!authorsMap.has(c.authorId)) {
+                authorsMap.set(c.authorId, {
+                    id: c.authorId,
+                    label: effectiveAuthor,
+                    sortIndex: c.authorSortIndex,
+                    books: new Map()
+                });
+            }
+
+            if (c.bookId && c.book) {
+                authorsMap.get(c.authorId)?.books.set(c.bookId, {
+                    id: c.bookId,
+                    label: c.book,
+                    sortIndex: c.bookSortIndex
+                });
             }
         });
 
-        const userBooks = authorsMap.get(username);
-        if (userBooks) {
-            const userBookLabels = applyCustomOrder(Array.from(userBooks), bookOrderByAuthor[username] || []);
-            rootItems[0].children = userBookLabels.map(book => ({
-                id: `book-${username}-${book}`,
-                label: book,
-                type: 'book',
-                data: { author: username, book }
-            }));
+        const userAuthor = Array.from(authorsMap.values()).find(author => author.label === username);
+        if (userAuthor) {
+            rootItems[0].data = { authorId: userAuthor.id, author: username, book: '' };
+            const orderedUserBookIds = getCurrentOrderedBooks(userAuthor.id);
+            const userBookById = userAuthor.books;
+            rootItems[0].children = orderedUserBookIds
+                .map(bookId => userBookById.get(bookId))
+                .filter(Boolean)
+                .map(book => ({
+                    id: `book-${userAuthor.id}-${book!.id}`,
+                    label: book!.label,
+                    type: 'book' as const,
+                    data: { authorId: userAuthor.id, author: username, bookId: book!.id, book: book!.label }
+                }));
         }
 
-        const orderedAuthors = applyCustomOrder(
-            Array.from(authorsMap.keys()).filter(author => author !== username),
-            authorOrder
-        );
+        const nonUserAuthors = Array.from(authorsMap.values()).filter(author => author.label !== username);
+        const authorById = new Map(nonUserAuthors.map(author => [author.id, author]));
+        const orderedAuthorIds = getCurrentOrderedAuthors();
 
-        const authorItems: SidebarItem[] = orderedAuthors
+        const authorItems: SidebarItem[] = orderedAuthorIds
+            .map(authorId => authorById.get(authorId))
+            .filter(Boolean)
             .map(author => {
-                const books = authorsMap.get(author) || new Set<string>();
-                const orderedBooks = applyCustomOrder(Array.from(books), bookOrderByAuthor[author] || []);
-                const bookItems: SidebarItem[] = orderedBooks.map(book => ({
-                    id: `book-${author}-${book}`,
-                    label: book,
-                    type: 'book',
-                    data: { author, book }
-                }));
+                const orderedBookIds = getCurrentOrderedBooks(author!.id);
+                const bookItems: SidebarItem[] = orderedBookIds
+                    .map(bookId => author!.books.get(bookId))
+                    .filter(Boolean)
+                    .map(book => ({
+                        id: `book-${author!.id}-${book!.id}`,
+                        label: book!.label,
+                        type: 'book' as const,
+                        data: { authorId: author!.id, author: author!.label, bookId: book!.id, book: book!.label }
+                    }));
                 return {
-                    id: `author-${author}`,
-                    label: author,
+                    id: `author-${author!.id}`,
+                    label: author!.label,
                     type: 'author',
-                    data: { author },
+                    data: { authorId: author!.id, author: author!.label },
                     children: bookItems.length > 0 ? bookItems : undefined
                 };
             });
 
         return [...rootItems, ...authorItems];
-    }, [citations, username, authorOrder, bookOrderByAuthor]);
+    }, [citations, username, getCurrentOrderedAuthors, getCurrentOrderedBooks]);
 
     const filteredCitations = useMemo(() => {
         let result = citations;
@@ -337,9 +383,7 @@ export const useArchiveFilter = (citations: Citation[], projects: Project[], use
         pageDirection,
         handleDateSortClick,
         handlePageSortClick,
-        handleReorderAuthor,
         handleReorderAuthorAt,
-        handleReorderBook,
         handleReorderBookAt,
         handleProjectSelect,
         handleTreeItemClick,

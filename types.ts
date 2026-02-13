@@ -14,9 +14,13 @@ export interface Highlight {
 export interface Citation {
   id: string;
   text: string;
+  authorId?: string;
   author: string; // If empty, treated as "Self"
+  authorSortIndex?: number | null;
   isSelf?: boolean;
+  bookId?: string;
   book: string;
+  bookSortIndex?: number | null;
   page?: string;      // Changed from number to string to support "30-31"
   pageSort?: number;  // Added for numeric sorting (e.g., 30)
   notes: Note[];
@@ -28,6 +32,7 @@ export interface Citation {
 export interface Project {
   id: string;
   name: string;
+  sortIndex?: number | null;
   citationIds: string[]; // References to citations
 }
 
@@ -37,7 +42,9 @@ export type SidebarItem = {
   type: 'author' | 'book' | 'root';
   children?: SidebarItem[];
   data?: {
+    authorId?: string;
     author: string;
+    bookId?: string;
     book?: string;
   };
 };
