@@ -279,7 +279,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
       <div className="flex-1 min-w-0">
         {/* Action Buttons (Hover) */}
         {!isEditing && !showDeleteConfirm && (
-          <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 z-20">
+          <div className="absolute top-3 right-3 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex gap-1 z-20">
             <button
               onClick={handleCopy}
               className={`p-1.5 rounded-md transition-colors ${copied
@@ -338,10 +338,10 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                 autoFocus
                 value={editText}
                 onChange={(e) => setEditText(e.target.value)}
-                className="w-full text-lg font-serif p-2 bg-[var(--bg-input)] text-[var(--text-main)] border border-[var(--border-main)] rounded-md focus:ring-2 focus:ring-indigo-100/20 focus:border-indigo-400 min-h-[100px] resize-none overflow-y-auto"
+                className="w-full text-base md:text-lg font-serif p-2 bg-[var(--bg-input)] text-[var(--text-main)] border border-[var(--border-main)] rounded-md focus:ring-2 focus:ring-indigo-100/20 focus:border-indigo-400 min-h-[100px] resize-none overflow-y-auto"
                 style={{ height: 'auto' }}
               />
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <div className="col-span-1">
                   <label className="text-[10px] uppercase font-bold text-[var(--text-muted)] block mb-1 ml-1">Author</label>
                   <input
@@ -390,7 +390,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
             <>
               {/* Quote Content */}
               <blockquote
-                className="font-serif text-lg leading-relaxed text-[var(--text-main)] mb-4 relative z-10 select-text whitespace-pre-wrap"
+                className="font-serif text-base md:text-lg leading-relaxed text-[var(--text-main)] mb-4 relative z-10 select-text whitespace-pre-wrap"
                 onMouseUp={handleTextSelection}
               >
                 {renderHighlightedText()}

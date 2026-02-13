@@ -121,7 +121,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({ onAddCitation, p
             }
           }}
           placeholder="Start typing a citation or quote..."
-          className="w-full text-lg font-serif placeholder:font-sans placeholder:text-[var(--text-muted)] text-[var(--text-main)] border-none resize-none focus:ring-0 bg-transparent p-0 min-h-[80px] overflow-y-auto"
+          className="w-full text-base md:text-lg font-serif placeholder:font-sans placeholder:text-[var(--text-muted)] text-[var(--text-main)] border-none resize-none focus:ring-0 bg-transparent p-0 min-h-[80px] overflow-y-auto"
         />
       </div>
 
@@ -129,7 +129,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({ onAddCitation, p
       <div className="bg-[var(--bg-sidebar)] rounded-b-lg border-t border-[var(--border-main)] p-2 flex flex-wrap gap-2 items-center">
 
         {/* Author Input */}
-        <div className="flex items-center bg-[var(--bg-card)] border border-[var(--border-main)] rounded-md px-2 py-1 flex-1 min-w-[120px] focus-within:border-indigo-400 focus-within:ring-1 focus-within:ring-indigo-100 transition-all">
+        <div className="flex items-center bg-[var(--bg-card)] border border-[var(--border-main)] rounded-md px-2 py-1 flex-1 min-w-[140px] focus-within:border-indigo-400 focus-within:ring-1 focus-within:ring-indigo-100 transition-all">
           <User size={12} className={`mr-2 ${isSelf ? 'text-[var(--text-muted)]' : 'text-indigo-500'}`} />
           <input
             type="text"
@@ -145,7 +145,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({ onAddCitation, p
         </div>
 
         {/* Book Input */}
-        <div className="flex items-center bg-[var(--bg-input)] border border-[var(--border-main)] rounded-md px-2 py-1 flex-1 min-w-[120px] focus-within:border-indigo-400 focus-within:ring-1 focus-within:ring-indigo-100 transition-all">
+        <div className="flex items-center bg-[var(--bg-input)] border border-[var(--border-main)] rounded-md px-2 py-1 flex-1 min-w-[140px] focus-within:border-indigo-400 focus-within:ring-1 focus-within:ring-indigo-100 transition-all">
           <BookIcon size={12} className="mr-2 text-[var(--text-muted)]" />
           <input
             type="text"

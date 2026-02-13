@@ -18,9 +18,9 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
     onAddCitation
 }) => {
     return (
-        <div className="pt-10 pb-0">
-            <div className="max-w-5xl mx-auto px-8">
-                <h2 className="font-serif text-3xl text-[var(--text-main)] mb-6 truncate">
+        <div className="pt-6 md:pt-10 pb-0">
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 className="font-serif text-2xl md:text-3xl text-[var(--text-main)] mb-4 md:mb-6 truncate">
                     {title}
                 </h2>
                 {showEditor && (

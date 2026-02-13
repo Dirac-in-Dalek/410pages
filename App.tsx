@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MainLayout } from './components/MainLayout';
 import { Auth } from './Auth';
-import { MobileLanding } from './components/MobileLanding';
+import { MobileLayout } from './components/MobileLayout';
 import { useAuthStatus } from './hooks/useAuthStatus';
 import { useArchiveData } from './hooks/useArchiveData';
 import { useArchiveFilter } from './hooks/useArchiveFilter';
@@ -61,8 +61,89 @@ const App: React.FC = () => {
   }, [session?.user.id, fetchData]);
 
   // --- RENDER ---
-  if (isMobile) return <MobileLanding />;
   if (!session) return <Auth />;
+
+  const archiveContent = (
+    <div className="h-full overflow-y-auto">
+      <ArchiveHeader
+        title={viewTitle}
+        showEditor={!searchTerm && !selectedProjectId}
+        username={username}
+        editorPrefill={editorPrefill}
+        onAddCitation={handleAddCitation}
+      />
+
+      <div className="pb-20 mt-4">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <BulkActionToolbar
+            selectedCount={selectedIds.size}
+            totalCount={filteredCitations.length}
+            projects={projects}
+            isCopying={isCopying}
+            onSelectAll={handleSelectAll}
+            onCopy={handleBatchCopy}
+            onDeleteRequest={() => setShowBatchDeleteModal(true)}
+            onCancel={() => setSelectedIds(new Set())}
+            onAddToProject={handleBatchAddToProject}
+            onCreateAndAddToProject={handleBatchCreateAndAddToProject}
+          />
+
+          <ConfirmModal
+            isOpen={showBatchDeleteModal}
+            title="삭제하시겠습니까?"
+            message={
+              <>
+                선택한 <span className="font-bold text-slate-700">{selectedIds.size}</span>개의 인용구가 영구히 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
+              </>
+            }
+            onConfirm={() => {
+              handleBatchDelete();
+              setShowBatchDeleteModal(false);
+            }}
+            onCancel={() => setShowBatchDeleteModal(false)}
+          />
+
+          <CitationList
+            citations={filteredCitations}
+            projects={projects}
+            username={username}
+            loading={dataLoading || authLoading}
+            searchTerm={searchTerm}
+            selectedIds={selectedIds}
+            onToggleSelect={handleToggleSelect}
+            onAddNote={handleAddNote}
+            onUpdateNote={handleUpdateNote}
+            onDeleteNote={handleDeleteNote}
+            onDeleteCitation={handleDeleteCitation}
+            onUpdateCitation={handleUpdateCitation}
+          />
+        </div>
+      </div>
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <MobileLayout
+        title={viewTitle}
+        projects={projects}
+        selectedProjectId={selectedProjectId}
+        onProjectSelect={handleProjectSelect}
+        onCreateProject={handleCreateProject}
+        treeData={treeData}
+        onTreeItemClick={handleTreeItemClick}
+        username={username}
+        onSignOut={handleSignOut}
+        onSearch={setSearchTerm}
+        searchTerm={searchTerm}
+        selectedFilter={filter}
+        isDarkMode={isDarkMode}
+        toggleDarkMode={toggleDarkMode}
+      >
+        {archiveContent}
+      </MobileLayout>
+    );
+  }
 
   return (
     <MainLayout
@@ -85,62 +166,7 @@ const App: React.FC = () => {
       isDarkMode={isDarkMode}
       toggleDarkMode={toggleDarkMode}
     >
-      <div className="h-full overflow-y-auto">
-        <ArchiveHeader
-          title={viewTitle}
-          showEditor={!searchTerm && !selectedProjectId}
-          username={username}
-          editorPrefill={editorPrefill}
-          onAddCitation={handleAddCitation}
-        />
-
-        <div className="pb-20 mt-4">
-          <div className="max-w-5xl mx-auto px-8">
-            <BulkActionToolbar
-              selectedCount={selectedIds.size}
-              totalCount={filteredCitations.length}
-              projects={projects}
-              isCopying={isCopying}
-              onSelectAll={handleSelectAll}
-              onCopy={handleBatchCopy}
-              onDeleteRequest={() => setShowBatchDeleteModal(true)}
-              onCancel={() => setSelectedIds(new Set())}
-              onAddToProject={handleBatchAddToProject}
-              onCreateAndAddToProject={handleBatchCreateAndAddToProject}
-            />
-
-            <ConfirmModal
-              isOpen={showBatchDeleteModal}
-              title="삭제하시겠습니까?"
-              message={
-                <>
-                  선택한 <span className="font-bold text-slate-700">{selectedIds.size}</span>개의 인용구가 영구히 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
-                </>
-              }
-              onConfirm={() => {
-                handleBatchDelete();
-                setShowBatchDeleteModal(false);
-              }}
-              onCancel={() => setShowBatchDeleteModal(false)}
-            />
-
-            <CitationList
-              citations={filteredCitations}
-              projects={projects}
-              username={username}
-              loading={dataLoading || authLoading}
-              searchTerm={searchTerm}
-              selectedIds={selectedIds}
-              onToggleSelect={handleToggleSelect}
-              onAddNote={handleAddNote}
-              onUpdateNote={handleUpdateNote}
-              onDeleteNote={handleDeleteNote}
-              onDeleteCitation={handleDeleteCitation}
-              onUpdateCitation={handleUpdateCitation}
-            />
-          </div>
-        </div>
-      </div>
+      {archiveContent}
     </MainLayout>
   );
 };

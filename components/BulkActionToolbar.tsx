@@ -37,7 +37,7 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
         <div className="sticky top-0 z-20 bg-[var(--bg-main)]/95 backdrop-blur-sm mb-2 h-14 flex items-center">
             <div className="w-full flex items-center justify-between bg-[var(--bg-card)] p-2 rounded-lg border border-[var(--border-main)] shadow-sm animate-in fade-in slide-in-from-top-1 duration-200 transition-all">
                 <div className="w-full flex items-center justify-between">
-                    <div className="flex items-center gap-3 pl-1">
+                    <div className="flex items-center gap-2 sm:gap-3 pl-1">
                         <button
                             onClick={() => onSelectAll(selectedCount < totalCount)}
                             className="flex items-center text-slate-400 hover:text-indigo-600 transition-colors"
@@ -50,12 +50,12 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
                             )}
                         </button>
                         <div className="h-4 w-[1px] bg-slate-300 mx-1"></div>
-                        <span className="text-sm font-bold text-indigo-600">
+                        <span className="text-xs sm:text-sm font-bold text-indigo-600">
                             {selectedCount} Selected
                         </span>
                     </div>
 
-                    <div className="flex items-center gap-1 pr-1">
+                    <div className="flex items-center gap-0.5 sm:gap-1 pr-1">
                         {/* Folder Menu */}
                         <div className="relative">
                             <button
@@ -134,7 +134,7 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
                             <Trash2 size={18} />
                         </button>
 
-                        <div className="h-4 w-[1px] bg-slate-200 mx-1"></div>
+                        <div className="h-4 w-[1px] bg-slate-200 mx-0.5 sm:mx-1"></div>
 
                         <button
                             onClick={onCancel}
