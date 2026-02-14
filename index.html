@@ -3,13 +3,52 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="410pages" />
   <title>410pages</title>
+  <script>
+    (function () {
+      const themeKey = 'theme-preference';
+      const legacyKey = 'dark-mode';
+      const root = document.documentElement;
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      let preference = localStorage.getItem(themeKey);
+
+      if (preference !== 'system' && preference !== 'light' && preference !== 'dark') {
+        const legacy = localStorage.getItem(legacyKey);
+        if (legacy !== null) {
+          try {
+            preference = JSON.parse(legacy) ? 'dark' : 'light';
+            localStorage.setItem(themeKey, preference);
+            localStorage.removeItem(legacyKey);
+          } catch (_) {
+            localStorage.removeItem(legacyKey);
+            preference = 'system';
+          }
+        } else {
+          preference = 'system';
+        }
+      }
+
+      const isDark = preference === 'dark' || (preference === 'system' && prefersDark);
+      root.classList.toggle('dark', isDark);
+      const themeMeta = document.querySelector('meta[name="theme-color"]');
+      if (themeMeta) {
+        themeMeta.setAttribute('content', isDark ? '#191919' : '#ffffff');
+      }
+    })();
+  </script>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="/pwa-icon.svg">
+  <link rel="apple-touch-icon" href="/pwa-icon.svg">
   <link rel="stylesheet" href="/index.css">
 </head>
 
-<body class="h-screen overflow-hidden">
-  <div id="root" class="h-full"></div>
+<body>
+  <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
 </body>
 

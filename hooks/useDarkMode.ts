@@ -1,22 +1,84 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+
+type ThemePreference = 'system' | 'light' | 'dark';
+type EffectiveTheme = 'light' | 'dark';
+
+const THEME_STORAGE_KEY = 'theme-preference';
+const LEGACY_THEME_STORAGE_KEY = 'dark-mode';
+
+const getSystemTheme = (): EffectiveTheme =>
+  window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+
+const resolveTheme = (preference: ThemePreference): EffectiveTheme =>
+  preference === 'system' ? getSystemTheme() : preference;
+
+const applyTheme = (theme: EffectiveTheme) => {
+  const root = window.document.documentElement;
+  const themeColorMeta = window.document.querySelector('meta[name="theme-color"]');
+
+  root.classList.toggle('dark', theme === 'dark');
+  if (themeColorMeta) {
+    themeColorMeta.setAttribute('content', theme === 'dark' ? '#191919' : '#ffffff');
+  }
+};
+
+const readThemePreference = (): ThemePreference => {
+  const storedPreference = localStorage.getItem(THEME_STORAGE_KEY);
+  if (storedPreference === 'system' || storedPreference === 'light' || storedPreference === 'dark') {
+    return storedPreference;
+  }
+
+  const legacyPreference = localStorage.getItem(LEGACY_THEME_STORAGE_KEY);
+  if (legacyPreference !== null) {
+    try {
+      const parsedLegacy = JSON.parse(legacyPreference);
+      const migratedPreference: ThemePreference = parsedLegacy ? 'dark' : 'light';
+      localStorage.setItem(THEME_STORAGE_KEY, migratedPreference);
+      localStorage.removeItem(LEGACY_THEME_STORAGE_KEY);
+      return migratedPreference;
+    } catch {
+      localStorage.removeItem(LEGACY_THEME_STORAGE_KEY);
+    }
+  }
+
+  return 'system';
+};
 
 export const useDarkMode = () => {
-    const [isDarkMode, setIsDarkMode] = useState(() => {
-        const saved = localStorage.getItem('dark-mode');
-        return saved ? JSON.parse(saved) : false;
-    });
+  const [themePreference, setThemePreference] = useState<ThemePreference>(() => readThemePreference());
+  const isDarkMode = useMemo(() => resolveTheme(themePreference) === 'dark', [themePreference]);
 
-    useEffect(() => {
-        const root = window.document.documentElement;
-        if (isDarkMode) {
-            root.classList.add('dark');
-        } else {
-            root.classList.remove('dark');
-        }
-        localStorage.setItem('dark-mode', JSON.stringify(isDarkMode));
-    }, [isDarkMode]);
+  useEffect(() => {
+    const resolvedTheme = resolveTheme(themePreference);
+    applyTheme(resolvedTheme);
+    localStorage.setItem(THEME_STORAGE_KEY, themePreference);
+  }, [themePreference]);
 
-    const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
+  useEffect(() => {
+    if (themePreference !== 'system') return;
 
-    return { isDarkMode, toggleDarkMode };
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleThemeChange = () => applyTheme(mediaQuery.matches ? 'dark' : 'light');
+
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleThemeChange);
+    } else {
+      mediaQuery.addListener(handleThemeChange);
+    }
+
+    return () => {
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener('change', handleThemeChange);
+      } else {
+        mediaQuery.removeListener(handleThemeChange);
+      }
+    };
+  }, [themePreference]);
+
+  const toggleDarkMode = () => {
+    const currentTheme = resolveTheme(themePreference);
+    setThemePreference(currentTheme === 'dark' ? 'light' : 'dark');
+  };
+
+  return { isDarkMode, toggleDarkMode };
 };

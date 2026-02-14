@@ -15,13 +15,41 @@ import { useDarkMode } from './hooks/useDarkMode';
 
 const App: React.FC = () => {
   const { isDarkMode, toggleDarkMode } = useDarkMode();
-  // --- Responsive Check ---
-  const [isMobile, setIsMobile] = useState(false);
+  // --- Mobile App Mode Check ---
+  const [isMobileApp, setIsMobileApp] = useState(false);
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    const widthQuery = window.matchMedia('(max-width: 1024px)');
+    const coarsePointerQuery = window.matchMedia('(pointer: coarse)');
+    const checkMobileApp = () => setIsMobileApp(widthQuery.matches || coarsePointerQuery.matches);
+
+    const addQueryListener = (query: MediaQueryList, listener: () => void) => {
+      if (query.addEventListener) {
+        query.addEventListener('change', listener);
+      } else {
+        query.addListener(listener);
+      }
+    };
+
+    const removeQueryListener = (query: MediaQueryList, listener: () => void) => {
+      if (query.removeEventListener) {
+        query.removeEventListener('change', listener);
+      } else {
+        query.removeListener(listener);
+      }
+    };
+
+    checkMobileApp();
+    addQueryListener(widthQuery, checkMobileApp);
+    addQueryListener(coarsePointerQuery, checkMobileApp);
+    window.addEventListener('orientationchange', checkMobileApp);
+    window.addEventListener('resize', checkMobileApp);
+
+    return () => {
+      removeQueryListener(widthQuery, checkMobileApp);
+      removeQueryListener(coarsePointerQuery, checkMobileApp);
+      window.removeEventListener('orientationchange', checkMobileApp);
+      window.removeEventListener('resize', checkMobileApp);
+    };
   }, []);
 
   // --- Logic Hooks ---
@@ -80,8 +108,8 @@ const App: React.FC = () => {
         onPageSortClick={handlePageSortClick}
       />
 
-      <div className="pb-20 mt-4">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className={isMobileApp ? 'pb-28 mt-3' : 'pb-20 mt-4'}>
+        <div className={isMobileApp ? 'max-w-5xl mx-auto px-3' : 'max-w-5xl mx-auto px-4 sm:px-6 lg:px-8'}>
           <BulkActionToolbar
             selectedCount={selectedIds.size}
             totalCount={filteredCitations.length}
@@ -129,7 +157,7 @@ const App: React.FC = () => {
     </div>
   );
 
-  if (isMobile) {
+  if (isMobileApp) {
     return (
       <MobileLayout
         title={viewTitle}

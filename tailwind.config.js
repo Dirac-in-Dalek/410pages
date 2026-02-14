@@ -12,12 +12,12 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['IBM Plex Sans', 'Noto Sans KR', 'Avenir Next', 'Segoe UI', 'sans-serif'],
-        serif: ['Newsreader', 'Noto Serif KR', 'Iowan Old Style', 'Times New Roman', 'serif'],
+        sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Noto Sans KR', 'Apple SD Gothic Neo', 'sans-serif'],
+        serif: ['Noto Serif KR', 'Iowan Old Style', 'Times New Roman', 'serif'],
       },
       colors: {
-        primary: '#1D5A72',
-        secondary: '#6F675C',
+        primary: '#37352F',
+        secondary: '#6F6E69',
       }
     },
   },
