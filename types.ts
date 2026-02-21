@@ -82,6 +82,7 @@ export interface PdfRectHighlight {
   id: string;
   citationId?: string;
   pageIndex: number;
+  kind?: 'underline' | 'highlight';
   rects: PdfHighlightRect[];
   createdAt: number;
 }

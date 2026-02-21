@@ -11,6 +11,8 @@ interface FilterState {
 type SortField = 'date' | 'page';
 type SortDirection = 'asc' | 'desc';
 
+const DEFAULT_ARCHIVE_TITLE = 'All Citations';
+
 const getPageNumber = (citation: Citation): number | undefined => {
     if (typeof citation.pageSort === 'number') return citation.pageSort;
     if (!citation.page) return undefined;
@@ -400,7 +402,7 @@ export const useArchiveFilter = (citations: Citation[], projects: Project[], use
         if (searchTerm.trim()) return `Search: ${searchTerm}`;
         if (selectedProjectId) return projects.find(p => p.id === selectedProjectId)?.name || 'Project';
         if (filter) return filter.value || (filter.type === 'author' ? 'Author View' : 'Book View');
-        return 'The Archive';
+        return DEFAULT_ARCHIVE_TITLE;
     }, [searchTerm, selectedProjectId, projects, filter]);
 
     return {

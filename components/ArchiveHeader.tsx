@@ -27,8 +27,10 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
     onDateSortClick,
     onPageSortClick
 }) => {
-    const dateLabel = `date${dateDirection === 'asc' ? '↑' : '↓'}`;
-    const pageLabel = `page${pageDirection === 'asc' ? '↑' : '↓'}`;
+    const isDateActive = sortField === 'date';
+    const isPageActive = sortField === 'page';
+    const dateLabel = isDateActive ? `Date ${dateDirection === 'asc' ? '↑' : '↓'}` : 'Date';
+    const pageLabel = isPageActive ? `Page ${pageDirection === 'asc' ? '↑' : '↓'}` : 'Page';
 
     const getButtonClass = (isActive: boolean) => (
         `shrink-0 inline-flex items-center px-3 py-2 text-xs md:text-sm rounded-xl border transition-colors ${isActive
@@ -49,8 +51,8 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
                             type="button"
                             onClick={onDateSortClick}
                             className={getButtonClass(sortField === 'date')}
-                            aria-label={`날짜 정렬 ${dateDirection === 'asc' ? '오름차순' : '내림차순'}`}
-                            title={`날짜 정렬 ${dateDirection === 'asc' ? '오름차순' : '내림차순'}`}
+                            aria-label={isDateActive ? `Sort by date: ${dateDirection === 'asc' ? 'ascending' : 'descending'}` : 'Sort by date'}
+                            title={isDateActive ? `Sort by date: ${dateDirection === 'asc' ? 'ascending' : 'descending'}` : 'Sort by date'}
                         >
                             <span>{dateLabel}</span>
                         </button>
@@ -58,8 +60,8 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
                             type="button"
                             onClick={onPageSortClick}
                             className={getButtonClass(sortField === 'page')}
-                            aria-label={`페이지 정렬 ${pageDirection === 'asc' ? '오름차순' : '내림차순'}`}
-                            title={`페이지 정렬 ${pageDirection === 'asc' ? '오름차순' : '내림차순'}`}
+                            aria-label={isPageActive ? `Sort by page: ${pageDirection === 'asc' ? 'ascending' : 'descending'}` : 'Sort by page'}
+                            title={isPageActive ? `Sort by page: ${pageDirection === 'asc' ? 'ascending' : 'descending'}` : 'Sort by page'}
                         >
                             <span>{pageLabel}</span>
                         </button>

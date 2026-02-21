@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, ChevronDown, ChevronUp, Plus, Quote, User, Edit2, Trash2, X, Check, Folder, Copy, Trash } from 'lucide-react';
+import { MessageSquare, ChevronDown, ChevronUp, Plus, Quote, User, Edit2, Trash2, X, Check, Folder, Copy } from 'lucide-react';
 import { Citation, Note, Highlight } from '../types';
 
 interface CitationCardProps {
@@ -43,10 +43,10 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   const [editBook, setEditBook] = useState(citation.book);
   const [editPage, setEditPage] = useState(citation.page?.toString() || '');
 
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
   // Copy button state
   const [copied, setCopied] = useState(false);
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Highlight state
   const [localHighlights, setLocalHighlights] = useState<Highlight[]>(citation.highlights || []);
@@ -75,6 +75,10 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   useEffect(() => {
     if (isNotesExpanded) adjustHeight(newNoteTextareaRef);
   }, [isNotesExpanded, newNote]);
+
+  useEffect(() => {
+    setLocalHighlights(citation.highlights || []);
+  }, [citation.highlights]);
 
   // Close popover when clicking outside
   useEffect(() => {
@@ -238,7 +242,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
             e.stopPropagation();
             handleRemoveHighlight(hl.id);
           }}
-          title="클릭하여 하이라이트 삭제"
+          title="Click to remove highlight"
         >
           {citation.text.slice(hl.start, hl.end)}
         </mark>
@@ -285,8 +289,8 @@ export const CitationCard: React.FC<CitationCardProps> = ({
               className={`p-1.5 rounded-md transition-colors ${copied
                 ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20'
                 : 'text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--bg-sidebar)]'
-                }`}
-              title={copied ? '복사됨!' : '복사하기'}
+              }`}
+              title={copied ? 'Copied' : 'Copy'}
             >
               {copied ? <Check size={14} /> : <Copy size={14} />}
             </button>
@@ -307,23 +311,25 @@ export const CitationCard: React.FC<CitationCardProps> = ({
           </div>
         )}
 
-        {/* Delete Confirmation */}
         {showDeleteConfirm && (
           <div className="absolute inset-0 z-30 bg-[var(--bg-card)]/95 backdrop-blur-sm rounded-lg flex items-center justify-center p-6 text-center">
             <div>
-              <p className="text-[var(--text-main)] font-medium mb-4">정말로 이 인용구를 삭제하시겠습니까?</p>
+              <p className="text-[var(--text-main)] font-medium mb-4">Are you sure you want to delete this citation?</p>
               <div className="flex gap-3 justify-center">
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
                   className="px-4 py-1.5 text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--bg-sidebar)] rounded-md"
                 >
-                  취소
+                  Cancel
                 </button>
                 <button
-                  onClick={() => onDelete(citation.id)}
+                  onClick={() => {
+                    onDelete(citation.id);
+                    setShowDeleteConfirm(false);
+                  }}
                   className="px-4 py-1.5 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-md shadow-sm"
                 >
-                  삭제하기
+                  Delete
                 </button>
               </div>
             </div>
@@ -376,13 +382,13 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                   onClick={handleCancel}
                   className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-[var(--text-muted)] hover:bg-[var(--bg-sidebar)] rounded-md transition-colors"
                 >
-                  <X size={14} /> 취소
+                  <X size={14} /> Cancel
                 </button>
                 <button
                   onClick={handleSave}
                   className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-[var(--accent)] hover:bg-[var(--accent-strong)] rounded-md shadow-sm transition-colors"
                 >
-                  <Check size={14} /> 저장하기
+                  <Check size={14} /> Save
                 </button>
               </div>
             </div>
@@ -482,13 +488,13 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                             onClick={(e) => { e.stopPropagation(); setEditingNoteId(null); }}
                             className="text-xs text-[var(--text-muted)] hover:text-[var(--text-main)]"
                           >
-                            취소
+                            Cancel
                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); handleSaveNoteEdit(note.id); }}
                             className="text-xs text-[var(--accent)] font-bold hover:text-[var(--accent-strong)]"
                           >
-                            저장
+                            Save
                           </button>
                         </div>
                       </div>
@@ -505,7 +511,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                   ref={newNoteTextareaRef}
                   value={newNote}
                   onChange={(e) => setNewNote(e.target.value)}
-                  placeholder="새로운 메모를 입력하세요..."
+                  placeholder="Add a new note..."
                   className="w-full text-sm bg-transparent text-[var(--text-main)] border-none p-3 focus:ring-0 focus:outline-none min-h-[60px] resize-none overflow-y-auto"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
@@ -519,11 +525,11 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                     onClick={submitNote}
                     disabled={!newNote.trim()}
                     className={`
-                  px-3 py-1 text-xs font-bold rounded transition-colors
-                  ${newNote.trim() ? 'bg-[var(--accent)] text-white hover:bg-[var(--accent-strong)]' : 'bg-[var(--bg-sidebar)] text-[var(--text-muted)] cursor-not-allowed'}
-                `}
+                      px-3 py-1 text-xs font-bold rounded transition-colors
+                      ${newNote.trim() ? 'bg-[var(--accent)] text-white hover:bg-[var(--accent-strong)]' : 'bg-[var(--bg-sidebar)] text-[var(--text-muted)] cursor-not-allowed'}
+                    `}
                   >
-                    메모 저장
+                    Save note
                   </button>
                 </div>
               </div>

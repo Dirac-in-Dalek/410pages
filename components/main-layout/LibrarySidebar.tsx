@@ -432,6 +432,15 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
       isTreeDragging &&
       treeDropIndicator?.itemId === item.id &&
       treeDropIndicator?.position === 'after';
+    const canReorder = Boolean(treeMeta);
+    const rowTypeLabel = item.type === 'author'
+      ? 'author'
+      : item.type === 'book'
+        ? 'book'
+        : 'section';
+    const rowTitle = canReorder
+      ? `Drag to reorder ${rowTypeLabel}. Double-click to rename.`
+      : item.label;
 
     return (
       <div
@@ -456,6 +465,8 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
             transition-colors duration-150 group
           `}
           style={{ paddingLeft: `${paddingLeft}px` }}
+          title={rowTitle}
+          aria-label={rowTitle}
           onClick={() => {
             if (editingNodeId === item.id) return;
             onTreeItemClick(item);
@@ -648,6 +659,8 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
             flex items-center p-2 rounded-md cursor-pointer mb-4 text-sm font-medium
             ${selectedProjectId === null ? 'bg-[var(--accent-active)] text-[var(--accent-active-text)] shadow-md border-transparent' : 'text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]'}
           `}
+          title="Show all citations"
+          aria-label="Show all citations"
           onClick={() => onProjectSelect(null)}
         >
           <FolderOpen size={16} className="mr-2" />
@@ -660,9 +673,6 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
         {renderTree(treeData)}
       </div>
 
-      <div className="p-4 bg-[var(--bg-sidebar)] text-xs text-[var(--text-muted)] border-t border-[var(--border-main)]">
-        <p>Drop between rows to reorder. Use pencil icon or double-click Author/Book to rename.</p>
-      </div>
     </aside>
   );
 };

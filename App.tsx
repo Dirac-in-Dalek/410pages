@@ -134,10 +134,10 @@ const App: React.FC = () => {
 
           <ConfirmModal
             isOpen={showBatchDeleteModal}
-            title="삭제하시겠습니까?"
+            title="Delete citations?"
             message={
               <>
-                선택한 <span className="font-bold text-[var(--text-main)]">{selectedIds.size}</span>개의 인용구가 영구히 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
+                <span className="font-bold text-[var(--text-main)]">{selectedIds.size}</span> citation(s) will be permanently deleted. This action cannot be undone.
               </>
             }
             onConfirm={() => {

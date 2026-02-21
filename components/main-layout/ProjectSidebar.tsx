@@ -436,13 +436,13 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
 
                 {deletingProjectId === project.id ? (
                   <div className="p-3 mb-1 text-sm bg-red-50 border border-red-200 rounded-md shadow-inner">
-                    <div className="text-red-800 text-xs mb-3 font-semibold text-center leading-tight">정말로 제거하시겠습니까?</div>
+                    <div className="text-red-800 text-xs mb-3 font-semibold text-center leading-tight">Are you sure you want to remove this folder?</div>
                     <div className="flex justify-center gap-2">
                       <button
                         onClick={() => setDeletingProjectId(null)}
                         className="px-3 py-1 text-xs text-[var(--text-muted)] bg-[var(--bg-card)] border border-[var(--border-main)] rounded shadow-sm hover:bg-[var(--sidebar-hover)]"
                       >
-                        취소
+                        Cancel
                       </button>
                       <button
                         onClick={() => {
@@ -451,7 +451,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
                         }}
                         className="px-3 py-1 text-xs text-white bg-red-600 border border-red-700 rounded shadow-sm hover:bg-red-700"
                       >
-                        제거
+                        Remove
                       </button>
                     </div>
                   </div>

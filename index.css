@@ -56,7 +56,7 @@
     --accent-active: #3a3a3a;
     --accent-active-text: #f5f5f5;
 
-    --highlight-bg: #303030;
+    --highlight-bg: rgba(96, 165, 250, 0.35);
   }
 
   * {
@@ -124,22 +124,25 @@
 
 }
 
-/* PDF reader selection: keep canvas glyphs visible and show only selection highlight. */
+/* PDF reader selection: keep native browser selection invisible (we render custom overlays). */
 .pdf-reader-mode .react-pdf__Page__textContent {
   -webkit-user-select: text;
   user-select: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
 }
 
 .pdf-reader-mode .react-pdf__Page__textContent span::selection,
 .pdf-reader-mode .react-pdf__Page__textContent br::selection {
-  background: rgba(250, 204, 21, 0.35);
+  background: transparent;
   color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
   text-shadow: none !important;
 }
 
 .pdf-reader-mode .react-pdf__Page__textContent span::-moz-selection,
 .pdf-reader-mode .react-pdf__Page__textContent br::-moz-selection {
-  background: rgba(250, 204, 21, 0.35);
+  background: transparent;
   color: transparent !important;
   text-shadow: none !important;
 }

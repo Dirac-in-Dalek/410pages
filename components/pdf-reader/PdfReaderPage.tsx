@@ -37,6 +37,20 @@ type SelectionPayload = {
   pageNumber: number;
   pageIndex: number;
   pageLabel: string;
+  segments: SelectionSegment[];
+};
+
+type SelectionPreview = {
+  pageIndex: number;
+  rects: PdfHighlightRect[];
+};
+
+type SelectionSegment = {
+  range: Range;
+  text: string;
+  pageNumber: number;
+  pageIndex: number;
+  pageLabel: string;
 };
 
 interface PdfReaderPageProps {
@@ -60,6 +74,7 @@ const VIRTUAL_OVERSCAN_PAGES = 6;
 const DEFAULT_PAGE_RATIO = 1.41;
 const PAGE_VERTICAL_GAP = 20;
 const READER_SESSION_STORAGE_KEY = 'pdfReaderSession.v1';
+const UNDERLINE_DRAG_HIT_TOLERANCE_PX = 8;
 
 type PersistedReaderSession = {
   pdfName: string;
@@ -86,14 +101,19 @@ const sanitizePersistedSession = (raw: unknown): PersistedReaderSession | null =
   const bookStartPage = typeof metaRaw.bookStartPage === 'number' && metaRaw.bookStartPage > 0 ? Math.floor(metaRaw.bookStartPage) : undefined;
 
   const highlights = Array.isArray(data.highlights)
-    ? (data.highlights as PdfRectHighlight[]).filter(
-        (item) =>
-          item &&
-          typeof item === 'object' &&
-          typeof item.id === 'string' &&
-          typeof item.pageIndex === 'number' &&
-          Array.isArray(item.rects)
-      )
+    ? (data.highlights as PdfRectHighlight[])
+        .filter(
+          (item) =>
+            item &&
+            typeof item === 'object' &&
+            typeof item.id === 'string' &&
+            typeof item.pageIndex === 'number' &&
+            Array.isArray(item.rects)
+        )
+        .map((item) => ({
+          ...item,
+          kind: item.kind === 'highlight' ? 'highlight' : 'underline'
+        }))
     : [];
 
   const draftSelection =
@@ -281,6 +301,120 @@ const createHighlightRects = (range: Range, pageNode: HTMLElement | null): PdfHi
     .filter((rect) => rect.widthPct > 0 && rect.heightPct > 0);
 };
 
+const intersectHighlightRects = (
+  source: PdfHighlightRect[],
+  clips: PdfHighlightRect[]
+): PdfHighlightRect[] => {
+  const intersections: PdfHighlightRect[] = [];
+  source.forEach((left) => {
+    clips.forEach((right) => {
+      const x1 = Math.max(left.leftPct, right.leftPct);
+      const x2 = Math.min(left.leftPct + left.widthPct, right.leftPct + right.widthPct);
+      const y1 = Math.max(left.topPct, right.topPct);
+      const y2 = Math.min(left.topPct + left.heightPct, right.topPct + right.heightPct);
+
+      const widthPct = x2 - x1;
+      const heightPct = y2 - y1;
+      if (widthPct <= 0 || heightPct <= 0) return;
+
+      intersections.push({
+        leftPct: x1,
+        topPct: y1,
+        widthPct,
+        heightPct
+      });
+    });
+  });
+  return intersections;
+};
+
+const constrainRangeToStableEnd = (range: Range): Range => {
+  return range;
+};
+
+const normalizeWithMap = (value: string): { text: string; indexMap: number[] } => {
+  const chars: string[] = [];
+  const map: number[] = [];
+  let sawNonSpace = false;
+  let pendingSpace = false;
+  let pendingSpaceIndex = -1;
+
+  for (let index = 0; index < value.length; index += 1) {
+    const raw = value[index] === '\u00A0' ? ' ' : value[index];
+    if (/\s/.test(raw)) {
+      if (!sawNonSpace) continue;
+      pendingSpace = true;
+      if (pendingSpaceIndex < 0) pendingSpaceIndex = index;
+      continue;
+    }
+
+    if (pendingSpace && chars.length > 0) {
+      chars.push(' ');
+      map.push(pendingSpaceIndex);
+    }
+
+    chars.push(raw);
+    map.push(index);
+    sawNonSpace = true;
+    pendingSpace = false;
+    pendingSpaceIndex = -1;
+  }
+
+  return { text: chars.join(''), indexMap: map };
+};
+
+const resolveSelectionRangeInCitation = (citationText: string, selectedText: string): { start: number; end: number } | null => {
+  const normalizedCitation = normalizeWithMap(citationText);
+  const normalizedSelected = normalizeSelectionText(selectedText);
+  if (!normalizedSelected) return null;
+
+  const startInNormalized = normalizedCitation.text.indexOf(normalizedSelected);
+  if (startInNormalized < 0) {
+    // If drag exceeds underline end, keep the portion that still matches citation text.
+    let bestStartToEnd = -1;
+    let bestLengthToEnd = 0;
+    let bestStartAny = -1;
+    let bestLengthAny = 0;
+
+    for (let start = 0; start < normalizedCitation.text.length; start += 1) {
+      let length = 0;
+      while (
+        start + length < normalizedCitation.text.length &&
+        length < normalizedSelected.length &&
+        normalizedCitation.text[start + length] === normalizedSelected[length]
+      ) {
+        length += 1;
+      }
+
+      if (length <= 0) continue;
+      const touchesEnd = start + length >= normalizedCitation.text.length;
+      if (touchesEnd && length > bestLengthToEnd) {
+        bestStartToEnd = start;
+        bestLengthToEnd = length;
+      }
+      if (length > bestLengthAny) {
+        bestStartAny = start;
+        bestLengthAny = length;
+      }
+    }
+
+    const bestStart = bestStartToEnd >= 0 ? bestStartToEnd : bestStartAny;
+    const bestLength = bestStartToEnd >= 0 ? bestLengthToEnd : bestLengthAny;
+    if (bestStart < 0 || bestLength <= 0) return null;
+    const fallbackStart = normalizedCitation.indexMap[bestStart];
+    const fallbackEnd = normalizedCitation.indexMap[bestStart + bestLength - 1] + 1;
+    if (!Number.isFinite(fallbackStart) || !Number.isFinite(fallbackEnd) || fallbackEnd <= fallbackStart) return null;
+    return { start: fallbackStart, end: fallbackEnd };
+  }
+
+  const endInNormalized = startInNormalized + normalizedSelected.length - 1;
+  const start = normalizedCitation.indexMap[startInNormalized];
+  const end = normalizedCitation.indexMap[endInNormalized] + 1;
+
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return null;
+  return { start, end };
+};
+
 export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
   username,
   onBack,
@@ -320,6 +454,9 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
   const [draftSelection, setDraftSelection] = useState<PdfDraftSelection | null>(() => restoredSession?.draftSelection || null);
   const [highlights, setHighlights] = useState<PdfRectHighlight[]>(() => restoredSession?.highlights || []);
   const [selectedCitationIds, setSelectedCitationIds] = useState<Set<string>>(new Set());
+  const [isPointerSelecting, setIsPointerSelecting] = useState(false);
+  const [selectionPreview, setSelectionPreview] = useState<SelectionPreview[]>([]);
+  const [selectionPreviewKind, setSelectionPreviewKind] = useState<'underline' | 'highlight'>('underline');
 
   const [pageWidth, setPageWidth] = useState<number | undefined>(undefined);
   const [visibleRange, setVisibleRange] = useState<ReaderVirtualRange>({ start: 1, end: 8 });
@@ -333,6 +470,7 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
   const isSavingRef = useRef(false);
   const resumeScrollTopRef = useRef<number | null>(restoredSession?.scrollTop ?? null);
   const resumePageRef = useRef<number>(restoredSession?.currentPage || 1);
+  const draggingUnderlineCitationRef = useRef<string | null>(null);
 
   const {
     leftPaneWidth,
@@ -432,6 +570,14 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
       .sort((a, b) => b.createdAt - a.createdAt);
   }, [citations, isMetaConfirmed, meta.author, meta.title]);
 
+  const citationMap = useMemo(() => {
+    const map = new Map<string, Citation>();
+    citations.forEach((citation) => {
+      map.set(citation.id, citation);
+    });
+    return map;
+  }, [citations]);
+
   useEffect(() => {
     const existingIds = new Set(currentDocumentCitations.map((citation) => citation.id));
 
@@ -454,6 +600,63 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
     if (node) pageContainerRefs.current[pageNumber] = node;
     else delete pageContainerRefs.current[pageNumber];
   }, []);
+
+  const resolveUnderlineCitationFromPoint = useCallback(
+    (pageNumber: number, clientX: number, clientY: number): string | null => {
+      const pageNode = pageContainerRefs.current[pageNumber];
+      if (!pageNode) return null;
+
+      const rect = pageNode.getBoundingClientRect();
+      const pageIndex = pageNumber - 1;
+      const localX = clientX - rect.left;
+      const localY = clientY - rect.top;
+      const width = rect.width;
+      const height = rect.height;
+      const tolerance = UNDERLINE_DRAG_HIT_TOLERANCE_PX;
+
+      for (const item of highlights) {
+        if (item.pageIndex !== pageIndex) continue;
+        if ((item.kind || 'underline') !== 'underline') continue;
+        if (!item.citationId) continue;
+
+        for (const hitRect of item.rects) {
+          const left = hitRect.leftPct * width;
+          const top = hitRect.topPct * height;
+          const right = left + hitRect.widthPct * width;
+          const bottom = top + hitRect.heightPct * height;
+
+          if (
+            localX >= left - tolerance &&
+            localX <= right + tolerance &&
+            localY >= top - tolerance &&
+            localY <= bottom + tolerance
+          ) {
+            return item.citationId;
+          }
+        }
+      }
+
+      return null;
+    },
+    [highlights]
+  );
+
+  const constrainRectsToCitationUnderlines = useCallback(
+    (rects: PdfHighlightRect[], citationId: string | null, pageIndex: number): PdfHighlightRect[] => {
+      if (!citationId) return rects;
+      if (rects.length === 0) return rects;
+
+      const underlineRects = highlights
+        .filter(
+          (item) => item.pageIndex === pageIndex && (item.kind || 'underline') === 'underline' && item.citationId === citationId
+        )
+        .flatMap((item) => item.rects);
+
+      if (underlineRects.length === 0) return [];
+      return intersectHighlightRects(rects, underlineRects);
+    },
+    [highlights]
+  );
 
   const getEstimatedPageHeight = useCallback(
     (pageNumber: number) => {
@@ -535,13 +738,64 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
     [getEstimatedPageHeight, numPages]
   );
 
+  const buildSelectionSegmentsFromRange = useCallback(
+    (range: Range): SelectionSegment[] => {
+      const pane = pdfPaneRef.current;
+      if (!pane) return [];
+
+      const pageNodes = Array.from(pane.querySelectorAll('[data-reader-page-number]')) as HTMLElement[];
+      const segments: SelectionSegment[] = [];
+
+      pageNodes.forEach((pageNode) => {
+        const pageNumber = Number.parseInt(pageNode.getAttribute('data-reader-page-number') || '', 10);
+        if (!Number.isFinite(pageNumber) || pageNumber <= 0) return;
+
+        const textLayer = pageNode.querySelector('.react-pdf__Page__textContent');
+        if (!textLayer) return;
+
+        try {
+          if (!range.intersectsNode(textLayer)) return;
+        } catch {
+          return;
+        }
+
+        const layerRange = document.createRange();
+        layerRange.selectNodeContents(textLayer);
+
+        const segmentRange = document.createRange();
+        segmentRange.selectNodeContents(textLayer);
+
+        if (range.compareBoundaryPoints(Range.START_TO_START, layerRange) > 0) {
+          segmentRange.setStart(range.startContainer, range.startOffset);
+        }
+        if (range.compareBoundaryPoints(Range.END_TO_END, layerRange) < 0) {
+          segmentRange.setEnd(range.endContainer, range.endOffset);
+        }
+
+        const text = normalizeSelectionText(segmentRange.toString());
+        if (!text) return;
+
+        segments.push({
+          range: segmentRange,
+          text,
+          pageNumber,
+          pageIndex: pageNumber - 1,
+          pageLabel: resolvePageLabel(pageNumber)
+        });
+      });
+
+      return segments.sort((a, b) => a.pageNumber - b.pageNumber);
+    },
+    [resolvePageLabel]
+  );
+
   const getSelectionPayload = useCallback((): SelectionPayload | null => {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return null;
 
-    const range = selection.getRangeAt(0).cloneRange();
-    const startElement = toElement(range.startContainer);
-    const endElement = toElement(range.endContainer);
+    const baseRange = selection.getRangeAt(0).cloneRange();
+    const startElement = toElement(baseRange.startContainer);
+    const endElement = toElement(baseRange.endContainer);
     const startLayer = startElement?.closest('.react-pdf__Page__textContent');
     const endLayer = endElement?.closest('.react-pdf__Page__textContent');
     const textLayer = (startLayer || endLayer) as HTMLElement | null;
@@ -549,28 +803,36 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
     if (!textLayer) return null;
     if (!pdfPaneRef.current?.contains(textLayer)) return null;
 
-    const text = normalizeSelectionText(selection.toString());
+    const range = constrainRangeToStableEnd(baseRange);
+    const baseSegments = buildSelectionSegmentsFromRange(range);
+    if (baseSegments.length === 0) return null;
+    const segments = baseSegments;
+    const text = normalizeSelectionText(segments.map((segment) => segment.text).join(' '));
     if (!text) return null;
-
-    const pageNode = textLayer.closest('[data-reader-page-number]') as HTMLElement | null;
-    const pageFromDom = Number.parseInt(pageNode?.getAttribute('data-reader-page-number') || '', 10);
-    const pageNumber = Number.isFinite(pageFromDom) && pageFromDom > 0 ? pageFromDom : currentPage;
+    const firstSegment = segments[0];
+    const lastSegment = segments[segments.length - 1];
+    const pageLabel =
+      segments.length > 1
+        ? `${firstSegment.pageLabel}-${lastSegment.pageLabel}`
+        : firstSegment.pageLabel;
 
     return {
       selection,
       range,
       text,
-      pageNumber,
-      pageIndex: pageNumber - 1,
-      pageLabel: resolvePageLabel(pageNumber)
+      pageNumber: firstSegment.pageNumber,
+      pageIndex: firstSegment.pageIndex,
+      pageLabel,
+      segments
     };
-  }, [currentPage, resolvePageLabel]);
+  }, [buildSelectionSegmentsFromRange]);
 
   useEffect(() => {
     const handleSelectionChange = () => {
       if (!isMetaConfirmed) {
         latestSelectionRef.current = null;
         setDraftSelection(null);
+        setSelectionPreview([]);
         return;
       }
 
@@ -578,6 +840,7 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
       if (!payload) {
         latestSelectionRef.current = null;
         setDraftSelection(null);
+        setSelectionPreview([]);
         return;
       }
 
@@ -586,7 +849,11 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
         text: payload.text,
         pageNumber: payload.pageNumber,
         pageIndex: payload.pageIndex,
-        pageLabel: payload.pageLabel
+        pageLabel: payload.pageLabel,
+        segments: payload.segments.map((segment) => ({
+          ...segment,
+          range: segment.range.cloneRange()
+        }))
       };
 
       setDraftSelection({
@@ -595,42 +862,152 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
         pageLabel: payload.pageLabel
       });
 
+      if (isPointerSelecting) {
+        const previews = payload.segments
+          .map((segment) => {
+            const pageNode = pageContainerRefs.current[segment.pageNumber] || null;
+            const basePreviewRects = createHighlightRects(segment.range, pageNode);
+            const previewRects = draggingUnderlineCitationRef.current
+              ? constrainRectsToCitationUnderlines(basePreviewRects, draggingUnderlineCitationRef.current, segment.pageIndex)
+              : basePreviewRects;
+            return previewRects.length > 0 ? { pageIndex: segment.pageIndex, rects: previewRects } : null;
+          })
+          .filter((segment): segment is SelectionPreview => Boolean(segment));
+        setSelectionPreview(previews);
+      } else {
+        setSelectionPreview([]);
+      }
+
       if (saveError) setSaveError(null);
     };
 
     document.addEventListener('selectionchange', handleSelectionChange);
     return () => document.removeEventListener('selectionchange', handleSelectionChange);
-  }, [getSelectionPayload, isMetaConfirmed, saveError]);
+  }, [constrainRectsToCitationUnderlines, getSelectionPayload, isMetaConfirmed, isPointerSelecting, saveError]);
+
+  const addInlineHighlightToCitation = useCallback(
+    (citationId: string, selectedText: string): 'added' | 'exists' | 'failed' => {
+      const citation = citationMap.get(citationId);
+      if (!citation) return 'failed';
+
+      const range = resolveSelectionRangeInCitation(citation.text, selectedText);
+      if (!range) return 'failed';
+
+      const existing = citation.highlights || [];
+      const hasOverlap = existing.some((highlight) => range.start < highlight.end && range.end > highlight.start);
+      if (hasOverlap) return 'exists';
+
+      const next = [
+        ...existing,
+        {
+          id: `hl-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          start: range.start,
+          end: range.end,
+          color: 'yellow'
+        }
+      ];
+      onUpdateCitation(citationId, { highlights: next });
+      return 'added';
+    },
+    [citationMap, onUpdateCitation]
+  );
 
   const saveSelection = useCallback(async () => {
     if (!isMetaConfirmed || isSavingRef.current) return;
 
     const livePayload = getSelectionPayload();
     const payload = livePayload || latestSelectionRef.current;
-    if (!payload) return;
+    if (!payload) {
+      draggingUnderlineCitationRef.current = null;
+      setSelectionPreviewKind('underline');
+      return;
+    }
+
+    const clearDraggingState = () => {
+      draggingUnderlineCitationRef.current = null;
+      setSelectionPreviewKind('underline');
+    };
 
     if (payload.text.length < MIN_CAPTURE_LENGTH) {
       latestSelectionRef.current = null;
       setDraftSelection(null);
+      setSelectionPreview([]);
+      clearDraggingState();
+      livePayload?.selection?.removeAllRanges();
+      return;
+    }
+
+    const targetPages = Array.from(new Set(payload.segments.map((segment) => segment.pageNumber)));
+    let segmentMarks = targetPages
+      .map((pageNumber) => {
+        const pageNode = pageContainerRefs.current[pageNumber] || null;
+        const rects = createHighlightRects(payload.range, pageNode);
+        return {
+          pageIndex: pageNumber - 1,
+          rects
+        };
+      })
+      .filter((segment) => segment.rects.length > 0);
+
+    const targetCitationId = draggingUnderlineCitationRef.current;
+    if (targetCitationId) {
+      segmentMarks = segmentMarks
+        .map((segment) => ({
+          ...segment,
+          rects: constrainRectsToCitationUnderlines(segment.rects, targetCitationId, segment.pageIndex)
+        }))
+        .filter((segment) => segment.rects.length > 0);
+    }
+
+    if (targetCitationId) {
+      if (segmentMarks.length === 0) {
+        setSaveError('Please select the highlight within an existing underline.');
+        latestSelectionRef.current = null;
+        setDraftSelection(null);
+        setSelectionPreview([]);
+        clearDraggingState();
+        livePayload?.selection?.removeAllRanges();
+        return;
+      }
+
+      const status = addInlineHighlightToCitation(targetCitationId, payload.text);
+      if (status === 'added' && segmentMarks.length > 0) {
+        const createdAt = Date.now();
+        const newMarks: PdfRectHighlight[] = segmentMarks.map((segment, index) => ({
+          id: `hl-${createdAt}-${index}-${Math.random().toString(36).slice(2, 8)}`,
+          citationId: targetCitationId,
+          pageIndex: segment.pageIndex,
+          kind: 'highlight',
+          rects: segment.rects,
+          createdAt
+        }));
+        setHighlights((prev) => [...newMarks, ...prev]);
+      }
+
+      setSaveError(null);
+      latestSelectionRef.current = null;
+      setDraftSelection(null);
+      setSelectionPreview([]);
+      clearDraggingState();
       livePayload?.selection?.removeAllRanges();
       return;
     }
 
     const dedupeKey = [payload.text, payload.pageLabel, meta.author.trim(), meta.title.trim()].join('|');
     const now = Date.now();
-    if (
-      lastSavedRef.current &&
-      lastSavedRef.current.key === dedupeKey &&
-      now - lastSavedRef.current.at < DUPLICATE_WINDOW_MS
-    ) {
-      latestSelectionRef.current = null;
-      setDraftSelection(null);
-      livePayload?.selection?.removeAllRanges();
-      return;
-    }
+      if (
+        lastSavedRef.current &&
+        lastSavedRef.current.key === dedupeKey &&
+        now - lastSavedRef.current.at < DUPLICATE_WINDOW_MS
+      ) {
+        latestSelectionRef.current = null;
+        setDraftSelection(null);
+        setSelectionPreview([]);
+        clearDraggingState();
+        livePayload?.selection?.removeAllRanges();
+        return;
+      }
 
-    const pageNode = pageContainerRefs.current[payload.pageNumber] || null;
-    const rects = createHighlightRects(payload.range, pageNode);
     const citation: AddCitationInput = {
       text: payload.text,
       author: meta.author.trim(),
@@ -647,37 +1024,71 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
       const createdAt = Date.now();
       lastSavedRef.current = { key: dedupeKey, at: createdAt };
 
-      if (rects.length > 0) {
-        setHighlights((prev) => [
-          {
-            id: `hl-${createdAt}-${Math.random().toString(36).slice(2, 8)}`,
-            citationId: result.citationId,
-            pageIndex: payload.pageIndex,
-            rects,
-            createdAt
-          },
-          ...prev
-        ]);
+      if (segmentMarks.length > 0) {
+        const newMarks: PdfRectHighlight[] = segmentMarks.map((segment, index) => ({
+          id: `hl-${createdAt}-${index}-${Math.random().toString(36).slice(2, 8)}`,
+          citationId: result.citationId,
+          pageIndex: segment.pageIndex,
+          kind: 'underline',
+          rects: segment.rects,
+          createdAt
+        }));
+        setHighlights((prev) => [...newMarks, ...prev]);
       }
 
       setSaveError(null);
       latestSelectionRef.current = null;
       setDraftSelection(null);
+      setSelectionPreview([]);
+      clearDraggingState();
       livePayload?.selection?.removeAllRanges();
       return;
     }
 
-    setSaveError('인용 저장에 실패했습니다. 다시 시도해주세요.');
-  }, [getSelectionPayload, isMetaConfirmed, meta.author, meta.title, onAddCitation]);
+    setSaveError('Failed to save the citation. Please try again.');
+    clearDraggingState();
+  }, [
+    addInlineHighlightToCitation,
+    constrainRectsToCitationUnderlines,
+    getSelectionPayload,
+    isMetaConfirmed,
+    meta.author,
+    meta.title,
+    onAddCitation,
+  ]);
 
   useEffect(() => {
+    const onMouseDown = (event: MouseEvent) => {
+      const target = event.target as Element | null;
+      if (!target) return;
+      if (!pdfPaneRef.current?.contains(target)) return;
+      if (!target.closest('.react-pdf__Page__textContent')) return;
+
+      const pageElement = target.closest('[data-reader-page-number]') as HTMLElement | null;
+      const pageNumber = pageElement ? Number(pageElement.dataset.readerPageNumber) : NaN;
+
+      const startCitationId = Number.isFinite(pageNumber)
+        ? resolveUnderlineCitationFromPoint(pageNumber, event.clientX, event.clientY)
+        : null;
+
+      draggingUnderlineCitationRef.current = startCitationId;
+      setSelectionPreviewKind(startCitationId ? 'highlight' : 'underline');
+      setIsPointerSelecting(true);
+      setSelectionPreview([]);
+    };
+
     const onMouseUp = () => {
+      setIsPointerSelecting(false);
       void saveSelection();
     };
 
+    document.addEventListener('mousedown', onMouseDown);
     document.addEventListener('mouseup', onMouseUp);
-    return () => document.removeEventListener('mouseup', onMouseUp);
-  }, [saveSelection]);
+    return () => {
+      document.removeEventListener('mousedown', onMouseDown);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+  }, [saveSelection, resolveUnderlineCitationFromPoint]);
 
   useEffect(() => {
     const paneNode = pdfPaneRef.current;
@@ -742,7 +1153,7 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
 
     if (!file) return;
     if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-      setLoadError('PDF 파일만 업로드할 수 있습니다.');
+      setLoadError('Only PDF files can be uploaded.');
       return;
     }
 
@@ -787,24 +1198,24 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
     const bookStartPage = parsePositiveInt(metaForm.bookStartPage);
 
     if (!author) {
-      setMetaError('저자 입력은 필수입니다.');
+      setMetaError('Author is required.');
       return;
     }
 
     if (!title) {
-      setMetaError('제목을 입력해주세요.');
+      setMetaError('Please enter a title.');
       return;
     }
 
     const hasPdfMapping = metaForm.pdfStartPage.trim().length > 0;
     const hasBookMapping = metaForm.bookStartPage.trim().length > 0;
     if (hasPdfMapping !== hasBookMapping) {
-      setMetaError('페이지 매핑은 두 칸을 함께 입력해야 합니다.');
+      setMetaError('Please enter both page mapping fields together.');
       return;
     }
 
     if ((hasPdfMapping && !pdfStartPage) || (hasBookMapping && !bookStartPage)) {
-      setMetaError('페이지 매핑은 1 이상의 정수로 입력해주세요.');
+      setMetaError('Page mapping must be a positive integer greater than 0.');
       return;
     }
 
@@ -830,12 +1241,12 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
       setIsMetaSaving(false);
 
       if (!bulkResult.ok) {
-        setMetaError('메타를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.');
+        setMetaError('Failed to save metadata. Please try again shortly.');
         return;
       }
 
       if (bulkResult.updatedCount > 0) {
-        setMetaNotice(`현재 문헌 인용 ${bulkResult.updatedCount}건의 저자/제목을 업데이트했습니다.`);
+        setMetaNotice(`Updated author/title for ${bulkResult.updatedCount} citation(s) in this document.`);
       }
     }
 
@@ -938,8 +1349,8 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
           </div>
 
           <div className="px-5 py-2 border-b border-[var(--border-main)] flex items-center gap-2 text-[11px]">
-            {pdfUrl && <span className="text-[var(--text-muted)]">연속 스크롤로 읽고 드래그하여 저장합니다.</span>}
-            {!isMetaConfirmed && pdfUrl && <span className="text-amber-600">메타 입력 완료 후 캡처할 수 있습니다.</span>}
+            {pdfUrl && <span className="text-[var(--text-muted)]">Read in continuous scroll and drag text to save.</span>}
+            {!isMetaConfirmed && pdfUrl && <span className="text-amber-600">You can capture after entering metadata.</span>}
           </div>
 
           <div
@@ -949,7 +1360,7 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
           >
             {!pdfUrl && (
               <div className="h-full border-2 border-dashed border-[var(--border-main)] rounded-xl flex items-center justify-center text-[var(--text-muted)]">
-                PDF를 업로드하면 여기서 바로 읽고 캡처할 수 있습니다.
+                Upload a PDF to read and capture here.
               </div>
             )}
 
@@ -959,15 +1370,18 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
                   file={pdfUrl}
                   onLoadSuccess={handleDocumentLoadSuccess}
                   onLoadError={(error) =>
-                    setLoadError(`PDF를 열지 못했습니다. ${error?.message || '파일을 다시 선택해주세요.'}`)
+                    setLoadError(`Unable to open PDF. ${error?.message || 'Please choose the file again.'}`)
                   }
-                  loading={<div className="p-6 text-sm text-[var(--text-muted)]">PDF를 불러오는 중...</div>}
+                  loading={<div className="p-6 text-sm text-[var(--text-muted)]">Loading PDF...</div>}
                   className="w-full flex flex-col items-center"
                 >
                   {Array.from({ length: numPages }, (_, index) => {
                     const pageNumber = index + 1;
                     const shouldRender = pageNumber >= visibleRange.start && pageNumber <= visibleRange.end;
-                    const pageHighlights = highlights.filter((item) => item.pageIndex === pageNumber - 1);
+                    const pageMarks = highlights.filter((item) => item.pageIndex === pageNumber - 1);
+                    const pageUnderlineMarks = pageMarks.filter((item) => (item.kind || 'underline') !== 'highlight');
+                    const pageHighlightMarks = pageMarks.filter((item) => (item.kind || 'underline') === 'highlight');
+                    const pageSelectionPreview = selectionPreview.find((item) => item.pageIndex === pageNumber - 1);
                     const estimatedHeight = getEstimatedPageHeight(pageNumber);
 
                     return (
@@ -989,10 +1403,10 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
                                 renderAnnotationLayer
                                 renderTextLayer
                                 onLoadSuccess={(page) => handlePageLoadSuccess(page, pageNumber)}
-                                loading={<div className="p-6 text-sm text-[var(--text-muted)]">페이지를 준비하는 중...</div>}
+                                loading={<div className="p-6 text-sm text-[var(--text-muted)]">Preparing page...</div>}
                               />
                               <div className="pointer-events-none absolute inset-0 z-20">
-                                {pageHighlights.map((highlight) =>
+                                {pageHighlightMarks.map((highlight) =>
                                   highlight.rects.map((rect, highlightIndex) => (
                                     <div
                                       key={`${highlight.id}-${highlightIndex}`}
@@ -1006,6 +1420,34 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
                                     />
                                   ))
                                 )}
+                                {pageUnderlineMarks.map((highlight) =>
+                                  highlight.rects.map((rect, underlineIndex) => (
+                                    <div
+                                      key={`${highlight.id}-u-${underlineIndex}`}
+                                      className="absolute border-b-2 border-amber-500/90"
+                                      style={{
+                                        left: `${rect.leftPct * 100}%`,
+                                        top: `${rect.topPct * 100}%`,
+                                        width: `${rect.widthPct * 100}%`,
+                                        height: `${rect.heightPct * 100}%`
+                                      }}
+                                    />
+                                  ))
+                                )}
+                                {isPointerSelecting &&
+                                  pageSelectionPreview &&
+                                  pageSelectionPreview.rects.map((rect, previewIndex) => (
+                                    <div
+                                      key={`preview-${pageNumber}-${previewIndex}`}
+                                      className={`absolute ${selectionPreviewKind === 'highlight' ? 'bg-yellow-300/45' : 'border-b-2 border-amber-500/90'}`}
+                                      style={{
+                                        left: `${rect.leftPct * 100}%`,
+                                        top: `${rect.topPct * 100}%`,
+                                        width: `${rect.widthPct * 100}%`,
+                                        height: `${rect.heightPct * 100}%`
+                                      }}
+                                    />
+                                  ))}
                               </div>
                             </>
                           ) : (
@@ -1043,7 +1485,7 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
               <div className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">Citation Capture</div>
               <h3 className="mt-1 text-base font-semibold truncate">{meta.title || extractTitleFromFileName(pdfName || '') || 'Untitled source'}</h3>
               <p className="text-xs text-[var(--text-muted)] mt-1 truncate">
-                {meta.author ? `${meta.author}` : '저자를 입력하면 문헌 필터가 정확해집니다.'}
+                {meta.author ? `${meta.author}` : 'Adding an author improves document filtering.'}
               </p>
               {metaNotice && (
                 <div className="mt-2 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-[11px] text-emerald-700">
@@ -1058,7 +1500,7 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
                 username={username}
                 readOnly
                 hideSubmit
-                placeholder={isMetaConfirmed ? 'PDF 텍스트를 드래그하면 여기에 표시됩니다.' : '먼저 저자/제목 메타를 입력해주세요.'}
+                  placeholder={isMetaConfirmed ? 'Drag text in the PDF and it will appear here.' : 'Enter author/title metadata first.'}
                 controlledValues={{
                   text: draftSelection?.text || '',
                   author: meta.author || '',
@@ -1077,7 +1519,7 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
 
               {currentDocumentCitations.length === 0 ? (
                 <div className="text-xs text-[var(--text-muted)] border border-dashed border-[var(--border-main)] rounded-md p-3">
-                  현재 문헌(author + title 일치) 인용이 없습니다.
+                  No citations yet for this document (matching author + title).
                 </div>
               ) : (
                 <CitationList
@@ -1105,7 +1547,7 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
           <div className="w-full max-w-lg bg-[var(--bg-card)] rounded-xl border border-[var(--border-main)] shadow-2xl">
             <div className="px-5 py-4 border-b border-[var(--border-main)]">
               <h3 className="text-lg font-semibold">PDF Metadata</h3>
-              <p className="text-xs text-[var(--text-muted)] mt-1">저자 입력은 필수입니다. 제목은 파일명으로 자동 채워집니다.</p>
+              <p className="text-xs text-[var(--text-muted)] mt-1">Author is required. Title is auto-filled from the file name.</p>
             </div>
 
             <div className="p-5 space-y-4">
@@ -1115,7 +1557,7 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
                   autoFocus
                   value={metaForm.author}
                   onChange={(event) => setMetaForm((prev) => ({ ...prev, author: event.target.value }))}
-                  placeholder={`예: ${username}`}
+                  placeholder={`e.g. ${username}`}
                   className="w-full rounded-md border border-[var(--border-main)] bg-[var(--bg-input)] px-3 py-2 text-sm"
                 />
               </div>
@@ -1125,28 +1567,28 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
                 <input
                   value={metaForm.title}
                   onChange={(event) => setMetaForm((prev) => ({ ...prev, title: event.target.value }))}
-                  placeholder="문헌 제목"
+                  placeholder="Document title"
                   className="w-full rounded-md border border-[var(--border-main)] bg-[var(--bg-input)] px-3 py-2 text-sm"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1">PDF 시작 페이지</label>
+                  <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1">PDF start page</label>
                   <input
                     value={metaForm.pdfStartPage}
                     onChange={(event) => setMetaForm((prev) => ({ ...prev, pdfStartPage: event.target.value }))}
-                    placeholder="예: 9"
+                    placeholder="e.g. 9"
                     inputMode="numeric"
                     className="w-full rounded-md border border-[var(--border-main)] bg-[var(--bg-input)] px-3 py-2 text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1">책 시작 페이지</label>
+                  <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1">Book start page</label>
                   <input
                     value={metaForm.bookStartPage}
                     onChange={(event) => setMetaForm((prev) => ({ ...prev, bookStartPage: event.target.value }))}
-                    placeholder="예: 1"
+                    placeholder="e.g. 1"
                     inputMode="numeric"
                     className="w-full rounded-md border border-[var(--border-main)] bg-[var(--bg-input)] px-3 py-2 text-sm"
                   />
@@ -1154,7 +1596,7 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
               </div>
 
               <p className="text-[11px] text-[var(--text-muted)]">
-                매핑은 선택사항입니다. 입력하면 page label이 없는 PDF에서도 책 페이지 번호를 계산합니다.
+                Mapping is optional. If set, book page numbers are computed even when PDF page labels are missing.
               </p>
 
               {metaError && <p className="text-xs text-red-600">{metaError}</p>}
