@@ -3,6 +3,7 @@ import {
   Book,
   ChevronDown,
   ChevronRight,
+  Edit2,
   FolderOpen,
   Search,
   User,
@@ -43,6 +44,8 @@ interface LibrarySidebarProps {
   selectedFilter?: SelectedFilter;
   onReorderAuthorAt?: (dragAuthor: string, dropIndex: number) => void;
   onReorderBookAt?: (author: string, dragBook: string, dropIndex: number) => void;
+  onRenameAuthor?: (authorId: string, name: string) => void;
+  onRenameBook?: (bookId: string, name: string) => void;
   width: number;
   isResizing: boolean;
   onStartResize: () => void;
@@ -58,6 +61,8 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
   selectedFilter = null,
   onReorderAuthorAt,
   onReorderBookAt,
+  onRenameAuthor,
+  onRenameBook,
   width,
   isResizing,
   onStartResize
@@ -68,6 +73,37 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
   const [isTreeDragging, setIsTreeDragging] = useState(false);
   const [activeTreeDragMeta, setActiveTreeDragMeta] = useState<TreeDragMeta | null>(null);
   const [dragCenterOffsetY, setDragCenterOffsetY] = useState(0);
+  const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
+  const [editingValue, setEditingValue] = useState('');
+
+  const startNodeEdit = (item: SidebarItem, event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (item.type !== 'author' && item.type !== 'book') return;
+    setEditingNodeId(item.id);
+    setEditingValue(item.label);
+  };
+
+  const cancelNodeEdit = () => {
+    setEditingNodeId(null);
+    setEditingValue('');
+  };
+
+  const saveNodeEdit = (item: SidebarItem) => {
+    const trimmed = editingValue.trim();
+    if (!trimmed || trimmed === item.label) {
+      cancelNodeEdit();
+      return;
+    }
+
+    if (item.type === 'author' && item.data?.authorId) {
+      onRenameAuthor?.(item.data.authorId, trimmed);
+    }
+    if (item.type === 'book' && item.data?.bookId) {
+      onRenameBook?.(item.data.bookId, trimmed);
+    }
+
+    cancelNodeEdit();
+  };
 
   const toggleNode = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -421,12 +457,18 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
           `}
           style={{ paddingLeft: `${paddingLeft}px` }}
           onClick={() => {
+            if (editingNodeId === item.id) return;
             onTreeItemClick(item);
             if (item.children && !expandedNodes.has(item.id)) {
               setExpandedNodes(prev => new Set([...prev, item.id]));
             }
           }}
-          draggable={Boolean(item.data)}
+          onDoubleClick={(event) => {
+            if (item.type === 'author' || item.type === 'book') {
+              startNodeEdit(item, event);
+            }
+          }}
+          draggable={Boolean(item.data) && editingNodeId !== item.id}
           onDragStart={(e) => handleDragStartRef(e, item.data, treeMeta)}
           onDragOver={(e) => {
             if (!rowMeta) return;
@@ -457,11 +499,45 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
             )}
           </span>
 
-          {item.type === 'root' && <User size={14} className="mr-2 text-[var(--accent)]" />}
-          {item.type === 'author' && <User size={14} className="mr-2 text-[var(--text-muted)]" />}
-          {item.type === 'book' && <Book size={14} className="mr-2 text-[var(--text-muted)]" />}
+          {item.type === 'root' && <User className="mr-2 h-4 w-4 flex-shrink-0 text-[var(--accent)]" />}
+          {item.type === 'author' && <User className="mr-2 h-4 w-4 flex-shrink-0 text-[var(--text-muted)]" />}
+          {item.type === 'book' && <Book className="mr-2 h-4 w-4 flex-shrink-0 text-[var(--text-muted)]" />}
 
-          <span className="truncate">{item.label}</span>
+          {editingNodeId === item.id ? (
+            <div className="flex-1 min-w-0 flex items-center">
+              <input
+                autoFocus
+                value={editingValue}
+                onChange={(e) => setEditingValue(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                onBlur={() => cancelNodeEdit()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    saveNodeEdit(item);
+                  } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    cancelNodeEdit();
+                  }
+                }}
+                className="flex-1 min-w-0 text-sm bg-transparent border border-[var(--border-main)] rounded px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-[var(--accent-ring)]"
+              />
+            </div>
+          ) : (
+            <>
+              <span className="truncate flex-1 min-w-0">{item.label}</span>
+              {(item.type === 'author' || item.type === 'book') && (
+                <button
+                  onClick={(event) => startNodeEdit(item, event)}
+                  className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity p-1 rounded hover:bg-[var(--sidebar-hover)] text-[var(--text-muted)]"
+                  aria-label={`Rename ${item.type}`}
+                  title={item.type === 'author' ? 'Rename author' : 'Rename book'}
+                >
+                  <Edit2 size={13} />
+                </button>
+              )}
+            </>
+          )}
         </div>
 
         {item.children && isExpanded && (
@@ -585,7 +661,7 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
       </div>
 
       <div className="p-4 bg-[var(--bg-sidebar)] text-xs text-[var(--text-muted)] border-t border-[var(--border-main)]">
-        <p>Drop between rows to reorder. Drag/click Author or Book to auto-fill metadata.</p>
+        <p>Drop between rows to reorder. Use pencil icon or double-click Author/Book to rename.</p>
       </div>
     </aside>
   );

@@ -1,13 +1,13 @@
 import React from 'react';
 import { CitationEditor } from './CitationEditor';
-import { Citation } from '../types';
+import { AddCitationInput } from '../types';
 
 interface ArchiveHeaderProps {
     title: string;
     showEditor: boolean;
     username: string;
     editorPrefill?: { author: string, book: string };
-    onAddCitation: (data: Omit<Citation, 'id' | 'createdAt' | 'notes'>) => void;
+    onAddCitation: (data: AddCitationInput) => void | Promise<unknown>;
     sortField: 'date' | 'page';
     dateDirection: 'asc' | 'desc';
     pageDirection: 'asc' | 'desc';

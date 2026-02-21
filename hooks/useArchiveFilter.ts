@@ -44,6 +44,23 @@ const sortByIndexThenLabel = <T extends { sortIndex?: number | null; label: stri
     });
 };
 
+const normalizeBookKey = (value: string) =>
+    value.trim().replace(/\s+/g, ' ').toLocaleLowerCase();
+
+const pickPreferredBook = (
+    current: { id: string; label: string; sortIndex?: number | null } | undefined,
+    candidate: { id: string; label: string; sortIndex?: number | null }
+) => {
+    if (!current) return candidate;
+    const currentSort = current.sortIndex;
+    const candidateSort = candidate.sortIndex;
+    if (typeof currentSort !== 'number' && typeof candidateSort === 'number') return candidate;
+    if (typeof currentSort === 'number' && typeof candidateSort === 'number' && candidateSort < currentSort) {
+        return candidate;
+    }
+    return current;
+};
+
 export const useArchiveFilter = (citations: Citation[], projects: Project[], username: string, userId?: string) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState<FilterState | null>(null);
@@ -79,11 +96,15 @@ export const useArchiveFilter = (citations: Citation[], projects: Project[], use
         citations.forEach(c => {
             if (!c.authorId || !c.bookId || !c.book) return;
             const existing = byAuthor.get(c.authorId) || new Map<string, { id: string; label: string; sortIndex?: number | null }>();
-            existing.set(c.bookId, {
-                id: c.bookId,
-                label: c.book,
-                sortIndex: c.bookSortIndex
-            });
+            const key = normalizeBookKey(c.book);
+            existing.set(
+                key,
+                pickPreferredBook(existing.get(key), {
+                    id: c.bookId,
+                    label: c.book,
+                    sortIndex: c.bookSortIndex
+                })
+            );
             byAuthor.set(c.authorId, existing);
         });
 
@@ -165,9 +186,15 @@ export const useArchiveFilter = (citations: Citation[], projects: Project[], use
         const map = new Map<string, { id: string; label: string; sortIndex?: number | null }>();
         citations.forEach(c => {
             if (!c.authorId || c.authorId !== authorId || !c.bookId || !c.book) return;
-            if (!map.has(c.bookId)) {
-                map.set(c.bookId, { id: c.bookId, label: c.book, sortIndex: c.bookSortIndex });
-            }
+            const key = normalizeBookKey(c.book);
+            map.set(
+                key,
+                pickPreferredBook(map.get(key), {
+                    id: c.bookId,
+                    label: c.book,
+                    sortIndex: c.bookSortIndex
+                })
+            );
         });
 
         const sorted = sortByIndexThenLabel(Array.from(map.values()));
@@ -250,11 +277,17 @@ export const useArchiveFilter = (citations: Citation[], projects: Project[], use
             }
 
             if (c.bookId && c.book) {
-                authorsMap.get(c.authorId)?.books.set(c.bookId, {
-                    id: c.bookId,
-                    label: c.book,
-                    sortIndex: c.bookSortIndex
-                });
+                const authorBooks = authorsMap.get(c.authorId)?.books;
+                if (authorBooks) {
+                    authorBooks.set(
+                        c.bookId,
+                        pickPreferredBook(authorBooks.get(c.bookId), {
+                            id: c.bookId,
+                            label: c.book,
+                            sortIndex: c.bookSortIndex
+                        })
+                    );
+                }
             }
         });
 

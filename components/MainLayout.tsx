@@ -13,6 +13,8 @@ interface MainLayoutProps {
   onCreateProject: (name: string) => void;
   onRenameProject: (id: string, name: string) => void;
   onDeleteProject: (id: string) => void;
+  onRenameAuthor: (authorId: string, name: string) => void;
+  onRenameBook: (bookId: string, name: string) => void;
   onReorderProjects: (dragIndex: number, hoverIndex: number) => void;
   treeData: SidebarItem[];
   onTreeItemClick: (item: SidebarItem) => void;
@@ -24,6 +26,7 @@ interface MainLayoutProps {
   selectedFilter?: { type: 'author' | 'book'; value: string; author?: string } | null;
   onReorderAuthorAt?: (dragAuthor: string, dropIndex: number) => void;
   onReorderBookAt?: (author: string, dragBook: string, dropIndex: number) => void;
+  onOpenPdfReader: () => void;
   isDarkMode: boolean;
   toggleDarkMode: () => void;
 }
@@ -37,6 +40,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   onCreateProject,
   onRenameProject,
   onDeleteProject,
+  onRenameAuthor,
+  onRenameBook,
   onReorderProjects,
   treeData,
   onTreeItemClick,
@@ -48,6 +53,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   selectedFilter = null,
   onReorderAuthorAt,
   onReorderBookAt,
+  onOpenPdfReader,
   isDarkMode,
   toggleDarkMode
 }) => {
@@ -74,6 +80,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         username={username}
         onUpdateUsername={onUpdateUsername}
         onSignOut={onSignOut}
+        onOpenPdfReader={onOpenPdfReader}
         isDarkMode={isDarkMode}
         toggleDarkMode={toggleDarkMode}
         width={leftWidth}
@@ -93,6 +100,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         onSearch={onSearch}
         searchTerm={searchTerm}
         selectedFilter={selectedFilter}
+        onRenameAuthor={onRenameAuthor}
+        onRenameBook={onRenameBook}
         onReorderAuthorAt={onReorderAuthorAt}
         onReorderBookAt={onReorderBookAt}
         width={rightWidth}

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  BookOpen,
   Check,
   Edit2,
   Folder,
@@ -34,6 +35,7 @@ interface ProjectSidebarProps {
   username?: string;
   onUpdateUsername?: (name: string) => void;
   onSignOut?: () => void;
+  onOpenPdfReader: () => void;
   isDarkMode: boolean;
   toggleDarkMode: () => void;
   width: number;
@@ -53,6 +55,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
   username = 'Researcher',
   onUpdateUsername,
   onSignOut,
+  onOpenPdfReader,
   isDarkMode,
   toggleDarkMode,
   width,
@@ -389,6 +392,15 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
           }
         }}
       >
+        <button
+          onClick={onOpenPdfReader}
+          aria-label="Open PDF Reader"
+          className="w-full mb-3 flex items-center justify-center p-2.5 text-sm font-medium text-[var(--accent)] bg-[var(--bg-card)] hover:bg-[var(--sidebar-hover)] rounded-md border border-[var(--accent-border)] shadow-sm transition-all"
+        >
+          <BookOpen size={16} className="mr-2" />
+          Read PDF
+        </button>
+
         <div className="mt-2 mb-2 px-2 flex items-center justify-between text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
           <span>Folders</span>
           <button

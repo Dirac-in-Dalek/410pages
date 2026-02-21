@@ -10,6 +10,7 @@ import { BulkActionToolbar } from './components/BulkActionToolbar';
 import { ConfirmModal } from './components/ConfirmModal';
 import { ArchiveHeader } from './components/ArchiveHeader';
 import { CitationList } from './components/CitationList';
+import { PdfReaderPage } from './components/pdf-reader/PdfReaderPage';
 
 import { useDarkMode } from './hooks/useDarkMode';
 
@@ -62,7 +63,8 @@ const App: React.FC = () => {
     projects, setProjects, citations, setCitations, loading: dataLoading,
     fetchData, handleAddCitation, handleAddNote, handleUpdateNote,
     handleDeleteNote, handleDeleteCitation, handleUpdateCitation,
-    handleCreateProject, handleRenameProject, handleDeleteProject,
+    handleBulkUpdateCitationSource,
+    handleCreateProject, handleRenameProject, handleDeleteProject, handleRenameAuthor, handleRenameBook,
     handleDropCitationToProject, handleReorderProjects
   } = useArchiveData(session);
 
@@ -82,6 +84,7 @@ const App: React.FC = () => {
 
   // --- UI State ---
   const [showBatchDeleteModal, setShowBatchDeleteModal] = useState(false);
+  const [viewMode, setViewMode] = useState<'archive' | 'reader'>('archive');
 
   // --- Effects ---
   useEffect(() => {
@@ -89,6 +92,12 @@ const App: React.FC = () => {
       fetchData();
     }
   }, [session?.user.id, fetchData]);
+
+  useEffect(() => {
+    if (isMobileApp && viewMode === 'reader') {
+      setViewMode('archive');
+    }
+  }, [isMobileApp, viewMode]);
 
   // --- RENDER ---
   if (!session) return <Auth />;
@@ -180,6 +189,25 @@ const App: React.FC = () => {
     );
   }
 
+  if (viewMode === 'reader') {
+    return (
+      <PdfReaderPage
+        username={username}
+        onBack={() => setViewMode('archive')}
+        citations={citations}
+        projects={projects}
+        loading={dataLoading || authLoading}
+        onAddCitation={handleAddCitation}
+        onAddNote={handleAddNote}
+        onUpdateNote={handleUpdateNote}
+        onDeleteNote={handleDeleteNote}
+        onDeleteCitation={handleDeleteCitation}
+        onUpdateCitation={handleUpdateCitation}
+        onBulkUpdateCitationSource={handleBulkUpdateCitationSource}
+      />
+    );
+  }
+
   return (
     <MainLayout
       projects={projects}
@@ -189,6 +217,8 @@ const App: React.FC = () => {
       onCreateProject={handleCreateProject}
       onRenameProject={handleRenameProject}
       onDeleteProject={handleDeleteProject}
+      onRenameAuthor={handleRenameAuthor}
+      onRenameBook={handleRenameBook}
       onReorderProjects={handleReorderProjects}
       treeData={treeData}
       onTreeItemClick={handleTreeItemClick}
@@ -200,6 +230,7 @@ const App: React.FC = () => {
       selectedFilter={filter}
       onReorderAuthorAt={handleReorderAuthorAt}
       onReorderBookAt={handleReorderBookAt}
+      onOpenPdfReader={() => setViewMode('reader')}
       isDarkMode={isDarkMode}
       toggleDarkMode={toggleDarkMode}
     >

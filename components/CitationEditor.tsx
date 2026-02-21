@@ -1,14 +1,33 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, User, Book as BookIcon, Hash, Type } from 'lucide-react';
-import { Citation } from '../types';
+import { Send, User, Book as BookIcon, Hash } from 'lucide-react';
+import { AddCitationInput } from '../types';
+
+type CitationEditorValues = {
+  text: string;
+  author: string;
+  book: string;
+  page: string;
+};
 
 interface CitationEditorProps {
-  onAddCitation: (citation: Omit<Citation, 'id' | 'createdAt' | 'notes'>) => void;
+  onAddCitation: (citation: AddCitationInput) => void | Promise<unknown>;
   prefillData?: { author: string; book: string };
   username: string;
+  controlledValues?: Partial<CitationEditorValues>;
+  readOnly?: boolean;
+  hideSubmit?: boolean;
+  placeholder?: string;
 }
 
-export const CitationEditor: React.FC<CitationEditorProps> = ({ onAddCitation, prefillData, username }) => {
+export const CitationEditor: React.FC<CitationEditorProps> = ({
+  onAddCitation,
+  prefillData,
+  username,
+  controlledValues,
+  readOnly = false,
+  hideSubmit = false,
+  placeholder = 'Write a quote, sentence, or field note...'
+}) => {
   const [text, setText] = useState('');
   const [author, setAuthor] = useState(''); // Keep empty as default for "Self"
   const [book, setBook] = useState('');
@@ -28,6 +47,8 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({ onAddCitation, p
 
   // Update inputs when prefillData changes
   useEffect(() => {
+    if (controlledValues) return;
+
     if (prefillData) {
       setAuthor(prefillData.author);
       setBook(prefillData.book || '');
@@ -35,9 +56,25 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({ onAddCitation, p
       setAuthor(''); // Empty author means "Self"
       setBook('');
     }
-  }, [prefillData]);
+  }, [controlledValues, prefillData]);
+
+  useEffect(() => {
+    if (!controlledValues) return;
+
+    setText(controlledValues.text ?? '');
+    setAuthor(controlledValues.author ?? '');
+    setBook(controlledValues.book ?? '');
+    setPage(controlledValues.page ?? '');
+  }, [
+    controlledValues,
+    controlledValues?.author,
+    controlledValues?.book,
+    controlledValues?.page,
+    controlledValues?.text
+  ]);
 
   const handleSubmit = () => {
+    if (readOnly) return;
     if (!text.trim()) return;
 
     onAddCitation({
@@ -56,6 +93,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({ onAddCitation, p
   };
 
   const handleDragOver = (e: React.DragEvent) => {
+    if (readOnly) return;
     e.preventDefault();
     setIsDraggingOver(true);
   };
@@ -65,6 +103,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({ onAddCitation, p
   };
 
   const handleDrop = (e: React.DragEvent) => {
+    if (readOnly) return;
     e.preventDefault();
     setIsDraggingOver(false);
 
@@ -112,15 +151,17 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({ onAddCitation, p
         <textarea
           ref={textareaRef}
           value={text}
+          readOnly={readOnly}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
+            if (readOnly) return;
             if (e.nativeEvent.isComposing) return;
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
               handleSubmit();
             }
           }}
-          placeholder="Write a quote, sentence, or field note..."
+          placeholder={placeholder}
           className="w-full text-base md:text-lg font-serif placeholder:font-sans placeholder:text-[var(--text-muted)] text-[var(--text-main)] border-none resize-none focus:ring-0 bg-transparent p-0 min-h-[80px] overflow-y-auto"
         />
       </div>
@@ -134,8 +175,10 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({ onAddCitation, p
           <input
             type="text"
             value={author}
+            readOnly={readOnly}
             onChange={(e) => setAuthor(e.target.value)}
             onKeyDown={(e) => {
+              if (readOnly) return;
               if (e.nativeEvent.isComposing) return;
               if (e.key === 'Enter') handleSubmit();
             }}
@@ -150,8 +193,10 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({ onAddCitation, p
           <input
             type="text"
             value={book}
+            readOnly={readOnly}
             onChange={(e) => setBook(e.target.value)}
             onKeyDown={(e) => {
+              if (readOnly) return;
               if (e.nativeEvent.isComposing) return;
               if (e.key === 'Enter') handleSubmit();
             }}
@@ -166,8 +211,10 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({ onAddCitation, p
           <input
             type="text"
             value={page}
+            readOnly={readOnly}
             onChange={(e) => setPage(e.target.value)}
             onKeyDown={(e) => {
+              if (readOnly) return;
               if (e.nativeEvent.isComposing) return;
               if (e.key === 'Enter') handleSubmit();
             }}
@@ -177,16 +224,18 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({ onAddCitation, p
         </div>
 
         {/* Submit Button */}
-        <button
-          onClick={handleSubmit}
-          disabled={!text.trim()}
-          className={`
-            ml-auto p-2 rounded-md transition-all
-            ${text.trim() ? 'bg-[var(--accent)] text-white shadow-md hover:bg-[var(--accent-strong)] hover:scale-105 active:scale-95' : 'bg-[var(--bg-sidebar)] text-[var(--text-muted)] cursor-not-allowed'}
-          `}
-        >
-          <Send size={16} />
-        </button>
+        {!hideSubmit && (
+          <button
+            onClick={handleSubmit}
+            disabled={readOnly || !text.trim()}
+            className={`
+              ml-auto p-2 rounded-md transition-all
+              ${text.trim() && !readOnly ? 'bg-[var(--accent)] text-white shadow-md hover:bg-[var(--accent-strong)] hover:scale-105 active:scale-95' : 'bg-[var(--bg-sidebar)] text-[var(--text-muted)] cursor-not-allowed'}
+            `}
+          >
+            <Send size={16} />
+          </button>
+        )}
       </div>
 
     </div>

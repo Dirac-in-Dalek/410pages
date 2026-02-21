@@ -29,6 +29,15 @@ export interface Citation {
   createdAt: number;
 }
 
+export type AddCitationInput = Omit<Citation, 'id' | 'createdAt' | 'notes'>;
+export type AddCitationResult = { ok: true; citationId: string } | { ok: false; error: unknown };
+export type BulkSourceUpdateResult = { ok: true; updatedCount: number } | { ok: false; error: unknown };
+
+export interface CitationSourceInput {
+  author: string;
+  book: string;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -48,3 +57,42 @@ export type SidebarItem = {
     book?: string;
   };
 };
+
+export interface PdfReaderMeta {
+  author: string;
+  title: string;
+  pdfStartPage?: number;
+  bookStartPage?: number;
+}
+
+export interface PdfDraftSelection {
+  text: string;
+  pageIndex: number;
+  pageLabel: string;
+}
+
+export interface PdfHighlightRect {
+  leftPct: number;
+  topPct: number;
+  widthPct: number;
+  heightPct: number;
+}
+
+export interface PdfRectHighlight {
+  id: string;
+  citationId?: string;
+  pageIndex: number;
+  rects: PdfHighlightRect[];
+  createdAt: number;
+}
+
+export interface ReaderPaneLayout {
+  leftWidth: number;
+  rightWidth: number;
+  isLeftCollapsed: boolean;
+}
+
+export interface ReaderVirtualRange {
+  start: number;
+  end: number;
+}

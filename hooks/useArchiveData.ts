@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Citation, Project } from '../types';
+import { AddCitationInput, AddCitationResult, BulkSourceUpdateResult, Citation, CitationSourceInput, Project } from '../types';
 import { api } from '../lib/api';
 
 export const useArchiveData = (session: any) => {
@@ -22,13 +22,17 @@ export const useArchiveData = (session: any) => {
         }
     }, []);
 
-    const handleAddCitation = async (data: Omit<Citation, 'id' | 'createdAt' | 'notes'>) => {
-        if (!session) return;
+    const handleAddCitation = async (data: AddCitationInput): Promise<AddCitationResult> => {
+        if (!session) {
+            return { ok: false, error: new Error('No active session') };
+        }
         try {
             const newCitation = await api.addCitation(session.user.id, data);
             setCitations(prev => [newCitation, ...prev]);
+            return { ok: true, citationId: newCitation.id };
         } catch (error) {
             console.error('Error adding citation:', error);
+            return { ok: false, error };
         }
     };
 
@@ -100,10 +104,30 @@ export const useArchiveData = (session: any) => {
     const handleUpdateCitation = async (id: string, data: Partial<Citation>) => {
         if (!session) return;
         try {
-            await api.updateCitation(session.user.id, id, data);
-            setCitations(prev => prev.map(c => c.id === id ? { ...c, ...data } : c));
+            const patch = await api.updateCitation(session.user.id, id, data);
+            setCitations(prev => prev.map(c => c.id === id ? { ...c, ...patch } : c));
         } catch (error) {
             console.error('Error updating citation:', error);
+        }
+    };
+
+    const handleBulkUpdateCitationSource = async (
+        citationIds: string[],
+        source: CitationSourceInput
+    ): Promise<BulkSourceUpdateResult> => {
+        if (!session) return { ok: false, error: new Error('No active session') };
+        if (citationIds.length === 0) return { ok: true, updatedCount: 0 };
+
+        try {
+            const result = await api.bulkUpdateCitationSource(session.user.id, citationIds, source);
+            const updatedIdSet = new Set(result.updatedIds);
+            setCitations((prev) =>
+                prev.map((citation) => (updatedIdSet.has(citation.id) ? { ...citation, ...result.patch } : citation))
+            );
+            return { ok: true, updatedCount: result.updatedCount };
+        } catch (error) {
+            console.error('Error bulk updating citation source:', error);
+            return { ok: false, error };
         }
     };
 
@@ -134,6 +158,80 @@ export const useArchiveData = (session: any) => {
             setProjects(prev => prev.filter(p => p.id !== id));
         } catch (error) {
             console.error('Error deleting project:', error);
+        }
+    };
+
+    const handleRenameAuthor = async (authorId: string, name: string) => {
+        if (!session) return;
+        const trimmed = name.trim();
+        if (!trimmed) return;
+
+        try {
+            const result = await api.renameAuthor(session.user.id, authorId, trimmed);
+            const bookMergeMap = new Map(
+                result.bookMerges.map((merge) => [
+                    merge.fromBookId,
+                    {
+                        toBookId: merge.toBookId,
+                        toBookTitle: merge.toBookTitle,
+                        toBookSortIndex: merge.toBookSortIndex
+                    }
+                ])
+            );
+
+            setCitations(prev =>
+                prev.map(citation => {
+                    let nextCitation = citation;
+
+                    if (citation.authorId === result.fromAuthorId) {
+                        nextCitation = {
+                            ...nextCitation,
+                            authorId: result.authorId,
+                            author: result.authorName,
+                            authorSortIndex: result.authorSortIndex,
+                            isSelf: result.isSelf
+                        };
+                    }
+
+                    if (citation.bookId && bookMergeMap.has(citation.bookId)) {
+                        const mergeTarget = bookMergeMap.get(citation.bookId)!;
+                        nextCitation = {
+                            ...nextCitation,
+                            bookId: mergeTarget.toBookId,
+                            book: mergeTarget.toBookTitle,
+                            bookSortIndex: mergeTarget.toBookSortIndex
+                        };
+                    }
+
+                    return nextCitation;
+                })
+            );
+        } catch (error) {
+            console.error('Error renaming author:', error);
+        }
+    };
+
+    const handleRenameBook = async (bookId: string, name: string) => {
+        if (!session) return;
+        const trimmed = name.trim();
+        if (!trimmed) return;
+
+        try {
+            const result = await api.renameBook(session.user.id, bookId, trimmed);
+            setCitations(prev =>
+                prev.map(citation =>
+                    citation.bookId === result.fromBookId
+                        ? {
+                            ...citation,
+                            bookId: result.bookId,
+                            book: result.bookTitle,
+                            bookSortIndex: result.bookSortIndex
+                        }
+                        : citation
+                )
+            );
+        } catch (error) {
+            console.error('Error renaming book:', error);
         }
     };
 
@@ -190,9 +288,12 @@ export const useArchiveData = (session: any) => {
         handleDeleteNote,
         handleDeleteCitation,
         handleUpdateCitation,
+        handleBulkUpdateCitationSource,
         handleCreateProject,
         handleRenameProject,
         handleDeleteProject,
+        handleRenameAuthor,
+        handleRenameBook,
         handleReorderProjects,
         handleDropCitationToProject
     };
