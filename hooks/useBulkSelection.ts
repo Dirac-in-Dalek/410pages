@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { Citation, Project } from '../types';
 import { api } from '../lib/api';
+import { formatCitationCopyText, writeTextToClipboard } from '../lib/citationCopy';
 
 export const useBulkSelection = (
     filteredCitations: Citation[],
@@ -29,33 +30,17 @@ export const useBulkSelection = (
         }
     }, [filteredCitations]);
 
-    const handleBatchCopy = async () => {
+    const handleBatchCopy = async (includeNotes: boolean = false) => {
         if (selectedIds.size === 0) return;
         setIsCopying(true);
 
         const selectedList = filteredCitations.filter(c => selectedIds.has(c.id));
-        const copyText = selectedList.map(citation => {
-            let text = `"${citation.text}"`;
-            const isSelf = citation.isSelf ?? (citation.author === username || !citation.author || citation.author === 'Self');
-            if (!isSelf && citation.author) {
-                text += ` — ${citation.author}`;
-                if (citation.book) text += `, 『${citation.book}』`;
-                if (citation.page) text += `, p.${citation.page}`;
-            }
-            return text;
-        }).join('\n\n');
+        const copyText = selectedList
+            .map(citation => formatCitationCopyText(citation, username, includeNotes))
+            .join('\n\n');
 
         try {
-            if (navigator.clipboard && window.isSecureContext) {
-                await navigator.clipboard.writeText(copyText);
-            } else {
-                const textArea = document.createElement("textarea");
-                textArea.value = copyText;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand("copy");
-                document.body.removeChild(textArea);
-            }
+            await writeTextToClipboard(copyText);
             setTimeout(() => setIsCopying(false), 2000);
         } catch (err) {
             console.error('Failed to copy text: ', err);

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Folder, CheckSquare, Square, Check, Copy, Trash2, X, Plus } from 'lucide-react';
 import { Project } from '../types';
 
@@ -8,7 +8,7 @@ interface BulkActionToolbarProps {
     projects: Project[];
     isCopying: boolean;
     onSelectAll: (select: boolean) => void;
-    onCopy: () => void;
+    onCopy: (includeNotes: boolean) => void | Promise<void>;
     onDeleteRequest: () => void;
     onCancel: () => void;
     onAddToProject: (projectId: string) => void;
@@ -28,13 +28,28 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
     onCreateAndAddToProject
 }) => {
     const [showFolderMenu, setShowFolderMenu] = useState(false);
+    const [showCopyMenu, setShowCopyMenu] = useState(false);
     const [isCreatingFolder, setIsCreatingFolder] = useState(false);
     const [newFolderName, setNewFolderName] = useState('');
+    const toolbarRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (toolbarRef.current && !toolbarRef.current.contains(event.target as Node)) {
+                setShowFolderMenu(false);
+                setShowCopyMenu(false);
+                setIsCreatingFolder(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     if (selectedCount === 0) return null;
 
     return (
-        <div className="sticky top-0 z-20 bg-[var(--bg-main)]/95 backdrop-blur-sm mb-2 h-14 flex items-center">
+        <div ref={toolbarRef} className="sticky top-0 z-20 bg-[var(--bg-main)]/95 backdrop-blur-sm mb-2 h-14 flex items-center">
             <div className="w-full flex items-center justify-between bg-[var(--bg-card)] p-2 rounded-lg border border-[var(--border-main)] shadow-sm animate-in fade-in slide-in-from-top-1 duration-200 transition-all">
                 <div className="w-full flex items-center justify-between">
                     <div className="flex items-center gap-2 sm:gap-3 pl-1">
@@ -59,7 +74,10 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
                         {/* Folder Menu */}
                         <div className="relative">
                             <button
-                                onClick={() => setShowFolderMenu(!showFolderMenu)}
+                                onClick={() => {
+                                    setShowCopyMenu(false);
+                                    setShowFolderMenu(!showFolderMenu);
+                                }}
                                 className="p-2 text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--sidebar-hover)] rounded-full transition-all"
                                 title="Move to Folder"
                             >
@@ -118,13 +136,41 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
                             )}
                         </div>
 
-                        <button
-                            onClick={onCopy}
-                            className={`p-2 rounded-full transition-all ${isCopying ? 'text-emerald-600 bg-emerald-50' : 'text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--sidebar-hover)]'}`}
-                            title="Copy to Clipboard"
-                        >
-                            {isCopying ? <Check size={18} /> : <Copy size={18} />}
-                        </button>
+                        <div className="relative">
+                            <button
+                                onClick={() => {
+                                    setShowFolderMenu(false);
+                                    setShowCopyMenu(!showCopyMenu);
+                                }}
+                                className={`p-2 rounded-full transition-all ${isCopying ? 'text-emerald-600 bg-emerald-50' : 'text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--sidebar-hover)]'}`}
+                                title="Copy to Clipboard"
+                            >
+                                {isCopying ? <Check size={18} /> : <Copy size={18} />}
+                            </button>
+
+                            {showCopyMenu && (
+                                <div className="absolute top-full right-0 mt-1 w-56 bg-[var(--bg-card)] text-[var(--text-main)] border border-[var(--border-main)] rounded-xl shadow-2xl z-[120] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                                    <button
+                                        onClick={() => {
+                                            void onCopy(false);
+                                            setShowCopyMenu(false);
+                                        }}
+                                        className="w-full text-left px-4 py-2.5 text-xs text-[var(--text-main)] hover:bg-[var(--sidebar-hover)] transition-colors"
+                                    >
+                                        copy
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            void onCopy(true);
+                                            setShowCopyMenu(false);
+                                        }}
+                                        className="w-full text-left px-4 py-2.5 text-xs text-[var(--text-main)] hover:bg-[var(--sidebar-hover)] transition-colors border-t border-[var(--border-main)]"
+                                    >
+                                        copy + memo
+                                    </button>
+                                </div>
+                            )}
+                        </div>
 
                         <button
                             onClick={onDeleteRequest}

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, ChevronDown, ChevronUp, Plus, Quote, User, Edit2, Trash2, X, Check, Folder, Copy } from 'lucide-react';
 import { Citation, Note, Highlight } from '../types';
+import { formatCitationCopyText, writeTextToClipboard } from '../lib/citationCopy';
 
 interface CitationCardProps {
   citation: Citation;
@@ -45,6 +46,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
 
   // Copy button state
   const [copied, setCopied] = useState(false);
+  const [showCopyMenu, setShowCopyMenu] = useState(false);
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -85,6 +87,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
     const handleClickOutside = (event: MouseEvent) => {
       if (cardRef.current && !cardRef.current.contains(event.target as Node)) {
         window.getSelection()?.removeAllRanges();
+        setShowCopyMenu(false);
       }
     };
 
@@ -135,27 +138,11 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   };
 
   // Copy with bibliographic info
-  const handleCopy = async () => {
-    let copyText = `"${citation.text}"`;
-
-    if (!isSelf && citation.author) {
-      copyText += ` — ${citation.author}`;
-      if (citation.book) copyText += `, 『${citation.book}』`;
-      if (citation.page) copyText += `, p.${citation.page}`;
-    }
-
+  const handleCopy = async (includeNotes: boolean = false) => {
+    const copyText = formatCitationCopyText(citation, username, includeNotes);
     try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(copyText);
-      } else {
-        // Fallback for non-secure contexts
-        const textArea = document.createElement("textarea");
-        textArea.value = copyText;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textArea);
-      }
+      await writeTextToClipboard(copyText);
+      setShowCopyMenu(false);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -284,16 +271,35 @@ export const CitationCard: React.FC<CitationCardProps> = ({
         {/* Action Buttons (Hover) */}
         {!isEditing && !showDeleteConfirm && (
           <div className="absolute top-3 right-3 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex gap-1 z-20">
-            <button
-              onClick={handleCopy}
-              className={`p-1.5 rounded-md transition-colors ${copied
-                ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20'
-                : 'text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--bg-sidebar)]'
-              }`}
-              title={copied ? 'Copied' : 'Copy'}
-            >
-              {copied ? <Check size={14} /> : <Copy size={14} />}
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setShowCopyMenu(!showCopyMenu)}
+                className={`p-1.5 rounded-md transition-colors ${copied
+                  ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20'
+                  : 'text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--bg-sidebar)]'
+                  }`}
+                title={copied ? 'Copied' : 'Copy'}
+              >
+                {copied ? <Check size={14} /> : <Copy size={14} />}
+              </button>
+
+              {showCopyMenu && (
+                <div className="absolute top-full right-0 mt-1 w-52 bg-[var(--bg-card)] text-[var(--text-main)] border border-[var(--border-main)] rounded-xl shadow-2xl z-[120] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                  <button
+                    onClick={() => void handleCopy(false)}
+                    className="w-full text-left px-3 py-2 text-xs text-[var(--text-main)] hover:bg-[var(--sidebar-hover)] transition-colors"
+                  >
+                    copy
+                  </button>
+                  <button
+                    onClick={() => void handleCopy(true)}
+                    className="w-full text-left px-3 py-2 text-xs text-[var(--text-main)] hover:bg-[var(--sidebar-hover)] transition-colors border-t border-[var(--border-main)]"
+                  >
+                    copy + memo
+                  </button>
+                </div>
+              )}
+            </div>
             <button
               onClick={() => setIsEditing(true)}
               className="p-1.5 text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] rounded-md transition-colors"
