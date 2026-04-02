@@ -246,7 +246,7 @@ const App: React.FC = () => {
       onClose={closeSettings}
       onDisplayNameChange={setSettingsDisplayName}
       onDisplayNameCommit={commitSettingsDisplayName}
-      onAvatarChange={() => window.alert('프로필 사진 변경은 다음 단계에서 연결합니다.')}
+      onAvatarChange={() => console.info('Avatar change action is not connected yet.')}
       onThemeChange={setTheme}
       onFontFamilyChange={setFontFamily}
       onTextScaleChange={setTextScale}

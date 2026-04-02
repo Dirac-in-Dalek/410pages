@@ -92,6 +92,15 @@ describe('SettingsPanel', () => {
     expect(baseProps.onThemeChange).toHaveBeenCalledWith('dark');
   });
 
+  it('calls onAvatarChange when the avatar action is clicked', async () => {
+    const user = userEvent.setup();
+    render(<SettingsPanel {...baseProps} />);
+
+    await user.click(screen.getByRole('button', { name: '변경' }));
+
+    expect(baseProps.onAvatarChange).toHaveBeenCalled();
+  });
+
   it('keeps display-name edits local until the field blurs', async () => {
     const user = userEvent.setup();
     const props = renderWithDisplayNameState({
