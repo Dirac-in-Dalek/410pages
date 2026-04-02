@@ -17,6 +17,7 @@ import { useUserPreferences } from './hooks/useUserPreferences';
 const App: React.FC = () => {
   const { preferences, setTheme, setFontFamily, setTextScale } = useUserPreferences();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [settingsDisplayName, setSettingsDisplayName] = useState('Researcher');
   // --- Mobile App Mode Check ---
   const [isMobileApp, setIsMobileApp] = useState(false);
   useEffect(() => {
@@ -100,8 +101,36 @@ const App: React.FC = () => {
     }
   }, [isMobileApp, viewMode]);
 
+  useEffect(() => {
+    setSettingsDisplayName(username);
+  }, [username]);
+
+  useEffect(() => {
+    if (!isSettingsOpen) {
+      return undefined;
+    }
+
+    const trimmedDraft = settingsDisplayName.trim();
+    const trimmedUsername = username.trim();
+
+    if (!trimmedDraft || trimmedDraft === trimmedUsername) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      handleUpdateUsername(trimmedDraft);
+    }, 600);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [handleUpdateUsername, isSettingsOpen, settingsDisplayName, username]);
+
   // --- RENDER ---
   if (!session) return <Auth />;
+
+  const openSettings = () => {
+    setSettingsDisplayName(username);
+    setIsSettingsOpen(true);
+  };
 
   const archiveContent = (
     <div className="h-full overflow-y-auto">
@@ -171,11 +200,11 @@ const App: React.FC = () => {
     <SettingsPanel
       isOpen={isSettingsOpen}
       isMobile={isMobileApp}
-      displayName={username}
+      displayName={settingsDisplayName}
       avatarUrl={null}
       preferences={preferences}
       onClose={() => setIsSettingsOpen(false)}
-      onDisplayNameChange={handleUpdateUsername}
+      onDisplayNameChange={setSettingsDisplayName}
       onAvatarChange={() => window.alert('프로필 사진 변경은 다음 단계에서 연결합니다.')}
       onThemeChange={setTheme}
       onFontFamilyChange={setFontFamily}
@@ -199,7 +228,7 @@ const App: React.FC = () => {
           onSearch={setSearchTerm}
           searchTerm={searchTerm}
           selectedFilter={filter}
-          onOpenSettings={() => setIsSettingsOpen(true)}
+          onOpenSettings={openSettings}
         >
           {archiveContent}
         </MobileLayout>
@@ -251,7 +280,7 @@ const App: React.FC = () => {
         onReorderAuthorAt={handleReorderAuthorAt}
         onReorderBookAt={handleReorderBookAt}
         onOpenPdfReader={() => setViewMode('reader')}
-        onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenSettings={openSettings}
       >
         {archiveContent}
       </MainLayout>

@@ -5,6 +5,7 @@ import {
   Edit2,
   Folder,
   GripVertical,
+  LogOut,
   Plus,
   Settings,
   Trash2,
@@ -48,6 +49,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
   onDeleteProject,
   onReorderProjects,
   username = 'Researcher',
+  onSignOut,
   onOpenPdfReader,
   onOpenSettings,
   width,
@@ -555,24 +557,36 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
       </div>
 
       <div className="mt-auto border-t border-[var(--border-main)] bg-[var(--bg-sidebar)] p-4 transition-colors duration-200">
-        <button
-          type="button"
-          onClick={onOpenSettings}
-          className="flex w-full items-center justify-between rounded-2xl border border-[var(--border-main)] bg-[var(--bg-card)] px-3 py-3 text-left transition-colors hover:bg-[var(--sidebar-hover)]"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--accent-soft)] text-sm font-semibold text-[var(--accent)]">
-              {userInitials}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onOpenSettings}
+            className="flex min-w-0 flex-1 items-center justify-between rounded-2xl border border-[var(--border-main)] bg-[var(--bg-card)] px-3 py-3 text-left transition-colors hover:bg-[var(--sidebar-hover)]"
+          >
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft)] text-sm font-semibold text-[var(--accent)]">
+                {userInitials}
+              </div>
+
+              <div className="min-w-0">
+                <div className="truncate text-sm font-medium text-[var(--text-main)]">{username}</div>
+                <div className="truncate text-xs text-[var(--text-muted)]">개인 설정</div>
+              </div>
             </div>
 
-            <div className="min-w-0">
-              <div className="truncate text-sm font-medium text-[var(--text-main)]">{username}</div>
-              <div className="truncate text-xs text-[var(--text-muted)]">개인 설정</div>
-            </div>
-          </div>
+            <Settings size={16} className="shrink-0 text-[var(--text-muted)]" />
+          </button>
 
-          <Settings size={16} className="text-[var(--text-muted)]" />
-        </button>
+          <button
+            type="button"
+            onClick={onSignOut}
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[var(--border-main)] bg-[var(--bg-card)] text-[var(--text-muted)] transition-colors hover:bg-[var(--sidebar-hover)] hover:text-red-500"
+            title="Log out"
+            aria-label="Log out"
+          >
+            <LogOut size={16} />
+          </button>
+        </div>
       </div>
     </aside>
   );
