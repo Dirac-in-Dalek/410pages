@@ -63,6 +63,7 @@ const App: React.FC = () => {
     handleUpdateUsername, handleSignOut
   } = useAuthStatus();
   const displayNameCommitVersionRef = useRef(0);
+  const previousCommittedUsernameRef = useRef(username);
 
   const {
     projects, setProjects, citations, setCitations, loading: dataLoading,
@@ -103,6 +104,17 @@ const App: React.FC = () => {
       setViewMode('archive');
     }
   }, [isMobileApp, viewMode]);
+
+  useEffect(() => {
+    const previousCommittedUsername = previousCommittedUsernameRef.current;
+    if (username !== previousCommittedUsername) {
+      setDisplayNameError(null);
+      setSettingsDisplayName((currentDraft) =>
+        currentDraft === previousCommittedUsername ? username : currentDraft
+      );
+      previousCommittedUsernameRef.current = username;
+    }
+  }, [username]);
 
   // --- RENDER ---
   if (!session) return <Auth />;

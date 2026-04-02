@@ -5,6 +5,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 
 const mockHandleUpdateUsername = vi.fn();
+const createDeferred = <T,>() => {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+};
 
 const authState = {
   session: { user: { id: 'user-1' } },
@@ -240,5 +249,32 @@ describe('App settings display-name flow', () => {
     await waitFor(() => {
       expect(screen.queryByTestId('settings-display-name-error')).toBeNull();
     });
+  });
+
+  it('syncs the reopened draft when the committed username changes after a pending save', async () => {
+    const user = userEvent.setup();
+    const deferredSave = createDeferred<boolean>();
+    mockHandleUpdateUsername.mockReturnValue(deferredSave.promise);
+
+    const { rerender } = render(<App />);
+
+    await user.click(screen.getByRole('button', { name: 'open-settings' }));
+    await user.click(screen.getByRole('button', { name: 'change-display-name' }));
+    await user.click(screen.getByRole('button', { name: 'commit-display-name' }));
+
+    await user.click(screen.getByRole('button', { name: 'close-settings' }));
+    await user.click(screen.getByRole('button', { name: 'open-settings' }));
+    expect(screen.getByTestId('settings-display-name').textContent).toBe('Committed Name');
+
+    authState.username = 'Draft Name';
+    rerender(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('settings-display-name').textContent).toBe('Draft Name');
+    });
+
+    deferredSave.resolve(true);
+    await deferredSave.promise;
+    expect(screen.getByTestId('settings-display-name').textContent).toBe('Draft Name');
   });
 });
