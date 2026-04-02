@@ -11,11 +11,12 @@ import { ConfirmModal } from './components/ConfirmModal';
 import { ArchiveHeader } from './components/ArchiveHeader';
 import { CitationList } from './components/CitationList';
 import { PdfReaderPage } from './components/pdf-reader/PdfReaderPage';
-
-import { useDarkMode } from './hooks/useDarkMode';
+import { SettingsPanel } from './components/settings/SettingsPanel';
+import { useUserPreferences } from './hooks/useUserPreferences';
 
 const App: React.FC = () => {
-  const { isDarkMode, toggleDarkMode } = useDarkMode();
+  const { preferences, setTheme, setFontFamily, setTextScale } = useUserPreferences();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   // --- Mobile App Mode Check ---
   const [isMobileApp, setIsMobileApp] = useState(false);
   useEffect(() => {
@@ -166,26 +167,44 @@ const App: React.FC = () => {
     </div>
   );
 
+  const settingsPanel = (
+    <SettingsPanel
+      isOpen={isSettingsOpen}
+      isMobile={isMobileApp}
+      displayName={username}
+      avatarUrl={null}
+      preferences={preferences}
+      onClose={() => setIsSettingsOpen(false)}
+      onDisplayNameChange={handleUpdateUsername}
+      onAvatarChange={() => window.alert('프로필 사진 변경은 다음 단계에서 연결합니다.')}
+      onThemeChange={setTheme}
+      onFontFamilyChange={setFontFamily}
+      onTextScaleChange={setTextScale}
+    />
+  );
+
   if (isMobileApp) {
     return (
-      <MobileLayout
-        title={viewTitle}
-        projects={projects}
-        selectedProjectId={selectedProjectId}
-        onProjectSelect={handleProjectSelect}
-        onCreateProject={handleCreateProject}
-        treeData={treeData}
-        onTreeItemClick={handleTreeItemClick}
-        username={username}
-        onSignOut={handleSignOut}
-        onSearch={setSearchTerm}
-        searchTerm={searchTerm}
-        selectedFilter={filter}
-        isDarkMode={isDarkMode}
-        toggleDarkMode={toggleDarkMode}
-      >
-        {archiveContent}
-      </MobileLayout>
+      <>
+        <MobileLayout
+          title={viewTitle}
+          projects={projects}
+          selectedProjectId={selectedProjectId}
+          onProjectSelect={handleProjectSelect}
+          onCreateProject={handleCreateProject}
+          treeData={treeData}
+          onTreeItemClick={handleTreeItemClick}
+          username={username}
+          onSignOut={handleSignOut}
+          onSearch={setSearchTerm}
+          searchTerm={searchTerm}
+          selectedFilter={filter}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+        >
+          {archiveContent}
+        </MobileLayout>
+        {settingsPanel}
+      </>
     );
   }
 
@@ -209,33 +228,35 @@ const App: React.FC = () => {
   }
 
   return (
-    <MainLayout
-      projects={projects}
-      selectedProjectId={selectedProjectId}
-      onProjectSelect={handleProjectSelect}
-      onDropCitationToProject={handleDropCitationToProject}
-      onCreateProject={handleCreateProject}
-      onRenameProject={handleRenameProject}
-      onDeleteProject={handleDeleteProject}
-      onRenameAuthor={handleRenameAuthor}
-      onRenameBook={handleRenameBook}
-      onReorderProjects={handleReorderProjects}
-      treeData={treeData}
-      onTreeItemClick={handleTreeItemClick}
-      username={username}
-      onUpdateUsername={handleUpdateUsername}
-      onSignOut={handleSignOut}
-      onSearch={setSearchTerm}
-      searchTerm={searchTerm}
-      selectedFilter={filter}
-      onReorderAuthorAt={handleReorderAuthorAt}
-      onReorderBookAt={handleReorderBookAt}
-      onOpenPdfReader={() => setViewMode('reader')}
-      isDarkMode={isDarkMode}
-      toggleDarkMode={toggleDarkMode}
-    >
-      {archiveContent}
-    </MainLayout>
+    <>
+      <MainLayout
+        projects={projects}
+        selectedProjectId={selectedProjectId}
+        onProjectSelect={handleProjectSelect}
+        onDropCitationToProject={handleDropCitationToProject}
+        onCreateProject={handleCreateProject}
+        onRenameProject={handleRenameProject}
+        onDeleteProject={handleDeleteProject}
+        onRenameAuthor={handleRenameAuthor}
+        onRenameBook={handleRenameBook}
+        onReorderProjects={handleReorderProjects}
+        treeData={treeData}
+        onTreeItemClick={handleTreeItemClick}
+        username={username}
+        onUpdateUsername={handleUpdateUsername}
+        onSignOut={handleSignOut}
+        onSearch={setSearchTerm}
+        searchTerm={searchTerm}
+        selectedFilter={filter}
+        onReorderAuthorAt={handleReorderAuthorAt}
+        onReorderBookAt={handleReorderBookAt}
+        onOpenPdfReader={() => setViewMode('reader')}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+      >
+        {archiveContent}
+      </MainLayout>
+      {settingsPanel}
+    </>
   );
 };
 

@@ -7,10 +7,9 @@ import {
   FolderOpen,
   Library,
   LogOut,
-  Moon,
   Plus,
   Search,
-  Sun,
+  Settings,
   User,
   X
 } from 'lucide-react';
@@ -30,8 +29,7 @@ interface MobileLayoutProps {
   selectedFilter?: { type: 'author' | 'book'; value: string; author?: string } | null;
   username?: string;
   onSignOut?: () => void;
-  isDarkMode: boolean;
-  toggleDarkMode: () => void;
+  onOpenSettings: () => void;
 }
 
 export const MobileLayout: React.FC<MobileLayoutProps> = ({
@@ -48,8 +46,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   selectedFilter = null,
   username = 'Researcher',
   onSignOut,
-  isDarkMode,
-  toggleDarkMode
+  onOpenSettings
 }) => {
   const [isProjectsOpen, setIsProjectsOpen] = useState(false);
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
@@ -170,11 +167,12 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
         <div className="h-14 px-4 flex items-center justify-between gap-3">
           <h1 className="text-sm font-semibold truncate">{title}</h1>
           <button
-            onClick={toggleDarkMode}
+            type="button"
+            onClick={onOpenSettings}
             className="p-2 rounded-md text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]"
-            title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            aria-label="Open settings"
           >
-            {isDarkMode ? <Sun size={17} /> : <Moon size={17} />}
+            <Settings size={17} />
           </button>
         </div>
       </header>
@@ -300,11 +298,15 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
               <div className="text-xs text-[var(--text-muted)] mb-2 truncate">{username}</div>
               <div className="grid grid-cols-2 gap-2">
                 <button
-                  onClick={toggleDarkMode}
+                  type="button"
+                  onClick={() => {
+                    onOpenSettings();
+                    closeSheets();
+                  }}
                   className="p-2.5 rounded-md border border-[var(--border-main)] text-sm text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)] flex items-center justify-center gap-1"
                 >
-                  {isDarkMode ? <Sun size={14} /> : <Moon size={14} />}
-                  Theme
+                  <Settings size={14} />
+                  Settings
                 </button>
                 <button
                   onClick={onSignOut}

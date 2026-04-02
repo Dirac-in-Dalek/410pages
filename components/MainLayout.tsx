@@ -27,8 +27,7 @@ interface MainLayoutProps {
   onReorderAuthorAt?: (dragAuthor: string, dropIndex: number) => void;
   onReorderBookAt?: (author: string, dragBook: string, dropIndex: number) => void;
   onOpenPdfReader: () => void;
-  isDarkMode: boolean;
-  toggleDarkMode: () => void;
+  onOpenSettings: () => void;
 }
 
 export const MainLayout: React.FC<MainLayoutProps> = ({
@@ -54,8 +53,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   onReorderAuthorAt,
   onReorderBookAt,
   onOpenPdfReader,
-  isDarkMode,
-  toggleDarkMode
+  onOpenSettings
 }) => {
   const {
     leftWidth,
@@ -81,8 +79,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         onUpdateUsername={onUpdateUsername}
         onSignOut={onSignOut}
         onOpenPdfReader={onOpenPdfReader}
-        isDarkMode={isDarkMode}
-        toggleDarkMode={toggleDarkMode}
+        onOpenSettings={onOpenSettings}
         width={leftWidth}
         isResizing={isResizingLeft}
         onStartResize={startLeftResize}
