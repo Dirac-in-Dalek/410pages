@@ -5,105 +5,17 @@ const SUPABASE_USER_SUFFIX = '-user';
 
 type StorageAdapter = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 
-function createMemoryStorage(): Storage {
-  const data = new Map<string, string>();
-
-  return {
-    get length() {
-      return data.size;
-    },
-    clear() {
-      data.clear();
-    },
-    getItem(key: string) {
-      return data.has(key) ? data.get(key)! : null;
-    },
-    key(index: number) {
-      return Array.from(data.keys())[index] ?? null;
-    },
-    removeItem(key: string) {
-      data.delete(key);
-    },
-    setItem(key: string, value: string) {
-      data.set(key, value);
-    },
-  } as Storage;
-}
-
-const memoryLocalStorage = createMemoryStorage();
-const memorySessionStorage = createMemoryStorage();
-
-function setGlobalStorage(kind: 'localStorage' | 'sessionStorage', storage: Storage): void {
-  try {
-    Object.defineProperty(globalThis, kind, {
-      configurable: true,
-      enumerable: true,
-      value: storage,
-      writable: true,
-    });
-  } catch {
-    try {
-      (globalThis as Record<string, unknown>)[kind] = storage;
-    } catch {
-      // Ignore environments where globals are read-only.
-    }
-  }
-
-  if (typeof window !== 'undefined') {
-    try {
-      Object.defineProperty(window, kind, {
-        configurable: true,
-        enumerable: true,
-        value: storage,
-        writable: true,
-      });
-    } catch {
-      try {
-        (window as Record<string, unknown>)[kind] = storage;
-      } catch {
-        // Ignore environments where window storage is read-only.
-      }
-    }
-  }
-}
-
-function isStorageLike(value: unknown): value is Storage {
-  return Boolean(
-    value &&
-      typeof value === 'object' &&
-      typeof (value as Storage).getItem === 'function' &&
-      typeof (value as Storage).setItem === 'function' &&
-      typeof (value as Storage).removeItem === 'function' &&
-      typeof (value as Storage).clear === 'function'
-  );
-}
-
-function ensureStorage(kind: 'localStorage' | 'sessionStorage'): Storage | null {
+function getBrowserStorage(kind: 'localStorage' | 'sessionStorage'): Storage | null {
   if (typeof window === 'undefined') {
     return null;
   }
 
   try {
-    const storage = window[kind];
-
-    if (isStorageLike(storage)) {
-      return storage;
-    }
+    return window[kind];
   } catch {
-    // Fall through to the in-memory shim.
+    return null;
   }
-
-  const fallback = kind === 'localStorage' ? memoryLocalStorage : memorySessionStorage;
-  setGlobalStorage(kind, fallback);
-  return fallback;
 }
-
-function getBrowserStorage(kind: 'localStorage' | 'sessionStorage'): Storage | null {
-  return ensureStorage(kind);
-}
-
-ensureStorage('localStorage');
-ensureStorage('sessionStorage');
 
 function getLocalStorage(): Storage | null {
   return getBrowserStorage('localStorage');
@@ -153,10 +65,6 @@ function getAuthStorageForPolicy(autoLoginEnabled: boolean): Storage | null {
   return autoLoginEnabled ? getLocalStorage() : getSessionStorage();
 }
 
-function getInactiveAuthStorage(autoLoginEnabled: boolean): Storage | null {
-  return autoLoginEnabled ? getSessionStorage() : getLocalStorage();
-}
-
 export function readRememberedEmail(): string | null {
   return readStorageItem(getLocalStorage(), REMEMBERED_EMAIL_STORAGE_KEY);
 }
@@ -201,8 +109,15 @@ export function clearSupabaseSessionArtifacts(storageKey: string): void {
   }
 }
 
-export function reconcileSupabaseSessionArtifacts(storageKey: string): void {
-  const inactiveStorage = getInactiveAuthStorage(readAutoLoginEnabled());
+function getInactiveAuthStorage(autoLoginEnabled: boolean): Storage | null {
+  return autoLoginEnabled ? getSessionStorage() : getLocalStorage();
+}
+
+export function reconcileSupabaseSessionArtifacts(
+  storageKey: string,
+  autoLoginEnabled = readAutoLoginEnabled(),
+): void {
+  const inactiveStorage = getInactiveAuthStorage(autoLoginEnabled);
   const keys = [storageKey, `${storageKey}${SUPABASE_USER_SUFFIX}`];
 
   for (const key of keys) {
