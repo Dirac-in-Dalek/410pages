@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SettingsPanel } from './SettingsPanel';
@@ -121,6 +121,64 @@ describe('SettingsPanel', () => {
     await user.keyboard('{Enter}');
 
     expect(props.onDisplayNameCommit).toHaveBeenCalledWith('다른 이름');
+  });
+
+  it('does not commit a dirty display name when the close button dismisses the panel', async () => {
+    const user = userEvent.setup();
+    const props = renderWithDisplayNameState({
+      onDisplayNameCommit: vi.fn().mockResolvedValue(undefined),
+    });
+
+    const input = screen.getByRole('textbox', { name: '이름' });
+    await user.clear(input);
+    await user.type(input, '닫기 전 초안');
+
+    await user.click(screen.getByRole('button', { name: '닫기' }));
+
+    expect(props.onDisplayNameCommit).not.toHaveBeenCalled();
+    expect(props.onClose).toHaveBeenCalled();
+  });
+
+  it('does not commit a dirty display name when the backdrop dismisses the panel', async () => {
+    const user = userEvent.setup();
+    const props = renderWithDisplayNameState({
+      onDisplayNameCommit: vi.fn().mockResolvedValue(undefined),
+    });
+
+    const input = screen.getByRole('textbox', { name: '이름' });
+    await user.clear(input);
+    await user.type(input, '백드롭 전 초안');
+
+    await user.click(screen.getByTestId('settings-backdrop'));
+
+    expect(props.onDisplayNameCommit).not.toHaveBeenCalled();
+    expect(props.onClose).toHaveBeenCalled();
+  });
+
+  it('ignores Enter-driven blur while IME composition is active', async () => {
+    const user = userEvent.setup();
+    const props = renderWithDisplayNameState({
+      onDisplayNameCommit: vi.fn().mockResolvedValue(undefined),
+    });
+
+    const input = screen.getByRole('textbox', { name: '이름' });
+    await user.clear(input);
+    await user.type(input, '한');
+
+    const keyDownEvent = new KeyboardEvent('keydown', {
+      key: 'Enter',
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(keyDownEvent, 'isComposing', {
+      configurable: true,
+      value: true,
+    });
+
+    fireEvent(input, keyDownEvent);
+
+    expect(props.onDisplayNameCommit).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(input);
   });
 
   it('renders a sign-out action inside settings', async () => {

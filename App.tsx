@@ -137,6 +137,7 @@ const App: React.FC = () => {
   };
 
   const commitSettingsDisplayName = async (nextDisplayName: string) => {
+    const submittedDisplayName = nextDisplayName;
     const trimmedDisplayName = nextDisplayName.trim();
     const trimmedUsername = username.trim();
 
@@ -154,7 +155,9 @@ const App: React.FC = () => {
       }
 
       if (didSave) {
-        setSettingsDisplayName(trimmedDisplayName);
+        setSettingsDisplayName((currentDraft) =>
+          currentDraft === submittedDisplayName ? trimmedDisplayName : currentDraft
+        );
         setDisplayNameError(null);
       } else {
         setDisplayNameError('이름 저장에 실패했습니다.');

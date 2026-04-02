@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import type {
   FontPreference,
   TextScalePreference,
@@ -46,6 +46,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onTextScaleChange,
   onSignOut,
 }) => {
+  const dismissingPanelRef = useRef(false);
+
   useEffect(() => {
     if (!isOpen) {
       return undefined;
@@ -65,6 +67,23 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     return null;
   }
 
+  const markDismissIntent = () => {
+    dismissingPanelRef.current = true;
+  };
+
+  const clearDismissIntent = () => {
+    dismissingPanelRef.current = false;
+  };
+
+  const dismissIntentProps = {
+    onPointerDown: markDismissIntent,
+    onMouseDown: markDismissIntent,
+    onPointerUp: clearDismissIntent,
+    onMouseUp: clearDismissIntent,
+    onPointerCancel: clearDismissIntent,
+    onMouseLeave: clearDismissIntent,
+  };
+
   const initials = displayName.trim().slice(0, 2) || 'RT';
   const panelClasses = isMobile
     ? 'inset-x-0 bottom-0 top-16 rounded-t-[28px] border-t'
@@ -77,6 +96,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         data-testid="settings-backdrop"
         className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px]"
         onClick={onClose}
+        {...dismissIntentProps}
       />
 
       <aside
@@ -93,6 +113,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 type="button"
                 aria-label="닫기"
                 onClick={onClose}
+                {...dismissIntentProps}
                 className="rounded-full p-2 text-[var(--text-muted)] transition-colors hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]"
               >
                 <span aria-hidden="true" className="block text-lg leading-none">
@@ -124,6 +145,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               avatarUrl={avatarUrl}
               isSavingDisplayName={isSavingDisplayName}
               displayNameError={displayNameError}
+              shouldSuppressBlurCommit={() => dismissingPanelRef.current}
               onDisplayNameChange={onDisplayNameChange}
               onDisplayNameCommit={onDisplayNameCommit}
               onAvatarChange={onAvatarChange}
@@ -147,6 +169,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               <button
                 type="button"
                 onClick={onSignOut}
+                {...dismissIntentProps}
                 className="w-full rounded-2xl border border-[var(--border-main)] bg-[var(--bg-card)] px-4 py-3 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--sidebar-hover)] hover:text-red-500"
               >
                 로그아웃

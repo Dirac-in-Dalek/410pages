@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
@@ -131,6 +131,11 @@ vi.mock('./components/settings/SettingsPanel', () => ({
         {props.displayNameError ? (
           <div data-testid="settings-display-name-error">{props.displayNameError}</div>
         ) : null}
+        <input
+          aria-label="mock-settings-display-name"
+          value={props.displayName}
+          onChange={(event) => props.onDisplayNameChange(event.target.value)}
+        />
         <button type="button" onClick={() => props.onDisplayNameChange('Draft Name')}>
           change-display-name
         </button>
@@ -276,5 +281,31 @@ describe('App settings display-name flow', () => {
     deferredSave.resolve(true);
     await deferredSave.promise;
     expect(screen.getByTestId('settings-display-name').textContent).toBe('Draft Name');
+  });
+
+  it('preserves newer local display-name edits when an earlier save resolves', async () => {
+    const user = userEvent.setup();
+    const deferredSave = createDeferred<boolean>();
+    mockHandleUpdateUsername.mockReturnValue(deferredSave.promise);
+
+    render(<App />);
+
+    await user.click(screen.getByRole('button', { name: 'open-settings' }));
+
+    const input = screen.getByRole('textbox', { name: 'mock-settings-display-name' });
+    await user.clear(input);
+    await user.type(input, 'First Draft');
+    await user.click(screen.getByRole('button', { name: 'commit-display-name' }));
+
+    await user.clear(input);
+    await user.type(input, 'Newer Local Draft');
+    expect(screen.getByTestId('settings-display-name').textContent).toBe('Newer Local Draft');
+
+    await act(async () => {
+      deferredSave.resolve(true);
+      await deferredSave.promise;
+    });
+
+    expect(screen.getByTestId('settings-display-name').textContent).toBe('Newer Local Draft');
   });
 });

@@ -6,6 +6,7 @@ type ProfileSettingsSectionProps = {
   avatarUrl: string | null;
   isSavingDisplayName?: boolean;
   displayNameError?: string | null;
+  shouldSuppressBlurCommit?: () => boolean;
   onDisplayNameChange: (value: string) => void;
   onDisplayNameCommit: (value: string) => void | Promise<void>;
   onAvatarChange: () => void;
@@ -17,6 +18,7 @@ export const ProfileSettingsSection: React.FC<ProfileSettingsSectionProps> = ({
   avatarUrl,
   isSavingDisplayName = false,
   displayNameError = null,
+  shouldSuppressBlurCommit,
   onDisplayNameChange,
   onDisplayNameCommit,
   onAvatarChange,
@@ -27,8 +29,12 @@ export const ProfileSettingsSection: React.FC<ProfileSettingsSectionProps> = ({
   const hasPendingDisplayNameChange =
     trimmedDisplayName.length > 0 && trimmedDisplayName !== trimmedSavedDisplayName;
 
-  const commitDisplayName = () => {
-    if (isSavingDisplayName || !hasPendingDisplayNameChange) {
+  const commitDisplayName = ({ isBlurTriggered = false } = {}) => {
+    if (
+      isSavingDisplayName ||
+      !hasPendingDisplayNameChange ||
+      (isBlurTriggered && shouldSuppressBlurCommit?.())
+    ) {
       return;
     }
 
@@ -72,9 +78,9 @@ export const ProfileSettingsSection: React.FC<ProfileSettingsSectionProps> = ({
           <input
             value={displayName}
             onChange={(event) => onDisplayNameChange(event.target.value)}
-            onBlur={commitDisplayName}
+            onBlur={() => commitDisplayName({ isBlurTriggered: true })}
             onKeyDown={(event) => {
-              if (event.key !== 'Enter') {
+              if (event.key !== 'Enter' || event.nativeEvent.isComposing) {
                 return;
               }
 
