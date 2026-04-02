@@ -11,30 +11,65 @@
   <title>410pages</title>
   <script>
     (function () {
-      const themeKey = 'theme-preference';
-      const legacyKey = 'dark-mode';
+      const preferencesKey = 'user-preferences';
+      const legacyThemeKey = 'theme-preference';
+      const legacyDarkModeKey = 'dark-mode';
       const root = document.documentElement;
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      let preference = localStorage.getItem(themeKey);
+      const defaultPreferences = { theme: 'system', fontFamily: 'pretendard', textScale: 'md' };
+      const textScaleMap = { sm: '0.9375', md: '1', lg: '1.125' };
+      let preferences = defaultPreferences;
 
-      if (preference !== 'system' && preference !== 'light' && preference !== 'dark') {
-        const legacy = localStorage.getItem(legacyKey);
-        if (legacy !== null) {
+      try {
+        const storedPreferences = localStorage.getItem(preferencesKey);
+        if (storedPreferences) {
+          let parsedPreferences;
+
           try {
-            preference = JSON.parse(legacy) ? 'dark' : 'light';
-            localStorage.setItem(themeKey, preference);
-            localStorage.removeItem(legacyKey);
+            parsedPreferences = JSON.parse(storedPreferences);
           } catch (_) {
-            localStorage.removeItem(legacyKey);
-            preference = 'system';
+            localStorage.removeItem(preferencesKey);
           }
-        } else {
-          preference = 'system';
+
+          preferences = {
+            theme:
+              parsedPreferences?.theme === 'light' || parsedPreferences?.theme === 'dark' || parsedPreferences?.theme === 'system'
+                ? parsedPreferences.theme
+                : defaultPreferences.theme,
+            fontFamily:
+              parsedPreferences?.fontFamily === 'serif' || parsedPreferences?.fontFamily === 'pretendard'
+                ? parsedPreferences.fontFamily
+                : defaultPreferences.fontFamily,
+            textScale:
+              parsedPreferences?.textScale === 'sm' || parsedPreferences?.textScale === 'lg' || parsedPreferences?.textScale === 'md'
+                ? parsedPreferences.textScale
+                : defaultPreferences.textScale,
+          };
         }
+
+        if (!storedPreferences || preferences === defaultPreferences) {
+          const legacyTheme = localStorage.getItem(legacyThemeKey);
+          if (legacyTheme === 'system' || legacyTheme === 'light' || legacyTheme === 'dark') {
+            preferences = { ...defaultPreferences, theme: legacyTheme };
+          } else {
+            const legacyDarkMode = localStorage.getItem(legacyDarkModeKey);
+            if (legacyDarkMode !== null) {
+              preferences = {
+                ...defaultPreferences,
+                theme: JSON.parse(legacyDarkMode) ? 'dark' : 'light',
+              };
+            }
+          }
+        }
+        localStorage.setItem(legacyThemeKey, preferences.theme);
+      } catch (_) {
+        preferences = defaultPreferences;
       }
 
-      const isDark = preference === 'dark' || (preference === 'system' && prefersDark);
+      const isDark = preferences.theme === 'dark' || (preferences.theme === 'system' && prefersDark);
       root.classList.toggle('dark', isDark);
+      root.dataset.font = preferences.fontFamily;
+      root.style.setProperty('--text-scale', textScaleMap[preferences.textScale] || '1');
       const themeMeta = document.querySelector('meta[name="theme-color"]');
       if (themeMeta) {
         themeMeta.setAttribute('content', isDark ? '#191919' : '#ffffff');

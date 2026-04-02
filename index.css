@@ -9,6 +9,9 @@
   :root {
     --font-ui: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
     --font-display: 'Noto Serif KR', 'Iowan Old Style', 'Times New Roman', serif;
+    --font-ui-active: var(--font-ui);
+    --font-display-active: var(--font-display);
+    --text-scale: 1;
 
     --bg-main: #ffffff;
     --bg-sidebar: #f7f7f5;
@@ -59,6 +62,11 @@
     --highlight-bg: rgba(96, 165, 250, 0.35);
   }
 
+  :root[data-font='serif'] {
+    --font-ui-active: 'Noto Serif KR', 'Iowan Old Style', 'Times New Roman', serif;
+    --font-display-active: 'Noto Serif KR', 'Iowan Old Style', 'Times New Roman', serif;
+  }
+
   * {
     -webkit-tap-highlight-color: transparent;
     border-color: var(--border-main);
@@ -71,9 +79,13 @@
     height: 100%;
   }
 
+  html {
+    font-size: calc(16px * var(--text-scale));
+  }
+
   body {
     @apply antialiased transition-colors duration-200;
-    font-family: var(--font-ui);
+    font-family: var(--font-ui-active);
     color: var(--text-main);
     background-color: var(--bg-main);
     letter-spacing: 0.001em;
@@ -84,7 +96,7 @@
   }
 
   blockquote {
-    font-family: var(--font-display);
+    font-family: var(--font-display-active);
     line-height: 1.68;
     letter-spacing: 0.001em;
   }
@@ -92,7 +104,7 @@
   input,
   textarea,
   button {
-    font-family: var(--font-ui);
+    font-family: var(--font-ui-active);
   }
 
   button {
@@ -100,7 +112,7 @@
   }
 
   .brand-wordmark {
-    font-family: var(--font-ui);
+    font-family: var(--font-ui-active);
     font-weight: 600;
     letter-spacing: -0.012em;
     display: inline-flex;
