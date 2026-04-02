@@ -17,6 +17,7 @@ export type SettingsPanelProps = {
   avatarUrl: string | null;
   preferences: UserPreferences;
   isSavingDisplayName?: boolean;
+  displayNameError?: string | null;
   onClose: () => void;
   onDisplayNameChange: (value: string) => void;
   onDisplayNameCommit: (value: string) => void | Promise<void>;
@@ -35,6 +36,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   avatarUrl,
   preferences,
   isSavingDisplayName = false,
+  displayNameError = null,
   onClose,
   onDisplayNameChange,
   onDisplayNameCommit,
@@ -121,6 +123,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               savedDisplayName={savedDisplayName}
               avatarUrl={avatarUrl}
               isSavingDisplayName={isSavingDisplayName}
+              displayNameError={displayNameError}
               onDisplayNameChange={onDisplayNameChange}
               onDisplayNameCommit={onDisplayNameCommit}
               onAvatarChange={onAvatarChange}

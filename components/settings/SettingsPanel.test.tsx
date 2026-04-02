@@ -24,6 +24,7 @@ const baseProps = {
   onAvatarChange: vi.fn(),
   onSignOut: vi.fn(),
   isSavingDisplayName: false,
+  displayNameError: undefined,
 };
 
 const renderWithDisplayNameState = (
@@ -129,5 +130,11 @@ describe('SettingsPanel', () => {
     await user.click(screen.getByRole('button', { name: '로그아웃' }));
 
     expect(baseProps.onSignOut).toHaveBeenCalled();
+  });
+
+  it('renders a display-name save error when provided', () => {
+    render(<SettingsPanel {...baseProps} displayNameError="이름 저장에 실패했습니다." />);
+
+    expect(screen.getByText('이름 저장에 실패했습니다.')).toBeTruthy();
   });
 });

@@ -5,6 +5,7 @@ type ProfileSettingsSectionProps = {
   savedDisplayName: string;
   avatarUrl: string | null;
   isSavingDisplayName?: boolean;
+  displayNameError?: string | null;
   onDisplayNameChange: (value: string) => void;
   onDisplayNameCommit: (value: string) => void | Promise<void>;
   onAvatarChange: () => void;
@@ -15,6 +16,7 @@ export const ProfileSettingsSection: React.FC<ProfileSettingsSectionProps> = ({
   savedDisplayName,
   avatarUrl,
   isSavingDisplayName = false,
+  displayNameError = null,
   onDisplayNameChange,
   onDisplayNameCommit,
   onAvatarChange,
@@ -87,10 +89,12 @@ export const ProfileSettingsSection: React.FC<ProfileSettingsSectionProps> = ({
         <p
           id="profile-display-name-hint"
           aria-live="polite"
-          className="mt-2 text-xs text-[var(--text-secondary)]"
+          className={`mt-2 text-xs ${displayNameError ? 'text-red-600' : 'text-[var(--text-secondary)]'}`}
         >
           {isSavingDisplayName
             ? '이름을 저장하고 있습니다.'
+            : displayNameError
+              ? displayNameError
             : '변경 내용을 적용하려면 Enter를 누르거나 입력란을 벗어나세요.'}
         </p>
       </div>

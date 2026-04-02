@@ -19,6 +19,7 @@ const App: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [settingsDisplayName, setSettingsDisplayName] = useState('Researcher');
   const [isSavingDisplayName, setIsSavingDisplayName] = useState(false);
+  const [displayNameError, setDisplayNameError] = useState<string | null>(null);
   // --- Mobile App Mode Check ---
   const [isMobileApp, setIsMobileApp] = useState(false);
   useEffect(() => {
@@ -61,7 +62,7 @@ const App: React.FC = () => {
     session, username, loading: authLoading,
     handleUpdateUsername, handleSignOut
   } = useAuthStatus();
-  const previousUsernameRef = useRef(username);
+  const displayNameCommitVersionRef = useRef(0);
 
   const {
     projects, setProjects, citations, setCitations, loading: dataLoading,
@@ -103,21 +104,23 @@ const App: React.FC = () => {
     }
   }, [isMobileApp, viewMode]);
 
-  useEffect(() => {
-    setSettingsDisplayName((currentName) =>
-      currentName === previousUsernameRef.current ? username : currentName
-    );
-    previousUsernameRef.current = username;
-  }, [username]);
-
   // --- RENDER ---
   if (!session) return <Auth />;
 
+  const resetSettingsDisplayNameState = () => {
+    displayNameCommitVersionRef.current += 1;
+    setSettingsDisplayName(username);
+    setDisplayNameError(null);
+    setIsSavingDisplayName(false);
+  };
+
   const openSettings = () => {
+    resetSettingsDisplayNameState();
     setIsSettingsOpen(true);
   };
 
   const closeSettings = () => {
+    resetSettingsDisplayNameState();
     setIsSettingsOpen(false);
   };
 
@@ -129,14 +132,25 @@ const App: React.FC = () => {
       return;
     }
 
+    const commitVersion = displayNameCommitVersionRef.current;
     setIsSavingDisplayName(true);
+    setDisplayNameError(null);
     try {
       const didSave = await handleUpdateUsername(trimmedDisplayName);
+      if (commitVersion !== displayNameCommitVersionRef.current) {
+        return;
+      }
+
       if (didSave) {
         setSettingsDisplayName(trimmedDisplayName);
+        setDisplayNameError(null);
+      } else {
+        setDisplayNameError('이름 저장에 실패했습니다.');
       }
     } finally {
-      setIsSavingDisplayName(false);
+      if (commitVersion === displayNameCommitVersionRef.current) {
+        setIsSavingDisplayName(false);
+      }
     }
   };
 
@@ -213,6 +227,7 @@ const App: React.FC = () => {
       avatarUrl={null}
       preferences={preferences}
       isSavingDisplayName={isSavingDisplayName}
+      displayNameError={displayNameError}
       onClose={closeSettings}
       onDisplayNameChange={setSettingsDisplayName}
       onDisplayNameCommit={commitSettingsDisplayName}
