@@ -72,6 +72,32 @@ describe('authStorage', () => {
     expect(sessionStorage.getItem(AUTH_TOKEN_KEY)).toBe('session-token');
   });
 
+  it('routes auth writes to sessionStorage when auto-login is off', () => {
+    const storage = createAuthStorageAdapter();
+
+    setAutoLoginEnabled(false);
+    storage.setItem(AUTH_TOKEN_KEY, 'session-token');
+    storage.setItem(AUTH_USER_KEY, 'session-user');
+
+    expect(sessionStorage.getItem(AUTH_TOKEN_KEY)).toBe('session-token');
+    expect(sessionStorage.getItem(AUTH_USER_KEY)).toBe('session-user');
+    expect(localStorage.getItem(AUTH_TOKEN_KEY)).toBeNull();
+    expect(localStorage.getItem(AUTH_USER_KEY)).toBeNull();
+  });
+
+  it('routes auth writes to localStorage when auto-login is on', () => {
+    const storage = createAuthStorageAdapter();
+
+    setAutoLoginEnabled(true);
+    storage.setItem(AUTH_TOKEN_KEY, 'local-token');
+    storage.setItem(AUTH_USER_KEY, 'local-user');
+
+    expect(localStorage.getItem(AUTH_TOKEN_KEY)).toBe('local-token');
+    expect(localStorage.getItem(AUTH_USER_KEY)).toBe('local-user');
+    expect(sessionStorage.getItem(AUTH_TOKEN_KEY)).toBeNull();
+    expect(sessionStorage.getItem(AUTH_USER_KEY)).toBeNull();
+  });
+
   it('re-reads auto-login policy for removeItem on every adapter call', () => {
     const storage = createAuthStorageAdapter();
 
@@ -103,6 +129,21 @@ describe('authStorage', () => {
     expect(localStorage.getItem(AUTH_USER_KEY)).toBe('active-local-user');
     expect(sessionStorage.getItem(AUTH_TOKEN_KEY)).toBeNull();
     expect(sessionStorage.getItem(AUTH_USER_KEY)).toBeNull();
+  });
+
+  it('removes stale session data from the inactive storage on reconcile when auto-login is off', () => {
+    localStorage.setItem(AUTH_TOKEN_KEY, 'stale-local-token');
+    localStorage.setItem(AUTH_USER_KEY, 'stale-local-user');
+    sessionStorage.setItem(AUTH_TOKEN_KEY, 'active-session-token');
+    sessionStorage.setItem(AUTH_USER_KEY, 'active-session-user');
+
+    setAutoLoginEnabled(false);
+    reconcileSupabaseSessionArtifacts(AUTH_TOKEN_KEY);
+
+    expect(localStorage.getItem(AUTH_TOKEN_KEY)).toBeNull();
+    expect(localStorage.getItem(AUTH_USER_KEY)).toBeNull();
+    expect(sessionStorage.getItem(AUTH_TOKEN_KEY)).toBe('active-session-token');
+    expect(sessionStorage.getItem(AUTH_USER_KEY)).toBe('active-session-user');
   });
 
   it('clears auth session artifacts from both storages', () => {
