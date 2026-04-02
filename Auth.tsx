@@ -83,13 +83,6 @@ export const Auth = () => {
                 setIsSuccess(true);
             } else {
                 previousAutoLogin = readAutoLoginEnabled();
-
-                if (rememberEmail) {
-                    setRememberedEmail(email);
-                } else {
-                    clearRememberedEmail();
-                }
-
                 setAutoLoginEnabled(autoLogin);
 
                 const supabase = getSupabaseClient();
@@ -98,6 +91,12 @@ export const Auth = () => {
                     password,
                 });
                 if (error) throw error;
+
+                if (rememberEmail) {
+                    setRememberedEmail(email);
+                } else {
+                    clearRememberedEmail();
+                }
             }
         } catch (err: any) {
             if (!isSignUp) {
