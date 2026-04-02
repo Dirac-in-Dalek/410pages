@@ -13,28 +13,36 @@ export type SettingsPanelProps = {
   isOpen: boolean;
   isMobile: boolean;
   displayName: string;
+  savedDisplayName: string;
   avatarUrl: string | null;
   preferences: UserPreferences;
+  isSavingDisplayName?: boolean;
   onClose: () => void;
   onDisplayNameChange: (value: string) => void;
+  onDisplayNameCommit: (value: string) => void | Promise<void>;
   onAvatarChange: () => void;
   onThemeChange: (value: ThemePreference) => void;
   onFontFamilyChange: (value: FontPreference) => void;
   onTextScaleChange: (value: TextScalePreference) => void;
+  onSignOut?: () => void;
 };
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   isOpen,
   isMobile,
   displayName,
+  savedDisplayName,
   avatarUrl,
   preferences,
+  isSavingDisplayName = false,
   onClose,
   onDisplayNameChange,
+  onDisplayNameCommit,
   onAvatarChange,
   onThemeChange,
   onFontFamilyChange,
   onTextScaleChange,
+  onSignOut,
 }) => {
   useEffect(() => {
     if (!isOpen) {
@@ -110,8 +118,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           <div className="flex-1 overflow-y-auto px-6 py-5">
             <ProfileSettingsSection
               displayName={displayName}
+              savedDisplayName={savedDisplayName}
               avatarUrl={avatarUrl}
+              isSavingDisplayName={isSavingDisplayName}
               onDisplayNameChange={onDisplayNameChange}
+              onDisplayNameCommit={onDisplayNameCommit}
               onAvatarChange={onAvatarChange}
             />
 
@@ -127,6 +138,18 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               onThemeChange={onThemeChange}
             />
           </div>
+
+          {onSignOut ? (
+            <div className="border-t border-[var(--border-main)] px-6 py-4">
+              <button
+                type="button"
+                onClick={onSignOut}
+                className="w-full rounded-2xl border border-[var(--border-main)] bg-[var(--bg-card)] px-4 py-3 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--sidebar-hover)] hover:text-red-500"
+              >
+                로그아웃
+              </button>
+            </div>
+          ) : null}
         </div>
       </aside>
     </>

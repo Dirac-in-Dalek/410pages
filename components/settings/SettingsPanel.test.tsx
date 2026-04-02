@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -13,12 +14,37 @@ const baseProps = {
     fontFamily: 'pretendard' as const,
     textScale: 'md' as const,
   },
+  savedDisplayName: '생활습관',
   onClose: vi.fn(),
   onDisplayNameChange: vi.fn(),
+  onDisplayNameCommit: vi.fn(),
   onThemeChange: vi.fn(),
   onFontFamilyChange: vi.fn(),
   onTextScaleChange: vi.fn(),
   onAvatarChange: vi.fn(),
+  onSignOut: vi.fn(),
+  isSavingDisplayName: false,
+};
+
+const renderWithDisplayNameState = (
+  overrides: Partial<typeof baseProps> = {}
+) => {
+  const props = { ...baseProps, ...overrides };
+
+  const Harness: React.FC = () => {
+    const [displayName, setDisplayName] = useState(props.displayName);
+
+    return (
+      <SettingsPanel
+        {...props}
+        displayName={displayName}
+        onDisplayNameChange={setDisplayName}
+      />
+    );
+  };
+
+  render(<Harness />);
+  return props;
 };
 
 describe('SettingsPanel', () => {
@@ -63,5 +89,45 @@ describe('SettingsPanel', () => {
     await user.click(screen.getByRole('button', { name: '다크' }));
 
     expect(baseProps.onThemeChange).toHaveBeenCalledWith('dark');
+  });
+
+  it('keeps display-name edits local until the field blurs', async () => {
+    const user = userEvent.setup();
+    const props = renderWithDisplayNameState({
+      onDisplayNameCommit: vi.fn().mockResolvedValue(undefined),
+    });
+
+    const input = screen.getByRole('textbox', { name: '이름' });
+    await user.clear(input);
+    await user.type(input, '  새 이름  ');
+
+    expect(props.onDisplayNameCommit).not.toHaveBeenCalled();
+
+    await user.tab();
+
+    expect(props.onDisplayNameCommit).toHaveBeenCalledWith('새 이름');
+  });
+
+  it('commits the display name when Enter is pressed', async () => {
+    const user = userEvent.setup();
+    const props = renderWithDisplayNameState({
+      onDisplayNameCommit: vi.fn().mockResolvedValue(undefined),
+    });
+
+    const input = screen.getByRole('textbox', { name: '이름' });
+    await user.clear(input);
+    await user.type(input, '다른 이름');
+    await user.keyboard('{Enter}');
+
+    expect(props.onDisplayNameCommit).toHaveBeenCalledWith('다른 이름');
+  });
+
+  it('renders a sign-out action inside settings', async () => {
+    const user = userEvent.setup();
+    render(<SettingsPanel {...baseProps} />);
+
+    await user.click(screen.getByRole('button', { name: '로그아웃' }));
+
+    expect(baseProps.onSignOut).toHaveBeenCalled();
   });
 });

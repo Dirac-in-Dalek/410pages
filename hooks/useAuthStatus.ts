@@ -27,11 +27,17 @@ export const useAuthStatus = () => {
 
     const handleUpdateUsername = async (newUsername: string) => {
         if (!session) return;
+        const trimmed = newUsername.trim();
+        if (!trimmed) return false;
+        if (trimmed === username.trim()) return true;
+
         try {
-            await api.updateProfile(session.user.id, newUsername);
-            setUsername(newUsername);
+            await api.updateProfile(session.user.id, { username: trimmed });
+            setUsername(trimmed);
+            return true;
         } catch (error) {
             console.error('Error updating username:', error);
+            return false;
         }
     };
 

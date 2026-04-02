@@ -2,18 +2,36 @@ import React from 'react';
 
 type ProfileSettingsSectionProps = {
   displayName: string;
+  savedDisplayName: string;
   avatarUrl: string | null;
+  isSavingDisplayName?: boolean;
   onDisplayNameChange: (value: string) => void;
+  onDisplayNameCommit: (value: string) => void | Promise<void>;
   onAvatarChange: () => void;
 };
 
 export const ProfileSettingsSection: React.FC<ProfileSettingsSectionProps> = ({
   displayName,
+  savedDisplayName,
   avatarUrl,
+  isSavingDisplayName = false,
   onDisplayNameChange,
+  onDisplayNameCommit,
   onAvatarChange,
 }) => {
   const initials = displayName.trim().slice(0, 2) || 'RT';
+  const trimmedDisplayName = displayName.trim();
+  const trimmedSavedDisplayName = savedDisplayName.trim();
+  const hasPendingDisplayNameChange =
+    trimmedDisplayName.length > 0 && trimmedDisplayName !== trimmedSavedDisplayName;
+
+  const commitDisplayName = () => {
+    if (isSavingDisplayName || !hasPendingDisplayNameChange) {
+      return;
+    }
+
+    void onDisplayNameCommit(trimmedDisplayName);
+  };
 
   return (
     <section className="mb-8">
@@ -52,9 +70,29 @@ export const ProfileSettingsSection: React.FC<ProfileSettingsSectionProps> = ({
           <input
             value={displayName}
             onChange={(event) => onDisplayNameChange(event.target.value)}
+            onBlur={commitDisplayName}
+            onKeyDown={(event) => {
+              if (event.key !== 'Enter') {
+                return;
+              }
+
+              event.preventDefault();
+              event.currentTarget.blur();
+            }}
+            aria-describedby="profile-display-name-hint"
             className="mt-2 w-full rounded-xl border border-[var(--border-main)] bg-[var(--bg-input)] px-3 py-2.5 outline-none transition-colors focus:border-[var(--accent-border)] focus:ring-2 focus:ring-[var(--accent-ring)]"
           />
         </label>
+
+        <p
+          id="profile-display-name-hint"
+          aria-live="polite"
+          className="mt-2 text-xs text-[var(--text-secondary)]"
+        >
+          {isSavingDisplayName
+            ? '이름을 저장하고 있습니다.'
+            : '변경 내용을 적용하려면 Enter를 누르거나 입력란을 벗어나세요.'}
+        </p>
       </div>
     </section>
   );

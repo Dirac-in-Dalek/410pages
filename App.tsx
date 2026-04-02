@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { MainLayout } from './components/MainLayout';
 import { Auth } from './Auth';
 import { MobileLayout } from './components/MobileLayout';
@@ -18,6 +18,7 @@ const App: React.FC = () => {
   const { preferences, setTheme, setFontFamily, setTextScale } = useUserPreferences();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [settingsDisplayName, setSettingsDisplayName] = useState('Researcher');
+  const [isSavingDisplayName, setIsSavingDisplayName] = useState(false);
   // --- Mobile App Mode Check ---
   const [isMobileApp, setIsMobileApp] = useState(false);
   useEffect(() => {
@@ -60,6 +61,7 @@ const App: React.FC = () => {
     session, username, loading: authLoading,
     handleUpdateUsername, handleSignOut
   } = useAuthStatus();
+  const previousUsernameRef = useRef(username);
 
   const {
     projects, setProjects, citations, setCitations, loading: dataLoading,
@@ -102,28 +104,40 @@ const App: React.FC = () => {
   }, [isMobileApp, viewMode]);
 
   useEffect(() => {
-    if (!isSettingsOpen) {
-      setSettingsDisplayName(username);
-    }
-  }, [isSettingsOpen, username]);
+    setSettingsDisplayName((currentName) =>
+      currentName === previousUsernameRef.current ? username : currentName
+    );
+    previousUsernameRef.current = username;
+  }, [username]);
 
   // --- RENDER ---
   if (!session) return <Auth />;
 
   const openSettings = () => {
-    setSettingsDisplayName(username);
     setIsSettingsOpen(true);
   };
 
   const closeSettings = () => {
-    const trimmedDraft = settingsDisplayName.trim();
+    setIsSettingsOpen(false);
+  };
+
+  const commitSettingsDisplayName = async (nextDisplayName: string) => {
+    const trimmedDisplayName = nextDisplayName.trim();
     const trimmedUsername = username.trim();
 
-    if (trimmedDraft && trimmedDraft !== trimmedUsername) {
-      handleUpdateUsername(trimmedDraft);
+    if (!trimmedDisplayName || trimmedDisplayName === trimmedUsername || isSavingDisplayName) {
+      return;
     }
 
-    setIsSettingsOpen(false);
+    setIsSavingDisplayName(true);
+    try {
+      const didSave = await handleUpdateUsername(trimmedDisplayName);
+      if (didSave) {
+        setSettingsDisplayName(trimmedDisplayName);
+      }
+    } finally {
+      setIsSavingDisplayName(false);
+    }
   };
 
   const archiveContent = (
@@ -195,14 +209,18 @@ const App: React.FC = () => {
       isOpen={isSettingsOpen}
       isMobile={isMobileApp}
       displayName={settingsDisplayName}
+      savedDisplayName={username}
       avatarUrl={null}
       preferences={preferences}
+      isSavingDisplayName={isSavingDisplayName}
       onClose={closeSettings}
       onDisplayNameChange={setSettingsDisplayName}
+      onDisplayNameCommit={commitSettingsDisplayName}
       onAvatarChange={() => window.alert('프로필 사진 변경은 다음 단계에서 연결합니다.')}
       onThemeChange={setTheme}
       onFontFamilyChange={setFontFamily}
       onTextScaleChange={setTextScale}
+      onSignOut={handleSignOut}
     />
   );
 
