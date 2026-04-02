@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { getSupabaseClient } from './supabase';
 import { Citation, CitationSourceInput, Note, Project } from '../types';
 
 const extractPageSort = (page: string | undefined): number | undefined => {
@@ -12,7 +12,7 @@ const getNextSortIndex = async (
     userId: string,
     filters: Record<string, string> = {}
 ) => {
-    let query = supabase
+    let query = getSupabaseClient()
         .from(table)
         .select('sort_index')
         .eq('user_id', userId)
@@ -70,7 +70,7 @@ const resolveCitationSource = async (
     let authorName = source.author?.trim() || '';
     const bookTitle = source.book?.trim() || '';
 
-    const { data: profile } = await supabase
+    const { data: profile } = await getSupabaseClient()
         .from('profiles')
         .select('username')
         .eq('id', userId)
@@ -82,7 +82,7 @@ const resolveCitationSource = async (
         authorName = currentUsername;
     }
 
-    const { data: authorData, error: authorError } = await supabase
+    const { data: authorData, error: authorError } = await getSupabaseClient()
         .from('authors')
         .select('id, name, sort_index, is_self')
         .eq('user_id', userId)
@@ -98,7 +98,7 @@ const resolveCitationSource = async (
         authorSortIndex = authorData.sort_index ?? null;
 
         if (isSelf && authorData.name !== currentUsername) {
-            const { error: authorSyncError } = await supabase
+            const { error: authorSyncError } = await getSupabaseClient()
                 .from('authors')
                 .update({ name: currentUsername })
                 .eq('id', authorId)
@@ -107,7 +107,7 @@ const resolveCitationSource = async (
         }
     } else {
         const nextAuthorSortIndex = await getNextSortIndex('authors', userId);
-        const { data: newAuthor, error: createAuthorError } = await supabase
+        const { data: newAuthor, error: createAuthorError } = await getSupabaseClient()
             .from('authors')
             .insert({
                 name: authorName,
@@ -134,7 +134,7 @@ const resolveCitationSource = async (
         };
     }
 
-    const { data: bookData, error: bookError } = await supabase
+    const { data: bookData, error: bookError } = await getSupabaseClient()
         .from('books')
         .select('id, sort_index')
         .eq('title', bookTitle)
@@ -156,7 +156,7 @@ const resolveCitationSource = async (
     }
 
     const nextBookSortIndex = await getNextSortIndex('books', userId, { author_id: authorId });
-    const { data: newBook, error: createBookError } = await supabase
+    const { data: newBook, error: createBookError } = await getSupabaseClient()
         .from('books')
         .insert({
             title: bookTitle,
@@ -182,7 +182,7 @@ const resolveCitationSource = async (
 export const api = {
     // Profiles
     async updateProfile(userId: string, username: string) {
-        const { error } = await supabase
+        const { error } = await getSupabaseClient()
             .from('profiles')
             .upsert({ id: userId, username });
         if (error) throw error;
@@ -190,7 +190,7 @@ export const api = {
 
     // Citations
     async fetchCitations() {
-        const { data, error } = await supabase
+        const { data, error } = await getSupabaseClient()
             .from('citations')
             .select(`
         *,
@@ -238,7 +238,7 @@ export const api = {
         // 3. Insert Citation
         // We explicitly provide author_id. Trigger handle_citation_defaults will kick in if we sent nulls, 
         // but we computed them for Book logic anyway.
-        const { data: citation, error } = await supabase
+        const { data: citation, error } = await getSupabaseClient()
             .from('citations')
             .insert({
                 text: data.text,
@@ -299,7 +299,7 @@ export const api = {
         }
 
         if (data.author !== undefined || data.book !== undefined) {
-            const { data: currentCitation, error: fetchCurrentError } = await supabase
+            const { data: currentCitation, error: fetchCurrentError } = await getSupabaseClient()
                 .from('citations')
                 .select(`
                     author:authors!citations_author_id_fkey(name),
@@ -331,7 +331,7 @@ export const api = {
             return localPatch;
         }
 
-        const { error } = await supabase
+        const { error } = await getSupabaseClient()
             .from('citations')
             .update(updateData)
             .eq('id', id)
@@ -352,7 +352,7 @@ export const api = {
 
         const resolvedSource = await resolveCitationSource(userId, source);
 
-        const { data, error } = await supabase
+        const { data, error } = await getSupabaseClient()
             .from('citations')
             .update({
                 author_id: resolvedSource.authorId,
@@ -380,7 +380,7 @@ export const api = {
     },
 
     async deleteCitation(userId: string, id: string) {
-        const { error } = await supabase
+        const { error } = await getSupabaseClient()
             .from('citations')
             .delete()
             .eq('id', id)
@@ -390,7 +390,7 @@ export const api = {
 
     // Notes
     async addNote(userId: string, citationId: string, content: string) {
-        const { data, error } = await supabase
+        const { data, error } = await getSupabaseClient()
             .from('notes')
             .insert({ citation_id: citationId, content, user_id: userId })
             .select()
@@ -404,7 +404,7 @@ export const api = {
     },
 
     async updateNote(userId: string, noteId: string, content: string) {
-        const { error } = await supabase
+        const { error } = await getSupabaseClient()
             .from('notes')
             .update({ content })
             .eq('id', noteId)
@@ -413,7 +413,7 @@ export const api = {
     },
 
     async deleteNote(userId: string, noteId: string) {
-        const { error } = await supabase
+        const { error } = await getSupabaseClient()
             .from('notes')
             .delete()
             .eq('id', noteId)
@@ -423,7 +423,7 @@ export const api = {
 
     // Projects
     async fetchProjects() {
-        const { data, error } = await supabase
+        const { data, error } = await getSupabaseClient()
             .from('projects')
             .select(`
         *,
@@ -444,7 +444,7 @@ export const api = {
 
     async createProject(userId: string, name: string) {
         const nextSortIndex = await getNextSortIndex('projects', userId);
-        const { data, error } = await supabase
+        const { data, error } = await getSupabaseClient()
             .from('projects')
             .insert({ name, user_id: userId, sort_index: nextSortIndex })
             .select()
@@ -461,7 +461,7 @@ export const api = {
     async reorderProjects(userId: string, orderedProjectIds: string[]) {
         const results = await Promise.all(
             orderedProjectIds.map((projectId, index) =>
-                supabase
+                getSupabaseClient()
                     .from('projects')
                     .update({ sort_index: index })
                     .eq('id', projectId)
@@ -475,7 +475,7 @@ export const api = {
     async reorderAuthors(userId: string, orderedAuthorIds: string[]) {
         const results = await Promise.all(
             orderedAuthorIds.map((authorId, index) =>
-                supabase
+                getSupabaseClient()
                     .from('authors')
                     .update({ sort_index: index })
                     .eq('id', authorId)
@@ -489,7 +489,7 @@ export const api = {
     async reorderBooks(userId: string, authorId: string, orderedBookIds: string[]) {
         const results = await Promise.all(
             orderedBookIds.map((bookId, index) =>
-                supabase
+                getSupabaseClient()
                     .from('books')
                     .update({ sort_index: index })
                     .eq('id', bookId)
@@ -502,7 +502,7 @@ export const api = {
     },
 
     async renameProject(userId: string, id: string, name: string) {
-        const { error } = await supabase
+        const { error } = await getSupabaseClient()
             .from('projects')
             .update({ name })
             .eq('id', id)
@@ -514,7 +514,7 @@ export const api = {
         const trimmed = name.trim();
         if (!trimmed) throw new Error('Author name is required');
 
-        const { data: sourceAuthor, error: sourceAuthorError } = await supabase
+        const { data: sourceAuthor, error: sourceAuthorError } = await getSupabaseClient()
             .from('authors')
             .select('id, name, sort_index, is_self')
             .eq('id', id)
@@ -534,7 +534,7 @@ export const api = {
             };
         }
 
-        const { data: existingAuthor, error: existingAuthorError } = await supabase
+        const { data: existingAuthor, error: existingAuthorError } = await getSupabaseClient()
             .from('authors')
             .select('id, name, sort_index, is_self')
             .eq('user_id', userId)
@@ -544,7 +544,7 @@ export const api = {
         if (existingAuthorError) throw existingAuthorError;
 
         if (!existingAuthor) {
-            const { data: updatedAuthor, error: renameAuthorError } = await supabase
+            const { data: updatedAuthor, error: renameAuthorError } = await getSupabaseClient()
                 .from('authors')
                 .update({ name: trimmed })
                 .eq('id', id)
@@ -564,14 +564,14 @@ export const api = {
             };
         }
 
-        const { data: sourceBooks, error: sourceBooksError } = await supabase
+        const { data: sourceBooks, error: sourceBooksError } = await getSupabaseClient()
             .from('books')
             .select('id, title')
             .eq('user_id', userId)
             .eq('author_id', id);
         if (sourceBooksError) throw sourceBooksError;
 
-        const { data: existingAuthorBooks, error: existingAuthorBooksError } = await supabase
+        const { data: existingAuthorBooks, error: existingAuthorBooksError } = await getSupabaseClient()
             .from('books')
             .select('id, title, sort_index')
             .eq('user_id', userId)
@@ -588,14 +588,14 @@ export const api = {
             const conflict = existingBookByTitle.get(normalizedTitle);
 
             if (conflict) {
-                const { error: moveCitationError } = await supabase
+                const { error: moveCitationError } = await getSupabaseClient()
                     .from('citations')
                     .update({ book_id: conflict.id })
                     .eq('user_id', userId)
                     .eq('book_id', sourceBook.id);
                 if (moveCitationError) throw moveCitationError;
 
-                const { error: deleteBookError } = await supabase
+                const { error: deleteBookError } = await getSupabaseClient()
                     .from('books')
                     .delete()
                     .eq('id', sourceBook.id)
@@ -609,7 +609,7 @@ export const api = {
                     toBookSortIndex: conflict.sort_index ?? null
                 });
             } else {
-                const { error: moveBookOwnerError } = await supabase
+                const { error: moveBookOwnerError } = await getSupabaseClient()
                     .from('books')
                     .update({ author_id: existingAuthor.id })
                     .eq('id', sourceBook.id)
@@ -618,14 +618,14 @@ export const api = {
             }
         }
 
-        const { error: moveCitationAuthorError } = await supabase
+        const { error: moveCitationAuthorError } = await getSupabaseClient()
             .from('citations')
             .update({ author_id: existingAuthor.id })
             .eq('user_id', userId)
             .eq('author_id', id);
         if (moveCitationAuthorError) throw moveCitationAuthorError;
 
-        const { error: deleteSourceAuthorError } = await supabase
+        const { error: deleteSourceAuthorError } = await getSupabaseClient()
             .from('authors')
             .delete()
             .eq('id', id)
@@ -647,7 +647,7 @@ export const api = {
         const trimmed = name.trim();
         if (!trimmed) throw new Error('Book title is required');
 
-        const { data: sourceBook, error: sourceBookError } = await supabase
+        const { data: sourceBook, error: sourceBookError } = await getSupabaseClient()
             .from('books')
             .select('id, title, author_id, sort_index')
             .eq('id', id)
@@ -665,7 +665,7 @@ export const api = {
             };
         }
 
-        const { data: existingBook, error: existingBookError } = await supabase
+        const { data: existingBook, error: existingBookError } = await getSupabaseClient()
             .from('books')
             .select('id, title, sort_index')
             .eq('user_id', userId)
@@ -676,14 +676,14 @@ export const api = {
         if (existingBookError) throw existingBookError;
 
         if (existingBook) {
-            const { error: moveCitationError } = await supabase
+            const { error: moveCitationError } = await getSupabaseClient()
                 .from('citations')
                 .update({ book_id: existingBook.id })
                 .eq('user_id', userId)
                 .eq('book_id', id);
             if (moveCitationError) throw moveCitationError;
 
-            const { error: deleteSourceBookError } = await supabase
+            const { error: deleteSourceBookError } = await getSupabaseClient()
                 .from('books')
                 .delete()
                 .eq('id', id)
@@ -699,7 +699,7 @@ export const api = {
             };
         }
 
-        const { data: updatedBook, error: renameBookError } = await supabase
+        const { data: updatedBook, error: renameBookError } = await getSupabaseClient()
             .from('books')
             .update({ title: trimmed })
             .eq('id', id)
@@ -718,7 +718,7 @@ export const api = {
     },
 
     async deleteProject(userId: string, id: string) {
-        const { error } = await supabase
+        const { error } = await getSupabaseClient()
             .from('projects')
             .delete()
             .eq('id', id)
@@ -727,7 +727,7 @@ export const api = {
     },
 
     async addCitationToProject(userId: string, projectId: string, citationId: string) {
-        const { error } = await supabase
+        const { error } = await getSupabaseClient()
             .from('project_citations')
             .upsert({ project_id: projectId, citation_id: citationId });
 
@@ -742,7 +742,7 @@ export const api = {
             citation_id: cid
         }));
 
-        const { error } = await supabase
+        const { error } = await getSupabaseClient()
             .from('project_citations')
             .upsert(records, { onConflict: 'project_id, citation_id', ignoreDuplicates: true });
 

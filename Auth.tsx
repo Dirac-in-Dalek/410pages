@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { supabase } from './lib/supabase';
+import React, { useEffect, useState } from 'react';
+import { clearRememberedEmail, readAutoLoginEnabled, readRememberedEmail, setAutoLoginEnabled, setRememberedEmail } from './lib/authStorage';
+import { getSupabaseClient } from './lib/supabase';
 
 export const Auth = () => {
     const [loading, setLoading] = useState(false);
@@ -10,6 +11,19 @@ export const Auth = () => {
     const [error, setError] = useState<string | null>(null);
     const [isSuccess, setIsSuccess] = useState(false);
     const [emailCheckResult, setEmailCheckResult] = useState<{ available: boolean; message: string } | null>(null);
+    const [rememberEmail, setRememberEmailState] = useState(false);
+    const [autoLogin, setAutoLogin] = useState(false);
+
+    useEffect(() => {
+        const storedEmail = readRememberedEmail();
+
+        if (storedEmail) {
+            setEmail(storedEmail);
+            setRememberEmailState(true);
+        }
+
+        setAutoLogin(readAutoLoginEnabled());
+    }, []);
 
     const checkEmailAvailability = async () => {
         if (!email || !email.includes('@')) {
@@ -20,6 +34,8 @@ export const Auth = () => {
         setError(null);
         setEmailCheckResult(null);
         try {
+            const supabase = getSupabaseClient();
+
             // Use RPC to check email existence (Server-side check)
             const { data: exists, error: rpcError } = await supabase.rpc('check_email_exists', {
                 email_to_check: email
@@ -44,9 +60,12 @@ export const Auth = () => {
         e.preventDefault();
         setLoading(true);
         setError(null);
+        let previousAutoLogin = autoLogin;
 
         try {
             if (isSignUp) {
+                const supabase = getSupabaseClient();
+
                 if (emailCheckResult && !emailCheckResult.available) {
                     throw new Error("이미 사용 중인 이메일입니다.");
                 }
@@ -63,13 +82,26 @@ export const Auth = () => {
                 if (error) throw error;
                 setIsSuccess(true);
             } else {
+                previousAutoLogin = readAutoLoginEnabled();
+                setAutoLoginEnabled(autoLogin);
+
+                const supabase = getSupabaseClient();
                 const { error } = await supabase.auth.signInWithPassword({
                     email,
                     password,
                 });
                 if (error) throw error;
+
+                if (rememberEmail) {
+                    setRememberedEmail(email);
+                } else {
+                    clearRememberedEmail();
+                }
             }
         } catch (err: any) {
+            if (!isSignUp) {
+                setAutoLoginEnabled(previousAutoLogin);
+            }
             setError(err.message);
         } finally {
             setLoading(false);
@@ -152,6 +184,7 @@ export const Auth = () => {
                                     setEmailCheckResult(null);
                                 }}
                                 required
+                                autoComplete="username"
                                 className={`flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--accent-ring)] bg-[var(--bg-card)] ${isSignUp && emailCheckResult ? (emailCheckResult.available ? 'border-emerald-300' : 'border-red-300') : 'border-[var(--border-main)]'
                                     }`}
                                 placeholder="name@example.com"
@@ -180,10 +213,34 @@ export const Auth = () => {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
+                            autoComplete={isSignUp ? 'new-password' : 'current-password'}
                             className="w-full px-3 py-2 border border-[var(--border-main)] rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--accent-ring)] bg-[var(--bg-card)]"
                             placeholder="••••••••"
                         />
                     </div>
+
+                    {!isSignUp && (
+                        <div className="flex items-center gap-4 text-xs text-[var(--text-muted)]">
+                            <label className="flex items-center gap-2 cursor-pointer select-none">
+                                <input
+                                    type="checkbox"
+                                    checked={rememberEmail}
+                                    onChange={(e) => setRememberEmailState(e.target.checked)}
+                                    className="h-4 w-4 rounded border-[var(--border-main)] text-[var(--accent)] focus:ring-[var(--accent-ring)]"
+                                />
+                                <span>아이디 기억</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer select-none">
+                                <input
+                                    type="checkbox"
+                                    checked={autoLogin}
+                                    onChange={(e) => setAutoLogin(e.target.checked)}
+                                    className="h-4 w-4 rounded border-[var(--border-main)] text-[var(--accent)] focus:ring-[var(--accent-ring)]"
+                                />
+                                <span>자동로그인</span>
+                            </label>
+                        </div>
+                    )}
 
                     {error && (
                         <div className="p-3 text-xs text-red-600 bg-red-50 rounded-md">
