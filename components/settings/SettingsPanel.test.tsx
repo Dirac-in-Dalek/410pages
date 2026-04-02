@@ -44,6 +44,18 @@ describe('SettingsPanel', () => {
     expect(baseProps.onClose).toHaveBeenCalled();
   });
 
+  it('closes when the backdrop is clicked without using a focusable button backdrop', async () => {
+    const user = userEvent.setup();
+    render(<SettingsPanel {...baseProps} />);
+
+    const backdrop = screen.getByTestId('settings-backdrop');
+    expect(backdrop.tagName).toBe('DIV');
+
+    await user.click(backdrop);
+
+    expect(baseProps.onClose).toHaveBeenCalled();
+  });
+
   it('sends live theme changes', async () => {
     const user = userEvent.setup();
     render(<SettingsPanel {...baseProps} />);

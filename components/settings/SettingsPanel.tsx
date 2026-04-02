@@ -62,9 +62,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
   return (
     <>
-      <button
-        type="button"
-        aria-label="설정 닫기 배경"
+      <div
+        aria-hidden="true"
+        data-testid="settings-backdrop"
         className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px]"
         onClick={onClose}
       />
