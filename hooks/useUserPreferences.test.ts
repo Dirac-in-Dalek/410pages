@@ -42,6 +42,35 @@ const installStorageStub = () => {
   });
 };
 
+const installThrowingStorageStub = () => {
+  const error = new Error('Access denied');
+  error.name = 'SecurityError';
+
+  Object.defineProperty(window, 'localStorage', {
+    configurable: true,
+    value: {
+      clear: () => {
+        throw error;
+      },
+      getItem: () => {
+        throw error;
+      },
+      key: () => {
+        throw error;
+      },
+      removeItem: () => {
+        throw error;
+      },
+      setItem: () => {
+        throw error;
+      },
+      get length() {
+        throw error;
+      },
+    },
+  });
+};
+
 const resetDom = () => {
   document.documentElement.className = '';
   document.documentElement.removeAttribute('data-font');
@@ -61,6 +90,12 @@ describe('useUserPreferences', () => {
   });
 
   it('returns defaults when storage is empty', () => {
+    expect(readStoredPreferences()).toEqual(DEFAULT_PREFERENCES);
+  });
+
+  it('falls back to defaults when storage access throws', () => {
+    installThrowingStorageStub();
+
     expect(readStoredPreferences()).toEqual(DEFAULT_PREFERENCES);
   });
 
@@ -91,5 +126,21 @@ describe('useUserPreferences', () => {
       fontFamily: 'serif',
       textScale: 'sm',
     });
+  });
+
+  it('applies preference updates even when storage writes throw', () => {
+    installThrowingStorageStub();
+
+    const { result } = renderHook(() => useUserPreferences());
+
+    act(() => {
+      result.current.setTheme('dark');
+      result.current.setFontFamily('serif');
+      result.current.setTextScale('lg');
+    });
+
+    expect(document.documentElement.classList.contains('dark')).toBe(true);
+    expect(document.documentElement.dataset.font).toBe('serif');
+    expect(document.documentElement.style.getPropertyValue('--text-scale')).toBe('1.125');
   });
 });

@@ -53,23 +53,47 @@ const getSystemTheme = (): 'light' | 'dark' =>
 const resolveTheme = (theme: ThemePreference): 'light' | 'dark' =>
   theme === 'system' ? getSystemTheme() : theme;
 
+const safeGetStorageItem = (key: string) => {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
+const safeSetStorageItem = (key: string, value: string) => {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    return;
+  }
+};
+
+const safeRemoveStorageItem = (key: string) => {
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    return;
+  }
+};
+
 export const readStoredPreferences = (): UserPreferences => {
-  const storedPreferences = window.localStorage.getItem(PREFERENCES_STORAGE_KEY);
+  const storedPreferences = safeGetStorageItem(PREFERENCES_STORAGE_KEY);
 
   if (storedPreferences) {
     try {
       return normalizePreferences(JSON.parse(storedPreferences));
     } catch {
-      window.localStorage.removeItem(PREFERENCES_STORAGE_KEY);
+      safeRemoveStorageItem(PREFERENCES_STORAGE_KEY);
     }
   }
 
-  const legacyTheme = window.localStorage.getItem(LEGACY_THEME_STORAGE_KEY);
+  const legacyTheme = safeGetStorageItem(LEGACY_THEME_STORAGE_KEY);
   if (isThemePreference(legacyTheme)) {
     return { ...DEFAULT_PREFERENCES, theme: legacyTheme };
   }
 
-  const legacyDarkMode = window.localStorage.getItem(LEGACY_DARK_MODE_KEY);
+  const legacyDarkMode = safeGetStorageItem(LEGACY_DARK_MODE_KEY);
   if (legacyDarkMode !== null) {
     try {
       return {
@@ -77,7 +101,7 @@ export const readStoredPreferences = (): UserPreferences => {
         theme: JSON.parse(legacyDarkMode) ? 'dark' : 'light',
       };
     } catch {
-      window.localStorage.removeItem(LEGACY_DARK_MODE_KEY);
+      safeRemoveStorageItem(LEGACY_DARK_MODE_KEY);
     }
   }
 
@@ -103,9 +127,9 @@ export const useUserPreferences = () => {
 
   useEffect(() => {
     applyPreferencesToDocument(preferences);
-    window.localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(preferences));
-    window.localStorage.setItem(LEGACY_THEME_STORAGE_KEY, preferences.theme);
-    window.localStorage.removeItem(LEGACY_DARK_MODE_KEY);
+    safeSetStorageItem(PREFERENCES_STORAGE_KEY, JSON.stringify(preferences));
+    safeSetStorageItem(LEGACY_THEME_STORAGE_KEY, preferences.theme);
+    safeRemoveStorageItem(LEGACY_DARK_MODE_KEY);
   }, [preferences]);
 
   useEffect(() => {
