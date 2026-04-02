@@ -1,6 +1,11 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
+import {
+    clearAutoLoginEnabled,
+    clearSupabaseSessionArtifacts,
+    reconcileSupabaseSessionArtifacts,
+} from '../lib/authStorage';
+import { getSupabaseClient, SUPABASE_AUTH_STORAGE_KEY } from '../lib/supabase';
 
 export const useAuthStatus = () => {
     const [session, setSession] = useState<any>(null);
@@ -9,17 +14,20 @@ export const useAuthStatus = () => {
 
     const fetchProfile = async (userId: string) => {
         try {
-            const { data, error } = await supabase
+            const { data, error } = await getSupabaseClient()
                 .from('profiles')
                 .select('username')
                 .eq('id', userId)
                 .single();
 
-            if (data?.username) {
-                setUsername(data.username);
+            if (error) {
+                throw error;
             }
+
+            setUsername(data?.username || 'Researcher');
         } catch (error) {
             console.error('Error fetching profile:', error);
+            setUsername('Researcher');
         } finally {
             setLoading(false);
         }
@@ -36,24 +44,60 @@ export const useAuthStatus = () => {
     };
 
     const handleSignOut = async () => {
-        await supabase.auth.signOut();
+        setLoading(true);
+
+        try {
+            const { error } = await getSupabaseClient().auth.signOut();
+
+            if (error) {
+                throw error;
+            }
+        } catch (error) {
+            console.error('Error signing out:', error);
+        } finally {
+            clearAutoLoginEnabled();
+
+            if (SUPABASE_AUTH_STORAGE_KEY) {
+                clearSupabaseSessionArtifacts(SUPABASE_AUTH_STORAGE_KEY);
+            }
+
+            setSession(null);
+            setUsername('Researcher');
+            setLoading(false);
+        }
     };
 
     useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session);
-            if (session) {
-                fetchProfile(session.user.id);
-            } else {
+        if (SUPABASE_AUTH_STORAGE_KEY) {
+            reconcileSupabaseSessionArtifacts(SUPABASE_AUTH_STORAGE_KEY);
+        }
+
+        const supabase = getSupabaseClient();
+
+        supabase.auth.getSession()
+            .then(({ data: { session } }) => {
+                setSession(session);
+                if (session) {
+                    setLoading(true);
+                    fetchProfile(session.user.id);
+                } else {
+                    setUsername('Researcher');
+                    setLoading(false);
+                }
+            })
+            .catch((error) => {
+                console.error('Error restoring session:', error);
+                setSession(null);
+                setUsername('Researcher');
                 setLoading(false);
-            }
-        });
+            });
 
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((_event, session) => {
             setSession(session);
             if (session) {
+                setLoading(true);
                 fetchProfile(session.user.id);
             } else {
                 setUsername('Researcher');
