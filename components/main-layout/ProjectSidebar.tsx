@@ -120,8 +120,10 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
   };
 
   const hasProjectSortType = (e: React.DragEvent) => {
-    const types = Array.from(e.dataTransfer.types || []).map(type => type.toLowerCase());
-    return types.includes(PROJECT_SORT_MIME);
+    const types = Array.from(e.dataTransfer.types ?? []);
+    return types.some(
+      (type) => typeof type === 'string' && type.toLowerCase() === PROJECT_SORT_MIME
+    );
   };
 
   const getProjectDragIndex = (e: React.DragEvent) => {

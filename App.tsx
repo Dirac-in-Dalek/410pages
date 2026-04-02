@@ -102,27 +102,10 @@ const App: React.FC = () => {
   }, [isMobileApp, viewMode]);
 
   useEffect(() => {
-    setSettingsDisplayName(username);
-  }, [username]);
-
-  useEffect(() => {
     if (!isSettingsOpen) {
-      return undefined;
+      setSettingsDisplayName(username);
     }
-
-    const trimmedDraft = settingsDisplayName.trim();
-    const trimmedUsername = username.trim();
-
-    if (!trimmedDraft || trimmedDraft === trimmedUsername) {
-      return undefined;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      handleUpdateUsername(trimmedDraft);
-    }, 600);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [handleUpdateUsername, isSettingsOpen, settingsDisplayName, username]);
+  }, [isSettingsOpen, username]);
 
   // --- RENDER ---
   if (!session) return <Auth />;
@@ -130,6 +113,17 @@ const App: React.FC = () => {
   const openSettings = () => {
     setSettingsDisplayName(username);
     setIsSettingsOpen(true);
+  };
+
+  const closeSettings = () => {
+    const trimmedDraft = settingsDisplayName.trim();
+    const trimmedUsername = username.trim();
+
+    if (trimmedDraft && trimmedDraft !== trimmedUsername) {
+      handleUpdateUsername(trimmedDraft);
+    }
+
+    setIsSettingsOpen(false);
   };
 
   const archiveContent = (
@@ -203,7 +197,7 @@ const App: React.FC = () => {
       displayName={settingsDisplayName}
       avatarUrl={null}
       preferences={preferences}
-      onClose={() => setIsSettingsOpen(false)}
+      onClose={closeSettings}
       onDisplayNameChange={setSettingsDisplayName}
       onAvatarChange={() => window.alert('프로필 사진 변경은 다음 단계에서 연결합니다.')}
       onThemeChange={setTheme}
