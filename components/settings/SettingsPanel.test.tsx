@@ -12,7 +12,7 @@ const baseProps = {
   preferences: {
     theme: 'system' as const,
     fontFamily: 'pretendard' as const,
-    textScale: 'md' as const,
+    baseFontPt: 16,
   },
   savedDisplayName: '생활습관',
   onClose: vi.fn(),
@@ -20,7 +20,7 @@ const baseProps = {
   onDisplayNameCommit: vi.fn(),
   onThemeChange: vi.fn(),
   onFontFamilyChange: vi.fn(),
-  onTextScaleChange: vi.fn(),
+  onBaseFontPtChange: vi.fn(),
   onAvatarChange: vi.fn(),
   onSignOut: vi.fn(),
   isSavingDisplayName: false,
@@ -90,6 +90,28 @@ describe('SettingsPanel', () => {
     await user.click(screen.getByRole('button', { name: '다크' }));
 
     expect(baseProps.onThemeChange).toHaveBeenCalledWith('dark');
+  });
+
+  it('renders a numeric font-size slider with the current value', () => {
+    render(<SettingsPanel {...baseProps} />);
+
+    const slider = screen.getByRole('slider', { name: '글자 크기' }) as HTMLInputElement;
+
+    expect(slider).toBeTruthy();
+    expect(slider.min).toBe('10');
+    expect(slider.max).toBe('40');
+    expect(slider.step).toBe('1');
+    expect(slider.value).toBe('16');
+    expect(screen.getByText('16pt')).toBeTruthy();
+  });
+
+  it('calls onBaseFontPtChange when the font slider changes', () => {
+    render(<SettingsPanel {...baseProps} />);
+
+    const slider = screen.getByRole('slider', { name: '글자 크기' });
+    fireEvent.change(slider, { target: { value: '22' } });
+
+    expect(baseProps.onBaseFontPtChange).toHaveBeenCalledWith(22);
   });
 
   it('calls onAvatarChange when the avatar action is clicked', async () => {

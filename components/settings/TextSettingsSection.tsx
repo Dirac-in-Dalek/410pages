@@ -1,11 +1,11 @@
 import React from 'react';
-import type { FontPreference, TextScalePreference } from '../../hooks/useUserPreferences';
+import type { FontPreference } from '../../hooks/useUserPreferences';
 
 type TextSettingsSectionProps = {
   fontFamily: FontPreference;
-  textScale: TextScalePreference;
+  baseFontPt: number;
   onFontFamilyChange: (value: FontPreference) => void;
-  onTextScaleChange: (value: TextScalePreference) => void;
+  onBaseFontPtChange: (value: number) => void;
 };
 
 const optionButtonClass = (isActive: boolean) =>
@@ -17,9 +17,9 @@ const optionButtonClass = (isActive: boolean) =>
 
 export const TextSettingsSection: React.FC<TextSettingsSectionProps> = ({
   fontFamily,
-  textScale,
+  baseFontPt,
   onFontFamilyChange,
-  onTextScaleChange,
+  onBaseFontPtChange,
 }) => (
   <section className="mb-8">
     <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
@@ -50,32 +50,28 @@ export const TextSettingsSection: React.FC<TextSettingsSectionProps> = ({
       </div>
 
       <div>
-        <p className="mb-2 text-sm font-medium text-[var(--text-main)]">글자 크기</p>
-        <div className="grid grid-cols-3 gap-2">
-          <button
-            type="button"
-            aria-pressed={textScale === 'sm'}
-            className={optionButtonClass(textScale === 'sm')}
-            onClick={() => onTextScaleChange('sm')}
-          >
-            작게
-          </button>
-          <button
-            type="button"
-            aria-pressed={textScale === 'md'}
-            className={optionButtonClass(textScale === 'md')}
-            onClick={() => onTextScaleChange('md')}
-          >
-            보통
-          </button>
-          <button
-            type="button"
-            aria-pressed={textScale === 'lg'}
-            className={optionButtonClass(textScale === 'lg')}
-            onClick={() => onTextScaleChange('lg')}
-          >
-            크게
-          </button>
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <label htmlFor="base-font-pt" className="text-sm font-medium text-[var(--text-main)]">
+            글자 크기
+          </label>
+          <span aria-live="polite" className="text-sm font-medium text-[var(--text-secondary)]">
+            {baseFontPt}pt
+          </span>
+        </div>
+        <input
+          id="base-font-pt"
+          type="range"
+          min={10}
+          max={40}
+          step={1}
+          value={baseFontPt}
+          aria-valuetext={`${baseFontPt}pt`}
+          className="w-full accent-[var(--accent)]"
+          onChange={(event) => onBaseFontPtChange(Number(event.currentTarget.value))}
+        />
+        <div className="mt-2 flex justify-between text-xs text-[var(--text-secondary)]">
+          <span>10pt</span>
+          <span>40pt</span>
         </div>
       </div>
     </div>

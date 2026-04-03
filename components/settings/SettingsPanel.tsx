@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import type {
   FontPreference,
-  TextScalePreference,
   ThemePreference,
   UserPreferences,
 } from '../../hooks/useUserPreferences';
@@ -24,7 +23,7 @@ export type SettingsPanelProps = {
   onAvatarChange: () => void;
   onThemeChange: (value: ThemePreference) => void;
   onFontFamilyChange: (value: FontPreference) => void;
-  onTextScaleChange: (value: TextScalePreference) => void;
+  onBaseFontPtChange: (value: number) => void;
   onSignOut?: () => void;
 };
 
@@ -43,7 +42,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onAvatarChange,
   onThemeChange,
   onFontFamilyChange,
-  onTextScaleChange,
+  onBaseFontPtChange,
   onSignOut,
 }) => {
   const dismissingPanelRef = useRef(false);
@@ -153,9 +152,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
             <TextSettingsSection
               fontFamily={preferences.fontFamily}
-              textScale={preferences.textScale}
+              baseFontPt={preferences.baseFontPt}
               onFontFamilyChange={onFontFamilyChange}
-              onTextScaleChange={onTextScaleChange}
+              onBaseFontPtChange={onBaseFontPtChange}
             />
 
             <AppearanceSettingsSection

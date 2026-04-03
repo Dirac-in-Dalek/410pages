@@ -15,7 +15,7 @@ import { SettingsPanel } from './components/settings/SettingsPanel';
 import { useUserPreferences } from './hooks/useUserPreferences';
 
 const App: React.FC = () => {
-  const { preferences, setTheme, setFontFamily, setTextScale } = useUserPreferences();
+  const { preferences, setTheme, setFontFamily, setBaseFontPt } = useUserPreferences();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [settingsDisplayName, setSettingsDisplayName] = useState('Researcher');
   const [isSavingDisplayName, setIsSavingDisplayName] = useState(false);
@@ -249,7 +249,7 @@ const App: React.FC = () => {
       onAvatarChange={() => console.info('Avatar change action is not connected yet.')}
       onThemeChange={setTheme}
       onFontFamilyChange={setFontFamily}
-      onTextScaleChange={setTextScale}
+      onBaseFontPtChange={setBaseFontPt}
       onSignOut={handleSignOut}
     />
   );
