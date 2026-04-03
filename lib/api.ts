@@ -2,11 +2,33 @@ import { getSupabaseClient } from './supabase';
 import { Citation, CitationSourceInput, Note, Project } from '../types';
 
 export const PROFILE_AVATAR_BUCKET = 'profile-avatars';
+const PROFILE_AVATAR_PUBLIC_PATH_PREFIX = `/storage/v1/object/public/${PROFILE_AVATAR_BUCKET}/`;
+const PROFILE_AVATAR_OBJECT_NAME = 'avatar';
 
 const extractPageSort = (page: string | undefined): number | undefined => {
     if (!page) return undefined;
     const match = page.match(/\d+/);
     return match ? parseInt(match[0], 10) : undefined;
+};
+
+const getProfileAvatarObjectPath = (userId: string) =>
+    `${userId}/${PROFILE_AVATAR_OBJECT_NAME}`;
+
+const extractProfileAvatarObjectPath = (avatarUrl?: string | null) => {
+    if (!avatarUrl) {
+        return null;
+    }
+
+    try {
+        const { pathname } = new URL(avatarUrl);
+        if (!pathname.startsWith(PROFILE_AVATAR_PUBLIC_PATH_PREFIX)) {
+            return null;
+        }
+
+        return decodeURIComponent(pathname.slice(PROFILE_AVATAR_PUBLIC_PATH_PREFIX.length));
+    } catch {
+        return null;
+    }
 };
 
 const getNextSortIndex = async (
@@ -193,24 +215,45 @@ export const api = {
         if (error) throw error;
     },
 
-    async uploadProfileAvatar(userId: string, file: File, _currentAvatarUrl?: string | null) {
-        const objectPath = `${userId}/avatar`;
-        const { error: uploadError } = await getSupabaseClient()
+    async uploadProfileAvatar(userId: string, file: File, currentAvatarUrl?: string | null) {
+        const uploadVersion = Date.now();
+        const objectPath = getProfileAvatarObjectPath(userId);
+        const avatarStorage = getSupabaseClient()
             .storage
-            .from(PROFILE_AVATAR_BUCKET)
-            .upload(objectPath, file, {
-                upsert: true,
+            .from(PROFILE_AVATAR_BUCKET);
+
+        const previousObjectPath = extractProfileAvatarObjectPath(currentAvatarUrl);
+        if (previousObjectPath && previousObjectPath !== objectPath) {
+            const { error: removeError } = await avatarStorage.remove([previousObjectPath]);
+            if (removeError) {
+                throw removeError;
+            }
+        }
+
+        const saveAvatarWithUpload = () =>
+            avatarStorage.upload(objectPath, file, {
+                upsert: false,
                 contentType: file.type || undefined,
             });
 
-        if (uploadError) throw uploadError;
+        const { error: saveError } = previousObjectPath === objectPath
+            ? await avatarStorage.update(objectPath, file, {
+                contentType: file.type || undefined,
+            })
+            : await saveAvatarWithUpload();
 
-        const { data } = getSupabaseClient()
-            .storage
-            .from(PROFILE_AVATAR_BUCKET)
-            .getPublicUrl(objectPath);
+        if (saveError) {
+            if (previousObjectPath === objectPath) {
+                const { error: uploadFallbackError } = await saveAvatarWithUpload();
+                if (uploadFallbackError) throw uploadFallbackError;
+            } else {
+                throw saveError;
+            }
+        }
 
-        return `${data.publicUrl}?v=${Date.now()}`;
+        const { data } = avatarStorage.getPublicUrl(objectPath);
+
+        return `${data.publicUrl}?v=${uploadVersion}`;
     },
 
     // Citations

@@ -6,6 +6,7 @@ const mockUpdateProfile = vi.fn();
 const mockUploadProfileAvatar = vi.fn();
 const mockGetSession = vi.fn();
 const mockOnAuthStateChange = vi.fn();
+const mockUpdateUser = vi.fn();
 const mockProfileSingle = vi.fn();
 const mockEq = vi.fn();
 const mockSelect = vi.fn();
@@ -23,6 +24,7 @@ vi.mock('../lib/supabase', () => ({
     auth: {
       getSession: mockGetSession,
       onAuthStateChange: mockOnAuthStateChange,
+      updateUser: mockUpdateUser,
       signOut: vi.fn().mockResolvedValue({ error: null }),
     },
     from: vi.fn(() => ({
@@ -40,6 +42,7 @@ vi.mock('../lib/authStorage', () => ({
 describe('useAuthStatus', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.localStorage.clear();
 
     mockEq.mockReturnValue({
       single: mockProfileSingle,
@@ -62,6 +65,8 @@ describe('useAuthStatus', () => {
         },
       },
     });
+
+    mockUpdateUser.mockResolvedValue({ error: null });
   });
 
   it('loads avatar_url with the profile on startup', async () => {
@@ -111,5 +116,45 @@ describe('useAuthStatus', () => {
       avatar_url: 'https://cdn.example.com/avatar-next.png',
     });
     expect(result.current.avatarUrl).toBe('https://cdn.example.com/avatar-next.png');
+  });
+
+  it('falls back to the cached display name when profile fetch fails on startup', async () => {
+    window.localStorage.setItem('profileDisplayName:user-1', 'Saved Name');
+
+    mockProfileSingle.mockResolvedValue({
+      data: null,
+      error: new Error('profile fetch failed'),
+    });
+
+    const { result } = renderHook(() => useAuthStatus());
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.username).toBe('Saved Name');
+  });
+
+  it('caches the updated display name after a successful save', async () => {
+    mockProfileSingle.mockResolvedValue({
+      data: {
+        username: 'Yoo Hankyul',
+        avatar_url: null,
+      },
+      error: null,
+    });
+    mockUpdateProfile.mockResolvedValue(undefined);
+
+    const { result } = renderHook(() => useAuthStatus());
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.handleUpdateUsername('Updated Name');
+    });
+
+    expect(window.localStorage.getItem('profileDisplayName:user-1')).toBe('Updated Name');
   });
 });
