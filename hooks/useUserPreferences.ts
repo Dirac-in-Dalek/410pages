@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
 export type FontPreference = 'pretendard' | 'serif';
+export type TextScalePreference = 'sm' | 'md' | 'lg';
 
 export type UserPreferences = {
   theme: ThemePreference;
@@ -17,7 +18,7 @@ const LIGHT_THEME_COLOR = '#ffffff';
 const DEFAULT_BASE_FONT_PT = 16;
 const MIN_BASE_FONT_PT = 10;
 const MAX_BASE_FONT_PT = 40;
-const LEGACY_TEXT_SCALE_TO_BASE_FONT_PT: Record<'sm' | 'md' | 'lg', number> = {
+const LEGACY_TEXT_SCALE_TO_BASE_FONT_PT: Record<TextScalePreference, number> = {
   sm: 14,
   md: 16,
   lg: 18,
@@ -182,12 +183,17 @@ export const useUserPreferences = () => {
     () => ({
       preferences,
       setPreferences,
+      setBaseFontPt: (baseFontPt: number) =>
+        setPreferences((current) => ({ ...current, baseFontPt: normalizeBaseFontPt(baseFontPt) })),
+      setTextScale: (textScale: TextScalePreference) =>
+        setPreferences((current) => ({
+          ...current,
+          baseFontPt: normalizeBaseFontPt(LEGACY_TEXT_SCALE_TO_BASE_FONT_PT[textScale]),
+        })),
       setTheme: (theme: ThemePreference) =>
         setPreferences((current) => ({ ...current, theme })),
       setFontFamily: (fontFamily: FontPreference) =>
         setPreferences((current) => ({ ...current, fontFamily })),
-      setBaseFontPt: (baseFontPt: number) =>
-        setPreferences((current) => ({ ...current, baseFontPt: normalizeBaseFontPt(baseFontPt) })),
       isDarkMode: resolveTheme(preferences.theme) === 'dark',
     }),
     [preferences]

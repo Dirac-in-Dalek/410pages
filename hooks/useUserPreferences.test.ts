@@ -142,6 +142,22 @@ describe('useUserPreferences', () => {
     });
   });
 
+  it.each([
+    ['sm', 14],
+    ['md', 16],
+    ['lg', 18],
+  ] as const)('preserves the legacy text scale alias for %s', (textScale, expectedBaseFontPt) => {
+    const { result } = renderHook(() => useUserPreferences());
+
+    act(() => {
+      result.current.setTextScale(textScale);
+    });
+
+    expect(JSON.parse(window.localStorage.getItem(PREFERENCES_STORAGE_KEY) || '{}')).toMatchObject({
+      baseFontPt: expectedBaseFontPt,
+    });
+  });
+
   it('clamps base font size to the minimum bound', () => {
     const { result } = renderHook(() => useUserPreferences());
 
