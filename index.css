@@ -1,4 +1,5 @@
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+@import url('https://fonts.googleapis.com/css2?family=Nanum+Brush+Script&family=Nanum+Gothic:wght@400;700;800&family=Nanum+Gothic+Coding:wght@400;700&family=Nanum+Myeongjo:wght@400;700;800&family=Nanum+Pen+Script&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -80,9 +81,39 @@
     --highlight-bg: rgba(96, 165, 250, 0.35);
   }
 
+  :root[data-font='pretendard'] {
+    --font-ui-active: var(--font-ui);
+    --font-display-active: var(--font-display);
+  }
+
   :root[data-font='serif'] {
     --font-ui-active: 'Noto Serif KR', 'Iowan Old Style', 'Times New Roman', serif;
     --font-display-active: 'Noto Serif KR', 'Iowan Old Style', 'Times New Roman', serif;
+  }
+
+  :root[data-font='nanum-gothic'] {
+    --font-ui-active: 'Nanum Gothic', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+    --font-display-active: 'Nanum Gothic', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+  }
+
+  :root[data-font='nanum-myeongjo'] {
+    --font-ui-active: 'Nanum Myeongjo', 'Iowan Old Style', 'Times New Roman', serif;
+    --font-display-active: 'Nanum Myeongjo', 'Iowan Old Style', 'Times New Roman', serif;
+  }
+
+  :root[data-font='nanum-gothic-coding'] {
+    --font-ui-active: 'Nanum Gothic Coding', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+    --font-display-active: 'Nanum Gothic Coding', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  }
+
+  :root[data-font='nanum-brush-script'] {
+    --font-ui-active: 'Nanum Brush Script', 'Nanum Pen Script', 'Apple Chancery', 'Segoe Script', cursive;
+    --font-display-active: 'Nanum Brush Script', 'Nanum Pen Script', 'Apple Chancery', 'Segoe Script', cursive;
+  }
+
+  :root[data-font='nanum-pen-script'] {
+    --font-ui-active: 'Nanum Pen Script', 'Nanum Brush Script', 'Apple Chancery', 'Segoe Script', cursive;
+    --font-display-active: 'Nanum Pen Script', 'Nanum Brush Script', 'Apple Chancery', 'Segoe Script', cursive;
   }
 
   * {

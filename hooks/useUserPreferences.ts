@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
+import {
+  DEFAULT_FONT_ID,
+  normalizeFontPreference,
+  type FontPreference,
+} from '../lib/fontRegistry';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
-export type FontPreference = 'pretendard' | 'serif';
 export type TextScalePreference = 'sm' | 'md' | 'lg';
 
 export type UserPreferences = {
@@ -26,15 +30,12 @@ const LEGACY_TEXT_SCALE_TO_BASE_FONT_PT: Record<TextScalePreference, number> = {
 
 export const DEFAULT_PREFERENCES: UserPreferences = {
   theme: 'system',
-  fontFamily: 'pretendard',
+  fontFamily: DEFAULT_FONT_ID,
   baseFontPt: DEFAULT_BASE_FONT_PT,
 };
 
 const isThemePreference = (value: unknown): value is ThemePreference =>
   value === 'system' || value === 'light' || value === 'dark';
-
-const isFontPreference = (value: unknown): value is FontPreference =>
-  value === 'pretendard' || value === 'serif';
 
 const normalizeBaseFontPt = (value: unknown): number => {
   const parsedValue = typeof value === 'number' ? value : Number(value);
@@ -66,7 +67,7 @@ const normalizePreferences = (value: unknown): UserPreferences => {
 
   return {
     theme: isThemePreference(candidate.theme) ? candidate.theme : DEFAULT_PREFERENCES.theme,
-    fontFamily: isFontPreference(candidate.fontFamily) ? candidate.fontFamily : DEFAULT_PREFERENCES.fontFamily,
+    fontFamily: normalizeFontPreference(candidate.fontFamily),
     baseFontPt,
   };
 };
@@ -136,12 +137,10 @@ export const applyPreferencesToDocument = (preferences: UserPreferences) => {
   const root = document.documentElement;
   const effectiveTheme = resolveTheme(preferences.theme);
   const themeColorMeta = document.querySelector('meta[name="theme-color"]');
-  const baseFontScale = preferences.baseFontPt / DEFAULT_BASE_FONT_PT;
 
   root.classList.toggle('dark', effectiveTheme === 'dark');
   root.dataset.font = preferences.fontFamily;
   root.style.setProperty('--font-base-pt', `${preferences.baseFontPt}pt`);
-  root.style.setProperty('--text-scale', `${baseFontScale}`);
 
   if (themeColorMeta) {
     themeColorMeta.setAttribute('content', effectiveTheme === 'dark' ? DARK_THEME_COLOR : LIGHT_THEME_COLOR);
@@ -193,7 +192,7 @@ export const useUserPreferences = () => {
       setTheme: (theme: ThemePreference) =>
         setPreferences((current) => ({ ...current, theme })),
       setFontFamily: (fontFamily: FontPreference) =>
-        setPreferences((current) => ({ ...current, fontFamily })),
+        setPreferences((current) => ({ ...current, fontFamily: normalizeFontPreference(fontFamily) })),
       isDarkMode: resolveTheme(preferences.theme) === 'dark',
     }),
     [preferences]

@@ -1,5 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { DEFAULT_FONT_ID } from '../lib/fontRegistry';
 import {
   DEFAULT_PREFERENCES,
   PREFERENCES_STORAGE_KEY,
@@ -123,6 +124,30 @@ describe('useUserPreferences', () => {
       theme: 'light',
       fontFamily: 'serif',
       baseFontPt: 18,
+    });
+  });
+
+  it('accepts known registry font ids', () => {
+    window.localStorage.setItem(
+      PREFERENCES_STORAGE_KEY,
+      JSON.stringify({ theme: 'system', fontFamily: 'nanum-myeongjo', baseFontPt: 16 })
+    );
+
+    expect(readStoredPreferences()).toMatchObject({
+      fontFamily: 'nanum-myeongjo',
+      baseFontPt: 16,
+    });
+  });
+
+  it('falls back to the default font when the stored id is unknown', () => {
+    window.localStorage.setItem(
+      PREFERENCES_STORAGE_KEY,
+      JSON.stringify({ theme: 'system', fontFamily: 'unknown-font', baseFontPt: 16 })
+    );
+
+    expect(readStoredPreferences()).toMatchObject({
+      fontFamily: DEFAULT_FONT_ID,
+      baseFontPt: 16,
     });
   });
 
