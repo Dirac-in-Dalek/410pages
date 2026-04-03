@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_FONT_ID } from '../lib/fontRegistry';
+import { DEFAULT_FONT_ID, FONT_IDS } from '../lib/fontRegistry';
 import {
   DEFAULT_PREFERENCES,
   PREFERENCES_STORAGE_KEY,
@@ -127,14 +127,14 @@ describe('useUserPreferences', () => {
     });
   });
 
-  it('accepts known registry font ids', () => {
+  it.each(FONT_IDS)('accepts known registry font id %s', (fontFamily) => {
     window.localStorage.setItem(
       PREFERENCES_STORAGE_KEY,
-      JSON.stringify({ theme: 'system', fontFamily: 'nanum-myeongjo', baseFontPt: 16 })
+      JSON.stringify({ theme: 'system', fontFamily, baseFontPt: 16 })
     );
 
     expect(readStoredPreferences()).toMatchObject({
-      fontFamily: 'nanum-myeongjo',
+      fontFamily,
       baseFontPt: 16,
     });
   });
