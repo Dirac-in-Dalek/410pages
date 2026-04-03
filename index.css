@@ -12,12 +12,12 @@
     --font-ui-active: var(--font-ui);
     --font-display-active: var(--font-display);
     --font-base-pt: 16pt;
-    --type-muted-size: calc(var(--font-base-pt) * 0.5625);
-    --type-label-size: calc(var(--font-base-pt) * 0.65625);
-    --type-body-size: calc(var(--font-base-pt) * 0.75);
-    --type-title-size: calc(var(--font-base-pt) * 0.875);
-    --type-section-size: calc(var(--font-base-pt) * 0.5625);
-    --type-display-size: calc(var(--font-base-pt) * 1.125);
+    --type-muted-size: calc(var(--font-base-pt) * 0.75);
+    --type-label-size: calc(var(--font-base-pt) * 0.875);
+    --type-body-size: calc(var(--font-base-pt) * 1);
+    --type-title-size: calc(var(--font-base-pt) * 1.25);
+    --type-section-size: calc(var(--font-base-pt) * 1.125);
+    --type-display-size: calc(var(--font-base-pt) * 1.5);
     --type-muted-line-height: 1.45;
     --type-label-line-height: 1.45;
     --type-body-line-height: 1.55;
