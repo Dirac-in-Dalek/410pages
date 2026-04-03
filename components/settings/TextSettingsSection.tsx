@@ -9,7 +9,7 @@ type TextSettingsSectionProps = {
 };
 
 const optionButtonClass = (isActive: boolean) =>
-  `rounded-xl border px-3 py-2 text-sm transition-colors ${
+  `type-label rounded-xl border px-3 py-2 transition-colors ${
     isActive
       ? 'border-transparent bg-[var(--accent-active)] text-[var(--accent-active-text)]'
       : 'border-[var(--border-main)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]'
@@ -22,13 +22,13 @@ export const TextSettingsSection: React.FC<TextSettingsSectionProps> = ({
   onBaseFontPtChange,
 }) => (
   <section className="mb-8">
-    <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+    <h3 className="type-section mb-3 font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
       텍스트
     </h3>
 
     <div className="rounded-2xl border border-[var(--border-main)] bg-[var(--bg-main)] p-4 shadow-sm">
       <div className="mb-5">
-        <p className="mb-2 text-sm font-medium text-[var(--text-main)]">서체</p>
+        <p className="type-label mb-2 font-medium text-[var(--text-main)]">서체</p>
         <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
@@ -51,10 +51,10 @@ export const TextSettingsSection: React.FC<TextSettingsSectionProps> = ({
 
       <div>
         <div className="mb-2 flex items-center justify-between gap-3">
-          <label htmlFor="base-font-pt" className="text-sm font-medium text-[var(--text-main)]">
+          <label htmlFor="base-font-pt" className="type-label font-medium text-[var(--text-main)]">
             글자 크기
           </label>
-          <span aria-live="polite" className="text-sm font-medium text-[var(--text-secondary)]">
+          <span aria-live="polite" className="type-label font-medium text-[var(--text-secondary)]">
             {baseFontPt}pt
           </span>
         </div>
@@ -69,7 +69,7 @@ export const TextSettingsSection: React.FC<TextSettingsSectionProps> = ({
           className="w-full accent-[var(--accent)]"
           onChange={(event) => onBaseFontPtChange(Number(event.currentTarget.value))}
         />
-        <div className="mt-2 flex justify-between text-xs text-[var(--text-secondary)]">
+        <div className="type-body-muted mt-2 flex justify-between text-[var(--text-secondary)]">
           <span>10pt</span>
           <span>40pt</span>
         </div>

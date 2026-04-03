@@ -107,7 +107,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         <div className="flex h-full flex-col overflow-hidden">
           <header className="border-b border-[var(--border-main)] bg-[linear-gradient(180deg,#f4efe7_0%,#fbfaf8_100%)] px-6 py-5 dark:bg-none">
             <div className="flex items-center justify-between gap-4">
-              <h2 className="text-2xl font-semibold tracking-[-0.02em] text-[var(--text-main)]">설정</h2>
+              <h2 className="type-display font-semibold tracking-[-0.02em] text-[var(--text-main)]">설정</h2>
               <button
                 type="button"
                 aria-label="닫기"
@@ -122,7 +122,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             </div>
 
             <div className="mt-5 flex items-center gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--accent-soft)] text-sm font-semibold text-[var(--accent)]">
+              <div className="type-title flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--accent-soft)] font-semibold text-[var(--accent)]">
                 {avatarUrl ? (
                   <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
                 ) : (
@@ -131,8 +131,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               </div>
 
               <div className="min-w-0">
-                <p className="truncate text-base font-semibold text-[var(--text-main)]">{displayName}</p>
-                <p className="text-sm text-[var(--text-secondary)]">reading environment</p>
+                <p className="type-title truncate font-semibold text-[var(--text-main)]">{displayName}</p>
+                <p className="type-body-muted text-[var(--text-secondary)]">reading environment</p>
               </div>
             </div>
           </header>
@@ -169,7 +169,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 type="button"
                 onClick={onSignOut}
                 {...dismissIntentProps}
-                className="w-full rounded-2xl border border-[var(--border-main)] bg-[var(--bg-card)] px-4 py-3 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--sidebar-hover)] hover:text-red-500"
+                className="type-label w-full rounded-2xl border border-[var(--border-main)] bg-[var(--bg-card)] px-4 py-3 font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--sidebar-hover)] hover:text-red-500"
               >
                 로그아웃
               </button>

@@ -105,6 +105,17 @@ describe('SettingsPanel', () => {
     expect(screen.getByText('16pt')).toBeTruthy();
   });
 
+  it('applies shared typography token classes to the primary settings copy', () => {
+    render(<SettingsPanel {...baseProps} />);
+
+    expect(screen.getByText('설정').className).toContain('type-display');
+    expect(screen.getByText('프로필').className).toContain('type-section');
+    expect(screen.getByText('텍스트').className).toContain('type-section');
+    expect(screen.getByText('화면').className).toContain('type-section');
+    expect(screen.getByText('reading environment').className).toContain('type-body-muted');
+    expect(screen.getByText('글자 크기').className).toContain('type-label');
+  });
+
   it('calls onBaseFontPtChange when the font slider changes', () => {
     render(<SettingsPanel {...baseProps} />);
 

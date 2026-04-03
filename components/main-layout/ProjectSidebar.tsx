@@ -327,13 +327,13 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
           style={{ top: contextMenu.y, left: contextMenu.x }}
         >
           <button
-            className="w-full text-left px-4 py-2 text-xs hover:bg-[var(--sidebar-hover)] text-[var(--text-main)] flex items-center"
+            className="type-label w-full text-left px-4 py-2 hover:bg-[var(--sidebar-hover)] text-[var(--text-main)] flex items-center"
             onClick={() => startRename(contextMenu.projectId, projects.find(p => p.id === contextMenu.projectId)?.name || '')}
           >
             <Edit2 size={12} className="mr-2" /> Rename
           </button>
           <button
-            className="w-full text-left px-4 py-2 text-xs hover:bg-[var(--sidebar-hover)] text-red-600 flex items-center"
+            className="type-label w-full text-left px-4 py-2 hover:bg-[var(--sidebar-hover)] text-red-600 flex items-center"
             onClick={() => {
               setDeletingProjectId(contextMenu.projectId);
               setContextMenu(null);
@@ -357,7 +357,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
             <path d="M7 6 L12 3 H18 V18 L13 21 H7 V6" />
           </svg>
         </div>
-        <h1 className="brand-wordmark text-xl font-semibold text-[var(--text-main)]">
+        <h1 className="brand-wordmark type-title font-semibold text-[var(--text-main)]">
           <span className="brand-number">410</span>
           <span className="brand-text">pages</span>
         </h1>
@@ -383,13 +383,13 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
         <button
           onClick={onOpenPdfReader}
           aria-label="Open PDF Reader"
-          className="w-full mb-3 flex items-center justify-center p-2.5 text-sm font-medium text-[var(--accent)] bg-[var(--bg-card)] hover:bg-[var(--sidebar-hover)] rounded-md border border-[var(--accent-border)] shadow-sm transition-all"
+          className="type-label w-full mb-3 flex items-center justify-center p-2.5 font-medium text-[var(--accent)] bg-[var(--bg-card)] hover:bg-[var(--sidebar-hover)] rounded-md border border-[var(--accent-border)] shadow-sm transition-all"
         >
           <BookOpen size={16} className="mr-2" />
           Read PDF
         </button>
 
-        <div className="mt-2 mb-2 px-2 flex items-center justify-between text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+        <div className="type-section mt-2 mb-2 px-2 flex items-center justify-between font-semibold text-[var(--text-muted)] uppercase tracking-wider">
           <span>Folders</span>
           <button
             onClick={() => {
@@ -423,12 +423,12 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
                 {showBefore && <div className="h-[2px] mb-0.5 rounded-full bg-[var(--accent)] mx-2" />}
 
                 {deletingProjectId === project.id ? (
-                  <div className="p-3 mb-1 text-sm bg-red-50 border border-red-200 rounded-md shadow-inner">
-                    <div className="text-red-800 text-xs mb-3 font-semibold text-center leading-tight">Are you sure you want to remove this folder?</div>
+                  <div className="type-label p-3 mb-1 bg-red-50 border border-red-200 rounded-md shadow-inner">
+                    <div className="type-body-muted text-red-800 mb-3 font-semibold text-center leading-tight">Are you sure you want to remove this folder?</div>
                     <div className="flex justify-center gap-2">
                       <button
                         onClick={() => setDeletingProjectId(null)}
-                        className="px-3 py-1 text-xs text-[var(--text-muted)] bg-[var(--bg-card)] border border-[var(--border-main)] rounded shadow-sm hover:bg-[var(--sidebar-hover)]"
+                        className="type-body-muted px-3 py-1 text-[var(--text-muted)] bg-[var(--bg-card)] border border-[var(--border-main)] rounded shadow-sm hover:bg-[var(--sidebar-hover)]"
                       >
                         Cancel
                       </button>
@@ -437,7 +437,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
                           onDeleteProject(project.id);
                           setDeletingProjectId(null);
                         }}
-                        className="px-3 py-1 text-xs text-white bg-red-600 border border-red-700 rounded shadow-sm hover:bg-red-700"
+                        className="type-body-muted px-3 py-1 text-white bg-red-600 border border-red-700 rounded shadow-sm hover:bg-red-700"
                       >
                         Remove
                       </button>
@@ -446,7 +446,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
                 ) : (
                   <div
                     className={`
-                      group flex items-center p-2 rounded-md cursor-pointer mb-1 text-sm relative
+                      type-label group flex items-center p-2 rounded-md cursor-pointer mb-1 relative
                       transition-all duration-200 border
                       ${dragOverProjectId === project.id ? 'bg-[var(--accent-soft)] border-[var(--accent-border)] scale-[1.02] shadow-md z-10' : ''}
                       ${selectedProjectId === project.id && dragOverProjectId !== project.id ? 'bg-[var(--bg-card)] shadow-sm border-[var(--border-main)] text-[var(--accent-strong)] font-medium' : 'border-transparent text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]'}
@@ -479,7 +479,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
                           value={editingName}
                           onChange={(e) => setEditingName(e.target.value)}
                           onKeyDown={(e) => e.key === 'Enter' && submitRename()}
-                          className="w-full text-sm border border-[var(--accent-border)] rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-[var(--accent-ring)] bg-[var(--bg-card)]"
+                          className="type-body w-full border border-[var(--accent-border)] rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-[var(--accent-ring)] bg-[var(--bg-card)]"
                         />
                         <button onClick={submitRename} className="ml-1 text-emerald-600"><Check size={14} /></button>
                       </div>
@@ -515,7 +515,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
                             </button>
                           </div>
                         ) : (
-                          <span className="ml-auto text-[10px] bg-[var(--sidebar-active)] text-[var(--text-muted)] py-0.5 px-1.5 rounded-full border border-[var(--border-main)] group-hover:hidden transition-colors">
+                          <span className="type-body-muted ml-auto bg-[var(--sidebar-active)] text-[var(--text-muted)] py-0.5 px-1.5 rounded-full border border-[var(--border-main)] group-hover:hidden transition-colors">
                             {project.citationIds.length}
                           </span>
                         )}
@@ -541,7 +541,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
                 if (e.key === 'Enter') submitCreate();
                 if (e.key === 'Escape') setIsCreating(false);
               }}
-              className="w-full text-sm border-none p-0 focus:ring-0 placeholder:text-[var(--text-muted)]"
+              className="type-body w-full border-none p-0 focus:ring-0 placeholder:text-[var(--text-muted)]"
             />
             <button onClick={submitCreate} className="ml-2 text-[var(--accent)] hover:bg-[var(--accent-soft)] rounded p-1"><Check size={14} /></button>
             <button onClick={() => setIsCreating(false)} className="ml-1 text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)] rounded p-1"><X size={14} /></button>
@@ -549,7 +549,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
         ) : (
           <button
             onClick={() => setIsCreating(true)}
-            className="w-full mt-2 flex items-center p-2 text-sm text-[var(--text-muted)] hover:text-[var(--accent)] bg-[var(--bg-card)] hover:bg-[var(--sidebar-hover)] rounded-md border border-[var(--border-main)] shadow-sm transition-all"
+            className="type-label w-full mt-2 flex items-center p-2 text-[var(--text-muted)] hover:text-[var(--accent)] bg-[var(--bg-card)] hover:bg-[var(--sidebar-hover)] rounded-md border border-[var(--border-main)] shadow-sm transition-all"
           >
             <Plus size={16} className="mr-2" />
             New Project
@@ -564,13 +564,13 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
           className="flex w-full min-w-0 items-center justify-between rounded-2xl border border-[var(--border-main)] bg-[var(--bg-card)] px-3 py-3 text-left transition-colors hover:bg-[var(--sidebar-hover)]"
         >
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft)] text-sm font-semibold text-[var(--accent)]">
+            <div className="type-label flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft)] font-semibold text-[var(--accent)]">
               {userInitials}
             </div>
 
             <div className="min-w-0">
-              <div className="truncate text-sm font-medium text-[var(--text-main)]">{username}</div>
-              <div className="truncate text-xs text-[var(--text-muted)]">개인 설정</div>
+              <div className="type-label truncate font-medium text-[var(--text-main)]">{username}</div>
+              <div className="type-body-muted truncate text-[var(--text-muted)]">개인 설정</div>
             </div>
           </div>
 

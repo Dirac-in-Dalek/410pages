@@ -11,7 +11,19 @@
     --font-display: 'Noto Serif KR', 'Iowan Old Style', 'Times New Roman', serif;
     --font-ui-active: var(--font-ui);
     --font-display-active: var(--font-display);
-    --text-scale: 1;
+    --font-base-pt: 16pt;
+    --type-muted-size: calc(var(--font-base-pt) * 0.5625);
+    --type-label-size: calc(var(--font-base-pt) * 0.65625);
+    --type-body-size: calc(var(--font-base-pt) * 0.75);
+    --type-title-size: calc(var(--font-base-pt) * 0.875);
+    --type-section-size: calc(var(--font-base-pt) * 0.5625);
+    --type-display-size: calc(var(--font-base-pt) * 1.125);
+    --type-muted-line-height: 1.45;
+    --type-label-line-height: 1.45;
+    --type-body-line-height: 1.55;
+    --type-title-line-height: 1.35;
+    --type-section-line-height: 1.35;
+    --type-display-line-height: 1.15;
 
     --bg-main: #ffffff;
     --bg-sidebar: #f7f7f5;
@@ -80,7 +92,7 @@
   }
 
   html {
-    font-size: calc(16px * var(--text-scale));
+    font-size: 16px;
   }
 
   body {
@@ -134,6 +146,39 @@
     color: var(--text-main);
   }
 
+}
+
+@layer utilities {
+  .type-muted,
+  .type-body-muted {
+    font-size: var(--type-muted-size);
+    line-height: var(--type-muted-line-height);
+  }
+
+  .type-label {
+    font-size: var(--type-label-size);
+    line-height: var(--type-label-line-height);
+  }
+
+  .type-body {
+    font-size: var(--type-body-size);
+    line-height: var(--type-body-line-height);
+  }
+
+  .type-title {
+    font-size: var(--type-title-size);
+    line-height: var(--type-title-line-height);
+  }
+
+  .type-section {
+    font-size: var(--type-section-size);
+    line-height: var(--type-section-line-height);
+  }
+
+  .type-display {
+    font-size: var(--type-display-size);
+    line-height: var(--type-display-line-height);
+  }
 }
 
 /* PDF reader selection: keep native browser selection invisible (we render custom overlays). */
