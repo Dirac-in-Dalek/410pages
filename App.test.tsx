@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 
 const mockHandleUpdateUsername = vi.fn();
+const mockSetBaseFontPt = vi.fn();
 const createDeferred = <T,>() => {
   let resolve!: (value: T | PromiseLike<T>) => void;
   let reject!: (reason?: unknown) => void;
@@ -83,11 +84,11 @@ vi.mock('./hooks/useUserPreferences', () => ({
     preferences: {
       theme: 'system',
       fontFamily: 'pretendard',
-      textScale: 'md',
+      baseFontPt: 16,
     },
     setTheme: vi.fn(),
     setFontFamily: vi.fn(),
-    setTextScale: vi.fn(),
+    setBaseFontPt: mockSetBaseFontPt,
   }),
 }));
 
@@ -142,6 +143,9 @@ vi.mock('./components/settings/SettingsPanel', () => ({
         <button type="button" onClick={() => props.onDisplayNameCommit(props.displayName)}>
           commit-display-name
         </button>
+        <button type="button" onClick={() => props.onBaseFontPtChange(22)}>
+          change-font-size
+        </button>
         <button type="button" onClick={props.onClose}>
           close-settings
         </button>
@@ -177,6 +181,7 @@ describe('App settings display-name flow', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockHandleUpdateUsername.mockResolvedValue(true);
+    mockSetBaseFontPt.mockReset();
     authState.username = 'Committed Name';
 
     Object.defineProperty(window, 'matchMedia', {
@@ -232,6 +237,16 @@ describe('App settings display-name flow', () => {
     await user.click(screen.getByRole('button', { name: 'open-settings' }));
     expect(screen.queryByTestId('settings-display-name-error')).toBeNull();
     expect(screen.getByTestId('settings-display-name').textContent).toBe('Committed Name');
+  });
+
+  it('wires settings font-size changes to setBaseFontPt', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole('button', { name: 'open-settings' }));
+    await user.click(screen.getByRole('button', { name: 'change-font-size' }));
+
+    expect(mockSetBaseFontPt).toHaveBeenCalledWith(22);
   });
 
   it('clears the save error after a successful retry', async () => {

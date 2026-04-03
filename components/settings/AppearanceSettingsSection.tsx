@@ -7,7 +7,7 @@ type AppearanceSettingsSectionProps = {
 };
 
 const themeButtonClass = (isActive: boolean) =>
-  `type-label rounded-xl border px-3 py-2 transition-colors ${
+  `type-label-bounded rounded-xl border px-3 py-2 transition-colors ${
     isActive
       ? 'border-transparent bg-[var(--accent-active)] text-[var(--accent-active-text)]'
       : 'border-[var(--border-main)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]'

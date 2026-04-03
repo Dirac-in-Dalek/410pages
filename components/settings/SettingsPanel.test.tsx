@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -118,15 +116,15 @@ describe('SettingsPanel', () => {
     expect(screen.getByText('글자 크기').className).toContain('type-label');
   });
 
-  it('defines body-led typography tokens from the base font size', () => {
-    const css = readFileSync(resolve(process.cwd(), 'index.css'), 'utf8');
+  it('uses bounded typography roles for constrained settings chrome', () => {
+    render(<SettingsPanel {...baseProps} />);
 
-    expect(css).toContain('--type-muted-size: calc(var(--font-base-pt) * 0.75);');
-    expect(css).toContain('--type-label-size: calc(var(--font-base-pt) * 0.875);');
-    expect(css).toContain('--type-body-size: calc(var(--font-base-pt) * 1);');
-    expect(css).toContain('--type-section-size: calc(var(--font-base-pt) * 1.125);');
-    expect(css).toContain('--type-title-size: calc(var(--font-base-pt) * 1.25);');
-    expect(css).toContain('--type-display-size: calc(var(--font-base-pt) * 1.5);');
+    expect(screen.getByText('설정').className).toContain('type-display-bounded');
+    expect(screen.getByText('생활습관').className).toContain('type-title-bounded');
+    expect(screen.getByText('변경').className).toContain('type-label-bounded');
+    expect(screen.getByText('프리텐다드').className).toContain('type-label-bounded');
+    expect(screen.getByText('라이트').className).toContain('type-label-bounded');
+    expect(screen.getByText('로그아웃').className).toContain('type-label-bounded');
   });
 
   it('calls onBaseFontPtChange when the font slider changes', () => {

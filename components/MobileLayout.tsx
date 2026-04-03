@@ -117,7 +117,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
           <button
             type="button"
             className={`
-              type-label w-full flex items-center py-2.5 pr-2 rounded-md my-0.5 transition-colors
+              type-label-bounded w-full flex items-center py-2.5 pr-2 rounded-md my-0.5 transition-colors
               ${isActive
                 ? 'bg-[var(--accent-active)] text-[var(--accent-active-text)]'
                 : 'text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]'}
@@ -155,7 +155,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
     });
 
   const navButtonClass = (isActive: boolean) =>
-    `type-label w-full h-10 rounded-md border font-medium transition-colors inline-flex items-center justify-center gap-2 ${
+    `type-label-bounded w-full h-10 rounded-md border font-medium transition-colors inline-flex items-center justify-center gap-2 ${
       isActive
         ? 'bg-[var(--accent-active)] text-[var(--accent-active-text)] border-transparent'
         : 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-main)] hover:bg-[var(--sidebar-hover)]'
@@ -165,7 +165,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
     <div className="h-[100dvh] w-full bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col overflow-hidden">
       <header className="border-b border-[var(--border-main)] bg-[var(--bg-card)] pt-[env(safe-area-inset-top)]">
         <div className="h-14 px-4 flex items-center justify-between gap-3">
-          <h1 className="type-title truncate font-semibold">{title}</h1>
+          <h1 className="type-title-bounded truncate font-semibold">{title}</h1>
           <button
             type="button"
             onClick={onOpenSettings}
@@ -210,7 +210,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
       >
         <div className="h-full flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
           <div className="h-14 px-4 border-b border-[var(--border-main)] flex items-center justify-between">
-            <div className="type-title font-semibold">Folders</div>
+            <div className="type-title-bounded font-semibold">Folders</div>
             <button
               onClick={() => setIsProjectsOpen(false)}
               className="p-2 rounded-md text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]"
@@ -227,7 +227,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
                 closeSheets();
               }}
               className={`
-                type-label w-full flex items-center p-2.5 rounded-md mb-3 border transition-colors
+                type-label-bounded w-full flex items-center p-2.5 rounded-md mb-3 border transition-colors
                 ${selectedProjectId === null
                   ? 'bg-[var(--accent-active)] text-[var(--accent-active-text)] border-transparent'
                   : 'border-[var(--border-main)] text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]'}
@@ -237,7 +237,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
               All Citations
             </button>
 
-            <div className="type-section uppercase tracking-wider text-[var(--text-muted)] px-1 mb-2">Projects</div>
+            <div className="type-section-bounded uppercase tracking-wider text-[var(--text-muted)] px-1 mb-2">Projects</div>
             <div className="space-y-1">
               {projects.map((project) => (
                 <button
@@ -247,7 +247,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
                     closeSheets();
                   }}
                   className={`
-                    type-label w-full flex items-center p-2.5 rounded-md border transition-colors
+                    type-label-bounded w-full flex items-center p-2.5 rounded-md border transition-colors
                     ${selectedProjectId === project.id
                       ? 'bg-[var(--accent-active)] text-[var(--accent-active-text)] border-transparent'
                       : 'border-[var(--border-main)] text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]'}
@@ -287,7 +287,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
             ) : (
               <button
                 onClick={() => setIsCreatingProject(true)}
-                className="type-label mt-3 w-full flex items-center justify-center gap-2 border border-[var(--border-main)] rounded-md p-2.5 text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]"
+                className="type-label-bounded mt-3 w-full flex items-center justify-center gap-2 border border-[var(--border-main)] rounded-md p-2.5 text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]"
               >
                 <Plus size={14} />
                 New Project
@@ -303,14 +303,14 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
                     onOpenSettings();
                     closeSheets();
                   }}
-                  className="type-label p-2.5 rounded-md border border-[var(--border-main)] text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)] flex items-center justify-center gap-1"
+                  className="type-label-bounded p-2.5 rounded-md border border-[var(--border-main)] text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)] flex items-center justify-center gap-1"
                 >
                   <Settings size={14} />
                   Settings
                 </button>
                 <button
                   onClick={onSignOut}
-                  className="type-label p-2.5 rounded-md border border-[var(--border-main)] text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)] flex items-center justify-center gap-1"
+                  className="type-label-bounded p-2.5 rounded-md border border-[var(--border-main)] text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)] flex items-center justify-center gap-1"
                 >
                   <LogOut size={14} />
                   Logout
@@ -330,7 +330,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
       >
         <div className="h-full flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
           <div className="h-14 px-4 border-b border-[var(--border-main)] flex items-center justify-between gap-3">
-            <div className="type-title font-semibold">Library</div>
+            <div className="type-title-bounded font-semibold">Library</div>
             <button
               onClick={() => setIsLibraryOpen(false)}
               className="p-2 rounded-md text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]"

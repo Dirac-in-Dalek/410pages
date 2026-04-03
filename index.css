@@ -18,6 +18,10 @@
     --type-title-size: calc(var(--font-base-pt) * 1.25);
     --type-section-size: calc(var(--font-base-pt) * 1.125);
     --type-display-size: calc(var(--font-base-pt) * 1.5);
+    --type-label-bounded-size: min(var(--type-label-size), 1rem);
+    --type-title-bounded-size: min(var(--type-title-size), 1.125rem);
+    --type-section-bounded-size: min(var(--type-section-size), 0.875rem);
+    --type-display-bounded-size: min(var(--type-display-size), 1.5rem);
     --type-muted-line-height: 1.45;
     --type-label-line-height: 1.45;
     --type-body-line-height: 1.55;
@@ -160,6 +164,11 @@
     line-height: var(--type-label-line-height);
   }
 
+  .type-label-bounded {
+    font-size: var(--type-label-bounded-size);
+    line-height: var(--type-label-line-height);
+  }
+
   .type-body {
     font-size: var(--type-body-size);
     line-height: var(--type-body-line-height);
@@ -170,13 +179,28 @@
     line-height: var(--type-title-line-height);
   }
 
+  .type-title-bounded {
+    font-size: var(--type-title-bounded-size);
+    line-height: var(--type-title-line-height);
+  }
+
   .type-section {
     font-size: var(--type-section-size);
     line-height: var(--type-section-line-height);
   }
 
+  .type-section-bounded {
+    font-size: var(--type-section-bounded-size);
+    line-height: var(--type-section-line-height);
+  }
+
   .type-display {
     font-size: var(--type-display-size);
+    line-height: var(--type-display-line-height);
+  }
+
+  .type-display-bounded {
+    font-size: var(--type-display-bounded-size);
     line-height: var(--type-display-line-height);
   }
 }

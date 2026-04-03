@@ -50,7 +50,7 @@ export const ProfileSettingsSection: React.FC<ProfileSettingsSectionProps> = ({
       <div className="rounded-2xl border border-[var(--border-main)] bg-[var(--bg-main)] p-4 shadow-sm">
         <div className="mb-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="type-label flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--accent-soft)] font-semibold text-[var(--accent)]">
+            <div className="type-label-bounded flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--accent-soft)] font-semibold text-[var(--accent)]">
               {avatarUrl ? (
                 <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
               ) : (
@@ -67,7 +67,7 @@ export const ProfileSettingsSection: React.FC<ProfileSettingsSectionProps> = ({
           <button
             type="button"
             onClick={onAvatarChange}
-            className="type-label rounded-md border border-[var(--border-main)] px-3 py-1.5 text-[var(--text-secondary)] transition-colors hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]"
+            className="type-label-bounded rounded-md border border-[var(--border-main)] px-3 py-1.5 text-[var(--text-secondary)] transition-colors hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]"
           >
             변경
           </button>
