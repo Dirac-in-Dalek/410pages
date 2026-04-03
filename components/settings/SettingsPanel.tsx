@@ -125,7 +125,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         className={`fixed z-50 bg-[var(--bg-card)] border-[var(--border-main)] shadow-2xl ${panelClasses}`}
       >
         <div className="flex h-full flex-col overflow-hidden">
-          <header className="border-b border-[var(--border-main)] bg-[linear-gradient(180deg,#f4efe7_0%,#fbfaf8_100%)] px-6 py-5 dark:bg-none">
+          <header className="border-b border-[var(--border-main)] bg-[var(--bg-card)] px-6 py-5">
             <div className="flex items-center justify-between gap-4">
               <h2 className="type-display-bounded font-semibold tracking-[-0.02em] text-[var(--text-main)]">설정</h2>
               <button

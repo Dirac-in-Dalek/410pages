@@ -98,7 +98,7 @@ describe('SettingsPanel', () => {
     render(<SettingsPanel {...baseProps} />);
 
     const slider = screen.getByRole('slider', { name: '글자 크기' }) as HTMLInputElement;
-    const fontButton = screen.getByRole('button', { name: '프리텐다드' });
+    const fontButton = screen.getByRole('button', { name: '현재 서체: 프리텐다드' });
 
     expect(fontButton).toBeTruthy();
     expect(slider).toBeTruthy();
@@ -107,6 +107,26 @@ describe('SettingsPanel', () => {
     expect(slider.step).toBe('1');
     expect(slider.value).toBe('16');
     expect(screen.getByText('16pt')).toBeTruthy();
+  });
+
+  it('shows the selected font as a collapsed trigger until the font picker is opened', async () => {
+    const user = userEvent.setup();
+    render(
+      <SettingsPanel
+        {...baseProps}
+        preferences={{ ...baseProps.preferences, fontFamily: 'nanum-gothic' }}
+      />
+    );
+
+    const trigger = screen.getByRole('button', { name: '현재 서체: 나눔고딕' });
+
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(screen.queryByRole('button', { name: '나눔명조' })).toBeNull();
+
+    await user.click(trigger);
+
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByRole('button', { name: '나눔명조' })).toBeTruthy();
   });
 
   it('applies shared typography token classes to the primary settings copy', () => {
@@ -124,7 +144,7 @@ describe('SettingsPanel', () => {
     expect(screen.getByText('설정').className).toContain('type-display-bounded');
     expect(screen.getByRole('button', { name: '사진 변경' }).className).toContain('type-label-bounded');
     expect(screen.getByRole('textbox', { name: '이름' }).className).toContain('type-body-bounded');
-    expect(screen.getByText('프리텐다드').className).toContain('type-label-bounded');
+    expect(screen.getByRole('button', { name: '현재 서체: 프리텐다드' }).className).toContain('type-label-bounded');
     expect(screen.getByText('라이트').className).toContain('type-label-bounded');
     expect(screen.getByText('로그아웃').className).toContain('type-label-bounded');
   });
@@ -266,5 +286,16 @@ describe('SettingsPanel', () => {
     render(<SettingsPanel {...baseProps} displayNameError="이름 저장에 실패했습니다." />);
 
     expect(screen.getByText('이름 저장에 실패했습니다.')).toBeTruthy();
+  });
+
+  it('uses the shared panel surface for the settings header instead of a light-only gradient', () => {
+    render(<SettingsPanel {...baseProps} />);
+
+    const header = screen.getByText('설정').closest('header');
+
+    expect(header).toBeTruthy();
+    expect(header?.className).toContain('bg-[var(--bg-card)]');
+    expect(header?.className).not.toContain('bg-[linear-gradient');
+    expect(header?.className).not.toContain('dark:bg-none');
   });
 });

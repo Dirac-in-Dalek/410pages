@@ -1,5 +1,6 @@
-import React from 'react';
-import { FONT_OPTIONS, type FontPreference } from '../../lib/fontRegistry';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { FONT_OPTIONS, getFontOption, type FontPreference } from '../../lib/fontRegistry';
 
 type TextSettingsSectionProps = {
   fontFamily: FontPreference;
@@ -23,27 +24,93 @@ type FontSelectionListProps = {
 export const FontSelectionList: React.FC<FontSelectionListProps> = ({
   selectedFontFamily,
   onFontFamilyChange,
-}) => (
-  <div className="max-h-64 overflow-y-auto rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] p-1">
-    {FONT_OPTIONS.map((option) => {
-      const isActive = option.id === selectedFontFamily;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const listboxId = useId();
+  const selectedOption = useMemo(
+    () => getFontOption(selectedFontFamily) ?? FONT_OPTIONS[0],
+    [selectedFontFamily]
+  );
 
-      return (
-        <button
-          key={option.id}
-          type="button"
-          aria-pressed={isActive}
-          className={`${optionButtonClass(isActive)} flex w-full items-center justify-start text-left`}
-          onClick={() => onFontFamilyChange(option.id)}
+  useEffect(() => {
+    if (!isOpen) {
+      return undefined;
+    }
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
+
+  return (
+    <div ref={containerRef} className="space-y-2">
+      <button
+        type="button"
+        aria-label={`현재 서체: ${selectedOption.label}`}
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+        aria-controls={listboxId}
+        className="type-label-bounded flex w-full items-center justify-between rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] px-4 py-3 text-left text-[var(--text-main)] transition-colors hover:bg-[var(--sidebar-hover)]"
+        onClick={() => setIsOpen((current) => !current)}
+      >
+        <span className="block min-w-0 truncate" style={{ fontFamily: selectedOption.fontFamily }}>
+          {selectedOption.label}
+        </span>
+        <ChevronDown
+          size={16}
+          className={`shrink-0 text-[var(--text-muted)] transition-transform ${isOpen ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      {isOpen ? (
+        <div
+          id={listboxId}
+          role="listbox"
+          aria-label="서체 목록"
+          className="max-h-64 overflow-y-auto rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] p-1"
         >
-          <span className="type-label-bounded block w-full truncate" style={{ fontFamily: option.fontFamily }}>
-            {option.label}
-          </span>
-        </button>
-      );
-    })}
-  </div>
-);
+          {FONT_OPTIONS.map((option) => {
+            const isActive = option.id === selectedFontFamily;
+
+            return (
+              <button
+                key={option.id}
+                type="button"
+                aria-pressed={isActive}
+                className={`${optionButtonClass(isActive)} flex w-full items-center justify-start text-left`}
+                onClick={() => {
+                  onFontFamilyChange(option.id);
+                  setIsOpen(false);
+                }}
+              >
+                <span className="type-label-bounded block w-full truncate" style={{ fontFamily: option.fontFamily }}>
+                  {option.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+};
 
 export const TextSettingsSection: React.FC<TextSettingsSectionProps> = ({
   fontFamily,
