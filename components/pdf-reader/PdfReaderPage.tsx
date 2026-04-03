@@ -1308,7 +1308,7 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
   };
 
   return (
-    <div className="pdf-reader-mode h-screen w-full overflow-hidden bg-[var(--bg-main)] text-[var(--text-main)]">
+    <div className="pdf-reader-mode font-size-static h-screen w-full overflow-hidden bg-[var(--bg-main)] text-[var(--text-main)]">
       <div ref={readerLayoutRef} className="h-full min-h-0 flex">
         <aside
           style={{ width: `${leftPaneWidth}px` }}

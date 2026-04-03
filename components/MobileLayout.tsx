@@ -162,7 +162,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
     }`;
 
   return (
-    <div className="h-[100dvh] w-full bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col overflow-hidden">
+    <div className="font-size-app h-[100dvh] w-full bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col overflow-hidden">
       <header className="border-b border-[var(--border-main)] bg-[var(--bg-card)] pt-[env(safe-area-inset-top)]">
         <div className="h-14 px-4 flex items-center justify-between gap-3">
           <h1 className="type-title-bounded truncate font-semibold">{title}</h1>

@@ -162,7 +162,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
             }
           }}
           placeholder={placeholder}
-          className="w-full text-base md:text-lg font-serif placeholder:font-sans placeholder:text-[var(--text-muted)] text-[var(--text-main)] border-none resize-none focus:ring-0 bg-transparent p-0 min-h-[80px] overflow-y-auto"
+          className="type-body w-full font-serif placeholder:font-sans placeholder:text-[var(--text-muted)] text-[var(--text-main)] border-none resize-none focus:ring-0 bg-transparent p-0 min-h-[80px] overflow-y-auto"
         />
       </div>
 
@@ -183,7 +183,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
               if (e.key === 'Enter') handleSubmit();
             }}
             placeholder="Author (Leave blank for Self)"
-            className="w-full text-xs border-none p-0 focus:ring-0 text-[var(--text-main)] placeholder:text-[var(--text-muted)] bg-transparent"
+            className="type-label-bounded w-full border-none p-0 focus:ring-0 text-[var(--text-main)] placeholder:text-[var(--text-muted)] bg-transparent"
           />
         </div>
 
@@ -201,7 +201,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
               if (e.key === 'Enter') handleSubmit();
             }}
             placeholder="Book or Source"
-            className="w-full text-xs border-none p-0 focus:ring-0 text-[var(--text-main)] placeholder:text-[var(--text-muted)] bg-transparent"
+            className="type-label-bounded w-full border-none p-0 focus:ring-0 text-[var(--text-main)] placeholder:text-[var(--text-muted)] bg-transparent"
           />
         </div>
 
@@ -219,7 +219,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
               if (e.key === 'Enter') handleSubmit();
             }}
             placeholder="Page"
-            className="w-full text-xs border-none p-0 focus:ring-0 text-[var(--text-main)] placeholder:text-[var(--text-muted)] bg-transparent"
+            className="type-label-bounded w-full border-none p-0 focus:ring-0 text-[var(--text-main)] placeholder:text-[var(--text-muted)] bg-transparent"
           />
         </div>
 

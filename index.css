@@ -248,6 +248,21 @@
   }
 }
 
+.font-size-static {
+  --type-muted-size: 0.75rem;
+  --type-label-size: 0.875rem;
+  --type-body-size: 1rem;
+  --type-title-size: 1.25rem;
+  --type-section-size: 1.125rem;
+  --type-display-size: 1.5rem;
+  --type-label-bounded-size: 0.875rem;
+  --type-body-bounded-size: 1rem;
+  --type-muted-bounded-size: 0.75rem;
+  --type-title-bounded-size: 1.125rem;
+  --type-section-bounded-size: 0.875rem;
+  --type-display-bounded-size: 1.5rem;
+}
+
 /* PDF reader selection: keep native browser selection invisible (we render custom overlays). */
 .pdf-reader-mode .react-pdf__Page__textContent {
   -webkit-user-select: text;
