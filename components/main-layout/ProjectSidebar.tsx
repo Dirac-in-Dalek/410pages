@@ -479,7 +479,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
                           value={editingName}
                           onChange={(e) => setEditingName(e.target.value)}
                           onKeyDown={(e) => e.key === 'Enter' && submitRename()}
-                          className="type-body w-full border border-[var(--accent-border)] rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-[var(--accent-ring)] bg-[var(--bg-card)]"
+                          className="type-body-bounded w-full border border-[var(--accent-border)] rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-[var(--accent-ring)] bg-[var(--bg-card)]"
                         />
                         <button onClick={submitRename} className="ml-1 text-emerald-600"><Check size={14} /></button>
                       </div>
@@ -515,7 +515,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
                             </button>
                           </div>
                         ) : (
-                          <span className="type-body-muted ml-auto bg-[var(--sidebar-active)] text-[var(--text-muted)] py-0.5 px-1.5 rounded-full border border-[var(--border-main)] group-hover:hidden transition-colors">
+                          <span className="type-body-muted-bounded ml-auto bg-[var(--sidebar-active)] text-[var(--text-muted)] py-0.5 px-1.5 rounded-full border border-[var(--border-main)] group-hover:hidden transition-colors">
                             {project.citationIds.length}
                           </span>
                         )}
@@ -541,7 +541,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
                 if (e.key === 'Enter') submitCreate();
                 if (e.key === 'Escape') setIsCreating(false);
               }}
-              className="type-body w-full border-none p-0 focus:ring-0 placeholder:text-[var(--text-muted)]"
+              className="type-body-bounded w-full border-none p-0 focus:ring-0 placeholder:text-[var(--text-muted)]"
             />
             <button onClick={submitCreate} className="ml-2 text-[var(--accent)] hover:bg-[var(--accent-soft)] rounded p-1"><Check size={14} /></button>
             <button onClick={() => setIsCreating(false)} className="ml-1 text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)] rounded p-1"><X size={14} /></button>

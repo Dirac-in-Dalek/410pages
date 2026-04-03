@@ -255,7 +255,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
                 >
                   <Folder size={15} className="mr-2" />
                   <span className="truncate flex-1 text-left">{project.name}</span>
-                  <span className="type-body-muted opacity-80">{project.citationIds.length}</span>
+                  <span className="type-body-muted-bounded opacity-80">{project.citationIds.length}</span>
                 </button>
               ))}
             </div>
@@ -274,7 +274,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
                     }
                   }}
                   placeholder="Project name"
-                  className="type-body flex-1 px-3 py-2.5 border border-[var(--border-main)] rounded-md bg-[var(--bg-input)]"
+                  className="type-body-bounded flex-1 px-3 py-2.5 border border-[var(--border-main)] rounded-md bg-[var(--bg-input)]"
                 />
                 <button
                   onClick={submitCreateProject}
@@ -347,7 +347,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
                 value={searchTerm}
                 onChange={(e) => onSearch?.(e.target.value)}
                 placeholder="Search citations, author, book"
-                className="type-body w-full bg-transparent border-none p-0 focus:ring-0 text-[var(--text-main)] placeholder:text-[var(--text-muted)]"
+                className="type-body-bounded w-full bg-transparent border-none p-0 focus:ring-0 text-[var(--text-main)] placeholder:text-[var(--text-muted)]"
               />
               {searchTerm && (
                 <button onClick={() => onSearch?.('')} className="text-[var(--text-muted)]" title="Clear search">

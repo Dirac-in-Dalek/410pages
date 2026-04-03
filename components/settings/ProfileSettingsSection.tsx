@@ -88,7 +88,7 @@ export const ProfileSettingsSection: React.FC<ProfileSettingsSectionProps> = ({
               event.currentTarget.blur();
             }}
             aria-describedby="profile-display-name-hint"
-            className="type-body mt-2 w-full rounded-xl border border-[var(--border-main)] bg-[var(--bg-input)] px-3 py-2.5 outline-none transition-colors focus:border-[var(--accent-border)] focus:ring-2 focus:ring-[var(--accent-ring)]"
+            className="type-body-bounded mt-2 w-full rounded-xl border border-[var(--border-main)] bg-[var(--bg-input)] px-3 py-2.5 outline-none transition-colors focus:border-[var(--accent-border)] focus:ring-2 focus:ring-[var(--accent-ring)]"
           />
         </label>
 

@@ -19,6 +19,8 @@
     --type-section-size: calc(var(--font-base-pt) * 1.125);
     --type-display-size: calc(var(--font-base-pt) * 1.5);
     --type-label-bounded-size: min(var(--type-label-size), 1rem);
+    --type-body-bounded-size: min(var(--type-body-size), 1rem);
+    --type-muted-bounded-size: min(var(--type-muted-size), 0.875rem);
     --type-title-bounded-size: min(var(--type-title-size), 1.125rem);
     --type-section-bounded-size: min(var(--type-section-size), 0.875rem);
     --type-display-bounded-size: min(var(--type-display-size), 1.5rem);
@@ -174,6 +176,11 @@
     line-height: var(--type-body-line-height);
   }
 
+  .type-body-bounded {
+    font-size: var(--type-body-bounded-size);
+    line-height: var(--type-body-line-height);
+  }
+
   .type-title {
     font-size: var(--type-title-size);
     line-height: var(--type-title-line-height);
@@ -202,6 +209,11 @@
   .type-display-bounded {
     font-size: var(--type-display-bounded-size);
     line-height: var(--type-display-line-height);
+  }
+
+  .type-body-muted-bounded {
+    font-size: var(--type-muted-bounded-size);
+    line-height: var(--type-muted-line-height);
   }
 }
 

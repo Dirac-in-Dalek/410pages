@@ -122,6 +122,7 @@ describe('SettingsPanel', () => {
     expect(screen.getByText('설정').className).toContain('type-display-bounded');
     expect(screen.getByText('생활습관').className).toContain('type-title-bounded');
     expect(screen.getByText('변경').className).toContain('type-label-bounded');
+    expect(screen.getByRole('textbox', { name: '이름' }).className).toContain('type-body-bounded');
     expect(screen.getByText('프리텐다드').className).toContain('type-label-bounded');
     expect(screen.getByText('라이트').className).toContain('type-label-bounded');
     expect(screen.getByText('로그아웃').className).toContain('type-label-bounded');
