@@ -19,6 +19,7 @@ interface MainLayoutProps {
   treeData: SidebarItem[];
   onTreeItemClick: (item: SidebarItem) => void;
   username?: string;
+  avatarUrl?: string | null;
   onUpdateUsername?: (name: string) => void;
   onSignOut?: () => void;
   onSearch?: (term: string) => void;
@@ -45,6 +46,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   treeData,
   onTreeItemClick,
   username = 'Researcher',
+  avatarUrl = null,
   onUpdateUsername,
   onSignOut,
   onSearch,
@@ -76,6 +78,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         onDeleteProject={onDeleteProject}
         onReorderProjects={onReorderProjects}
         username={username}
+        avatarUrl={avatarUrl}
         onUpdateUsername={onUpdateUsername}
         onSignOut={onSignOut}
         onOpenPdfReader={onOpenPdfReader}

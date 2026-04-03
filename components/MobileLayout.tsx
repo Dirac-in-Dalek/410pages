@@ -28,6 +28,7 @@ interface MobileLayoutProps {
   searchTerm?: string;
   selectedFilter?: { type: 'author' | 'book'; value: string; author?: string } | null;
   username?: string;
+  avatarUrl?: string | null;
   onSignOut?: () => void;
   onOpenSettings: () => void;
 }
@@ -45,6 +46,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   searchTerm = '',
   selectedFilter = null,
   username = 'Researcher',
+  avatarUrl = null,
   onSignOut,
   onOpenSettings
 }) => {
@@ -295,7 +297,16 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
             )}
 
             <div className="mt-auto pt-4 border-t border-[var(--border-main)]">
-              <div className="text-xs text-[var(--text-muted)] mb-2 truncate">{username}</div>
+              <div className="mb-2 flex items-center gap-2">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--accent-soft)] text-xs font-semibold text-[var(--accent)]">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    username.trim().slice(0, 2).toUpperCase() || 'RT'
+                  )}
+                </div>
+                <div className="min-w-0 truncate text-xs text-[var(--text-muted)]">{username}</div>
+              </div>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"

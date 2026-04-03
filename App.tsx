@@ -19,7 +19,9 @@ const App: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [settingsDisplayName, setSettingsDisplayName] = useState('Researcher');
   const [isSavingDisplayName, setIsSavingDisplayName] = useState(false);
+  const [isSavingAvatar, setIsSavingAvatar] = useState(false);
   const [displayNameError, setDisplayNameError] = useState<string | null>(null);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
   // --- Mobile App Mode Check ---
   const [isMobileApp, setIsMobileApp] = useState(false);
   useEffect(() => {
@@ -59,10 +61,11 @@ const App: React.FC = () => {
 
   // --- Logic Hooks ---
   const {
-    session, username, loading: authLoading,
-    handleUpdateUsername, handleSignOut
+    session, username, avatarUrl, loading: authLoading,
+    handleUpdateUsername, handleUpdateAvatar, handleSignOut
   } = useAuthStatus();
   const displayNameCommitVersionRef = useRef(0);
+  const avatarCommitVersionRef = useRef(0);
   const previousCommittedUsernameRef = useRef(username);
 
   const {
@@ -121,9 +124,12 @@ const App: React.FC = () => {
 
   const resetSettingsDisplayNameState = () => {
     displayNameCommitVersionRef.current += 1;
+    avatarCommitVersionRef.current += 1;
     setSettingsDisplayName(username);
     setDisplayNameError(null);
+    setAvatarError(null);
     setIsSavingDisplayName(false);
+    setIsSavingAvatar(false);
   };
 
   const openSettings = () => {
@@ -165,6 +171,36 @@ const App: React.FC = () => {
     } finally {
       if (commitVersion === displayNameCommitVersionRef.current) {
         setIsSavingDisplayName(false);
+      }
+    }
+  };
+
+  const commitSettingsAvatar = async (file: File) => {
+    if (isSavingAvatar) {
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      setAvatarError('이미지 파일만 업로드할 수 있습니다.');
+      return;
+    }
+
+    const commitVersion = avatarCommitVersionRef.current;
+    setIsSavingAvatar(true);
+    setAvatarError(null);
+
+    try {
+      const didSave = await handleUpdateAvatar(file);
+      if (commitVersion !== avatarCommitVersionRef.current) {
+        return;
+      }
+
+      if (!didSave) {
+        setAvatarError('프로필 사진 저장에 실패했습니다.');
+      }
+    } finally {
+      if (commitVersion === avatarCommitVersionRef.current) {
+        setIsSavingAvatar(false);
       }
     }
   };
@@ -239,14 +275,16 @@ const App: React.FC = () => {
       isMobile={isMobileApp}
       displayName={settingsDisplayName}
       savedDisplayName={username}
-      avatarUrl={null}
+      avatarUrl={avatarUrl}
       preferences={preferences}
       isSavingDisplayName={isSavingDisplayName}
+      isSavingAvatar={isSavingAvatar}
+      avatarError={avatarError}
       displayNameError={displayNameError}
       onClose={closeSettings}
       onDisplayNameChange={setSettingsDisplayName}
       onDisplayNameCommit={commitSettingsDisplayName}
-      onAvatarChange={() => console.info('Avatar change action is not connected yet.')}
+      onAvatarChange={commitSettingsAvatar}
       onThemeChange={setTheme}
       onFontFamilyChange={setFontFamily}
       onTextScaleChange={setTextScale}
@@ -266,6 +304,7 @@ const App: React.FC = () => {
           treeData={treeData}
           onTreeItemClick={handleTreeItemClick}
           username={username}
+          avatarUrl={avatarUrl}
           onSignOut={handleSignOut}
           onSearch={setSearchTerm}
           searchTerm={searchTerm}
@@ -314,6 +353,7 @@ const App: React.FC = () => {
         treeData={treeData}
         onTreeItemClick={handleTreeItemClick}
         username={username}
+        avatarUrl={avatarUrl}
         onUpdateUsername={handleUpdateUsername}
         onSignOut={handleSignOut}
         onSearch={setSearchTerm}

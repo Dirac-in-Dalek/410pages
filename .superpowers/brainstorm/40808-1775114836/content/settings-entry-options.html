@@ -1,0 +1,88 @@
+<h2>설정 버튼은 어디에 둘까?</h2>
+<p class="subtitle">전역 개인 설정이라는 성격에 맞는 위치를 먼저 고릅니다. 제 추천은 A입니다.</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">A. 왼쪽 사이드바 하단 사용자 영역</div>
+        <div class="mockup-body" style="min-height: 250px; background:#f7f7f5; color:#37352f; display:flex; flex-direction:column; justify-content:space-between;">
+          <div style="padding:16px 14px; opacity:.7; font-size:12px;">Projects</div>
+          <div style="padding:12px 14px; border-top:1px solid #e8e8e6; display:flex; align-items:center; justify-content:space-between; background:#fff;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="width:28px; height:28px; border-radius:999px; background:#ddd;"></div>
+              <div>
+                <div style="font-size:13px; font-weight:600;">생활습관</div>
+                <div style="font-size:11px; color:#6f6e69;">Personal space</div>
+              </div>
+            </div>
+            <div style="width:30px; height:30px; border-radius:8px; border:1px solid #e8e8e6; display:flex; align-items:center; justify-content:center;">⚙</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>사용자 맥락에 가장 잘 맞음</h3>
+      <p>프로젝트/라이브러리 탐색과 분리되고, 프로필 사진과 이름 변경도 자연스럽게 이어집니다.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">B. 메인 헤더 오른쪽 상단</div>
+        <div class="mockup-body" style="min-height: 250px; background:#fff; color:#37352f;">
+          <div style="height:52px; border-bottom:1px solid #e8e8e6; display:flex; align-items:center; justify-content:space-between; padding:0 16px;">
+            <div style="font-size:18px; font-weight:600;">Archive</div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div style="width:30px; height:30px; border-radius:8px; border:1px solid #e8e8e6; display:flex; align-items:center; justify-content:center;">🔍</div>
+              <div style="width:30px; height:30px; border-radius:8px; border:1px solid #e8e8e6; display:flex; align-items:center; justify-content:center;">⚙</div>
+            </div>
+          </div>
+          <div style="padding:16px; color:#9b9a97; font-size:13px;">콘텐츠 영역</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>발견성은 좋음</h3>
+      <p>익숙한 패턴이지만, 현재 앱에는 강한 상단 앱바가 없어서 구조를 새로 만들어야 합니다.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">C. 좌하단 플로팅 액션</div>
+        <div class="mockup-body" style="min-height: 250px; background:#fff; color:#37352f; position:relative;">
+          <div style="padding:16px; color:#9b9a97; font-size:13px;">콘텐츠 영역</div>
+          <div style="position:absolute; left:16px; bottom:16px; width:46px; height:46px; border-radius:14px; background:#2f3437; color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 10px 24px rgba(0,0,0,.18);">⚙</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>눈에 잘 띄지만 과함</h3>
+      <p>설정은 보조 기능이라 항상 떠 있는 버튼은 앱의 집중도를 깨뜨릴 가능성이 큽니다.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="pros-cons">
+    <div class="pros">
+      <h4>추천 기준</h4>
+      <ul>
+        <li>전역 설정인지 바로 이해되는가</li>
+        <li>현재 레이아웃을 크게 흔들지 않는가</li>
+        <li>프로필 편집과 자연스럽게 연결되는가</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>현재 판단</h4>
+      <ul>
+        <li>A가 가장 일관적</li>
+        <li>B는 헤더 구조를 먼저 만들어야 함</li>
+        <li>C는 시각적 우선순위가 지나침</li>
+      </ul>
+    </div>
+  </div>
+</div>

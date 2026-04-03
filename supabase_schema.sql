@@ -5,8 +5,11 @@ create extension if not exists "uuid-ossp";
 create table if not exists profiles (
   id uuid references auth.users not null primary key,
   username text unique,
+  avatar_url text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
+
+alter table profiles add column if not exists avatar_url text;
 
 alter table profiles enable row level security;
 
@@ -172,3 +175,39 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 GRANT EXECUTE ON FUNCTION public.check_email_exists(text) TO anon, authenticated;
+
+-- 12. PROFILE AVATAR STORAGE
+insert into storage.buckets (id, name, public)
+values ('profile-avatars', 'profile-avatars', true)
+on conflict (id) do nothing;
+
+do $$ begin
+  if not exists (select 1 from pg_policies where policyname = 'Public can view profile avatars') then
+    create policy "Public can view profile avatars" on storage.objects
+      for select using (bucket_id = 'profile-avatars');
+  end if;
+
+  if not exists (select 1 from pg_policies where policyname = 'Users can upload their own profile avatars') then
+    create policy "Users can upload their own profile avatars" on storage.objects
+      for insert with check (
+        bucket_id = 'profile-avatars'
+        and auth.uid()::text = (storage.foldername(name))[1]
+      );
+  end if;
+
+  if not exists (select 1 from pg_policies where policyname = 'Users can update their own profile avatars') then
+    create policy "Users can update their own profile avatars" on storage.objects
+      for update using (
+        bucket_id = 'profile-avatars'
+        and auth.uid()::text = (storage.foldername(name))[1]
+      );
+  end if;
+
+  if not exists (select 1 from pg_policies where policyname = 'Users can delete their own profile avatars') then
+    create policy "Users can delete their own profile avatars" on storage.objects
+      for delete using (
+        bucket_id = 'profile-avatars'
+        and auth.uid()::text = (storage.foldername(name))[1]
+      );
+  end if;
+end $$;

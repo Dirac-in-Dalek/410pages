@@ -30,6 +30,7 @@ interface ProjectSidebarProps {
   onDeleteProject: (id: string) => void;
   onReorderProjects: (dragIndex: number, hoverIndex: number) => void;
   username?: string;
+  avatarUrl?: string | null;
   onSignOut?: () => void;
   onOpenPdfReader: () => void;
   onOpenSettings: () => void;
@@ -48,6 +49,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
   onDeleteProject,
   onReorderProjects,
   username = 'Researcher',
+  avatarUrl = null,
   onSignOut,
   onOpenPdfReader,
   onOpenSettings,
@@ -564,8 +566,12 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
           className="flex w-full min-w-0 items-center justify-between rounded-2xl border border-[var(--border-main)] bg-[var(--bg-card)] px-3 py-3 text-left transition-colors hover:bg-[var(--sidebar-hover)]"
         >
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft)] text-sm font-semibold text-[var(--accent)]">
-              {userInitials}
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--accent-soft)] text-sm font-semibold text-[var(--accent)]">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                userInitials
+              )}
             </div>
 
             <div className="min-w-0">

@@ -21,9 +21,11 @@ const baseProps = {
   onThemeChange: vi.fn(),
   onFontFamilyChange: vi.fn(),
   onTextScaleChange: vi.fn(),
-  onAvatarChange: vi.fn(),
+  onAvatarChange: vi.fn().mockResolvedValue(undefined),
   onSignOut: vi.fn(),
   isSavingDisplayName: false,
+  isSavingAvatar: false,
+  avatarError: undefined,
   displayNameError: undefined,
 };
 
@@ -57,9 +59,9 @@ describe('SettingsPanel', () => {
     render(<SettingsPanel {...baseProps} />);
 
     expect(screen.getByText('설정')).toBeTruthy();
-    expect(screen.getByText('프로필')).toBeTruthy();
     expect(screen.getByText('텍스트')).toBeTruthy();
     expect(screen.getByText('화면')).toBeTruthy();
+    expect(screen.queryByText('프로필')).toBeNull();
   });
 
   it('closes when the close button is pressed', async () => {
@@ -96,9 +98,19 @@ describe('SettingsPanel', () => {
     const user = userEvent.setup();
     render(<SettingsPanel {...baseProps} />);
 
-    await user.click(screen.getByRole('button', { name: '변경' }));
+    const file = new File(['avatar'], 'avatar.png', { type: 'image/png' });
+    const input = screen.getByLabelText('프로필 사진 업로드') as HTMLInputElement;
 
-    expect(baseProps.onAvatarChange).toHaveBeenCalled();
+    await user.upload(input, file);
+
+    expect(baseProps.onAvatarChange).toHaveBeenCalledWith(file);
+  });
+
+  it('renders the avatar change action in the profile header', () => {
+    render(<SettingsPanel {...baseProps} />);
+
+    expect(screen.getByRole('button', { name: '사진 변경' })).toBeTruthy();
+    expect(screen.getByLabelText('프로필 사진 업로드')).toBeTruthy();
   });
 
   it('keeps display-name edits local until the field blurs', async () => {
@@ -116,6 +128,13 @@ describe('SettingsPanel', () => {
     await user.tab();
 
     expect(props.onDisplayNameCommit).toHaveBeenCalledWith('새 이름');
+  });
+
+  it('does not render the old profile name card or helper copy', () => {
+    render(<SettingsPanel {...baseProps} />);
+
+    expect(screen.queryByText('변경 내용을 적용하려면 Enter를 누르거나 입력란을 벗어나세요.')).toBeNull();
+    expect(screen.queryByText('reading environment')).toBeNull();
   });
 
   it('commits the display name when Enter is pressed', async () => {

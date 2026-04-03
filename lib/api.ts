@@ -1,6 +1,8 @@
 import { getSupabaseClient } from './supabase';
 import { Citation, CitationSourceInput, Note, Project } from '../types';
 
+export const PROFILE_AVATAR_BUCKET = 'profile-avatars';
+
 const extractPageSort = (page: string | undefined): number | undefined => {
     if (!page) return undefined;
     const match = page.match(/\d+/);
@@ -189,6 +191,26 @@ export const api = {
             .from('profiles')
             .upsert({ id: userId, ...profilePatch });
         if (error) throw error;
+    },
+
+    async uploadProfileAvatar(userId: string, file: File, _currentAvatarUrl?: string | null) {
+        const objectPath = `${userId}/avatar`;
+        const { error: uploadError } = await getSupabaseClient()
+            .storage
+            .from(PROFILE_AVATAR_BUCKET)
+            .upload(objectPath, file, {
+                upsert: true,
+                contentType: file.type || undefined,
+            });
+
+        if (uploadError) throw uploadError;
+
+        const { data } = getSupabaseClient()
+            .storage
+            .from(PROFILE_AVATAR_BUCKET)
+            .getPublicUrl(objectPath);
+
+        return `${data.publicUrl}?v=${Date.now()}`;
     },
 
     // Citations

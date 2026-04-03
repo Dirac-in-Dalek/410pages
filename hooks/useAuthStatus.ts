@@ -10,13 +10,14 @@ import { getSupabaseClient, SUPABASE_AUTH_STORAGE_KEY } from '../lib/supabase';
 export const useAuthStatus = () => {
     const [session, setSession] = useState<any>(null);
     const [username, setUsername] = useState('Researcher');
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
     const fetchProfile = async (userId: string) => {
         try {
             const { data, error } = await getSupabaseClient()
                 .from('profiles')
-                .select('username')
+                .select('username, avatar_url')
                 .eq('id', userId)
                 .single();
 
@@ -25,9 +26,11 @@ export const useAuthStatus = () => {
             }
 
             setUsername(data?.username || 'Researcher');
+            setAvatarUrl(data?.avatar_url || null);
         } catch (error) {
             console.error('Error fetching profile:', error);
             setUsername('Researcher');
+            setAvatarUrl(null);
         } finally {
             setLoading(false);
         }
@@ -45,6 +48,20 @@ export const useAuthStatus = () => {
             return true;
         } catch (error) {
             console.error('Error updating username:', error);
+            return false;
+        }
+    };
+
+    const handleUpdateAvatar = async (file: File) => {
+        if (!session || !file) return false;
+
+        try {
+            const nextAvatarUrl = await api.uploadProfileAvatar(session.user.id, file, avatarUrl);
+            await api.updateProfile(session.user.id, { avatar_url: nextAvatarUrl });
+            setAvatarUrl(nextAvatarUrl);
+            return true;
+        } catch (error) {
+            console.error('Error updating avatar:', error);
             return false;
         }
     };
@@ -69,6 +86,7 @@ export const useAuthStatus = () => {
 
             setSession(null);
             setUsername('Researcher');
+            setAvatarUrl(null);
             setLoading(false);
         }
     };
@@ -85,12 +103,13 @@ export const useAuthStatus = () => {
                 setSession(session);
                 if (session) {
                     setLoading(true);
-                    fetchProfile(session.user.id);
-                } else {
-                    setUsername('Researcher');
-                    setLoading(false);
-                }
-            })
+                fetchProfile(session.user.id);
+            } else {
+                setUsername('Researcher');
+                setAvatarUrl(null);
+                setLoading(false);
+            }
+        })
             .catch((error) => {
                 console.error('Error restoring session:', error);
                 setSession(null);
@@ -107,6 +126,7 @@ export const useAuthStatus = () => {
                 fetchProfile(session.user.id);
             } else {
                 setUsername('Researcher');
+                setAvatarUrl(null);
                 setLoading(false);
             }
         });
@@ -117,9 +137,11 @@ export const useAuthStatus = () => {
     return {
         session,
         username,
+        avatarUrl,
         loading,
         setLoading,
         handleUpdateUsername,
+        handleUpdateAvatar,
         handleSignOut
     };
 };

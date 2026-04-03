@@ -6,7 +6,6 @@ import type {
   UserPreferences,
 } from '../../hooks/useUserPreferences';
 import { AppearanceSettingsSection } from './AppearanceSettingsSection';
-import { ProfileSettingsSection } from './ProfileSettingsSection';
 import { TextSettingsSection } from './TextSettingsSection';
 
 export type SettingsPanelProps = {
@@ -17,11 +16,13 @@ export type SettingsPanelProps = {
   avatarUrl: string | null;
   preferences: UserPreferences;
   isSavingDisplayName?: boolean;
+  isSavingAvatar?: boolean;
+  avatarError?: string | null;
   displayNameError?: string | null;
   onClose: () => void;
   onDisplayNameChange: (value: string) => void;
   onDisplayNameCommit: (value: string) => void | Promise<void>;
-  onAvatarChange: () => void;
+  onAvatarChange: (file: File) => void | Promise<void>;
   onThemeChange: (value: ThemePreference) => void;
   onFontFamilyChange: (value: FontPreference) => void;
   onTextScaleChange: (value: TextScalePreference) => void;
@@ -36,6 +37,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   avatarUrl,
   preferences,
   isSavingDisplayName = false,
+  isSavingAvatar = false,
+  avatarError = null,
   displayNameError = null,
   onClose,
   onDisplayNameChange,
@@ -47,6 +50,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onSignOut,
 }) => {
   const dismissingPanelRef = useRef(false);
+  const avatarInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!isOpen) {
@@ -88,6 +92,22 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   const panelClasses = isMobile
     ? 'inset-x-0 bottom-0 top-16 rounded-t-[28px] border-t'
     : 'right-0 top-0 h-full w-[min(520px,100vw)] border-l';
+  const trimmedDisplayName = displayName.trim();
+  const trimmedSavedDisplayName = savedDisplayName.trim();
+  const hasPendingDisplayNameChange =
+    trimmedDisplayName.length > 0 && trimmedDisplayName !== trimmedSavedDisplayName;
+
+  const commitDisplayName = ({ isBlurTriggered = false } = {}) => {
+    if (
+      isSavingDisplayName ||
+      !hasPendingDisplayNameChange ||
+      (isBlurTriggered && dismissingPanelRef.current)
+    ) {
+      return;
+    }
+
+    void onDisplayNameCommit(trimmedDisplayName);
+  };
 
   return (
     <>
@@ -122,8 +142,25 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               </button>
             </div>
 
-            <div className="mt-5 flex items-center gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--accent-soft)] text-sm font-semibold text-[var(--accent)]">
+            <div className="mt-6 flex items-center gap-5">
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/*"
+                aria-label="프로필 사진 업로드"
+                className="sr-only"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  event.currentTarget.value = '';
+                  if (!file) {
+                    return;
+                  }
+
+                  void onAvatarChange(file);
+                }}
+              />
+
+              <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--accent-soft)] text-2xl font-semibold text-[var(--accent)]">
                 {avatarUrl ? (
                   <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
                 ) : (
@@ -131,26 +168,48 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 )}
               </div>
 
-              <div className="min-w-0">
-                <p className="truncate text-base font-semibold text-[var(--text-main)]">{displayName}</p>
-                <p className="text-sm text-[var(--text-secondary)]">reading environment</p>
+              <div className="min-w-0 flex-1">
+                <div className="mb-3 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => avatarInputRef.current?.click()}
+                    disabled={isSavingAvatar}
+                    className="rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] px-3 py-2 text-sm font-medium text-[var(--text-main)] transition-colors hover:bg-[var(--sidebar-hover)] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    사진 변경
+                  </button>
+                  {avatarError ? (
+                    <p className="text-xs text-red-600">{avatarError}</p>
+                  ) : null}
+                </div>
+
+                <label className="block text-sm font-medium text-[var(--text-main)]">
+                  이름
+                  <input
+                    value={displayName}
+                    onChange={(event) => onDisplayNameChange(event.target.value)}
+                    onBlur={() => commitDisplayName({ isBlurTriggered: true })}
+                    onKeyDown={(event) => {
+                      if (event.key !== 'Enter' || event.nativeEvent.isComposing) {
+                        return;
+                      }
+
+                      event.preventDefault();
+                      event.currentTarget.blur();
+                    }}
+                    aria-label="이름"
+                    className="mt-2 w-full rounded-xl border border-[var(--border-main)] bg-[var(--bg-input)] px-3 py-2.5 text-base outline-none transition-colors focus:border-[var(--accent-border)] focus:ring-2 focus:ring-[var(--accent-ring)]"
+                  />
+                </label>
+
+                {displayNameError ? (
+                  <p className="mt-2 text-xs text-red-600">{displayNameError}</p>
+                ) : null}
               </div>
             </div>
           </header>
 
           <div className="flex-1 overflow-y-auto px-6 py-5">
-            <ProfileSettingsSection
-              displayName={displayName}
-              savedDisplayName={savedDisplayName}
-              avatarUrl={avatarUrl}
-              isSavingDisplayName={isSavingDisplayName}
-              displayNameError={displayNameError}
-              shouldSuppressBlurCommit={() => dismissingPanelRef.current}
-              onDisplayNameChange={onDisplayNameChange}
-              onDisplayNameCommit={onDisplayNameCommit}
-              onAvatarChange={onAvatarChange}
-            />
-
             <TextSettingsSection
               fontFamily={preferences.fontFamily}
               textScale={preferences.textScale}
