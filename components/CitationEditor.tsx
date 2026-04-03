@@ -162,7 +162,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
             }
           }}
           placeholder={placeholder}
-          className="type-body w-full font-serif placeholder:font-sans placeholder:text-[var(--text-muted)] text-[var(--text-main)] border-none resize-none focus:ring-0 bg-transparent p-0 min-h-[80px] overflow-y-auto"
+          className="type-body w-full placeholder:text-[var(--text-muted)] text-[var(--text-main)] border-none resize-none focus:ring-0 bg-transparent p-0 min-h-[80px] overflow-y-auto"
         />
       </div>
 
