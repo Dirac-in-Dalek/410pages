@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FontPreference } from '../../hooks/useUserPreferences';
+import { FONT_OPTIONS, type FontPreference } from '../../lib/fontRegistry';
 
 type TextSettingsSectionProps = {
   fontFamily: FontPreference;
@@ -15,6 +15,41 @@ const optionButtonClass = (isActive: boolean) =>
       : 'border-[var(--border-main)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]'
   }`;
 
+type FontSelectionListProps = {
+  selectedFontFamily: FontPreference;
+  onFontFamilyChange: (value: FontPreference) => void;
+};
+
+export const FontSelectionList: React.FC<FontSelectionListProps> = ({
+  selectedFontFamily,
+  onFontFamilyChange,
+}) => (
+  <div
+    role="listbox"
+    aria-label="서체"
+    className="max-h-64 overflow-y-auto rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] p-1"
+  >
+    {FONT_OPTIONS.map((option) => {
+      const isActive = option.id === selectedFontFamily;
+
+      return (
+        <button
+          key={option.id}
+          type="button"
+          role="option"
+          aria-selected={isActive}
+          className={`${optionButtonClass(isActive)} flex w-full items-center justify-start text-left`}
+          onClick={() => onFontFamilyChange(option.id)}
+        >
+          <span className="type-label-bounded block w-full truncate" style={{ fontFamily: option.fontFamily }}>
+            {option.label}
+          </span>
+        </button>
+      );
+    })}
+  </div>
+);
+
 export const TextSettingsSection: React.FC<TextSettingsSectionProps> = ({
   fontFamily,
   baseFontPt,
@@ -29,24 +64,7 @@ export const TextSettingsSection: React.FC<TextSettingsSectionProps> = ({
     <div className="rounded-2xl border border-[var(--border-main)] bg-[var(--bg-main)] p-4 shadow-sm">
       <div className="mb-5">
         <p className="type-label mb-2 font-medium text-[var(--text-main)]">서체</p>
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            aria-pressed={fontFamily === 'pretendard'}
-            className={optionButtonClass(fontFamily === 'pretendard')}
-            onClick={() => onFontFamilyChange('pretendard')}
-          >
-            프리텐다드
-          </button>
-          <button
-            type="button"
-            aria-pressed={fontFamily === 'serif'}
-            className={optionButtonClass(fontFamily === 'serif')}
-            onClick={() => onFontFamilyChange('serif')}
-          >
-            명조
-          </button>
-        </div>
+        <FontSelectionList selectedFontFamily={fontFamily} onFontFamilyChange={onFontFamilyChange} />
       </div>
 
       <div>

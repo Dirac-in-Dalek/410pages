@@ -96,7 +96,9 @@ describe('SettingsPanel', () => {
     render(<SettingsPanel {...baseProps} />);
 
     const slider = screen.getByRole('slider', { name: '글자 크기' }) as HTMLInputElement;
+    const fontList = screen.getByRole('listbox', { name: '서체' });
 
+    expect(fontList).toBeTruthy();
     expect(slider).toBeTruthy();
     expect(slider.min).toBe('10');
     expect(slider.max).toBe('40');
