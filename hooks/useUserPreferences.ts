@@ -1,13 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
+import {
+  DEFAULT_FONT_ID,
+  normalizeFontPreference,
+  type FontPreference,
+} from '../lib/fontRegistry';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
-export type FontPreference = 'pretendard' | 'serif';
 export type TextScalePreference = 'sm' | 'md' | 'lg';
 
 export type UserPreferences = {
   theme: ThemePreference;
   fontFamily: FontPreference;
-  textScale: TextScalePreference;
+  baseFontPt: number;
 };
 
 export const PREFERENCES_STORAGE_KEY = 'user-preferences';
@@ -15,35 +19,56 @@ const LEGACY_THEME_STORAGE_KEY = 'theme-preference';
 const LEGACY_DARK_MODE_KEY = 'dark-mode';
 const DARK_THEME_COLOR = '#191919';
 const LIGHT_THEME_COLOR = '#ffffff';
+const DEFAULT_BASE_FONT_PT = 16;
+const MIN_BASE_FONT_PT = 10;
+const MAX_BASE_FONT_PT = 40;
+const LEGACY_TEXT_SCALE_TO_BASE_FONT_PT: Record<TextScalePreference, number> = {
+  sm: 14,
+  md: 16,
+  lg: 18,
+};
 
 export const DEFAULT_PREFERENCES: UserPreferences = {
   theme: 'system',
-  fontFamily: 'pretendard',
-  textScale: 'md',
-};
-
-const TEXT_SCALE_MAP: Record<TextScalePreference, string> = {
-  sm: '0.9375',
-  md: '1',
-  lg: '1.125',
+  fontFamily: DEFAULT_FONT_ID,
+  baseFontPt: DEFAULT_BASE_FONT_PT,
 };
 
 const isThemePreference = (value: unknown): value is ThemePreference =>
   value === 'system' || value === 'light' || value === 'dark';
 
-const isFontPreference = (value: unknown): value is FontPreference =>
-  value === 'pretendard' || value === 'serif';
+const normalizeBaseFontPt = (value: unknown): number => {
+  const parsedValue = typeof value === 'number' ? value : Number(value);
 
-const isTextScalePreference = (value: unknown): value is TextScalePreference =>
-  value === 'sm' || value === 'md' || value === 'lg';
+  if (!Number.isFinite(parsedValue)) {
+    return DEFAULT_BASE_FONT_PT;
+  }
+
+  return Math.min(MAX_BASE_FONT_PT, Math.max(MIN_BASE_FONT_PT, Math.round(parsedValue)));
+};
+
+const getBaseFontPtFromLegacyTextScale = (textScale: unknown): number => {
+  if (textScale === 'sm' || textScale === 'md' || textScale === 'lg') {
+    return LEGACY_TEXT_SCALE_TO_BASE_FONT_PT[textScale];
+  }
+
+  return DEFAULT_BASE_FONT_PT;
+};
 
 const normalizePreferences = (value: unknown): UserPreferences => {
-  const candidate = typeof value === 'object' && value !== null ? value as Partial<UserPreferences> : {};
+  const candidate =
+    typeof value === 'object' && value !== null
+      ? value as Partial<UserPreferences> & { textScale?: unknown }
+      : {};
+  const baseFontPt =
+    candidate.baseFontPt !== undefined
+      ? normalizeBaseFontPt(candidate.baseFontPt)
+      : getBaseFontPtFromLegacyTextScale(candidate.textScale);
 
   return {
     theme: isThemePreference(candidate.theme) ? candidate.theme : DEFAULT_PREFERENCES.theme,
-    fontFamily: isFontPreference(candidate.fontFamily) ? candidate.fontFamily : DEFAULT_PREFERENCES.fontFamily,
-    textScale: isTextScalePreference(candidate.textScale) ? candidate.textScale : DEFAULT_PREFERENCES.textScale,
+    fontFamily: normalizeFontPreference(candidate.fontFamily),
+    baseFontPt,
   };
 };
 
@@ -115,7 +140,7 @@ export const applyPreferencesToDocument = (preferences: UserPreferences) => {
 
   root.classList.toggle('dark', effectiveTheme === 'dark');
   root.dataset.font = preferences.fontFamily;
-  root.style.setProperty('--text-scale', TEXT_SCALE_MAP[preferences.textScale]);
+  root.style.setProperty('--font-base-pt', `${preferences.baseFontPt}pt`);
 
   if (themeColorMeta) {
     themeColorMeta.setAttribute('content', effectiveTheme === 'dark' ? DARK_THEME_COLOR : LIGHT_THEME_COLOR);
@@ -157,12 +182,17 @@ export const useUserPreferences = () => {
     () => ({
       preferences,
       setPreferences,
+      setBaseFontPt: (baseFontPt: number) =>
+        setPreferences((current) => ({ ...current, baseFontPt: normalizeBaseFontPt(baseFontPt) })),
+      setTextScale: (textScale: TextScalePreference) =>
+        setPreferences((current) => ({
+          ...current,
+          baseFontPt: normalizeBaseFontPt(LEGACY_TEXT_SCALE_TO_BASE_FONT_PT[textScale]),
+        })),
       setTheme: (theme: ThemePreference) =>
         setPreferences((current) => ({ ...current, theme })),
       setFontFamily: (fontFamily: FontPreference) =>
-        setPreferences((current) => ({ ...current, fontFamily })),
-      setTextScale: (textScale: TextScalePreference) =>
-        setPreferences((current) => ({ ...current, textScale })),
+        setPreferences((current) => ({ ...current, fontFamily: normalizeFontPreference(fontFamily) })),
       isDarkMode: resolveTheme(preferences.theme) === 'dark',
     }),
     [preferences]

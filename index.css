@@ -1,4 +1,5 @@
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+@import url('https://fonts.googleapis.com/css2?family=Nanum+Brush+Script&family=Nanum+Gothic:wght@400;700;800&family=Nanum+Gothic+Coding:wght@400;700&family=Nanum+Myeongjo:wght@400;700;800&family=Nanum+Pen+Script&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&display=swap');
 
 @tailwind base;
@@ -11,7 +12,25 @@
     --font-display: 'Noto Serif KR', 'Iowan Old Style', 'Times New Roman', serif;
     --font-ui-active: var(--font-ui);
     --font-display-active: var(--font-display);
-    --text-scale: 1;
+    --font-base-pt: 16pt;
+    --type-muted-size: calc(var(--font-base-pt) * 0.75);
+    --type-label-size: calc(var(--font-base-pt) * 0.875);
+    --type-body-size: calc(var(--font-base-pt) * 1);
+    --type-title-size: calc(var(--font-base-pt) * 1.25);
+    --type-section-size: calc(var(--font-base-pt) * 1.125);
+    --type-display-size: calc(var(--font-base-pt) * 1.5);
+    --type-label-bounded-size: min(var(--type-label-size), 1rem);
+    --type-body-bounded-size: min(var(--type-body-size), 1rem);
+    --type-muted-bounded-size: min(var(--type-muted-size), 0.875rem);
+    --type-title-bounded-size: min(var(--type-title-size), 1.125rem);
+    --type-section-bounded-size: min(var(--type-section-size), 0.875rem);
+    --type-display-bounded-size: min(var(--type-display-size), 1.5rem);
+    --type-muted-line-height: 1.45;
+    --type-label-line-height: 1.45;
+    --type-body-line-height: 1.55;
+    --type-title-line-height: 1.35;
+    --type-section-line-height: 1.35;
+    --type-display-line-height: 1.15;
 
     --bg-main: #ffffff;
     --bg-sidebar: #f7f7f5;
@@ -62,9 +81,39 @@
     --highlight-bg: rgba(96, 165, 250, 0.35);
   }
 
+  :root[data-font='pretendard'] {
+    --font-ui-active: var(--font-ui);
+    --font-display-active: var(--font-display);
+  }
+
   :root[data-font='serif'] {
     --font-ui-active: 'Noto Serif KR', 'Iowan Old Style', 'Times New Roman', serif;
     --font-display-active: 'Noto Serif KR', 'Iowan Old Style', 'Times New Roman', serif;
+  }
+
+  :root[data-font='nanum-gothic'] {
+    --font-ui-active: 'Nanum Gothic', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+    --font-display-active: 'Nanum Gothic', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+  }
+
+  :root[data-font='nanum-myeongjo'] {
+    --font-ui-active: 'Nanum Myeongjo', 'Iowan Old Style', 'Times New Roman', serif;
+    --font-display-active: 'Nanum Myeongjo', 'Iowan Old Style', 'Times New Roman', serif;
+  }
+
+  :root[data-font='nanum-gothic-coding'] {
+    --font-ui-active: 'Nanum Gothic Coding', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+    --font-display-active: 'Nanum Gothic Coding', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  }
+
+  :root[data-font='nanum-brush-script'] {
+    --font-ui-active: 'Nanum Brush Script', 'Nanum Pen Script', 'Apple Chancery', 'Segoe Script', cursive;
+    --font-display-active: 'Nanum Brush Script', 'Nanum Pen Script', 'Apple Chancery', 'Segoe Script', cursive;
+  }
+
+  :root[data-font='nanum-pen-script'] {
+    --font-ui-active: 'Nanum Pen Script', 'Nanum Brush Script', 'Apple Chancery', 'Segoe Script', cursive;
+    --font-display-active: 'Nanum Pen Script', 'Nanum Brush Script', 'Apple Chancery', 'Segoe Script', cursive;
   }
 
   * {
@@ -80,7 +129,7 @@
   }
 
   html {
-    font-size: calc(16px * var(--text-scale));
+    font-size: 16px;
   }
 
   body {
@@ -134,6 +183,84 @@
     color: var(--text-main);
   }
 
+}
+
+@layer utilities {
+  .type-muted,
+  .type-body-muted {
+    font-size: var(--type-muted-size);
+    line-height: var(--type-muted-line-height);
+  }
+
+  .type-label {
+    font-size: var(--type-label-size);
+    line-height: var(--type-label-line-height);
+  }
+
+  .type-label-bounded {
+    font-size: var(--type-label-bounded-size);
+    line-height: var(--type-label-line-height);
+  }
+
+  .type-body {
+    font-size: var(--type-body-size);
+    line-height: var(--type-body-line-height);
+  }
+
+  .type-body-bounded {
+    font-size: var(--type-body-bounded-size);
+    line-height: var(--type-body-line-height);
+  }
+
+  .type-title {
+    font-size: var(--type-title-size);
+    line-height: var(--type-title-line-height);
+  }
+
+  .type-title-bounded {
+    font-size: var(--type-title-bounded-size);
+    line-height: var(--type-title-line-height);
+  }
+
+  .type-section {
+    font-size: var(--type-section-size);
+    line-height: var(--type-section-line-height);
+  }
+
+  .type-section-bounded {
+    font-size: var(--type-section-bounded-size);
+    line-height: var(--type-section-line-height);
+  }
+
+  .type-display {
+    font-size: var(--type-display-size);
+    line-height: var(--type-display-line-height);
+  }
+
+  .type-display-bounded {
+    font-size: var(--type-display-bounded-size);
+    line-height: var(--type-display-line-height);
+  }
+
+  .type-body-muted-bounded {
+    font-size: var(--type-muted-bounded-size);
+    line-height: var(--type-muted-line-height);
+  }
+}
+
+.font-size-static {
+  --type-muted-size: 0.75rem;
+  --type-label-size: 0.875rem;
+  --type-body-size: 1rem;
+  --type-title-size: 1.25rem;
+  --type-section-size: 1.125rem;
+  --type-display-size: 1.5rem;
+  --type-label-bounded-size: 0.875rem;
+  --type-body-bounded-size: 1rem;
+  --type-muted-bounded-size: 0.75rem;
+  --type-title-bounded-size: 1.125rem;
+  --type-section-bounded-size: 0.875rem;
+  --type-display-bounded-size: 1.5rem;
 }
 
 /* PDF reader selection: keep native browser selection invisible (we render custom overlays). */

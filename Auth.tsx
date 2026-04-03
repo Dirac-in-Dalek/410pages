@@ -110,7 +110,7 @@ export const Auth = () => {
 
     if (isSuccess) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[100dvh] bg-[var(--bg-main)] font-sans px-4 py-6 sm:px-6 sm:py-8">
+            <div className="font-size-static flex flex-col items-center justify-center min-h-[100dvh] bg-[var(--bg-main)] font-sans px-4 py-6 sm:px-6 sm:py-8">
                 <div className="w-full max-w-md p-6 sm:p-8 bg-[var(--bg-card)] border border-[var(--border-main)] shadow-sm rounded-2xl sm:rounded-xl text-center">
                     <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -141,7 +141,7 @@ export const Auth = () => {
     }
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-[100dvh] bg-[var(--bg-main)] font-sans px-4 py-6 sm:px-6 sm:py-8">
+        <div className="font-size-static flex flex-col items-center justify-center min-h-[100dvh] bg-[var(--bg-main)] font-sans px-4 py-6 sm:px-6 sm:py-8">
             <div className="w-full max-w-md p-6 sm:p-8 bg-[var(--bg-card)] border border-[var(--border-main)] shadow-sm rounded-2xl sm:rounded-xl">
                 <div className="flex flex-col items-center mb-10">
                     <div className="text-[var(--text-main)] mb-4">

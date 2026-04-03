@@ -287,13 +287,13 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                 <div className="absolute top-full right-0 mt-1 w-52 bg-[var(--bg-card)] text-[var(--text-main)] border border-[var(--border-main)] rounded-xl shadow-2xl z-[120] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
                   <button
                     onClick={() => void handleCopy(false)}
-                    className="w-full text-left px-3 py-2 text-xs text-[var(--text-main)] hover:bg-[var(--sidebar-hover)] transition-colors"
+                    className="type-label-bounded w-full text-left px-3 py-2 text-[var(--text-main)] hover:bg-[var(--sidebar-hover)] transition-colors"
                   >
                     copy
                   </button>
                   <button
                     onClick={() => void handleCopy(true)}
-                    className="w-full text-left px-3 py-2 text-xs text-[var(--text-main)] hover:bg-[var(--sidebar-hover)] transition-colors border-t border-[var(--border-main)]"
+                    className="type-label-bounded w-full text-left px-3 py-2 text-[var(--text-main)] hover:bg-[var(--sidebar-hover)] transition-colors border-t border-[var(--border-main)]"
                   >
                     copy + memo
                   </button>
@@ -320,11 +320,11 @@ export const CitationCard: React.FC<CitationCardProps> = ({
         {showDeleteConfirm && (
           <div className="absolute inset-0 z-30 bg-[var(--bg-card)]/95 backdrop-blur-sm rounded-lg flex items-center justify-center p-6 text-center">
             <div>
-              <p className="text-[var(--text-main)] font-medium mb-4">Are you sure you want to delete this citation?</p>
+              <p className="type-body text-[var(--text-main)] font-medium mb-4">Are you sure you want to delete this citation?</p>
               <div className="flex gap-3 justify-center">
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="px-4 py-1.5 text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--bg-sidebar)] rounded-md"
+                  className="type-label-bounded px-4 py-1.5 font-medium text-[var(--text-muted)] hover:bg-[var(--bg-sidebar)] rounded-md"
                 >
                   Cancel
                 </button>
@@ -333,7 +333,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                     onDelete(citation.id);
                     setShowDeleteConfirm(false);
                   }}
-                  className="px-4 py-1.5 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-md shadow-sm"
+                  className="type-label-bounded px-4 py-1.5 font-medium text-white bg-red-500 hover:bg-red-600 rounded-md shadow-sm"
                 >
                   Delete
                 </button>
@@ -350,49 +350,49 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                 autoFocus
                 value={editText}
                 onChange={(e) => setEditText(e.target.value)}
-                className="w-full text-base md:text-lg font-serif p-2 bg-[var(--bg-input)] text-[var(--text-main)] border border-[var(--border-main)] rounded-md focus:ring-2 focus:ring-[var(--accent-ring)] focus:border-[var(--accent-border)] min-h-[100px] resize-none overflow-y-auto"
+                className="type-body w-full font-serif p-2 bg-[var(--bg-input)] text-[var(--text-main)] border border-[var(--border-main)] rounded-md focus:ring-2 focus:ring-[var(--accent-ring)] focus:border-[var(--accent-border)] min-h-[100px] resize-none overflow-y-auto"
                 style={{ height: 'auto' }}
               />
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <div className="col-span-1">
-                  <label className="text-[10px] uppercase font-bold text-[var(--text-muted)] block mb-1 ml-1">Author</label>
+                  <label className="type-muted uppercase font-bold text-[var(--text-muted)] block mb-1 ml-1">Author</label>
                   <input
                     type="text"
                     value={editAuthor}
                     onChange={(e) => setEditAuthor(e.target.value)}
                     placeholder="Self"
-                    className="w-full text-xs p-2 bg-[var(--bg-input)] text-[var(--text-main)] border border-[var(--border-main)] rounded-md focus:border-[var(--accent-border)]"
+                    className="type-label-bounded w-full p-2 bg-[var(--bg-input)] text-[var(--text-main)] border border-[var(--border-main)] rounded-md focus:border-[var(--accent-border)]"
                   />
                 </div>
                 <div className="col-span-1">
-                  <label className="text-[10px] uppercase font-bold text-[var(--text-muted)] block mb-1 ml-1">Source</label>
+                  <label className="type-muted uppercase font-bold text-[var(--text-muted)] block mb-1 ml-1">Source</label>
                   <input
                     type="text"
                     value={editBook}
                     onChange={(e) => setEditBook(e.target.value)}
-                    className="w-full text-xs p-2 bg-[var(--bg-input)] text-[var(--text-main)] border border-[var(--border-main)] rounded-md focus:border-[var(--accent-border)]"
+                    className="type-label-bounded w-full p-2 bg-[var(--bg-input)] text-[var(--text-main)] border border-[var(--border-main)] rounded-md focus:border-[var(--accent-border)]"
                   />
                 </div>
                 <div className="col-span-1">
-                  <label className="text-[10px] uppercase font-bold text-[var(--text-muted)] block mb-1 ml-1">Page</label>
+                  <label className="type-muted uppercase font-bold text-[var(--text-muted)] block mb-1 ml-1">Page</label>
                   <input
                     type="text"
                     value={editPage}
                     onChange={(e) => setEditPage(e.target.value)}
-                    className="w-full text-xs p-2 bg-[var(--bg-input)] text-[var(--text-main)] border border-[var(--border-main)] rounded-md focus:border-[var(--accent-border)]"
+                    className="type-label-bounded w-full p-2 bg-[var(--bg-input)] text-[var(--text-main)] border border-[var(--border-main)] rounded-md focus:border-[var(--accent-border)]"
                   />
                 </div>
               </div>
               <div className="flex justify-end gap-2 pt-2 border-t border-[var(--border-main)]">
                 <button
                   onClick={handleCancel}
-                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-[var(--text-muted)] hover:bg-[var(--bg-sidebar)] rounded-md transition-colors"
+                  className="type-label-bounded flex items-center gap-1 px-3 py-1.5 font-medium text-[var(--text-muted)] hover:bg-[var(--bg-sidebar)] rounded-md transition-colors"
                 >
                   <X size={14} /> Cancel
                 </button>
                 <button
                   onClick={handleSave}
-                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-[var(--accent)] hover:bg-[var(--accent-strong)] rounded-md shadow-sm transition-colors"
+                  className="type-label-bounded flex items-center gap-1 px-3 py-1.5 font-medium text-white bg-[var(--accent)] hover:bg-[var(--accent-strong)] rounded-md shadow-sm transition-colors"
                 >
                   <Check size={14} /> Save
                 </button>
@@ -402,14 +402,14 @@ export const CitationCard: React.FC<CitationCardProps> = ({
             <>
               {/* Quote Content */}
               <blockquote
-                className="font-serif text-base md:text-lg leading-relaxed text-[var(--text-main)] mb-4 relative z-10 select-text whitespace-pre-wrap"
+                className="type-body font-serif leading-relaxed text-[var(--text-main)] mb-4 relative z-10 select-text whitespace-pre-wrap"
                 onMouseUp={handleTextSelection}
               >
                 {renderHighlightedText()}
               </blockquote>
 
               {/* Metadata Tags */}
-              <div className="flex flex-wrap items-center gap-2 text-xs font-sans mt-4">
+              <div className="type-label-bounded flex flex-wrap items-center gap-2 font-sans mt-4">
                 {/* Author Tag */}
                 {isSelf ? (
                   <span className="px-2 py-1 bg-[var(--accent-soft)] text-[var(--accent-strong)] rounded-md border border-[var(--accent-border)] font-medium flex items-center">
@@ -470,7 +470,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                   <div
                     key={note.id}
                     className={`
-                  group/note relative text-sm text-[var(--text-main)] bg-[var(--bg-card)] rounded border transition-all overflow-hidden
+                  group/note relative type-body text-[var(--text-main)] bg-[var(--bg-card)] rounded border transition-all overflow-hidden
                   ${editingNoteId === note.id ? 'border-[var(--accent-border)] shadow-md ring-1 ring-[var(--accent-ring)]' : 'p-2 border-[var(--border-main)] hover:border-[var(--accent-border)] cursor-pointer'}
                 `}
                     onClick={() => {
@@ -487,18 +487,18 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                           autoFocus
                           value={editNoteContent}
                           onChange={(e) => setEditNoteContent(e.target.value)}
-                          className="w-full text-sm bg-transparent text-[var(--text-main)] border-none p-3 focus:ring-0 focus:outline-none min-h-[80px] resize-none overflow-y-auto"
+                          className="type-body w-full bg-transparent text-[var(--text-main)] border-none p-3 focus:ring-0 focus:outline-none min-h-[80px] resize-none overflow-y-auto"
                         />
                         <div className="flex justify-end gap-3 p-2 bg-[var(--bg-sidebar)]/50 border-t border-[var(--border-main)]">
                           <button
                             onClick={(e) => { e.stopPropagation(); setEditingNoteId(null); }}
-                            className="text-xs text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                            className="type-label-bounded text-[var(--text-muted)] hover:text-[var(--text-main)]"
                           >
                             Cancel
                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); handleSaveNoteEdit(note.id); }}
-                            className="text-xs text-[var(--accent)] font-bold hover:text-[var(--accent-strong)]"
+                            className="type-label-bounded text-[var(--accent)] font-bold hover:text-[var(--accent-strong)]"
                           >
                             Save
                           </button>
@@ -518,7 +518,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                   value={newNote}
                   onChange={(e) => setNewNote(e.target.value)}
                   placeholder="Add a new note..."
-                  className="w-full text-sm bg-transparent text-[var(--text-main)] border-none p-3 focus:ring-0 focus:outline-none min-h-[60px] resize-none overflow-y-auto"
+                  className="type-body w-full bg-transparent text-[var(--text-main)] border-none p-3 focus:ring-0 focus:outline-none min-h-[60px] resize-none overflow-y-auto"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
@@ -531,7 +531,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                     onClick={submitNote}
                     disabled={!newNote.trim()}
                     className={`
-                      px-3 py-1 text-xs font-bold rounded transition-colors
+                      type-label-bounded px-3 py-1 font-bold rounded transition-colors
                       ${newNote.trim() ? 'bg-[var(--accent)] text-white hover:bg-[var(--accent-strong)]' : 'bg-[var(--bg-sidebar)] text-[var(--text-muted)] cursor-not-allowed'}
                     `}
                   >

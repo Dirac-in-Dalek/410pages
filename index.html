@@ -14,40 +14,66 @@
       const preferencesKey = 'user-preferences';
       const legacyThemeKey = 'theme-preference';
       const legacyDarkModeKey = 'dark-mode';
+      const supportedFonts = new Set([
+        'pretendard',
+        'serif',
+        'nanum-gothic',
+        'nanum-myeongjo',
+        'nanum-gothic-coding',
+        'nanum-brush-script',
+        'nanum-pen-script',
+      ]);
+      const minBaseFontPt = 10;
+      const maxBaseFontPt = 40;
       const root = document.documentElement;
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const defaultPreferences = { theme: 'system', fontFamily: 'pretendard', textScale: 'md' };
-      const textScaleMap = { sm: '0.9375', md: '1', lg: '1.125' };
+      const defaultPreferences = { theme: 'system', fontFamily: 'pretendard', baseFontPt: 16 };
+      const legacyTextScaleMap = { sm: 14, md: 16, lg: 18 };
+
+      const clampBaseFontPt = (value) => {
+        const parsedValue = Number(value);
+
+        if (!Number.isFinite(parsedValue)) {
+          return defaultPreferences.baseFontPt;
+        }
+
+        return Math.min(maxBaseFontPt, Math.max(minBaseFontPt, Math.round(parsedValue)));
+      };
+
+      const normalizePreferences = (value) => {
+        const candidate = value && typeof value === 'object' ? value : {};
+
+        return {
+          theme:
+            candidate.theme === 'light' || candidate.theme === 'dark' || candidate.theme === 'system'
+              ? candidate.theme
+              : defaultPreferences.theme,
+          fontFamily: supportedFonts.has(candidate.fontFamily)
+            ? candidate.fontFamily
+            : defaultPreferences.fontFamily,
+          baseFontPt:
+            candidate.baseFontPt !== undefined
+              ? clampBaseFontPt(candidate.baseFontPt)
+              : legacyTextScaleMap[candidate.textScale] || defaultPreferences.baseFontPt,
+        };
+      };
+
       let preferences = defaultPreferences;
 
       try {
         const storedPreferences = localStorage.getItem(preferencesKey);
-        if (storedPreferences) {
-          let parsedPreferences;
+        let hasStoredPreferences = false;
 
+        if (storedPreferences) {
           try {
-            parsedPreferences = JSON.parse(storedPreferences);
+            preferences = normalizePreferences(JSON.parse(storedPreferences));
+            hasStoredPreferences = true;
           } catch (_) {
             localStorage.removeItem(preferencesKey);
           }
-
-          preferences = {
-            theme:
-              parsedPreferences?.theme === 'light' || parsedPreferences?.theme === 'dark' || parsedPreferences?.theme === 'system'
-                ? parsedPreferences.theme
-                : defaultPreferences.theme,
-            fontFamily:
-              parsedPreferences?.fontFamily === 'serif' || parsedPreferences?.fontFamily === 'pretendard'
-                ? parsedPreferences.fontFamily
-                : defaultPreferences.fontFamily,
-            textScale:
-              parsedPreferences?.textScale === 'sm' || parsedPreferences?.textScale === 'lg' || parsedPreferences?.textScale === 'md'
-                ? parsedPreferences.textScale
-                : defaultPreferences.textScale,
-          };
         }
 
-        if (!storedPreferences || preferences === defaultPreferences) {
+        if (!hasStoredPreferences) {
           const legacyTheme = localStorage.getItem(legacyThemeKey);
           if (legacyTheme === 'system' || legacyTheme === 'light' || legacyTheme === 'dark') {
             preferences = { ...defaultPreferences, theme: legacyTheme };
@@ -61,15 +87,21 @@
             }
           }
         }
-        localStorage.setItem(legacyThemeKey, preferences.theme);
       } catch (_) {
         preferences = defaultPreferences;
+      }
+
+      try {
+        localStorage.setItem(preferencesKey, JSON.stringify(preferences));
+        localStorage.setItem(legacyThemeKey, preferences.theme);
+        localStorage.removeItem(legacyDarkModeKey);
+      } catch (_) {
       }
 
       const isDark = preferences.theme === 'dark' || (preferences.theme === 'system' && prefersDark);
       root.classList.toggle('dark', isDark);
       root.dataset.font = preferences.fontFamily;
-      root.style.setProperty('--text-scale', textScaleMap[preferences.textScale] || '1');
+      root.style.setProperty('--font-base-pt', `${preferences.baseFontPt}pt`);
       const themeMeta = document.querySelector('meta[name="theme-color"]');
       if (themeMeta) {
         themeMeta.setAttribute('content', isDark ? '#191919' : '#ffffff');

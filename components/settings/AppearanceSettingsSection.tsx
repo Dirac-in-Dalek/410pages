@@ -7,7 +7,7 @@ type AppearanceSettingsSectionProps = {
 };
 
 const themeButtonClass = (isActive: boolean) =>
-  `rounded-xl border px-3 py-2 text-sm transition-colors ${
+  `type-label-bounded rounded-xl border px-3 py-2 transition-colors ${
     isActive
       ? 'border-transparent bg-[var(--accent-active)] text-[var(--accent-active-text)]'
       : 'border-[var(--border-main)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]'
@@ -18,12 +18,12 @@ export const AppearanceSettingsSection: React.FC<AppearanceSettingsSectionProps>
   onThemeChange,
 }) => (
   <section>
-    <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+    <h3 className="type-section mb-3 font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
       화면
     </h3>
 
     <div className="rounded-2xl border border-[var(--border-main)] bg-[var(--bg-main)] p-4 shadow-sm">
-      <p className="mb-2 text-sm font-medium text-[var(--text-main)]">테마</p>
+      <p className="type-label mb-2 font-medium text-[var(--text-main)]">테마</p>
       <div className="grid grid-cols-3 gap-2">
         <button
           type="button"

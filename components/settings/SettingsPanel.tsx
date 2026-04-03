@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import type {
   FontPreference,
-  TextScalePreference,
   ThemePreference,
   UserPreferences,
 } from '../../hooks/useUserPreferences';
@@ -25,7 +24,7 @@ export type SettingsPanelProps = {
   onAvatarChange: (file: File) => void | Promise<void>;
   onThemeChange: (value: ThemePreference) => void;
   onFontFamilyChange: (value: FontPreference) => void;
-  onTextScaleChange: (value: TextScalePreference) => void;
+  onBaseFontPtChange: (value: number) => void;
   onSignOut?: () => void;
 };
 
@@ -46,7 +45,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onAvatarChange,
   onThemeChange,
   onFontFamilyChange,
-  onTextScaleChange,
+  onBaseFontPtChange,
   onSignOut,
 }) => {
   const dismissingPanelRef = useRef(false);
@@ -128,7 +127,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         <div className="flex h-full flex-col overflow-hidden">
           <header className="border-b border-[var(--border-main)] bg-[linear-gradient(180deg,#f4efe7_0%,#fbfaf8_100%)] px-6 py-5 dark:bg-none">
             <div className="flex items-center justify-between gap-4">
-              <h2 className="text-2xl font-semibold tracking-[-0.02em] text-[var(--text-main)]">설정</h2>
+              <h2 className="type-display-bounded font-semibold tracking-[-0.02em] text-[var(--text-main)]">설정</h2>
               <button
                 type="button"
                 aria-label="닫기"
@@ -160,7 +159,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 }}
               />
 
-              <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--accent-soft)] text-2xl font-semibold text-[var(--accent)]">
+              <div className="type-title-bounded flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--accent-soft)] font-semibold text-[var(--accent)]">
                 {avatarUrl ? (
                   <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
                 ) : (
@@ -174,16 +173,16 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     type="button"
                     onClick={() => avatarInputRef.current?.click()}
                     disabled={isSavingAvatar}
-                    className="rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] px-3 py-2 text-sm font-medium text-[var(--text-main)] transition-colors hover:bg-[var(--sidebar-hover)] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="type-label-bounded rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] px-3 py-2 font-medium text-[var(--text-main)] transition-colors hover:bg-[var(--sidebar-hover)] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     사진 변경
                   </button>
                   {avatarError ? (
-                    <p className="text-xs text-red-600">{avatarError}</p>
+                    <p className="type-body-muted text-red-600">{avatarError}</p>
                   ) : null}
                 </div>
 
-                <label className="block text-sm font-medium text-[var(--text-main)]">
+                <label className="type-label block font-medium text-[var(--text-main)]">
                   이름
                   <input
                     value={displayName}
@@ -198,12 +197,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                       event.currentTarget.blur();
                     }}
                     aria-label="이름"
-                    className="mt-2 w-full rounded-xl border border-[var(--border-main)] bg-[var(--bg-input)] px-3 py-2.5 text-base outline-none transition-colors focus:border-[var(--accent-border)] focus:ring-2 focus:ring-[var(--accent-ring)]"
+                    className="type-body-bounded mt-2 w-full rounded-xl border border-[var(--border-main)] bg-[var(--bg-input)] px-3 py-2.5 outline-none transition-colors focus:border-[var(--accent-border)] focus:ring-2 focus:ring-[var(--accent-ring)]"
                   />
                 </label>
 
                 {displayNameError ? (
-                  <p className="mt-2 text-xs text-red-600">{displayNameError}</p>
+                  <p className="type-body-muted mt-2 text-red-600">{displayNameError}</p>
                 ) : null}
               </div>
             </div>
@@ -212,9 +211,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           <div className="flex-1 overflow-y-auto px-6 py-5">
             <TextSettingsSection
               fontFamily={preferences.fontFamily}
-              textScale={preferences.textScale}
+              baseFontPt={preferences.baseFontPt}
               onFontFamilyChange={onFontFamilyChange}
-              onTextScaleChange={onTextScaleChange}
+              onBaseFontPtChange={onBaseFontPtChange}
             />
 
             <AppearanceSettingsSection
@@ -229,7 +228,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 type="button"
                 onClick={onSignOut}
                 {...dismissIntentProps}
-                className="w-full rounded-2xl border border-[var(--border-main)] bg-[var(--bg-card)] px-4 py-3 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--sidebar-hover)] hover:text-red-500"
+                className="type-label-bounded w-full rounded-2xl border border-[var(--border-main)] bg-[var(--bg-card)] px-4 py-3 font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--sidebar-hover)] hover:text-red-500"
               >
                 로그아웃
               </button>

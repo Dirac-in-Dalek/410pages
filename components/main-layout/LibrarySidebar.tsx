@@ -457,7 +457,7 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
 
         <div
           className={`
-            flex items-center py-1.5 px-2 type-body cursor-pointer select-none
+            type-label-bounded flex items-center py-1.5 px-2 cursor-pointer select-none
             ${(selectedFilter?.type === item.type && selectedFilter?.value === (item.type === 'book' ? item.data?.book : item.data?.author) && (item.type !== 'book' || selectedFilter?.author === item.data?.author))
               ? 'bg-[var(--sidebar-active)] text-[var(--text-main)] font-medium shadow-sm'
               : 'hover:bg-[var(--sidebar-hover)] text-[var(--text-muted)]'}
@@ -531,7 +531,7 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
                     cancelNodeEdit();
                   }
                 }}
-                className="flex-1 min-w-0 type-body bg-transparent border border-[var(--border-main)] rounded px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-[var(--accent-ring)]"
+                className="type-label-bounded flex-1 min-w-0 bg-transparent border border-[var(--border-main)] rounded px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-[var(--accent-ring)]"
               />
             </div>
           ) : (
@@ -613,9 +613,9 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
         <div className={`w-[2px] h-full mx-auto transition-colors ${isResizing ? 'bg-[var(--accent)]' : 'group-hover:bg-[var(--accent-border)]'}`} />
       </div>
 
-          <div className="p-4 border-b border-[var(--border-main)] flex items-center justify-between">
+      <div className="p-4 border-b border-[var(--border-main)] flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="type-title font-semibold text-[var(--text-main)]">Library</span>
+          <span className="type-title-bounded font-semibold text-[var(--text-main)]">Library</span>
         </div>
         {!isSearchExpanded ? (
           <button
@@ -630,7 +630,7 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
             <Search size={14} className="text-[var(--text-muted)] mr-2 flex-shrink-0" />
             <input
               autoFocus
-              className="bg-transparent border-none p-0 type-body focus:ring-0 w-full placeholder:text-[var(--text-muted)]"
+              className="type-body-bounded bg-transparent border-none p-0 focus:ring-0 w-full placeholder:text-[var(--text-muted)]"
               placeholder="Search everything..."
               value={searchTerm}
               onChange={(e) => onSearch?.(e.target.value)}
@@ -656,7 +656,7 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
       >
         <div
           className={`
-            flex items-center p-2 rounded-md cursor-pointer mb-4 type-body font-medium
+            type-label-bounded flex items-center p-2 rounded-md cursor-pointer mb-4 font-medium
             ${selectedProjectId === null ? 'bg-[var(--accent-active)] text-[var(--accent-active-text)] shadow-md border-transparent' : 'text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]'}
           `}
           title="Show all citations"
@@ -667,7 +667,7 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
           All Citations
         </div>
 
-        <div className="mb-2 px-2 type-label font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+        <div className="type-section-bounded mb-2 px-2 font-semibold text-[var(--text-muted)] uppercase tracking-wider">
           Authors & Books
         </div>
         {renderTree(treeData)}

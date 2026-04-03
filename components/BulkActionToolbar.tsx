@@ -65,7 +65,7 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
                             )}
                         </button>
                         <div className="h-4 w-[1px] bg-[var(--border-main)] mx-1"></div>
-                        <span className="text-xs sm:text-sm font-bold text-[var(--accent)]">
+                        <span className="type-label-bounded font-bold text-[var(--accent)]">
                             {selectedCount} Selected
                         </span>
                     </div>
@@ -104,20 +104,20 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
                                                         }
                                                         if (e.key === 'Escape') setIsCreatingFolder(false);
                                                     }}
-                                                    className="flex-1 text-xs px-2 py-1.5 border border-[var(--accent-border)] rounded-md focus:ring-2 focus:ring-[var(--accent-ring)] focus:border-[var(--accent-border)] outline-none"
+                                                    className="type-label-bounded flex-1 px-2 py-1.5 border border-[var(--accent-border)] rounded-md focus:ring-2 focus:ring-[var(--accent-ring)] focus:border-[var(--accent-border)] outline-none"
                                                 />
                                             </div>
                                         ) : (
                                             <button
                                                 onClick={() => setIsCreatingFolder(true)}
-                                                className="w-full flex items-center gap-2 px-2 py-1.5 text-xs text-[var(--accent)] hover:bg-[var(--accent-soft)] rounded-md transition-colors font-bold"
+                                                className="type-label-bounded w-full flex items-center gap-2 px-2 py-1.5 text-[var(--accent)] hover:bg-[var(--accent-soft)] rounded-md transition-colors font-bold"
                                             >
                                                 <Plus size={14} /> New Folder
                                             </button>
                                         )}
                                     </div>
                                     <div className="max-h-56 overflow-y-auto py-1">
-                                        {projects.length === 0 && <div className="px-4 py-3 text-xs text-[var(--text-muted)] text-center">No existing folders</div>}
+                                        {projects.length === 0 && <div className="type-body-muted px-4 py-3 text-[var(--text-muted)] text-center">No existing folders</div>}
                                         {projects.map(p => (
                                             <button
                                                 key={p.id}
@@ -125,7 +125,7 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
                                                     onAddToProject(p.id);
                                                     setShowFolderMenu(false);
                                                 }}
-                                                className="w-full text-left px-4 py-2.5 text-xs text-[var(--text-main)] hover:bg-[var(--sidebar-hover)] flex items-center gap-2 transition-colors"
+                                                className="type-label-bounded w-full text-left px-4 py-2.5 text-[var(--text-main)] hover:bg-[var(--sidebar-hover)] flex items-center gap-2 transition-colors"
                                             >
                                                 <Folder size={14} className="text-[var(--text-muted)]" />
                                                 <span className="truncate">{p.name}</span>
@@ -155,7 +155,7 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
                                             void onCopy(false);
                                             setShowCopyMenu(false);
                                         }}
-                                        className="w-full text-left px-4 py-2.5 text-xs text-[var(--text-main)] hover:bg-[var(--sidebar-hover)] transition-colors"
+                                        className="type-label-bounded w-full text-left px-4 py-2.5 text-[var(--text-main)] hover:bg-[var(--sidebar-hover)] transition-colors"
                                     >
                                         copy
                                     </button>
@@ -164,7 +164,7 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
                                             void onCopy(true);
                                             setShowCopyMenu(false);
                                         }}
-                                        className="w-full text-left px-4 py-2.5 text-xs text-[var(--text-main)] hover:bg-[var(--sidebar-hover)] transition-colors border-t border-[var(--border-main)]"
+                                        className="type-label-bounded w-full text-left px-4 py-2.5 text-[var(--text-main)] hover:bg-[var(--sidebar-hover)] transition-colors border-t border-[var(--border-main)]"
                                     >
                                         copy + memo
                                     </button>

@@ -1,81 +1,90 @@
 import React from 'react';
-import type { FontPreference, TextScalePreference } from '../../hooks/useUserPreferences';
+import { FONT_OPTIONS, type FontPreference } from '../../lib/fontRegistry';
 
 type TextSettingsSectionProps = {
   fontFamily: FontPreference;
-  textScale: TextScalePreference;
+  baseFontPt: number;
   onFontFamilyChange: (value: FontPreference) => void;
-  onTextScaleChange: (value: TextScalePreference) => void;
+  onBaseFontPtChange: (value: number) => void;
 };
 
 const optionButtonClass = (isActive: boolean) =>
-  `rounded-xl border px-3 py-2 text-sm transition-colors ${
+  `type-label-bounded rounded-xl border px-3 py-2 transition-colors ${
     isActive
       ? 'border-transparent bg-[var(--accent-active)] text-[var(--accent-active-text)]'
       : 'border-[var(--border-main)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]'
   }`;
 
+type FontSelectionListProps = {
+  selectedFontFamily: FontPreference;
+  onFontFamilyChange: (value: FontPreference) => void;
+};
+
+export const FontSelectionList: React.FC<FontSelectionListProps> = ({
+  selectedFontFamily,
+  onFontFamilyChange,
+}) => (
+  <div className="max-h-64 overflow-y-auto rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] p-1">
+    {FONT_OPTIONS.map((option) => {
+      const isActive = option.id === selectedFontFamily;
+
+      return (
+        <button
+          key={option.id}
+          type="button"
+          aria-pressed={isActive}
+          className={`${optionButtonClass(isActive)} flex w-full items-center justify-start text-left`}
+          onClick={() => onFontFamilyChange(option.id)}
+        >
+          <span className="type-label-bounded block w-full truncate" style={{ fontFamily: option.fontFamily }}>
+            {option.label}
+          </span>
+        </button>
+      );
+    })}
+  </div>
+);
+
 export const TextSettingsSection: React.FC<TextSettingsSectionProps> = ({
   fontFamily,
-  textScale,
+  baseFontPt,
   onFontFamilyChange,
-  onTextScaleChange,
+  onBaseFontPtChange,
 }) => (
   <section className="mb-8">
-    <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+    <h3 className="type-section mb-3 font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
       텍스트
     </h3>
 
     <div className="rounded-2xl border border-[var(--border-main)] bg-[var(--bg-main)] p-4 shadow-sm">
       <div className="mb-5">
-        <p className="mb-2 text-sm font-medium text-[var(--text-main)]">서체</p>
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            aria-pressed={fontFamily === 'pretendard'}
-            className={optionButtonClass(fontFamily === 'pretendard')}
-            onClick={() => onFontFamilyChange('pretendard')}
-          >
-            프리텐다드
-          </button>
-          <button
-            type="button"
-            aria-pressed={fontFamily === 'serif'}
-            className={optionButtonClass(fontFamily === 'serif')}
-            onClick={() => onFontFamilyChange('serif')}
-          >
-            명조
-          </button>
-        </div>
+        <p className="type-label mb-2 font-medium text-[var(--text-main)]">서체</p>
+        <FontSelectionList selectedFontFamily={fontFamily} onFontFamilyChange={onFontFamilyChange} />
       </div>
 
       <div>
-        <p className="mb-2 text-sm font-medium text-[var(--text-main)]">글자 크기</p>
-        <div className="grid grid-cols-3 gap-2">
-          <button
-            type="button"
-            aria-pressed={textScale === 'sm'}
-            className={optionButtonClass(textScale === 'sm')}
-            onClick={() => onTextScaleChange('sm')}
-          >
-            작게
-          </button>
-          <button
-            type="button"
-            aria-pressed={textScale === 'md'}
-            className={optionButtonClass(textScale === 'md')}
-            onClick={() => onTextScaleChange('md')}
-          >
-            보통
-          </button>
-          <button
-            type="button"
-            aria-pressed={textScale === 'lg'}
-            className={optionButtonClass(textScale === 'lg')}
-            onClick={() => onTextScaleChange('lg')}
-          >
-            크게
-          </button>
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <label htmlFor="base-font-pt" className="type-label-bounded font-medium text-[var(--text-main)]">
+            글자 크기
+          </label>
+          <span aria-live="polite" className="type-label-bounded font-medium text-[var(--text-secondary)]">
+            {baseFontPt}pt
+          </span>
+        </div>
+        <input
+          id="base-font-pt"
+          type="range"
+          min={10}
+          max={40}
+          step={1}
+          value={baseFontPt}
+          aria-valuetext={`${baseFontPt}pt`}
+          className="w-full accent-[var(--accent)]"
+          onChange={(event) => onBaseFontPtChange(Number(event.currentTarget.value))}
+        />
+        <div className="type-body-muted mt-2 flex justify-between text-[var(--text-secondary)]">
+          <span>10pt</span>
+          <span>40pt</span>
         </div>
       </div>
     </div>

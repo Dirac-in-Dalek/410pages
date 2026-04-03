@@ -67,7 +67,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   } = useSidebarResize();
 
   return (
-    <div className="flex h-screen w-full bg-[var(--bg-main)] overflow-hidden font-sans text-[var(--text-main)] transition-colors duration-200">
+    <div className="font-size-app flex h-screen w-full bg-[var(--bg-main)] overflow-hidden font-sans text-[var(--text-main)] transition-colors duration-200">
       <ProjectSidebar
         projects={projects}
         selectedProjectId={selectedProjectId}
