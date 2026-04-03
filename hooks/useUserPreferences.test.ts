@@ -75,6 +75,7 @@ const resetDom = () => {
   document.documentElement.className = '';
   document.documentElement.removeAttribute('data-font');
   document.documentElement.style.removeProperty('--text-scale');
+  document.documentElement.style.removeProperty('--font-base-pt');
   installStorageStub();
   window.localStorage.clear();
   Object.defineProperty(window, 'matchMedia', {
@@ -99,17 +100,30 @@ describe('useUserPreferences', () => {
     expect(readStoredPreferences()).toEqual(DEFAULT_PREFERENCES);
   });
 
-  it('applies dark theme, font, and scale to the root document', () => {
+  it('applies dark theme, font, and base font size to the root document', () => {
     applyPreferencesToDocument({
       ...DEFAULT_PREFERENCES,
       theme: 'dark',
       fontFamily: 'serif',
-      textScale: 'lg',
+      baseFontPt: 22,
     });
 
     expect(document.documentElement.classList.contains('dark')).toBe(true);
     expect(document.documentElement.dataset.font).toBe('serif');
-    expect(document.documentElement.style.getPropertyValue('--text-scale')).toBe('1.125');
+    expect(document.documentElement.style.getPropertyValue('--font-base-pt')).toBe('22pt');
+  });
+
+  it('migrates legacy text scale preferences to numeric base font sizes', () => {
+    window.localStorage.setItem(
+      PREFERENCES_STORAGE_KEY,
+      JSON.stringify({ theme: 'light', fontFamily: 'serif', textScale: 'lg' })
+    );
+
+    expect(readStoredPreferences()).toEqual({
+      theme: 'light',
+      fontFamily: 'serif',
+      baseFontPt: 18,
+    });
   });
 
   it('persists updates from the hook', () => {
@@ -118,13 +132,25 @@ describe('useUserPreferences', () => {
     act(() => {
       result.current.setTheme('light');
       result.current.setFontFamily('serif');
-      result.current.setTextScale('sm');
+      result.current.setBaseFontPt(23.7);
     });
 
     expect(JSON.parse(window.localStorage.getItem(PREFERENCES_STORAGE_KEY) || '{}')).toMatchObject({
       theme: 'light',
       fontFamily: 'serif',
-      textScale: 'sm',
+      baseFontPt: 24,
+    });
+  });
+
+  it('clamps base font size to the minimum bound', () => {
+    const { result } = renderHook(() => useUserPreferences());
+
+    act(() => {
+      result.current.setBaseFontPt(3.2);
+    });
+
+    expect(JSON.parse(window.localStorage.getItem(PREFERENCES_STORAGE_KEY) || '{}')).toMatchObject({
+      baseFontPt: 10,
     });
   });
 
@@ -136,11 +162,11 @@ describe('useUserPreferences', () => {
     act(() => {
       result.current.setTheme('dark');
       result.current.setFontFamily('serif');
-      result.current.setTextScale('lg');
+      result.current.setBaseFontPt(40.2);
     });
 
     expect(document.documentElement.classList.contains('dark')).toBe(true);
     expect(document.documentElement.dataset.font).toBe('serif');
-    expect(document.documentElement.style.getPropertyValue('--text-scale')).toBe('1.125');
+    expect(document.documentElement.style.getPropertyValue('--font-base-pt')).toBe('40pt');
   });
 });
