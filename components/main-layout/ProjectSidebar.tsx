@@ -428,7 +428,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
                     <div className="flex justify-center gap-2">
                       <button
                         onClick={() => setDeletingProjectId(null)}
-                        className="type-body-muted px-3 py-1 text-[var(--text-muted)] bg-[var(--bg-card)] border border-[var(--border-main)] rounded shadow-sm hover:bg-[var(--sidebar-hover)]"
+                        className="type-body-muted-bounded px-3 py-1 text-[var(--text-muted)] bg-[var(--bg-card)] border border-[var(--border-main)] rounded shadow-sm hover:bg-[var(--sidebar-hover)]"
                       >
                         Cancel
                       </button>
@@ -437,7 +437,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
                           onDeleteProject(project.id);
                           setDeletingProjectId(null);
                         }}
-                        className="type-body-muted px-3 py-1 text-white bg-red-600 border border-red-700 rounded shadow-sm hover:bg-red-700"
+                        className="type-body-muted-bounded px-3 py-1 text-white bg-red-600 border border-red-700 rounded shadow-sm hover:bg-red-700"
                       >
                         Remove
                       </button>
@@ -500,6 +500,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
                                 e.stopPropagation();
                                 startRename(project.id, project.name);
                               }}
+                              aria-label="Rename project"
                               className="p-1 hover:bg-[var(--sidebar-hover)] rounded text-[var(--text-muted)]"
                             >
                               <Edit2 size={12} />
@@ -509,6 +510,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
                                 e.stopPropagation();
                                 setDeletingProjectId(project.id);
                               }}
+                              aria-label="Delete project"
                               className="p-1 hover:bg-red-100 rounded text-red-500"
                             >
                               <Trash2 size={12} />

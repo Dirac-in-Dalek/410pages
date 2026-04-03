@@ -52,6 +52,12 @@ describe('Constrained typography', () => {
     await user.click(screen.getByRole('button', { name: 'New Project' }));
 
     expect(screen.getByPlaceholderText('Project Name').className).toContain('type-body-bounded');
+
+    await user.click(screen.getByRole('button', { name: 'Manage Folders' }));
+    await user.click(screen.getByRole('button', { name: 'Delete project' }));
+
+    expect(screen.getByRole('button', { name: 'Cancel' }).className).toContain('type-body-muted-bounded');
+    expect(screen.getByRole('button', { name: 'Remove' }).className).toContain('type-body-muted-bounded');
   });
 
   it('bounds body text in mobile layout inputs and count badges', async () => {
