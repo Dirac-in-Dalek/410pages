@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { MainLayout } from './components/MainLayout';
 import { Auth } from './Auth';
 import { MobileLayout } from './components/MobileLayout';
@@ -11,11 +11,15 @@ import { ConfirmModal } from './components/ConfirmModal';
 import { ArchiveHeader } from './components/ArchiveHeader';
 import { CitationList } from './components/CitationList';
 import { PdfReaderPage } from './components/pdf-reader/PdfReaderPage';
-
-import { useDarkMode } from './hooks/useDarkMode';
+import { SettingsPanel } from './components/settings/SettingsPanel';
+import { useUserPreferences } from './hooks/useUserPreferences';
 
 const App: React.FC = () => {
-  const { isDarkMode, toggleDarkMode } = useDarkMode();
+  const { preferences, setTheme, setFontFamily, setTextScale } = useUserPreferences();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [settingsDisplayName, setSettingsDisplayName] = useState('Researcher');
+  const [isSavingDisplayName, setIsSavingDisplayName] = useState(false);
+  const [displayNameError, setDisplayNameError] = useState<string | null>(null);
   // --- Mobile App Mode Check ---
   const [isMobileApp, setIsMobileApp] = useState(false);
   useEffect(() => {
@@ -58,6 +62,8 @@ const App: React.FC = () => {
     session, username, loading: authLoading,
     handleUpdateUsername, handleSignOut
   } = useAuthStatus();
+  const displayNameCommitVersionRef = useRef(0);
+  const previousCommittedUsernameRef = useRef(username);
 
   const {
     projects, setProjects, citations, setCitations, loading: dataLoading,
@@ -99,8 +105,69 @@ const App: React.FC = () => {
     }
   }, [isMobileApp, viewMode]);
 
+  useEffect(() => {
+    const previousCommittedUsername = previousCommittedUsernameRef.current;
+    if (username !== previousCommittedUsername) {
+      setDisplayNameError(null);
+      setSettingsDisplayName((currentDraft) =>
+        currentDraft === previousCommittedUsername ? username : currentDraft
+      );
+      previousCommittedUsernameRef.current = username;
+    }
+  }, [username]);
+
   // --- RENDER ---
   if (!session) return <Auth />;
+
+  const resetSettingsDisplayNameState = () => {
+    displayNameCommitVersionRef.current += 1;
+    setSettingsDisplayName(username);
+    setDisplayNameError(null);
+    setIsSavingDisplayName(false);
+  };
+
+  const openSettings = () => {
+    resetSettingsDisplayNameState();
+    setIsSettingsOpen(true);
+  };
+
+  const closeSettings = () => {
+    resetSettingsDisplayNameState();
+    setIsSettingsOpen(false);
+  };
+
+  const commitSettingsDisplayName = async (nextDisplayName: string) => {
+    const submittedDisplayName = nextDisplayName;
+    const trimmedDisplayName = nextDisplayName.trim();
+    const trimmedUsername = username.trim();
+
+    if (!trimmedDisplayName || trimmedDisplayName === trimmedUsername || isSavingDisplayName) {
+      return;
+    }
+
+    const commitVersion = displayNameCommitVersionRef.current;
+    setIsSavingDisplayName(true);
+    setDisplayNameError(null);
+    try {
+      const didSave = await handleUpdateUsername(trimmedDisplayName);
+      if (commitVersion !== displayNameCommitVersionRef.current) {
+        return;
+      }
+
+      if (didSave) {
+        setSettingsDisplayName((currentDraft) =>
+          currentDraft === submittedDisplayName ? trimmedDisplayName : currentDraft
+        );
+        setDisplayNameError(null);
+      } else {
+        setDisplayNameError('이름 저장에 실패했습니다.');
+      }
+    } finally {
+      if (commitVersion === displayNameCommitVersionRef.current) {
+        setIsSavingDisplayName(false);
+      }
+    }
+  };
 
   const archiveContent = (
     <div className="h-full overflow-y-auto">
@@ -166,26 +233,49 @@ const App: React.FC = () => {
     </div>
   );
 
+  const settingsPanel = (
+    <SettingsPanel
+      isOpen={isSettingsOpen}
+      isMobile={isMobileApp}
+      displayName={settingsDisplayName}
+      savedDisplayName={username}
+      avatarUrl={null}
+      preferences={preferences}
+      isSavingDisplayName={isSavingDisplayName}
+      displayNameError={displayNameError}
+      onClose={closeSettings}
+      onDisplayNameChange={setSettingsDisplayName}
+      onDisplayNameCommit={commitSettingsDisplayName}
+      onAvatarChange={() => console.info('Avatar change action is not connected yet.')}
+      onThemeChange={setTheme}
+      onFontFamilyChange={setFontFamily}
+      onTextScaleChange={setTextScale}
+      onSignOut={handleSignOut}
+    />
+  );
+
   if (isMobileApp) {
     return (
-      <MobileLayout
-        title={viewTitle}
-        projects={projects}
-        selectedProjectId={selectedProjectId}
-        onProjectSelect={handleProjectSelect}
-        onCreateProject={handleCreateProject}
-        treeData={treeData}
-        onTreeItemClick={handleTreeItemClick}
-        username={username}
-        onSignOut={handleSignOut}
-        onSearch={setSearchTerm}
-        searchTerm={searchTerm}
-        selectedFilter={filter}
-        isDarkMode={isDarkMode}
-        toggleDarkMode={toggleDarkMode}
-      >
-        {archiveContent}
-      </MobileLayout>
+      <>
+        <MobileLayout
+          title={viewTitle}
+          projects={projects}
+          selectedProjectId={selectedProjectId}
+          onProjectSelect={handleProjectSelect}
+          onCreateProject={handleCreateProject}
+          treeData={treeData}
+          onTreeItemClick={handleTreeItemClick}
+          username={username}
+          onSignOut={handleSignOut}
+          onSearch={setSearchTerm}
+          searchTerm={searchTerm}
+          selectedFilter={filter}
+          onOpenSettings={openSettings}
+        >
+          {archiveContent}
+        </MobileLayout>
+        {settingsPanel}
+      </>
     );
   }
 
@@ -209,33 +299,35 @@ const App: React.FC = () => {
   }
 
   return (
-    <MainLayout
-      projects={projects}
-      selectedProjectId={selectedProjectId}
-      onProjectSelect={handleProjectSelect}
-      onDropCitationToProject={handleDropCitationToProject}
-      onCreateProject={handleCreateProject}
-      onRenameProject={handleRenameProject}
-      onDeleteProject={handleDeleteProject}
-      onRenameAuthor={handleRenameAuthor}
-      onRenameBook={handleRenameBook}
-      onReorderProjects={handleReorderProjects}
-      treeData={treeData}
-      onTreeItemClick={handleTreeItemClick}
-      username={username}
-      onUpdateUsername={handleUpdateUsername}
-      onSignOut={handleSignOut}
-      onSearch={setSearchTerm}
-      searchTerm={searchTerm}
-      selectedFilter={filter}
-      onReorderAuthorAt={handleReorderAuthorAt}
-      onReorderBookAt={handleReorderBookAt}
-      onOpenPdfReader={() => setViewMode('reader')}
-      isDarkMode={isDarkMode}
-      toggleDarkMode={toggleDarkMode}
-    >
-      {archiveContent}
-    </MainLayout>
+    <>
+      <MainLayout
+        projects={projects}
+        selectedProjectId={selectedProjectId}
+        onProjectSelect={handleProjectSelect}
+        onDropCitationToProject={handleDropCitationToProject}
+        onCreateProject={handleCreateProject}
+        onRenameProject={handleRenameProject}
+        onDeleteProject={handleDeleteProject}
+        onRenameAuthor={handleRenameAuthor}
+        onRenameBook={handleRenameBook}
+        onReorderProjects={handleReorderProjects}
+        treeData={treeData}
+        onTreeItemClick={handleTreeItemClick}
+        username={username}
+        onUpdateUsername={handleUpdateUsername}
+        onSignOut={handleSignOut}
+        onSearch={setSearchTerm}
+        searchTerm={searchTerm}
+        selectedFilter={filter}
+        onReorderAuthorAt={handleReorderAuthorAt}
+        onReorderBookAt={handleReorderBookAt}
+        onOpenPdfReader={() => setViewMode('reader')}
+        onOpenSettings={openSettings}
+      >
+        {archiveContent}
+      </MainLayout>
+      {settingsPanel}
+    </>
   );
 };
 

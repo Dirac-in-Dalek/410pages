@@ -5,11 +5,8 @@ import {
   Edit2,
   Folder,
   GripVertical,
-  LogOut,
-  Moon,
   Plus,
   Settings,
-  Sun,
   Trash2,
   X
 } from 'lucide-react';
@@ -33,11 +30,9 @@ interface ProjectSidebarProps {
   onDeleteProject: (id: string) => void;
   onReorderProjects: (dragIndex: number, hoverIndex: number) => void;
   username?: string;
-  onUpdateUsername?: (name: string) => void;
   onSignOut?: () => void;
   onOpenPdfReader: () => void;
-  isDarkMode: boolean;
-  toggleDarkMode: () => void;
+  onOpenSettings: () => void;
   width: number;
   isResizing: boolean;
   onStartResize: () => void;
@@ -53,11 +48,9 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
   onDeleteProject,
   onReorderProjects,
   username = 'Researcher',
-  onUpdateUsername,
   onSignOut,
   onOpenPdfReader,
-  isDarkMode,
-  toggleDarkMode,
+  onOpenSettings,
   width,
   isResizing,
   onStartResize
@@ -70,8 +63,6 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
   const [newProjectName, setNewProjectName] = useState('');
   const [isManageMode, setIsManageMode] = useState(false);
   const [dragOverProjectId, setDragOverProjectId] = useState<string | null>(null);
-  const [isEditingUsername, setIsEditingUsername] = useState(false);
-  const [newUsername, setNewUsername] = useState(username);
   const [projectDropIndicator, setProjectDropIndicator] = useState<ProjectDropIndicator | null>(null);
   const [activeProjectDragIndex, setActiveProjectDragIndex] = useState<number | null>(null);
   const [projectDragCenterOffsetY, setProjectDragCenterOffsetY] = useState(0);
@@ -128,8 +119,10 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
   };
 
   const hasProjectSortType = (e: React.DragEvent) => {
-    const types = Array.from(e.dataTransfer.types || []).map(type => type.toLowerCase());
-    return types.includes(PROJECT_SORT_MIME);
+    const types = Array.from(e.dataTransfer.types ?? []);
+    return types.some(
+      (type) => typeof type === 'string' && type.toLowerCase() === PROJECT_SORT_MIME
+    );
   };
 
   const getProjectDragIndex = (e: React.DragEvent) => {
@@ -320,12 +313,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
     setNewProjectName('');
   };
 
-  const submitUsername = () => {
-    if (newUsername.trim() && onUpdateUsername) {
-      onUpdateUsername(newUsername.trim());
-    }
-    setIsEditingUsername(false);
-  };
+  const userInitials = username.trim().slice(0, 2).toUpperCase() || 'RT';
 
   return (
     <aside
@@ -569,49 +557,25 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
         )}
       </div>
 
-      <div className="p-4 border-t border-[var(--border-main)] bg-[var(--bg-sidebar)] mt-auto transition-colors duration-200">
-        <div className="flex items-center">
-          <div className="w-8 h-8 rounded-full bg-[var(--accent-soft)] flex items-center justify-center text-[var(--accent)] font-bold text-xs mr-3 border border-[var(--accent-border)] flex-shrink-0">
-            {username.slice(0, 2).toUpperCase()}
+      <div className="mt-auto border-t border-[var(--border-main)] bg-[var(--bg-sidebar)] p-4 transition-colors duration-200">
+        <button
+          type="button"
+          onClick={onOpenSettings}
+          className="flex w-full min-w-0 items-center justify-between rounded-2xl border border-[var(--border-main)] bg-[var(--bg-card)] px-3 py-3 text-left transition-colors hover:bg-[var(--sidebar-hover)]"
+        >
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft)] text-sm font-semibold text-[var(--accent)]">
+              {userInitials}
+            </div>
+
+            <div className="min-w-0">
+              <div className="truncate text-sm font-medium text-[var(--text-main)]">{username}</div>
+              <div className="truncate text-xs text-[var(--text-muted)]">개인 설정</div>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            {isEditingUsername ? (
-              <div className="flex items-center">
-                <input
-                  autoFocus
-                  value={newUsername}
-                  onChange={(e) => setNewUsername(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && submitUsername()}
-                  onBlur={() => setIsEditingUsername(false)}
-                  className="w-full text-xs border border-[var(--accent-border)] rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-[var(--accent-ring)] bg-[var(--bg-card)]"
-                />
-              </div>
-            ) : (
-              <div className="flex items-center group/user cursor-pointer" onClick={() => {
-                setIsEditingUsername(true);
-                setNewUsername(username);
-              }}>
-                <p className="text-sm font-medium text-[var(--text-main)] truncate">{username}</p>
-                <Edit2 size={10} className="ml-1.5 text-[var(--text-muted)] opacity-0 group-hover/user:opacity-100 transition-opacity" />
-              </div>
-            )}
-            <p className="text-[10px] text-[var(--text-muted)] truncate">Synced</p>
-          </div>
-          <button
-            onClick={toggleDarkMode}
-            className="text-[var(--text-muted)] hover:text-[var(--accent)] p-1 rounded hover:bg-[var(--sidebar-hover)] transition-colors ml-2"
-            title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-          >
-            {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
-          </button>
-          <button
-            onClick={onSignOut}
-            className="text-[var(--text-muted)] hover:text-red-500 p-1 rounded hover:bg-[var(--sidebar-hover)] transition-colors ml-2"
-            title="Log out"
-          >
-            <LogOut size={16} />
-          </button>
-        </div>
+
+          <Settings size={16} className="shrink-0 text-[var(--text-muted)]" />
+        </button>
       </div>
     </aside>
   );

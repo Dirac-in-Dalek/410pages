@@ -181,10 +181,13 @@ const resolveCitationSource = async (
 
 export const api = {
     // Profiles
-    async updateProfile(userId: string, username: string) {
+    async updateProfile(
+        userId: string,
+        profilePatch: { username?: string; avatar_url?: string | null }
+    ) {
         const { error } = await getSupabaseClient()
             .from('profiles')
-            .upsert({ id: userId, username });
+            .upsert({ id: userId, ...profilePatch });
         if (error) throw error;
     },
 
@@ -310,9 +313,30 @@ export const api = {
                 .single();
             if (fetchCurrentError) throw fetchCurrentError;
 
+            const currentAuthorRecord = Array.isArray(currentCitation.author)
+                ? currentCitation.author[0]
+                : currentCitation.author;
+            const currentBookRecord = Array.isArray(currentCitation.book)
+                ? currentCitation.book[0]
+                : currentCitation.book;
+            const currentAuthorName =
+                currentAuthorRecord &&
+                typeof currentAuthorRecord === 'object' &&
+                'name' in currentAuthorRecord &&
+                typeof currentAuthorRecord.name === 'string'
+                    ? currentAuthorRecord.name
+                    : '';
+            const currentBookTitle =
+                currentBookRecord &&
+                typeof currentBookRecord === 'object' &&
+                'title' in currentBookRecord &&
+                typeof currentBookRecord.title === 'string'
+                    ? currentBookRecord.title
+                    : '';
+
             const resolvedSource = await resolveCitationSource(userId, {
-                author: data.author ?? currentCitation.author?.name ?? '',
-                book: data.book ?? currentCitation.book?.title ?? ''
+                author: data.author ?? currentAuthorName,
+                book: data.book ?? currentBookTitle
             });
 
             updateData.author_id = resolvedSource.authorId;
