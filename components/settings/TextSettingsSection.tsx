@@ -24,11 +24,7 @@ export const FontSelectionList: React.FC<FontSelectionListProps> = ({
   selectedFontFamily,
   onFontFamilyChange,
 }) => (
-  <div
-    role="listbox"
-    aria-label="서체"
-    className="max-h-64 overflow-y-auto rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] p-1"
-  >
+  <div className="max-h-64 overflow-y-auto rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] p-1">
     {FONT_OPTIONS.map((option) => {
       const isActive = option.id === selectedFontFamily;
 
@@ -36,8 +32,7 @@ export const FontSelectionList: React.FC<FontSelectionListProps> = ({
         <button
           key={option.id}
           type="button"
-          role="option"
-          aria-selected={isActive}
+          aria-pressed={isActive}
           className={`${optionButtonClass(isActive)} flex w-full items-center justify-start text-left`}
           onClick={() => onFontFamilyChange(option.id)}
         >
