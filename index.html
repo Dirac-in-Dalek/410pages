@@ -9,19 +9,25 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="410pages" />
   <title>410pages</title>
-  <script type="module">
-    import { DEFAULT_FONT_ID, FONT_IDS } from '/lib/fontRegistry.ts';
-
+  <script>
     (function () {
       const preferencesKey = 'user-preferences';
       const legacyThemeKey = 'theme-preference';
       const legacyDarkModeKey = 'dark-mode';
-      const supportedFonts = new Set(FONT_IDS);
+      const supportedFonts = new Set([
+        'pretendard',
+        'serif',
+        'nanum-gothic',
+        'nanum-myeongjo',
+        'nanum-gothic-coding',
+        'nanum-brush-script',
+        'nanum-pen-script',
+      ]);
       const minBaseFontPt = 10;
       const maxBaseFontPt = 40;
       const root = document.documentElement;
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const defaultPreferences = { theme: 'system', fontFamily: DEFAULT_FONT_ID, baseFontPt: 16 };
+      const defaultPreferences = { theme: 'system', fontFamily: 'pretendard', baseFontPt: 16 };
       const legacyTextScaleMap = { sm: 14, md: 16, lg: 18 };
 
       const clampBaseFontPt = (value) => {

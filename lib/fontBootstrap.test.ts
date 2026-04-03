@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_FONT_ID, FONT_IDS } from './fontRegistry';
 
 const INDEX_HTML_PATH = resolve(import.meta.dirname, '..', 'index.html');
-const BOOTSTRAP_IMPORT_STATEMENT = "import { DEFAULT_FONT_ID, FONT_IDS } from '/lib/fontRegistry.ts';";
 
 const createMatchMediaStub = (matches = false) =>
   vi.fn().mockImplementation(() => ({
@@ -54,14 +53,12 @@ const resetDom = () => {
   });
 };
 
-const getBootstrapScript = () => {
+const getClassicBootstrapScript = () => {
   const html = readFileSync(INDEX_HTML_PATH, 'utf8');
-  const scriptMatch = html.match(
-    /<script type="module">\s*([\s\S]*?)\s*<\/script>\s*<link rel="manifest"/
-  );
+  const scriptMatch = html.match(/<script>\s*([\s\S]*?)\s*<\/script>\s*<link rel="manifest"/);
 
   if (!scriptMatch) {
-    throw new Error('Unable to locate the bootstrap module script in index.html');
+    throw new Error('Unable to locate the classic inline bootstrap script in index.html');
   }
 
   return {
@@ -70,12 +67,34 @@ const getBootstrapScript = () => {
   };
 };
 
-const runBootstrapScript = () => {
-  const { script } = getBootstrapScript();
-  const executableScript = script.replace(BOOTSTRAP_IMPORT_STATEMENT, '');
-  const runBootstrap = new Function('DEFAULT_FONT_ID', 'FONT_IDS', executableScript);
+const extractQuotedValues = (value: string) =>
+  Array.from(value.matchAll(/'([^']+)'/g), (match) => match[1]);
 
-  runBootstrap(DEFAULT_FONT_ID, FONT_IDS);
+const getDeclaredSupportedFonts = (script: string) => {
+  const match = script.match(/const supportedFonts = new Set\(\[([\s\S]*?)\]\);/);
+
+  if (!match) {
+    throw new Error('Unable to locate supportedFonts in the classic bootstrap script');
+  }
+
+  return extractQuotedValues(match[1]);
+};
+
+const getDeclaredDefaultFontId = (script: string) => {
+  const match = script.match(/fontFamily:\s*'([^']+)'/);
+
+  if (!match) {
+    throw new Error('Unable to locate the default font id in the classic bootstrap script');
+  }
+
+  return match[1];
+};
+
+const runBootstrapScript = () => {
+  const { script } = getClassicBootstrapScript();
+  const runBootstrap = new Function(script);
+
+  runBootstrap();
 };
 
 describe('index bootstrap', () => {
@@ -83,14 +102,20 @@ describe('index bootstrap', () => {
     resetDom();
   });
 
-  it('loads registry font ids through the html bootstrap module', () => {
-    const { html, script } = getBootstrapScript();
+  it('keeps the classic inline bootstrap in index.html', () => {
+    const { html } = getClassicBootstrapScript();
 
-    expect(html).not.toContain("const supportedFonts = new Set([");
-    expect(script).toContain(BOOTSTRAP_IMPORT_STATEMENT);
+    expect(html).not.toContain('<script type="module">');
   });
 
-  it('accepts expanded nanum font ids during first paint', () => {
+  it('keeps the bootstrap font contract aligned with the registry exports', () => {
+    const { script } = getClassicBootstrapScript();
+
+    expect(getDeclaredSupportedFonts(script)).toEqual(FONT_IDS);
+    expect(getDeclaredDefaultFontId(script)).toBe(DEFAULT_FONT_ID);
+  });
+
+  it('accepts expanded nanum font ids during classic first paint', () => {
     window.localStorage.setItem(
       'user-preferences',
       JSON.stringify({ theme: 'system', fontFamily: 'nanum-brush-script', baseFontPt: 18 })
@@ -103,7 +128,7 @@ describe('index bootstrap', () => {
     expect(document.documentElement.classList.contains('dark')).toBe(false);
   });
 
-  it('falls back to the registry default font during first paint', () => {
+  it('falls back to the registry default font during classic first paint', () => {
     window.localStorage.setItem(
       'user-preferences',
       JSON.stringify({ theme: 'system', fontFamily: 'unknown-font', baseFontPt: 18 })
