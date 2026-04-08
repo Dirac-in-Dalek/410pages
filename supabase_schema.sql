@@ -5,10 +5,12 @@ create extension if not exists "uuid-ossp";
 create table if not exists profiles (
   id uuid references auth.users not null primary key,
   username text unique,
+  avatar_path text,
   avatar_url text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+alter table profiles add column if not exists avatar_path text;
 alter table profiles add column if not exists avatar_url text;
 
 alter table profiles enable row level security;
@@ -96,6 +98,22 @@ do $$ begin
     create policy "Users can crud their own citations" on citations for all using (auth.uid() = user_id);
   end if;
 end $$;
+
+-- 7.1 CHAPTER BLOCKS 테이블
+create table if not exists chapter_blocks (
+  id uuid default uuid_generate_v4() primary key,
+  book_id uuid references books(id) on delete cascade not null,
+  label text not null,
+  page_sort double precision,
+  created_at_sort double precision not null,
+  user_id uuid references auth.users not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table chapter_blocks enable row level security;
+
+drop policy if exists "Users can crud their own chapter_blocks" on chapter_blocks;
+create policy "Users can crud their own chapter_blocks" on chapter_blocks for all using (auth.uid() = user_id);
 
 -- CITATIONS highlights 컬럼 추가
 ALTER TABLE citations ADD COLUMN IF NOT EXISTS highlights JSONB DEFAULT '[]';

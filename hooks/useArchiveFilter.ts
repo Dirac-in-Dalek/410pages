@@ -67,6 +67,7 @@ export const useArchiveFilter = (citations: Citation[], projects: Project[], use
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState<FilterState | null>(null);
     const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+    const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
     const [editorPrefill, setEditorPrefill] = useState<{ author: string, book: string } | undefined>(undefined);
     const [sortField, setSortField] = useState<SortField>('date');
     const [dateDirection, setDateDirection] = useState<SortDirection>('desc');
@@ -137,6 +138,7 @@ export const useArchiveFilter = (citations: Citation[], projects: Project[], use
 
     const handleProjectSelect = (id: string | null) => {
         setSelectedProjectId(id);
+        setSelectedBookId(null);
         setFilter(null);
         setSearchTerm('');
         setEditorPrefill(undefined);
@@ -154,6 +156,7 @@ export const useArchiveFilter = (citations: Citation[], projects: Project[], use
                 author: item.data.author
             });
             setSelectedProjectId(null);
+            setSelectedBookId(item.type === 'book' ? item.data.bookId || null : null);
             setSearchTerm('');
         }
     };
@@ -405,6 +408,8 @@ export const useArchiveFilter = (citations: Citation[], projects: Project[], use
         return DEFAULT_ARCHIVE_TITLE;
     }, [searchTerm, selectedProjectId, projects, filter]);
 
+    const isBookView = selectedBookId !== null;
+
     return {
         searchTerm,
         setSearchTerm,
@@ -412,10 +417,12 @@ export const useArchiveFilter = (citations: Citation[], projects: Project[], use
         setFilter,
         selectedProjectId,
         setSelectedProjectId,
+        selectedBookId,
         editorPrefill,
         sortField,
         dateDirection,
         pageDirection,
+        isBookView,
         handleDateSortClick,
         handlePageSortClick,
         handleReorderAuthorAt,

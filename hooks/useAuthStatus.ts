@@ -72,7 +72,7 @@ export const useAuthStatus = () => {
         try {
             const { data, error } = await getSupabaseClient()
                 .from('profiles')
-                .select('username, avatar_url')
+                .select('username, avatar_path, avatar_url')
                 .eq('id', userId)
                 .single();
 
@@ -83,9 +83,10 @@ export const useAuthStatus = () => {
             const nextUsername = typeof data?.username === 'string' && data.username.trim()
                 ? data.username.trim()
                 : fallbackUsername;
+            const nextAvatarPath = api.resolveStoredProfileAvatarPath(data?.avatar_path || data?.avatar_url || null);
 
             setUsername(nextUsername);
-            setAvatarUrl(data?.avatar_url || null);
+            setAvatarUrl(nextAvatarPath ? api.getProfileAvatarPublicUrl(nextAvatarPath) : null);
             writeCachedDisplayName(userId, nextUsername);
         } catch (error) {
             console.error('Error fetching profile:', error);
@@ -117,9 +118,10 @@ export const useAuthStatus = () => {
         if (!session || !file) return false;
 
         try {
-            const nextAvatarUrl = await api.uploadProfileAvatar(session.user.id, file, avatarUrl);
-            await api.updateProfile(session.user.id, { avatar_url: nextAvatarUrl });
-            setAvatarUrl(nextAvatarUrl);
+            const nextAvatarPath = await api.uploadProfileAvatar(session.user.id, file);
+            const avatarVersion = Date.now();
+            await api.updateProfile(session.user.id, { avatar_path: nextAvatarPath });
+            setAvatarUrl(api.getProfileAvatarPublicUrl(nextAvatarPath, avatarVersion));
             return true;
         } catch (error) {
             console.error('Error updating avatar:', error);

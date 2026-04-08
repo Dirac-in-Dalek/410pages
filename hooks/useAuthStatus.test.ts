@@ -4,6 +4,8 @@ import { useAuthStatus } from './useAuthStatus';
 
 const mockUpdateProfile = vi.fn();
 const mockUploadProfileAvatar = vi.fn();
+const mockGetProfileAvatarPublicUrl = vi.fn();
+const mockResolveStoredProfileAvatarPath = vi.fn();
 const mockGetSession = vi.fn();
 const mockOnAuthStateChange = vi.fn();
 const mockUpdateUser = vi.fn();
@@ -13,8 +15,10 @@ const mockSelect = vi.fn();
 
 vi.mock('../lib/api', () => ({
   api: {
+    resolveStoredProfileAvatarPath: (...args: unknown[]) => mockResolveStoredProfileAvatarPath(...args),
     updateProfile: (...args: unknown[]) => mockUpdateProfile(...args),
     uploadProfileAvatar: (...args: unknown[]) => mockUploadProfileAvatar(...args),
+    getProfileAvatarPublicUrl: (...args: unknown[]) => mockGetProfileAvatarPublicUrl(...args),
   },
 }));
 
@@ -42,7 +46,24 @@ vi.mock('../lib/authStorage', () => ({
 describe('useAuthStatus', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    window.localStorage.clear();
+    const storage = new Map<string, string>();
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      value: {
+        clear: () => storage.clear(),
+        getItem: (key: string) => storage.get(key) ?? null,
+        key: (index: number) => Array.from(storage.keys())[index] ?? null,
+        removeItem: (key: string) => {
+          storage.delete(key);
+        },
+        setItem: (key: string, value: string) => {
+          storage.set(key, String(value));
+        },
+        get length() {
+          return storage.size;
+        },
+      },
+    });
 
     mockEq.mockReturnValue({
       single: mockProfileSingle,
@@ -67,13 +88,15 @@ describe('useAuthStatus', () => {
     });
 
     mockUpdateUser.mockResolvedValue({ error: null });
+    mockResolveStoredProfileAvatarPath.mockImplementation((path: string | null) => path);
+    mockGetProfileAvatarPublicUrl.mockImplementation((path: string) => `https://cdn.example.com/${path}`);
   });
 
-  it('loads avatar_url with the profile on startup', async () => {
+  it('loads avatar_path with the profile on startup', async () => {
     mockProfileSingle.mockResolvedValue({
       data: {
         username: 'Yoo Hankyul',
-        avatar_url: 'https://cdn.example.com/avatar.png',
+        avatar_path: 'user-1/avatar',
       },
       error: null,
     });
@@ -85,18 +108,19 @@ describe('useAuthStatus', () => {
     });
 
     expect(result.current.username).toBe('Yoo Hankyul');
-    expect(result.current.avatarUrl).toBe('https://cdn.example.com/avatar.png');
+    expect(mockGetProfileAvatarPublicUrl).toHaveBeenCalledWith('user-1/avatar');
+    expect(result.current.avatarUrl).toBe('https://cdn.example.com/user-1/avatar');
   });
 
-  it('uploads an avatar and updates local state with the stored url', async () => {
+  it('uploads an avatar and updates local state with the stored path', async () => {
     mockProfileSingle.mockResolvedValue({
       data: {
         username: 'Yoo Hankyul',
-        avatar_url: null,
+        avatar_path: null,
       },
       error: null,
     });
-    mockUploadProfileAvatar.mockResolvedValue('https://cdn.example.com/avatar-next.png');
+    mockUploadProfileAvatar.mockResolvedValue('user-1/avatar');
     mockUpdateProfile.mockResolvedValue(undefined);
 
     const { result } = renderHook(() => useAuthStatus());
@@ -111,11 +135,12 @@ describe('useAuthStatus', () => {
       await result.current.handleUpdateAvatar(file);
     });
 
-    expect(mockUploadProfileAvatar).toHaveBeenCalledWith('user-1', file, null);
+    expect(mockUploadProfileAvatar).toHaveBeenCalledWith('user-1', file);
     expect(mockUpdateProfile).toHaveBeenCalledWith('user-1', {
-      avatar_url: 'https://cdn.example.com/avatar-next.png',
+      avatar_path: 'user-1/avatar',
     });
-    expect(result.current.avatarUrl).toBe('https://cdn.example.com/avatar-next.png');
+    expect(mockGetProfileAvatarPublicUrl).toHaveBeenLastCalledWith('user-1/avatar', expect.any(Number));
+    expect(result.current.avatarUrl).toContain('https://cdn.example.com/user-1/avatar');
   });
 
   it('falls back to the cached display name when profile fetch fails on startup', async () => {
@@ -139,7 +164,7 @@ describe('useAuthStatus', () => {
     mockProfileSingle.mockResolvedValue({
       data: {
         username: 'Yoo Hankyul',
-        avatar_url: null,
+        avatar_path: null,
       },
       error: null,
     });

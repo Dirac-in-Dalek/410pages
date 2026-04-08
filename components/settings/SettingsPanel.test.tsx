@@ -2,6 +2,16 @@ import React, { useState } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('../../lib/avatarCrop', async () => {
+  const actual = await vi.importActual<typeof import('../../lib/avatarCrop')>('../../lib/avatarCrop');
+
+  return {
+    ...actual,
+    cropAvatarFile: vi.fn(async (_src, file: File) => file),
+  };
+});
+
 import { SettingsPanel } from './SettingsPanel';
 
 const baseProps = {
@@ -53,6 +63,14 @@ const renderWithDisplayNameState = (
 describe('SettingsPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    Object.defineProperty(URL, 'createObjectURL', {
+      configurable: true,
+      value: vi.fn(() => 'blob:avatar-preview'),
+    });
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      value: vi.fn(),
+    });
   });
 
   it('renders the expected sections', () => {
@@ -142,7 +160,7 @@ describe('SettingsPanel', () => {
     render(<SettingsPanel {...baseProps} />);
 
     expect(screen.getByText('설정').className).toContain('type-display-bounded');
-    expect(screen.getByRole('button', { name: '사진 변경' }).className).toContain('type-label-bounded');
+    expect(screen.getByText('사진 변경').closest('label')?.className).toContain('type-label-bounded');
     expect(screen.getByRole('textbox', { name: '이름' }).className).toContain('type-body-bounded');
     expect(screen.getByRole('button', { name: '현재 서체: 프리텐다드' }).className).toContain('type-label-bounded');
     expect(screen.getByText('라이트').className).toContain('type-label-bounded');
@@ -158,6 +176,16 @@ describe('SettingsPanel', () => {
     expect(baseProps.onBaseFontPtChange).toHaveBeenCalledWith(22);
   });
 
+  it('renders the avatar change trigger as a native file-input label', () => {
+    render(<SettingsPanel {...baseProps} />);
+
+    const trigger = screen.getByText('사진 변경').closest('label');
+    const input = screen.getByLabelText('프로필 사진 업로드');
+
+    expect(trigger).toBeTruthy();
+    expect(trigger?.contains(input)).toBe(true);
+  });
+
   it('calls onAvatarChange when the avatar action is clicked', async () => {
     const user = userEvent.setup();
     render(<SettingsPanel {...baseProps} />);
@@ -167,13 +195,33 @@ describe('SettingsPanel', () => {
 
     await user.upload(input, file);
 
-    expect(baseProps.onAvatarChange).toHaveBeenCalledWith(file);
+    expect(baseProps.onAvatarChange).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog', { name: '프로필 사진 편집' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '저장' })).toBeTruthy();
+  });
+
+  it('only calls onAvatarChange after the crop save action is pressed', async () => {
+    const user = userEvent.setup();
+    render(<SettingsPanel {...baseProps} />);
+
+    const file = new File(['avatar'], 'avatar.png', { type: 'image/png' });
+    const input = screen.getByLabelText('프로필 사진 업로드') as HTMLInputElement;
+
+    await user.upload(input, file);
+    const previewImage = screen.getByAltText('편집 중인 프로필 사진');
+    Object.defineProperty(previewImage, 'naturalWidth', { configurable: true, value: 1200 });
+    Object.defineProperty(previewImage, 'naturalHeight', { configurable: true, value: 900 });
+    fireEvent.load(previewImage);
+    await user.click(screen.getByRole('button', { name: '저장' }));
+
+    expect(baseProps.onAvatarChange).toHaveBeenCalledTimes(1);
+    expect(baseProps.onAvatarChange).toHaveBeenCalledWith(expect.any(File));
   });
 
   it('renders the avatar change action in the profile header', () => {
     render(<SettingsPanel {...baseProps} />);
 
-    expect(screen.getByRole('button', { name: '사진 변경' })).toBeTruthy();
+    expect(screen.getByText('사진 변경')).toBeTruthy();
     expect(screen.getByLabelText('프로필 사진 업로드')).toBeTruthy();
   });
 

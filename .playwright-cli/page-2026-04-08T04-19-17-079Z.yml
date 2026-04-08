@@ -1,0 +1,25 @@
+- generic [ref=e4]:
+  - generic [ref=e5]:
+    - img [ref=e7]
+    - heading "410 pages" [level=1] [ref=e9]:
+      - generic [ref=e10]: "410"
+      - generic [ref=e11]: pages
+    - paragraph [ref=e12]: Welcome back to your second brain.
+  - generic [ref=e13]:
+    - generic [ref=e14]:
+      - generic [ref=e15]: Email
+      - textbox "name@example.com" [ref=e17]
+    - generic [ref=e18]:
+      - generic [ref=e19]: Password
+      - textbox "••••••••" [ref=e20]
+    - generic [ref=e21]:
+      - generic [ref=e22] [cursor=pointer]:
+        - checkbox "아이디 기억" [ref=e23]
+        - generic [ref=e24]: 아이디 기억
+      - generic [ref=e25] [cursor=pointer]:
+        - checkbox "자동로그인" [ref=e26]
+        - generic [ref=e27]: 자동로그인
+    - button "Sign In" [ref=e28] [cursor=pointer]
+  - generic [ref=e29]:
+    - text: Don't have an account?
+    - button "Sign up" [ref=e30] [cursor=pointer]
