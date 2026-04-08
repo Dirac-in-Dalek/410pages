@@ -33,12 +33,12 @@ export const sortBookViewItems = (
       return (a.createdAtSort - b.createdAtSort) * factor;
     }
     if (a.pageSort == null && b.pageSort == null) {
-      return a.createdAtSort - b.createdAtSort;
+      return b.createdAtSort - a.createdAtSort;
     }
     if (a.pageSort == null) return 1;
     if (b.pageSort == null) return -1;
     if (a.pageSort !== b.pageSort) return (a.pageSort - b.pageSort) * factor;
-    return a.createdAtSort - b.createdAtSort;
+    return b.createdAtSort - a.createdAtSort;
   });
 };
 

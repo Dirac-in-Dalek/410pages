@@ -18,6 +18,62 @@ const chapterBlock = (
 });
 
 describe('bookViewItems', () => {
+  it('sorts same-page items newest-first when sorting by page', () => {
+    const items = toBookViewItems(
+      [
+        citation({
+          id: 'citation-old',
+          text: 'Older quote',
+          author: 'Author A',
+          book: 'Book A',
+          pageSort: 336,
+          createdAt: 1000,
+        }),
+        citation({
+          id: 'citation-new',
+          text: 'Newer quote',
+          author: 'Author B',
+          book: 'Book A',
+          pageSort: 336,
+          createdAt: 1001,
+        }),
+      ],
+      []
+    );
+
+    expect(sortBookViewItems(items, 'page', 'asc').map((item) => item.id)).toEqual([
+      'citation-new',
+      'citation-old',
+    ]);
+  });
+
+  it('sorts page-less items newest-first when sorting by page', () => {
+    const items = toBookViewItems(
+      [
+        citation({
+          id: 'citation-old',
+          text: 'Older quote',
+          author: 'Author A',
+          book: 'Book A',
+          createdAt: 1000,
+        }),
+        citation({
+          id: 'citation-new',
+          text: 'Newer quote',
+          author: 'Author B',
+          book: 'Book A',
+          createdAt: 1001,
+        }),
+      ],
+      []
+    );
+
+    expect(sortBookViewItems(items, 'page', 'asc').map((item) => item.id)).toEqual([
+      'citation-new',
+      'citation-old',
+    ]);
+  });
+
   it('keeps a chapter block between neighboring citations when sorting by page', () => {
     const items = toBookViewItems(
       [
