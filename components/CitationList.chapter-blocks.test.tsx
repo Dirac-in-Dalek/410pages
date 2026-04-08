@@ -152,7 +152,7 @@ describe('CitationList chapter blocks', () => {
       />
     );
 
-    const trigger = screen.getByRole('button', { name: 'Add chapter block' });
+    const trigger = screen.getAllByRole('button', { name: 'Add chapter block' })[0];
     expect(trigger.className).toContain('opacity-0');
   });
 
@@ -190,7 +190,7 @@ describe('CitationList chapter blocks', () => {
       />
     );
 
-    await user.click(screen.getByRole('button', { name: 'Add chapter block' }));
+    await user.click(screen.getAllByRole('button', { name: 'Add chapter block' })[0]);
     await user.type(screen.getByRole('textbox', { name: 'Chapter block label' }), '3장');
     await user.click(screen.getByRole('button', { name: 'Save chapter block' }));
 
@@ -199,6 +199,43 @@ describe('CitationList chapter blocks', () => {
       label: '3장',
       pageSort: 150,
       createdAtSort: 1500,
+    });
+  });
+
+  it('still shows an insert control when the book view has only one citation', async () => {
+    const user = userEvent.setup();
+    const onCreateChapterBlock = vi.fn();
+
+    render(
+      <CitationList
+        {...baseProps}
+        citations={[
+          citation({
+            id: 'citation-1',
+            text: 'Only quote',
+            author: 'Author A',
+            book: 'Book A',
+            bookId: 'book-1',
+            pageSort: 100,
+            createdAt: 1000,
+          }),
+        ]}
+        chapterBlocks={[]}
+        isBookView
+        sortField="page"
+        onCreateChapterBlock={onCreateChapterBlock}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Add chapter block' }));
+    await user.type(screen.getByRole('textbox', { name: 'Chapter block label' }), '프롤로그');
+    await user.click(screen.getByRole('button', { name: 'Save chapter block' }));
+
+    expect(onCreateChapterBlock).toHaveBeenCalledWith({
+      bookId: 'book-1',
+      label: '프롤로그',
+      pageSort: 100,
+      createdAtSort: 999.9,
     });
   });
 });

@@ -152,6 +152,20 @@ export const CitationList: React.FC<CitationListProps> = ({
                         </React.Fragment>
                     );
                 })}
+                {isBookView && bookViewItems.length > 0 ? (
+                    <div className="group flex justify-center py-2">
+                        <ChapterBlockInsertButton
+                            onSubmit={async (label) => {
+                                const lastItem = bookViewItems[bookViewItems.length - 1];
+                                await handleCreateChapterBlock(
+                                    lastItem ? { pageSort: lastItem.pageSort, createdAtSort: lastItem.createdAtSort } : undefined,
+                                    undefined,
+                                    label
+                                );
+                            }}
+                        />
+                    </div>
+                ) : null}
             </div>
         </div>
     );
