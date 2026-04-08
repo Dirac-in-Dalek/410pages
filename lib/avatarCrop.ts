@@ -12,7 +12,15 @@ export type AvatarCropFrame = {
   size: number;
 };
 
-export type AvatarCropHandle = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+export type AvatarCropHandle =
+  | 'top-left'
+  | 'top'
+  | 'top-right'
+  | 'right'
+  | 'bottom-right'
+  | 'bottom'
+  | 'bottom-left'
+  | 'left';
 
 const DEFAULT_MIN_FRAME_SIZE = 72;
 const DEFAULT_OUTPUT_SIZE = 512;
@@ -102,6 +110,58 @@ export function resizeAvatarCropFrame(
   const top = frame.y;
   const right = frame.x + frame.size;
   const bottom = frame.y + frame.size;
+
+  if (handle === 'left') {
+    const nextSize = Math.max(minFrameSize, right - (left + deltaX));
+    return clampAvatarCropFrame(
+      {
+        x: right - nextSize,
+        y: top - (nextSize - frame.size) / 2,
+        size: nextSize,
+      },
+      imageRect,
+      minFrameSize
+    );
+  }
+
+  if (handle === 'right') {
+    const nextSize = Math.max(minFrameSize, right + deltaX - left);
+    return clampAvatarCropFrame(
+      {
+        x: left,
+        y: top - (nextSize - frame.size) / 2,
+        size: nextSize,
+      },
+      imageRect,
+      minFrameSize
+    );
+  }
+
+  if (handle === 'top') {
+    const nextSize = Math.max(minFrameSize, bottom - (top + deltaY));
+    return clampAvatarCropFrame(
+      {
+        x: left - (nextSize - frame.size) / 2,
+        y: bottom - nextSize,
+        size: nextSize,
+      },
+      imageRect,
+      minFrameSize
+    );
+  }
+
+  if (handle === 'bottom') {
+    const nextSize = Math.max(minFrameSize, bottom + deltaY - top);
+    return clampAvatarCropFrame(
+      {
+        x: left - (nextSize - frame.size) / 2,
+        y: top,
+        size: nextSize,
+      },
+      imageRect,
+      minFrameSize
+    );
+  }
 
   let nextLeft = left;
   let nextTop = top;

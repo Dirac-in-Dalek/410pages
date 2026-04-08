@@ -8,9 +8,74 @@ import {
   moveAvatarCropFrame,
   resizeAvatarCropFrame,
 } from '../../lib/avatarCrop';
+import { avatarDebugError, avatarDebugInfo, clearAvatarDebugLog } from '../../lib/avatarDebug';
 
 const EDITOR_SIZE = 320;
 const HANDLE_SIZE = 18;
+const HANDLE_CONFIGS: Array<{
+  handle: AvatarCropHandle;
+  cursor: string;
+  width: number;
+  height: number;
+  style: React.CSSProperties;
+}> = [
+  {
+    handle: 'top-left',
+    cursor: 'nwse-resize',
+    width: HANDLE_SIZE,
+    height: HANDLE_SIZE,
+    style: { left: `-${HANDLE_SIZE / 2}px`, top: `-${HANDLE_SIZE / 2}px` },
+  },
+  {
+    handle: 'top',
+    cursor: 'ns-resize',
+    width: 34,
+    height: 14,
+    style: { left: '50%', top: '-7px', transform: 'translateX(-50%)' },
+  },
+  {
+    handle: 'top-right',
+    cursor: 'nesw-resize',
+    width: HANDLE_SIZE,
+    height: HANDLE_SIZE,
+    style: { right: `-${HANDLE_SIZE / 2}px`, top: `-${HANDLE_SIZE / 2}px` },
+  },
+  {
+    handle: 'right',
+    cursor: 'ew-resize',
+    width: 14,
+    height: 34,
+    style: { right: '-7px', top: '50%', transform: 'translateY(-50%)' },
+  },
+  {
+    handle: 'bottom-right',
+    cursor: 'nwse-resize',
+    width: HANDLE_SIZE,
+    height: HANDLE_SIZE,
+    style: { right: `-${HANDLE_SIZE / 2}px`, bottom: `-${HANDLE_SIZE / 2}px` },
+  },
+  {
+    handle: 'bottom',
+    cursor: 'ns-resize',
+    width: 34,
+    height: 14,
+    style: { left: '50%', bottom: '-7px', transform: 'translateX(-50%)' },
+  },
+  {
+    handle: 'bottom-left',
+    cursor: 'nesw-resize',
+    width: HANDLE_SIZE,
+    height: HANDLE_SIZE,
+    style: { left: `-${HANDLE_SIZE / 2}px`, bottom: `-${HANDLE_SIZE / 2}px` },
+  },
+  {
+    handle: 'left',
+    cursor: 'ew-resize',
+    width: 14,
+    height: 34,
+    style: { left: '-7px', top: '50%', transform: 'translateY(-50%)' },
+  },
+];
 
 type AvatarCropModalProps = {
   file: File | null;
@@ -24,6 +89,7 @@ type InteractionState =
       type: 'move';
       originX: number;
       originY: number;
+      pointerId: number;
       startFrame: AvatarCropFrame;
     }
   | {
@@ -31,6 +97,7 @@ type InteractionState =
       handle: AvatarCropHandle;
       originX: number;
       originY: number;
+      pointerId: number;
       startFrame: AvatarCropFrame;
     };
 
@@ -66,79 +133,96 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
   }, [file]);
 
   useEffect(() => {
-    if (!file) {
+    if (!previewUrl) {
       return undefined;
     }
 
-    const handlePointerMove = (event: PointerEvent) => {
-      if (!interactionRef.current || !imageRect) {
-        return;
-      }
-
-      const deltaX = event.clientX - interactionRef.current.originX;
-      const deltaY = event.clientY - interactionRef.current.originY;
-
-      setCropFrame((currentFrame) => {
-        const baseFrame = currentFrame || interactionRef.current?.startFrame;
-        if (!baseFrame) {
-          return currentFrame;
-        }
-
-        if (interactionRef.current?.type === 'move') {
-          return moveAvatarCropFrame(interactionRef.current.startFrame, deltaX, deltaY, imageRect);
-        }
-
-        return resizeAvatarCropFrame(
-          interactionRef.current.startFrame,
-          interactionRef.current.handle,
-          deltaX,
-          deltaY,
-          imageRect
-        );
-      });
-    };
-
-    const stopInteraction = () => {
-      interactionRef.current = null;
-    };
-
-    window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('pointerup', stopInteraction);
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
 
     return () => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', stopInteraction);
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
     };
-  }, [file, imageRect]);
+  }, [previewUrl]);
 
   if (!file || !previewUrl) {
     return null;
   }
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!interactionRef.current || !imageRect || interactionRef.current.pointerId !== event.pointerId) {
+      return;
+    }
+
+    event.preventDefault();
+    const deltaX = event.clientX - interactionRef.current.originX;
+    const deltaY = event.clientY - interactionRef.current.originY;
+
+    setCropFrame((currentFrame) => {
+      const baseFrame = currentFrame || interactionRef.current?.startFrame;
+      if (!baseFrame) {
+        return currentFrame;
+      }
+
+      if (interactionRef.current?.type === 'move') {
+        return moveAvatarCropFrame(interactionRef.current.startFrame, deltaX, deltaY, imageRect);
+      }
+
+      return resizeAvatarCropFrame(
+        interactionRef.current.startFrame,
+        interactionRef.current.handle,
+        deltaX,
+        deltaY,
+        imageRect
+      );
+    });
+  };
+
+  const stopInteraction = (event?: React.PointerEvent<HTMLDivElement>) => {
+    if (
+      event &&
+      interactionRef.current &&
+      interactionRef.current.pointerId !== event.pointerId
+    ) {
+      return;
+    }
+
+    interactionRef.current = null;
+  };
 
   const startMove = (event: React.PointerEvent<HTMLDivElement>) => {
     if (!cropFrame) {
       return;
     }
 
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
     interactionRef.current = {
       type: 'move',
       originX: event.clientX,
       originY: event.clientY,
+      pointerId: event.pointerId,
       startFrame: cropFrame,
     };
   };
 
   const startResize = (handle: AvatarCropHandle) => (event: React.PointerEvent<HTMLButtonElement>) => {
+    event.preventDefault();
     event.stopPropagation();
     if (!cropFrame) {
       return;
     }
 
+    event.currentTarget.setPointerCapture(event.pointerId);
     interactionRef.current = {
       type: 'resize',
       handle,
       originX: event.clientX,
       originY: event.clientY,
+      pointerId: event.pointerId,
       startFrame: cropFrame,
     };
   };
@@ -160,10 +244,24 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
 
     try {
       setError(null);
+      clearAvatarDebugLog();
+      avatarDebugInfo('crop save started', {
+        originalName: file.name,
+        originalSize: file.size,
+        originalType: file.type,
+        cropFrame,
+        imageRect,
+      });
       const croppedFile = await cropAvatarFile(previewUrl, file, cropFrame, imageRect);
+      avatarDebugInfo('crop file created', {
+        croppedName: croppedFile.name,
+        croppedSize: croppedFile.size,
+        croppedType: croppedFile.type,
+      });
       await onSave(croppedFile);
+      avatarDebugInfo('crop save completed');
     } catch (saveError) {
-      console.error('Error creating cropped avatar:', saveError);
+      avatarDebugError('crop save failed', saveError);
       setError('프로필 사진 편집에 실패했습니다.');
     }
   };
@@ -176,9 +274,25 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
         height: `${cropFrame.size}px`,
       }
     : undefined;
+  const circleGuideStyle = cropFrame
+    ? {
+        width: `${cropFrame.size}px`,
+        height: `${cropFrame.size}px`,
+      }
+    : undefined;
+  const overlayStyle = cropFrame
+    ? {
+        background: `radial-gradient(circle ${cropFrame.size / 2}px at ${cropFrame.x + cropFrame.size / 2}px ${
+          cropFrame.y + cropFrame.size / 2
+        }px, transparent ${Math.max(cropFrame.size / 2 - 1, 0)}px, rgba(0, 0, 0, 0.48) ${cropFrame.size / 2 + 1}px)`,
+      }
+    : undefined;
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 px-4">
+    <div
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 px-4 touch-none overscroll-contain"
+      onWheelCapture={(event) => event.preventDefault()}
+    >
       <div
         aria-label="프로필 사진 편집"
         aria-modal="true"
@@ -189,7 +303,7 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
           <div>
             <h3 className="type-display-bounded text-[var(--text-main)]">프로필 사진 편집</h3>
             <p className="type-body-muted mt-2 text-[var(--text-secondary)]">
-              원형 밖은 실제 프로필에 보이지 않습니다. 프레임을 움직이거나 모서리를 잡아 크기를 조절하세요.
+              원형 밖은 실제 프로필에 보이지 않습니다. 프레임을 움직이거나 모서리와 변을 잡아 크기를 조절하세요.
             </p>
           </div>
           <button
@@ -207,8 +321,11 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
 
         <div className="mt-5 flex justify-center">
           <div
-            className="relative overflow-hidden rounded-[28px] border border-[var(--border-main)] bg-[var(--bg-main)]"
+            className="relative overflow-hidden rounded-[28px] border border-[var(--border-main)] bg-[var(--bg-main)] touch-none select-none overscroll-contain"
             style={{ width: `${EDITOR_SIZE}px`, height: `${EDITOR_SIZE}px` }}
+            onPointerMove={handlePointerMove}
+            onPointerUp={stopInteraction}
+            onPointerCancel={stopInteraction}
           >
             <img
               src={previewUrl}
@@ -219,37 +336,34 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
             />
 
             {cropFrame ? (
-              <div
-                className="absolute cursor-move rounded-full border-2 border-white"
-                style={{
-                  ...frameStyle,
-                  boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.48)',
-                }}
-                onPointerDown={startMove}
-              >
-                {(['top-left', 'top-right', 'bottom-left', 'bottom-right'] as AvatarCropHandle[]).map((handle) => {
-                  const isLeft = handle.includes('left');
-                  const isTop = handle.includes('top');
-
-                  return (
+              <>
+                <div className="pointer-events-none absolute inset-0" style={overlayStyle} />
+                <div
+                  className="absolute cursor-move border-2 border-white"
+                  style={frameStyle}
+                  onPointerDown={startMove}
+                >
+                  <div
+                    className="pointer-events-none absolute inset-0 rounded-full border-2 border-white"
+                    style={circleGuideStyle}
+                  />
+                  {HANDLE_CONFIGS.map(({ handle, cursor, width, height, style }) => (
                     <button
                       key={handle}
                       type="button"
                       aria-label={`${handle} 핸들`}
-                      className="absolute rounded-full border-2 border-white bg-[var(--accent)]"
+                      className="absolute rounded-md border-2 border-white bg-[var(--accent)] shadow-sm"
                       style={{
-                        width: `${HANDLE_SIZE}px`,
-                        height: `${HANDLE_SIZE}px`,
-                        left: isLeft ? `-${HANDLE_SIZE / 2}px` : undefined,
-                        right: isLeft ? undefined : `-${HANDLE_SIZE / 2}px`,
-                        top: isTop ? `-${HANDLE_SIZE / 2}px` : undefined,
-                        bottom: isTop ? undefined : `-${HANDLE_SIZE / 2}px`,
+                        width: `${width}px`,
+                        height: `${height}px`,
+                        cursor,
+                        ...style,
                       }}
                       onPointerDown={startResize(handle)}
                     />
-                  );
-                })}
-              </div>
+                  ))}
+                </div>
+              </>
             ) : null}
           </div>
         </div>
@@ -269,7 +383,7 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
             type="button"
             onClick={handleSave}
             disabled={isSaving || !cropFrame || !imageRect}
-            className="type-label-bounded rounded-xl bg-[var(--accent)] px-4 py-2.5 text-[var(--accent-contrast)] transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
+            className="type-label-bounded rounded-xl bg-[var(--accent)] px-4 py-2.5 text-white shadow-sm transition-colors hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
           >
             저장
           </button>
