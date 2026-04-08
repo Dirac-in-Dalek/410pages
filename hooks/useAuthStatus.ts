@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
+import { avatarDebugError, avatarDebugInfo } from '../lib/avatarDebug';
 import {
     clearAutoLoginEnabled,
     clearSupabaseSessionArtifacts,
@@ -118,13 +119,28 @@ export const useAuthStatus = () => {
         if (!session || !file) return false;
 
         try {
+            avatarDebugInfo('upload flow started', {
+                userId: session.user.id,
+                fileName: file.name,
+                fileSize: file.size,
+                fileType: file.type,
+            });
             const nextAvatarPath = await api.uploadProfileAvatar(session.user.id, file);
+            avatarDebugInfo('storage upload succeeded', {
+                userId: session.user.id,
+                avatarPath: nextAvatarPath,
+            });
             const avatarVersion = Date.now();
             await api.updateProfile(session.user.id, { avatar_path: nextAvatarPath });
+            avatarDebugInfo('profile update succeeded', {
+                userId: session.user.id,
+                avatarPath: nextAvatarPath,
+                avatarVersion,
+            });
             setAvatarUrl(api.getProfileAvatarPublicUrl(nextAvatarPath, avatarVersion));
             return true;
         } catch (error) {
-            console.error('Error updating avatar:', error);
+            avatarDebugError('upload flow failed', error);
             return false;
         }
     };
