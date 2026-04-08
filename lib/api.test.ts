@@ -5,6 +5,7 @@ const mockGetPublicUrl = vi.fn();
 const mockChapterBlocksOrder = vi.fn();
 const mockChapterBlocksSelect = vi.fn(() => chapterBlocksQuery);
 const mockChapterBlocksEq = vi.fn(() => chapterBlocksQuery);
+const mockChapterBlocksDeleteEq = vi.fn();
 const mockStorageFrom = vi.fn(() => ({
   upload: mockUpload,
   getPublicUrl: mockGetPublicUrl,
@@ -16,6 +17,9 @@ const mockChapterBlocksInsertSelect = vi.fn(() => ({
 const mockChapterBlocksInsert = vi.fn(() => ({
   select: mockChapterBlocksInsertSelect,
 }));
+const mockChapterBlocksDelete = vi.fn(() => ({
+  eq: mockChapterBlocksDeleteEq,
+}));
 const chapterBlocksQuery = {
   select: mockChapterBlocksSelect,
   eq: mockChapterBlocksEq,
@@ -26,6 +30,7 @@ const mockChapterBlocksFrom = vi.fn((table: string) => {
     return {
       ...chapterBlocksQuery,
       insert: mockChapterBlocksInsert,
+      delete: mockChapterBlocksDelete,
     };
   }
 
@@ -185,5 +190,23 @@ describe('api.fetchChapterBlocks', () => {
         createdAt: new Date('2026-04-07T10:00:00.000Z').getTime(),
       },
     ]);
+  });
+});
+
+describe('api.deleteChapterBlock', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockChapterBlocksDeleteEq
+      .mockReturnValueOnce({ eq: mockChapterBlocksDeleteEq })
+      .mockResolvedValueOnce({ error: null });
+  });
+
+  it('deletes a chapter block scoped to the current user', async () => {
+    await api.deleteChapterBlock('user-1', 'block-1');
+
+    expect(mockChapterBlocksFrom).toHaveBeenCalledWith('chapter_blocks');
+    expect(mockChapterBlocksDelete).toHaveBeenCalled();
+    expect(mockChapterBlocksDeleteEq).toHaveBeenNthCalledWith(1, 'user_id', 'user-1');
+    expect(mockChapterBlocksDeleteEq).toHaveBeenNthCalledWith(2, 'id', 'block-1');
   });
 });

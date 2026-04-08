@@ -88,6 +88,19 @@ export const useArchiveData = (session: any) => {
         }
     }, [session]);
 
+    const handleDeleteChapterBlock = useCallback(async (bookId: string, blockId: string) => {
+        if (!session) return;
+        try {
+            await api.deleteChapterBlock(session.user.id, blockId);
+            setChapterBlocksByBook(prev => ({
+                ...prev,
+                [bookId]: (prev[bookId] || []).filter((block) => block.id !== blockId)
+            }));
+        } catch (error) {
+            console.error('Error deleting chapter block:', error);
+        }
+    }, [session]);
+
     const handleUpdateNote = async (citationId: string, noteId: string, content: string) => {
         if (!session) return;
         try {
@@ -334,6 +347,7 @@ export const useArchiveData = (session: any) => {
         handleRenameBook,
         handleLoadChapterBlocks,
         handleCreateChapterBlock,
+        handleDeleteChapterBlock,
         handleReorderProjects,
         handleDropCitationToProject
     };

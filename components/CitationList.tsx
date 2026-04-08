@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ChapterBlock, Citation, CreateChapterBlockInput, Project } from '../types';
 import { CitationCard } from './CitationCard';
 import { ChapterBlockCard } from './ChapterBlockCard';
@@ -30,6 +30,7 @@ interface CitationListProps {
     dateDirection?: 'asc' | 'desc';
     pageDirection?: 'asc' | 'desc';
     onCreateChapterBlock?: (input: CreateChapterBlockInput) => Promise<unknown> | unknown;
+    onDeleteChapterBlock?: (bookId: string, blockId: string) => Promise<unknown> | unknown;
 }
 
 export const CitationList: React.FC<CitationListProps> = ({
@@ -50,8 +51,10 @@ export const CitationList: React.FC<CitationListProps> = ({
     sortField = 'page',
     dateDirection = 'desc',
     pageDirection = 'asc',
-    onCreateChapterBlock
+    onCreateChapterBlock,
+    onDeleteChapterBlock
 }) => {
+    const [activeInsertId, setActiveInsertId] = useState<string | null>(null);
     const bookId = chapterBlocks[0]?.bookId ?? citations.find((citation) => citation.bookId)?.bookId;
     const direction = sortField === 'date' ? dateDirection : pageDirection;
     const bookViewItems = isBookView
@@ -87,6 +90,7 @@ export const CitationList: React.FC<CitationListProps> = ({
             ...input,
             label,
         }));
+        setActiveInsertId(null);
     };
 
     if (loading) {
@@ -134,11 +138,20 @@ export const CitationList: React.FC<CitationListProps> = ({
                                     onUpdate={onUpdateCitation}
                                 />
                             ) : (
-                                <ChapterBlockCard label={item.block.label} />
+                                <ChapterBlockCard
+                                    id={item.block.id}
+                                    label={item.block.label}
+                                    onDelete={(blockId) => {
+                                        void Promise.resolve(onDeleteChapterBlock?.(item.block.bookId, blockId));
+                                    }}
+                                />
                             )}
-                            {isBookView && index < bookViewItems.length - 1 ? (
-                                <div className="group flex justify-center py-2">
+                            {isBookView && index < bookViewItems.length - 1 && (activeInsertId === null || activeInsertId === `after-${item.id}`) ? (
+                                <div className="group flex justify-center py-0.5">
                                     <ChapterBlockInsertButton
+                                        isEditing={activeInsertId === `after-${item.id}`}
+                                        onOpen={() => setActiveInsertId(`after-${item.id}`)}
+                                        onCancel={() => setActiveInsertId(null)}
                                         onSubmit={async (label) => {
                                             await handleCreateChapterBlock(
                                                 { pageSort: item.pageSort, createdAtSort: item.createdAtSort },
@@ -152,9 +165,12 @@ export const CitationList: React.FC<CitationListProps> = ({
                         </React.Fragment>
                     );
                 })}
-                {isBookView && bookViewItems.length > 0 ? (
-                    <div className="group flex justify-center py-2">
+                {isBookView && bookViewItems.length > 0 && (activeInsertId === null || activeInsertId === 'end') ? (
+                    <div className="group flex justify-center py-0.5">
                         <ChapterBlockInsertButton
+                            isEditing={activeInsertId === 'end'}
+                            onOpen={() => setActiveInsertId('end')}
+                            onCancel={() => setActiveInsertId(null)}
                             onSubmit={async (label) => {
                                 const lastItem = bookViewItems[bookViewItems.length - 1];
                                 await handleCreateChapterBlock(

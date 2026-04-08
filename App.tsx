@@ -74,7 +74,7 @@ const App: React.FC = () => {
     handleDeleteNote, handleDeleteCitation, handleUpdateCitation,
     handleBulkUpdateCitationSource,
     handleCreateProject, handleRenameProject, handleDeleteProject, handleRenameAuthor, handleRenameBook,
-    handleLoadChapterBlocks, handleCreateChapterBlock,
+    handleLoadChapterBlocks, handleCreateChapterBlock, handleDeleteChapterBlock,
     handleDropCitationToProject, handleReorderProjects
   } = useArchiveData(session);
 
@@ -275,6 +275,7 @@ const App: React.FC = () => {
             dateDirection={dateDirection}
             pageDirection={pageDirection}
             onCreateChapterBlock={handleCreateChapterBlock}
+            onDeleteChapterBlock={handleDeleteChapterBlock}
             onToggleSelect={handleToggleSelect}
             onAddNote={handleAddNote}
             onUpdateNote={handleUpdateNote}

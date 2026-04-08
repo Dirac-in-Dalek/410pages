@@ -47,6 +47,7 @@ const archiveDataState = {
   handleRenameBook: vi.fn(),
   handleLoadChapterBlocks: vi.fn(),
   handleCreateChapterBlock: vi.fn(),
+  handleDeleteChapterBlock: vi.fn(),
   handleDropCitationToProject: vi.fn(),
   handleReorderProjects: vi.fn(),
 };
