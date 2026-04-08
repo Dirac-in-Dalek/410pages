@@ -40,10 +40,13 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   const [editAuthor, setEditAuthor] = useState(citation.author);
   const [editBook, setEditBook] = useState(citation.book);
   const [editPage, setEditPage] = useState(citation.page?.toString() || '');
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isOverflowing, setIsOverflowing] = useState(false);
 
   // Highlight state
   const [localHighlights, setLocalHighlights] = useState<Highlight[]>(citation.highlights || []);
   const cardRef = useRef<HTMLDivElement>(null);
+  const quoteRef = useRef<HTMLElement>(null);
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
   const editNoteTextareaRef = useRef<HTMLTextAreaElement>(null);
   const newNoteTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -72,6 +75,33 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   useEffect(() => {
     setLocalHighlights(citation.highlights || []);
   }, [citation.highlights]);
+
+  useEffect(() => {
+    setIsExpanded(false);
+  }, [citation.id, citation.text]);
+
+  useEffect(() => {
+    if (isEditing) {
+      setIsOverflowing(false);
+      return;
+    }
+
+    const quote = quoteRef.current;
+    if (!quote) return;
+
+    const checkOverflow = () => {
+      if (isExpanded) {
+        setIsOverflowing(true);
+        return;
+      }
+
+      setIsOverflowing(quote.scrollHeight - quote.clientHeight > 1);
+    };
+
+    checkOverflow();
+    window.addEventListener('resize', checkOverflow);
+    return () => window.removeEventListener('resize', checkOverflow);
+  }, [citation.text, isEditing, isExpanded, localHighlights]);
 
   const activeNote = editingNoteId ? citation.notes.find((note) => note.id === editingNoteId) : null;
   const isEditSessionPristine =
@@ -339,11 +369,27 @@ export const CitationCard: React.FC<CitationCardProps> = ({
             <>
               {/* Quote Content */}
               <blockquote
-                className="type-body leading-relaxed text-[var(--text-main)] mb-4 relative z-10 select-text whitespace-pre-wrap"
+                ref={quoteRef}
+                data-testid="citation-text"
+                className={[
+                  'type-body leading-relaxed text-[var(--text-main)] relative z-10 select-text whitespace-pre-wrap',
+                  isExpanded ? 'mb-2' : 'mb-2 line-clamp-2 lg:line-clamp-3'
+                ].join(' ')}
                 onMouseUp={handleTextSelection}
               >
                 {renderHighlightedText()}
               </blockquote>
+
+              {isOverflowing && (
+                <button
+                  type="button"
+                  onClick={() => setIsExpanded((prev) => !prev)}
+                  className="type-label-bounded mb-4 text-[var(--text-muted)] underline-offset-2 hover:text-[var(--text-main)] hover:underline"
+                  aria-label={isExpanded ? 'Less' : 'More'}
+                >
+                  {isExpanded ? 'Less' : 'More'}
+                </button>
+              )}
 
               {/* Metadata Tags */}
               <div className="type-label-bounded flex flex-wrap items-center gap-2 font-sans mt-4">

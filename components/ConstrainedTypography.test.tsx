@@ -82,14 +82,14 @@ describe('Constrained typography', () => {
       </MobileLayout>
     );
 
-    await user.click(screen.getByRole('button', { name: 'Folders' }));
+    await user.click(screen.getByRole('button', { name: 'Open folders' }));
     expect(screen.getByText('1').className).toContain('type-body-muted-bounded');
 
     await user.click(screen.getByRole('button', { name: 'New Project' }));
     expect(screen.getByPlaceholderText('Project name').className).toContain('type-body-bounded');
 
     await user.click(screen.getByLabelText('Close panels'));
-    await user.click(screen.getByRole('button', { name: 'Library' }));
+    await user.click(screen.getByRole('button', { name: 'Open library' }));
     expect(screen.getByPlaceholderText('Search citations, author, book').className).toContain('type-body-bounded');
   });
 });
