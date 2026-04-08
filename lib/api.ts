@@ -4,6 +4,7 @@ import { ChapterBlock, Citation, CitationSourceInput, CreateChapterBlockInput, N
 export const PROFILE_AVATAR_BUCKET = 'profile-avatars';
 const PROFILE_AVATAR_PUBLIC_PATH_PREFIX = `/storage/v1/object/public/${PROFILE_AVATAR_BUCKET}/`;
 const PROFILE_AVATAR_OBJECT_NAME = 'avatar';
+const PROFILE_AVATAR_CACHE_CONTROL = '0';
 
 const extractPageSort = (page: string | undefined): number | undefined => {
     if (!page) return undefined;
@@ -32,13 +33,17 @@ const mapChapterBlockRow = (row: ChapterBlockRow): ChapterBlock => ({
     createdAt: new Date(row.created_at).getTime(),
 });
 
-const extractProfileAvatarObjectPath = (avatarUrl?: string | null) => {
-    if (!avatarUrl) {
+export const resolveStoredProfileAvatarPath = (avatarPath?: string | null) => {
+    if (!avatarPath) {
         return null;
     }
 
+    if (!avatarPath.includes('://')) {
+        return avatarPath;
+    }
+
     try {
-        const { pathname } = new URL(avatarUrl);
+        const { pathname } = new URL(avatarPath);
         if (!pathname.startsWith(PROFILE_AVATAR_PUBLIC_PATH_PREFIX)) {
             return null;
         }
@@ -222,10 +227,12 @@ const resolveCitationSource = async (
 };
 
 export const api = {
+    resolveStoredProfileAvatarPath,
+
     // Profiles
     async updateProfile(
         userId: string,
-        profilePatch: { username?: string; avatar_url?: string | null }
+        profilePatch: { username?: string; avatar_path?: string | null }
     ) {
         const { error } = await getSupabaseClient()
             .from('profiles')
@@ -233,45 +240,32 @@ export const api = {
         if (error) throw error;
     },
 
-    async uploadProfileAvatar(userId: string, file: File, currentAvatarUrl?: string | null) {
-        const uploadVersion = Date.now();
+    getProfileAvatarPublicUrl(objectPath: string, version?: number) {
+        const { data } = getSupabaseClient()
+            .storage
+            .from(PROFILE_AVATAR_BUCKET)
+            .getPublicUrl(objectPath);
+
+        return typeof version === 'number'
+            ? `${data.publicUrl}?v=${version}`
+            : data.publicUrl;
+    },
+
+    async uploadProfileAvatar(userId: string, file: File) {
         const objectPath = getProfileAvatarObjectPath(userId);
         const avatarStorage = getSupabaseClient()
             .storage
             .from(PROFILE_AVATAR_BUCKET);
 
-        const previousObjectPath = extractProfileAvatarObjectPath(currentAvatarUrl);
-        if (previousObjectPath && previousObjectPath !== objectPath) {
-            const { error: removeError } = await avatarStorage.remove([previousObjectPath]);
-            if (removeError) {
-                throw removeError;
-            }
-        }
+        const { error } = await avatarStorage.upload(objectPath, file, {
+            upsert: true,
+            contentType: file.type || undefined,
+            cacheControl: PROFILE_AVATAR_CACHE_CONTROL,
+        });
 
-        const saveAvatarWithUpload = () =>
-            avatarStorage.upload(objectPath, file, {
-                upsert: false,
-                contentType: file.type || undefined,
-            });
+        if (error) throw error;
 
-        const { error: saveError } = previousObjectPath === objectPath
-            ? await avatarStorage.update(objectPath, file, {
-                contentType: file.type || undefined,
-            })
-            : await saveAvatarWithUpload();
-
-        if (saveError) {
-            if (previousObjectPath === objectPath) {
-                const { error: uploadFallbackError } = await saveAvatarWithUpload();
-                if (uploadFallbackError) throw uploadFallbackError;
-            } else {
-                throw saveError;
-            }
-        }
-
-        const { data } = avatarStorage.getPublicUrl(objectPath);
-
-        return `${data.publicUrl}?v=${uploadVersion}`;
+        return objectPath;
     },
 
     async fetchChapterBlocks(userId: string, bookId: string) {

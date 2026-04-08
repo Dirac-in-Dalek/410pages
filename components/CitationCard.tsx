@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, ChevronDown, ChevronUp, Plus, Quote, User, Edit2, Trash2, X, Check, Folder, Copy } from 'lucide-react';
-import { Citation, Note, Highlight } from '../types';
-import { formatCitationCopyText, writeTextToClipboard } from '../lib/citationCopy';
+import { MessageSquare, ChevronDown, ChevronUp, User, X, Check, Folder } from 'lucide-react';
+import { Citation, Highlight } from '../types';
 
 interface CitationCardProps {
   citation: Citation;
@@ -10,16 +9,15 @@ interface CitationCardProps {
   projectNames?: string[];
   isSelected: boolean;
   onToggleSelect: (id: string, selected: boolean) => void;
-  onAddNote: (citationId: string, content: string) => void;
+  onAddNote: (citationId: string, content: string) => void | Promise<unknown>;
   onUpdateNote: (citationId: string, noteId: string, content: string) => void;
   onDeleteNote: (citationId: string, noteId: string) => void;
   onDelete: (id: string) => void;
-  onUpdate: (id: string, data: Partial<Citation>) => void;
+  onUpdate: (id: string, data: Partial<Citation>) => void | Promise<unknown>;
 }
 
 export const CitationCard: React.FC<CitationCardProps> = ({
   citation,
-  index,
   username,
   projectNames = [],
   isSelected,
@@ -27,7 +25,6 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   onAddNote,
   onUpdateNote,
   onDeleteNote,
-  onDelete,
   onUpdate
 }) => {
   const [isNotesExpanded, setIsNotesExpanded] = useState(false);
@@ -43,12 +40,6 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   const [editAuthor, setEditAuthor] = useState(citation.author);
   const [editBook, setEditBook] = useState(citation.book);
   const [editPage, setEditPage] = useState(citation.page?.toString() || '');
-
-  // Copy button state
-  const [copied, setCopied] = useState(false);
-  const [showCopyMenu, setShowCopyMenu] = useState(false);
-
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Highlight state
   const [localHighlights, setLocalHighlights] = useState<Highlight[]>(citation.highlights || []);
@@ -82,20 +73,14 @@ export const CitationCard: React.FC<CitationCardProps> = ({
     setLocalHighlights(citation.highlights || []);
   }, [citation.highlights]);
 
-  // Close popover when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (cardRef.current && !cardRef.current.contains(event.target as Node)) {
-        window.getSelection()?.removeAllRanges();
-        setShowCopyMenu(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+  const activeNote = editingNoteId ? citation.notes.find((note) => note.id === editingNoteId) : null;
+  const isEditSessionPristine =
+    editText === citation.text &&
+    editAuthor === citation.author &&
+    editBook === citation.book &&
+    editPage === (citation.page?.toString() || '') &&
+    newNote === '' &&
+    (!editingNoteId || editNoteContent === (activeNote?.content ?? ''));
 
   const isSelf = citation.isSelf ?? (citation.author === username || !citation.author || citation.author === 'Self');
 
@@ -118,15 +103,36 @@ export const CitationCard: React.FC<CitationCardProps> = ({
     setEditingNoteId(null);
   };
 
-  const handleSave = () => {
+  const closeEditingSession = () => {
+    setIsEditing(false);
+    setIsNotesExpanded(false);
+    setEditingNoteId(null);
+    setEditNoteContent('');
+    setNewNote('');
+  };
+
+  const handleSave = async () => {
     if (!editText.trim()) return;
-    onUpdate(citation.id, {
+
+    await Promise.resolve(onUpdate(citation.id, {
       text: editText,
       author: editAuthor,
       book: editBook,
       page: editPage || undefined
-    });
-    setIsEditing(false);
+    }));
+
+    const trimmedNote = newNote.trim();
+    if (trimmedNote) {
+      await Promise.resolve(onAddNote(citation.id, trimmedNote));
+    }
+
+    closeEditingSession();
+  };
+
+  const openEditor = () => {
+    setIsEditing(true);
+    setIsNotesExpanded(true);
+    setEditingNoteId(null);
   };
 
   const handleCancel = () => {
@@ -134,24 +140,42 @@ export const CitationCard: React.FC<CitationCardProps> = ({
     setEditAuthor(citation.author);
     setEditBook(citation.book);
     setEditPage(citation.page?.toString() || '');
-    setIsEditing(false);
+    closeEditingSession();
   };
 
-  // Copy with bibliographic info
-  const handleCopy = async (includeNotes: boolean = false) => {
-    const copyText = formatCitationCopyText(citation, username, includeNotes);
-    try {
-      await writeTextToClipboard(copyText);
-      setShowCopyMenu(false);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy text: ', err);
+  useEffect(() => {
+    if (!isEditing) return;
+
+    const handlePointerDownOutside = (event: MouseEvent) => {
+      if (!cardRef.current) return;
+      if (cardRef.current.contains(event.target as Node)) return;
+      if (!isEditSessionPristine) return;
+
+      handleCancel();
+    };
+
+    document.addEventListener('mousedown', handlePointerDownOutside);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDownOutside);
+    };
+  }, [handleCancel, isEditSessionPristine, isEditing]);
+
+  const handleCardDoubleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (isEditing) return;
+
+    const target = event.target as HTMLElement;
+    if (target.closest('button, input, textarea, select, option, label, a')) {
+      return;
     }
+
+    window.getSelection()?.removeAllRanges();
+    openEditor();
   };
 
   // Text selection for highlighting
-  const handleTextSelection = () => {
+  const handleTextSelection = (event: React.MouseEvent<HTMLElement>) => {
+    if (event.detail > 1) return;
+
     const selection = window.getSelection();
     if (!selection || selection.isCollapsed || !cardRef.current) return;
 
@@ -248,6 +272,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   return (
     <div
       ref={cardRef}
+      onDoubleClick={handleCardDoubleClick}
       className={`
         group relative rounded-lg border mb-4 transition-all duration-200 flex items-start gap-2
         ${isSelected ? 'bg-[var(--accent-soft)] border-[var(--accent-border)]' : 'bg-[var(--bg-card)] border-[var(--border-main)] hover:shadow-md'}
@@ -268,80 +293,6 @@ export const CitationCard: React.FC<CitationCardProps> = ({
       )}
 
       <div className="flex-1 min-w-0">
-        {/* Action Buttons (Hover) */}
-        {!isEditing && !showDeleteConfirm && (
-          <div className="absolute top-3 right-3 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex gap-1 z-20">
-            <div className="relative">
-              <button
-                onClick={() => setShowCopyMenu(!showCopyMenu)}
-                className={`p-1.5 rounded-md transition-colors ${copied
-                  ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20'
-                  : 'text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--bg-sidebar)]'
-                  }`}
-                title={copied ? 'Copied' : 'Copy'}
-              >
-                {copied ? <Check size={14} /> : <Copy size={14} />}
-              </button>
-
-              {showCopyMenu && (
-                <div className="absolute top-full right-0 mt-1 w-52 bg-[var(--bg-card)] text-[var(--text-main)] border border-[var(--border-main)] rounded-xl shadow-2xl z-[120] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
-                  <button
-                    onClick={() => void handleCopy(false)}
-                    className="type-label-bounded w-full text-left px-3 py-2 text-[var(--text-main)] hover:bg-[var(--sidebar-hover)] transition-colors"
-                  >
-                    copy
-                  </button>
-                  <button
-                    onClick={() => void handleCopy(true)}
-                    className="type-label-bounded w-full text-left px-3 py-2 text-[var(--text-main)] hover:bg-[var(--sidebar-hover)] transition-colors border-t border-[var(--border-main)]"
-                  >
-                    copy + memo
-                  </button>
-                </div>
-              )}
-            </div>
-            <button
-              onClick={() => setIsEditing(true)}
-              className="p-1.5 text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] rounded-md transition-colors"
-              title="Edit"
-            >
-              <Edit2 size={14} />
-            </button>
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              className="p-1.5 text-[var(--text-muted)] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
-              title="Delete"
-            >
-              <Trash2 size={14} />
-            </button>
-          </div>
-        )}
-
-        {showDeleteConfirm && (
-          <div className="absolute inset-0 z-30 bg-[var(--bg-card)]/95 backdrop-blur-sm rounded-lg flex items-center justify-center p-6 text-center">
-            <div>
-              <p className="type-body text-[var(--text-main)] font-medium mb-4">Are you sure you want to delete this citation?</p>
-              <div className="flex gap-3 justify-center">
-                <button
-                  onClick={() => setShowDeleteConfirm(false)}
-                  className="type-label-bounded px-4 py-1.5 font-medium text-[var(--text-muted)] hover:bg-[var(--bg-sidebar)] rounded-md"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    onDelete(citation.id);
-                    setShowDeleteConfirm(false);
-                  }}
-                  className="type-label-bounded px-4 py-1.5 font-medium text-white bg-red-500 hover:bg-red-600 rounded-md shadow-sm"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
         <div className="p-5">
           {isEditing ? (
             <div className="space-y-4">
@@ -382,20 +333,6 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                     className="type-label-bounded w-full p-2 bg-[var(--bg-input)] text-[var(--text-main)] border border-[var(--border-main)] rounded-md focus:border-[var(--accent-border)]"
                   />
                 </div>
-              </div>
-              <div className="flex justify-end gap-2 pt-2 border-t border-[var(--border-main)]">
-                <button
-                  onClick={handleCancel}
-                  className="type-label-bounded flex items-center gap-1 px-3 py-1.5 font-medium text-[var(--text-muted)] hover:bg-[var(--bg-sidebar)] rounded-md transition-colors"
-                >
-                  <X size={14} /> Cancel
-                </button>
-                <button
-                  onClick={handleSave}
-                  className="type-label-bounded flex items-center gap-1 px-3 py-1.5 font-medium text-white bg-[var(--accent)] hover:bg-[var(--accent-strong)] rounded-md shadow-sm transition-colors"
-                >
-                  <Check size={14} /> Save
-                </button>
               </div>
             </div>
           ) : (
@@ -461,7 +398,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
 
         {/* Collapsible Notes Section */}
         {
-          isNotesExpanded && !isEditing && (
+          isNotesExpanded && (
             <div className="border-t border-[var(--border-main)] bg-[var(--bg-sidebar)]/30 rounded-b-lg p-4">
 
               {/* List of Existing Notes */}
@@ -526,19 +463,24 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                     }
                   }}
                 />
-                <div className="flex justify-end p-2 bg-[var(--bg-sidebar)]/50 border-t border-[var(--border-main)]">
+              </div>
+
+              {isEditing && (
+                <div className="flex justify-end gap-2 pt-4">
                   <button
-                    onClick={submitNote}
-                    disabled={!newNote.trim()}
-                    className={`
-                      type-label-bounded px-3 py-1 font-bold rounded transition-colors
-                      ${newNote.trim() ? 'bg-[var(--accent)] text-white hover:bg-[var(--accent-strong)]' : 'bg-[var(--bg-sidebar)] text-[var(--text-muted)] cursor-not-allowed'}
-                    `}
+                    onClick={() => void handleCancel()}
+                    className="type-label-bounded flex items-center gap-1 px-3 py-1.5 font-medium text-[var(--text-muted)] hover:bg-[var(--bg-sidebar)] rounded-md transition-colors"
                   >
-                    Save note
+                    <X size={14} /> Cancel
+                  </button>
+                  <button
+                    onClick={() => void handleSave()}
+                    className="type-label-bounded flex items-center gap-1 px-3 py-1.5 font-medium text-white bg-[var(--accent)] hover:bg-[var(--accent-strong)] rounded-md shadow-sm transition-colors"
+                  >
+                    <Check size={14} /> Save
                   </button>
                 </div>
-              </div>
+              )}
             </div>
           )
         }

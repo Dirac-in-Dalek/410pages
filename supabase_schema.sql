@@ -5,10 +5,12 @@ create extension if not exists "uuid-ossp";
 create table if not exists profiles (
   id uuid references auth.users not null primary key,
   username text unique,
+  avatar_path text,
   avatar_url text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+alter table profiles add column if not exists avatar_path text;
 alter table profiles add column if not exists avatar_url text;
 
 alter table profiles enable row level security;

@@ -1,9 +1,10 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type {
   FontPreference,
   ThemePreference,
   UserPreferences,
 } from '../../hooks/useUserPreferences';
+import { AvatarCropModal } from './AvatarCropModal';
 import { AppearanceSettingsSection } from './AppearanceSettingsSection';
 import { TextSettingsSection } from './TextSettingsSection';
 
@@ -21,7 +22,7 @@ export type SettingsPanelProps = {
   onClose: () => void;
   onDisplayNameChange: (value: string) => void;
   onDisplayNameCommit: (value: string) => void | Promise<void>;
-  onAvatarChange: (file: File) => void | Promise<void>;
+  onAvatarChange: (file: File) => boolean | void | Promise<boolean | void>;
   onThemeChange: (value: ThemePreference) => void;
   onFontFamilyChange: (value: FontPreference) => void;
   onBaseFontPtChange: (value: number) => void;
@@ -49,7 +50,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onSignOut,
 }) => {
   const dismissingPanelRef = useRef(false);
-  const avatarInputRef = useRef<HTMLInputElement | null>(null);
+  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (!isOpen) {
@@ -142,23 +143,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             </div>
 
             <div className="mt-6 flex items-center gap-5">
-              <input
-                ref={avatarInputRef}
-                type="file"
-                accept="image/*"
-                aria-label="프로필 사진 업로드"
-                className="sr-only"
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  event.currentTarget.value = '';
-                  if (!file) {
-                    return;
-                  }
-
-                  void onAvatarChange(file);
-                }}
-              />
-
               <div className="type-title-bounded flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--accent-soft)] font-semibold text-[var(--accent)]">
                 {avatarUrl ? (
                   <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
@@ -169,14 +153,29 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
               <div className="min-w-0 flex-1">
                 <div className="mb-3 flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => avatarInputRef.current?.click()}
-                    disabled={isSavingAvatar}
-                    className="type-label-bounded rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] px-3 py-2 font-medium text-[var(--text-main)] transition-colors hover:bg-[var(--sidebar-hover)] disabled:cursor-not-allowed disabled:opacity-60"
+                  <label
+                    className={`type-label-bounded rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] px-3 py-2 font-medium text-[var(--text-main)] transition-colors ${
+                      isSavingAvatar ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-[var(--sidebar-hover)]'
+                    }`}
                   >
                     사진 변경
-                  </button>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      aria-label="프로필 사진 업로드"
+                      className="hidden"
+                      disabled={isSavingAvatar}
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        event.currentTarget.value = '';
+                        if (!file) {
+                          return;
+                        }
+
+                        setPendingAvatarFile(file);
+                      }}
+                    />
+                  </label>
                   {avatarError ? (
                     <p className="type-body-muted text-red-600">{avatarError}</p>
                   ) : null}
@@ -236,6 +235,20 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           ) : null}
         </div>
       </aside>
+
+      <AvatarCropModal
+        file={pendingAvatarFile}
+        isSaving={isSavingAvatar}
+        onCancel={() => setPendingAvatarFile(null)}
+        onSave={async (croppedFile) => {
+          const didSave = await onAvatarChange(croppedFile);
+          if (didSave === false) {
+            return;
+          }
+
+          setPendingAvatarFile(null);
+        }}
+      />
     </>
   );
 };
