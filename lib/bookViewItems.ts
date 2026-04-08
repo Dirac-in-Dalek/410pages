@@ -48,3 +48,13 @@ export const getMidpoint = (left?: number, right?: number) => {
   if (right != null) return right - 0.1;
   return undefined;
 };
+
+// Used for newest-first groups such as createdAt tie-breaking.
+// `above` means the item rendered before the insertion point,
+// `below` means the item rendered after the insertion point.
+export const getDescendingMidpoint = (above?: number, below?: number) => {
+  if (above != null && below != null) return (above + below) / 2;
+  if (above != null) return above - 0.1;
+  if (below != null) return below + 0.1;
+  return undefined;
+};

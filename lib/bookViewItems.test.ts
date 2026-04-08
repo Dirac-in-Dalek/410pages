@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getMidpoint, sortBookViewItems, toBookViewItems } from './bookViewItems';
+import { getDescendingMidpoint, getMidpoint, sortBookViewItems, toBookViewItems } from './bookViewItems';
 import type { Citation, ChapterBlock } from '../types';
 
 const citation = (overrides: Partial<Citation> & Pick<Citation, 'id' | 'text' | 'author' | 'book'>): Citation => ({
@@ -116,5 +116,11 @@ describe('bookViewItems', () => {
   it('uses midpoint fallbacks when only one neighbor exists', () => {
     expect(getMidpoint(336, undefined)).toBe(336.9);
     expect(getMidpoint(undefined, 336)).toBe(335.9);
+  });
+
+  it('uses newest-first midpoint fallbacks for descending tie groups', () => {
+    expect(getDescendingMidpoint(100, undefined)).toBe(99.9);
+    expect(getDescendingMidpoint(undefined, 100)).toBe(100.1);
+    expect(getDescendingMidpoint(100.2, 99.8)).toBe(100);
   });
 });
