@@ -14,7 +14,16 @@ const extractPageSort = (page: string | undefined): number | undefined => {
 const getProfileAvatarObjectPath = (userId: string) =>
     `${userId}/${PROFILE_AVATAR_OBJECT_NAME}`;
 
-const mapChapterBlockRow = (row: any): ChapterBlock => ({
+type ChapterBlockRow = {
+    id: string;
+    book_id: string;
+    label: string;
+    page_sort: number | null;
+    created_at_sort: number;
+    created_at: string;
+};
+
+const mapChapterBlockRow = (row: ChapterBlockRow): ChapterBlock => ({
     id: row.id,
     bookId: row.book_id,
     label: row.label,
