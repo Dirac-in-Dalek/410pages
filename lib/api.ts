@@ -1,5 +1,4 @@
 import { getSupabaseClient } from './supabase';
-import { avatarDebugError, avatarDebugInfo } from './avatarDebug';
 import { ChapterBlock, Citation, CitationSourceInput, CreateChapterBlockInput, Note, Project } from '../types';
 
 export const PROFILE_AVATAR_BUCKET = 'profile-avatars';
@@ -235,22 +234,10 @@ export const api = {
         userId: string,
         profilePatch: { username?: string; avatar_path?: string | null }
     ) {
-        avatarDebugInfo('updateProfile request', {
-            userId,
-            hasAvatarPath: typeof profilePatch.avatar_path === 'string',
-            hasUsername: typeof profilePatch.username === 'string',
-        });
         const { error } = await getSupabaseClient()
             .from('profiles')
             .upsert({ id: userId, ...profilePatch });
-        if (error) {
-            avatarDebugError('updateProfile failed', {
-                userId,
-                profilePatch,
-                error,
-            });
-            throw error;
-        }
+        if (error) throw error;
     },
 
     getProfileAvatarPublicUrl(objectPath: string, version?: number) {
@@ -270,27 +257,13 @@ export const api = {
             .storage
             .from(PROFILE_AVATAR_BUCKET);
 
-        avatarDebugInfo('storage upload request', {
-            userId,
-            objectPath,
-            fileName: file.name,
-            fileSize: file.size,
-            fileType: file.type,
-        });
         const { error } = await avatarStorage.upload(objectPath, file, {
             upsert: true,
             contentType: file.type || undefined,
             cacheControl: PROFILE_AVATAR_CACHE_CONTROL,
         });
 
-        if (error) {
-            avatarDebugError('storage upload failed', {
-                userId,
-                objectPath,
-                error,
-            });
-            throw error;
-        }
+        if (error) throw error;
 
         return objectPath;
     },
