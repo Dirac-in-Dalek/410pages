@@ -10,12 +10,29 @@ const mockStorageFrom = vi.fn(() => ({
   remove: mockRemove,
   getPublicUrl: mockGetPublicUrl,
 }));
+const mockChapterBlocksSingle = vi.fn();
+const mockChapterBlocksInsertSelect = vi.fn(() => ({
+  single: mockChapterBlocksSingle,
+}));
+const mockChapterBlocksInsert = vi.fn(() => ({
+  select: mockChapterBlocksInsertSelect,
+}));
+const mockChapterBlocksFrom = vi.fn((table: string) => {
+  if (table === 'chapter_blocks') {
+    return {
+      insert: mockChapterBlocksInsert,
+    };
+  }
+
+  return {};
+});
 
 vi.mock('./supabase', () => ({
   getSupabaseClient: () => ({
     storage: {
       from: mockStorageFrom,
     },
+    from: mockChapterBlocksFrom,
   }),
 }));
 
@@ -86,5 +103,47 @@ describe('api.uploadProfileAvatar', () => {
       contentType: 'image/png',
     });
     expect(mockUpdate).not.toHaveBeenCalled();
+  });
+});
+
+describe('api.createChapterBlock', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockChapterBlocksSingle.mockResolvedValue({
+      data: {
+        id: 'block-1',
+        book_id: 'book-1',
+        label: '3장',
+        page_sort: 336,
+        created_at_sort: 1700.5,
+        created_at: '2026-04-07T10:00:00.000Z',
+      },
+      error: null,
+    });
+  });
+
+  it('maps a created chapter block from snake_case to camelCase', async () => {
+    const block = await api.createChapterBlock('user-1', {
+      bookId: 'book-1',
+      label: '3장',
+      pageSort: 336,
+      createdAtSort: 1700.5,
+    });
+
+    expect(mockChapterBlocksFrom).toHaveBeenCalledWith('chapter_blocks');
+    expect(mockChapterBlocksInsert).toHaveBeenCalledWith({
+      book_id: 'book-1',
+      label: '3장',
+      page_sort: 336,
+      created_at_sort: 1700.5,
+      user_id: 'user-1',
+    });
+    expect(block).toMatchObject({
+      id: 'block-1',
+      bookId: 'book-1',
+      label: '3장',
+      pageSort: 336,
+      createdAtSort: 1700.5,
+    });
   });
 });

@@ -33,6 +33,22 @@ export type AddCitationInput = Omit<Citation, 'id' | 'createdAt' | 'notes'>;
 export type AddCitationResult = { ok: true; citationId: string } | { ok: false; error: unknown };
 export type BulkSourceUpdateResult = { ok: true; updatedCount: number } | { ok: false; error: unknown };
 
+export interface ChapterBlock {
+  id: string;
+  bookId: string;
+  label: string;
+  pageSort?: number;
+  createdAtSort: number;
+  createdAt: number;
+}
+
+export interface CreateChapterBlockInput {
+  bookId: string;
+  label: string;
+  pageSort?: number;
+  createdAtSort: number;
+}
+
 export interface CitationSourceInput {
   author: string;
   book: string;

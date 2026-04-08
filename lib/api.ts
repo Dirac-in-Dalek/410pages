@@ -1,5 +1,5 @@
 import { getSupabaseClient } from './supabase';
-import { Citation, CitationSourceInput, Note, Project } from '../types';
+import { ChapterBlock, Citation, CitationSourceInput, CreateChapterBlockInput, Note, Project } from '../types';
 
 export const PROFILE_AVATAR_BUCKET = 'profile-avatars';
 const PROFILE_AVATAR_PUBLIC_PATH_PREFIX = `/storage/v1/object/public/${PROFILE_AVATAR_BUCKET}/`;
@@ -13,6 +13,15 @@ const extractPageSort = (page: string | undefined): number | undefined => {
 
 const getProfileAvatarObjectPath = (userId: string) =>
     `${userId}/${PROFILE_AVATAR_OBJECT_NAME}`;
+
+const mapChapterBlockRow = (row: any): ChapterBlock => ({
+    id: row.id,
+    bookId: row.book_id,
+    label: row.label,
+    pageSort: row.page_sort ?? undefined,
+    createdAtSort: row.created_at_sort,
+    createdAt: new Date(row.created_at).getTime(),
+});
 
 const extractProfileAvatarObjectPath = (avatarUrl?: string | null) => {
     if (!avatarUrl) {
@@ -254,6 +263,33 @@ export const api = {
         const { data } = avatarStorage.getPublicUrl(objectPath);
 
         return `${data.publicUrl}?v=${uploadVersion}`;
+    },
+
+    async fetchChapterBlocks(userId: string, bookId: string) {
+        const { data, error } = await getSupabaseClient()
+            .from('chapter_blocks')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('book_id', bookId)
+            .order('created_at_sort', { ascending: true });
+        if (error) throw error;
+        return (data || []).map(mapChapterBlockRow);
+    },
+
+    async createChapterBlock(userId: string, input: CreateChapterBlockInput) {
+        const { data, error } = await getSupabaseClient()
+            .from('chapter_blocks')
+            .insert({
+                book_id: input.bookId,
+                label: input.label,
+                page_sort: input.pageSort,
+                created_at_sort: input.createdAtSort,
+                user_id: userId,
+            })
+            .select('*')
+            .single();
+        if (error) throw error;
+        return mapChapterBlockRow(data);
     },
 
     // Citations

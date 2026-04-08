@@ -97,6 +97,25 @@ do $$ begin
   end if;
 end $$;
 
+-- 7.1 CHAPTER BLOCKS 테이블
+create table if not exists chapter_blocks (
+  id uuid default uuid_generate_v4() primary key,
+  book_id uuid references books(id) on delete cascade not null,
+  label text not null,
+  page_sort double precision,
+  created_at_sort double precision not null,
+  user_id uuid references auth.users not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table chapter_blocks enable row level security;
+
+do $$ begin
+  if not exists (select 1 from pg_policies where policyname = 'Users can crud their own chapter_blocks') then
+    create policy "Users can crud their own chapter_blocks" on chapter_blocks for all using (auth.uid() = user_id);
+  end if;
+end $$;
+
 -- CITATIONS highlights 컬럼 추가
 ALTER TABLE citations ADD COLUMN IF NOT EXISTS highlights JSONB DEFAULT '[]';
 
