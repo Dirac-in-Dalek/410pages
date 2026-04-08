@@ -110,25 +110,8 @@ create table if not exists chapter_blocks (
 
 alter table chapter_blocks enable row level security;
 
-do $$ begin
-  if not exists (select 1 from pg_policies where policyname = 'Users can crud their own chapter_blocks') then
-    create policy "Users can crud their own chapter_blocks" on chapter_blocks for all using (
-      exists (
-        select 1
-        from books
-        where books.id = chapter_blocks.book_id
-          and books.user_id = auth.uid()
-      )
-    ) with check (
-      exists (
-        select 1
-        from books
-        where books.id = chapter_blocks.book_id
-          and books.user_id = auth.uid()
-      )
-    );
-  end if;
-end $$;
+drop policy if exists "Users can crud their own chapter_blocks" on chapter_blocks;
+create policy "Users can crud their own chapter_blocks" on chapter_blocks for all using (auth.uid() = user_id);
 
 -- CITATIONS highlights 컬럼 추가
 ALTER TABLE citations ADD COLUMN IF NOT EXISTS highlights JSONB DEFAULT '[]';
