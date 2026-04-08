@@ -69,16 +69,17 @@ const App: React.FC = () => {
   const previousCommittedUsernameRef = useRef(username);
 
   const {
-    projects, setProjects, citations, setCitations, loading: dataLoading,
+    projects, setProjects, citations, setCitations, chapterBlocksByBook, loading: dataLoading,
     fetchData, handleAddCitation, handleAddNote, handleUpdateNote,
     handleDeleteNote, handleDeleteCitation, handleUpdateCitation,
     handleBulkUpdateCitationSource,
     handleCreateProject, handleRenameProject, handleDeleteProject, handleRenameAuthor, handleRenameBook,
+    handleLoadChapterBlocks, handleCreateChapterBlock,
     handleDropCitationToProject, handleReorderProjects
   } = useArchiveData(session);
 
   const {
-    searchTerm, setSearchTerm, selectedProjectId, handleProjectSelect,
+    searchTerm, setSearchTerm, selectedProjectId, selectedBookId, isBookView, handleProjectSelect,
     handleTreeItemClick, treeData, filteredCitations, viewTitle,
     editorPrefill, filter, sortField, dateDirection, pageDirection,
     handleDateSortClick, handlePageSortClick,
@@ -101,6 +102,14 @@ const App: React.FC = () => {
       fetchData();
     }
   }, [session?.user.id, fetchData]);
+
+  useEffect(() => {
+    if (!selectedBookId) {
+      return;
+    }
+
+    void handleLoadChapterBlocks(selectedBookId);
+  }, [handleLoadChapterBlocks, selectedBookId]);
 
   useEffect(() => {
     if (isMobileApp && viewMode === 'reader') {
@@ -177,12 +186,12 @@ const App: React.FC = () => {
 
   const commitSettingsAvatar = async (file: File) => {
     if (isSavingAvatar) {
-      return;
+      return false;
     }
 
     if (!file.type.startsWith('image/')) {
       setAvatarError('이미지 파일만 업로드할 수 있습니다.');
-      return;
+      return false;
     }
 
     const commitVersion = avatarCommitVersionRef.current;
@@ -197,7 +206,10 @@ const App: React.FC = () => {
 
       if (!didSave) {
         setAvatarError('프로필 사진 저장에 실패했습니다.');
+        return false;
       }
+
+      return true;
     } finally {
       if (commitVersion === avatarCommitVersionRef.current) {
         setIsSavingAvatar(false);
@@ -257,6 +269,12 @@ const App: React.FC = () => {
             loading={dataLoading || authLoading}
             searchTerm={searchTerm}
             selectedIds={selectedIds}
+            chapterBlocks={selectedBookId ? chapterBlocksByBook[selectedBookId] || [] : []}
+            isBookView={isBookView}
+            sortField={sortField}
+            dateDirection={dateDirection}
+            pageDirection={pageDirection}
+            onCreateChapterBlock={handleCreateChapterBlock}
             onToggleSelect={handleToggleSelect}
             onAddNote={handleAddNote}
             onUpdateNote={handleUpdateNote}

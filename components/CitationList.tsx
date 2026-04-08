@@ -1,5 +1,5 @@
 import React from 'react';
-import { Citation, Project } from '../types';
+import { ChapterBlock, Citation, CreateChapterBlockInput, Project } from '../types';
 import { CitationCard } from './CitationCard';
 
 interface CitationListProps {
@@ -15,6 +15,12 @@ interface CitationListProps {
     onDeleteNote: (citationId: string, noteId: string) => void;
     onDeleteCitation: (id: string) => void;
     onUpdateCitation: (id: string, data: Partial<Citation>) => void;
+    chapterBlocks?: ChapterBlock[];
+    isBookView?: boolean;
+    sortField?: 'date' | 'page';
+    dateDirection?: 'asc' | 'desc';
+    pageDirection?: 'asc' | 'desc';
+    onCreateChapterBlock?: (input: CreateChapterBlockInput) => Promise<unknown> | unknown;
 }
 
 export const CitationList: React.FC<CitationListProps> = ({

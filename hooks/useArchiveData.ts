@@ -1,10 +1,20 @@
 import { useState, useCallback } from 'react';
-import { AddCitationInput, AddCitationResult, BulkSourceUpdateResult, Citation, CitationSourceInput, Project } from '../types';
+import {
+    AddCitationInput,
+    AddCitationResult,
+    BulkSourceUpdateResult,
+    ChapterBlock,
+    Citation,
+    CitationSourceInput,
+    CreateChapterBlockInput,
+    Project
+} from '../types';
 import { api } from '../lib/api';
 
 export const useArchiveData = (session: any) => {
     const [projects, setProjects] = useState<Project[]>([]);
     const [citations, setCitations] = useState<Citation[]>([]);
+    const [chapterBlocksByBook, setChapterBlocksByBook] = useState<Record<string, ChapterBlock[]>>({});
     const [loading, setLoading] = useState(false);
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -50,6 +60,33 @@ export const useArchiveData = (session: any) => {
             console.error('Error adding note:', error);
         }
     };
+
+    const handleLoadChapterBlocks = useCallback(async (bookId: string) => {
+        if (!session) return;
+        try {
+            const chapterBlocks = await api.fetchChapterBlocks(session.user.id, bookId);
+            setChapterBlocksByBook(prev => ({
+                ...prev,
+                [bookId]: chapterBlocks
+            }));
+        } catch (error) {
+            console.error('Error fetching chapter blocks:', error);
+        }
+    }, [session]);
+
+    const handleCreateChapterBlock = useCallback(async (input: CreateChapterBlockInput) => {
+        if (!session) return;
+        try {
+            const chapterBlock = await api.createChapterBlock(session.user.id, input);
+            setChapterBlocksByBook(prev => ({
+                ...prev,
+                [chapterBlock.bookId]: [...(prev[chapterBlock.bookId] || []), chapterBlock]
+            }));
+            return chapterBlock;
+        } catch (error) {
+            console.error('Error creating chapter block:', error);
+        }
+    }, [session]);
 
     const handleUpdateNote = async (citationId: string, noteId: string, content: string) => {
         if (!session) return;
@@ -280,6 +317,7 @@ export const useArchiveData = (session: any) => {
         setProjects,
         citations,
         setCitations,
+        chapterBlocksByBook,
         loading,
         fetchData,
         handleAddCitation,
@@ -294,6 +332,8 @@ export const useArchiveData = (session: any) => {
         handleDeleteProject,
         handleRenameAuthor,
         handleRenameBook,
+        handleLoadChapterBlocks,
+        handleCreateChapterBlock,
         handleReorderProjects,
         handleDropCitationToProject
     };

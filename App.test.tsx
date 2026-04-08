@@ -6,6 +6,7 @@ import App from './App';
 
 const mockHandleUpdateUsername = vi.fn();
 const mockSetBaseFontPt = vi.fn();
+const mockCitationList = vi.fn();
 const createDeferred = <T,>() => {
   let resolve!: (value: T | PromiseLike<T>) => void;
   let reject!: (reason?: unknown) => void;
@@ -31,6 +32,7 @@ const archiveDataState = {
   setCitations: vi.fn(),
   loading: false,
   fetchData: vi.fn(),
+  chapterBlocksByBook: {},
   handleAddCitation: vi.fn(),
   handleAddNote: vi.fn(),
   handleUpdateNote: vi.fn(),
@@ -43,6 +45,8 @@ const archiveDataState = {
   handleDeleteProject: vi.fn(),
   handleRenameAuthor: vi.fn(),
   handleRenameBook: vi.fn(),
+  handleLoadChapterBlocks: vi.fn(),
+  handleCreateChapterBlock: vi.fn(),
   handleDropCitationToProject: vi.fn(),
   handleReorderProjects: vi.fn(),
 };
@@ -51,6 +55,8 @@ const archiveFilterState = {
   searchTerm: '',
   setSearchTerm: vi.fn(),
   selectedProjectId: null,
+  selectedBookId: null,
+  isBookView: false,
   handleProjectSelect: vi.fn(),
   handleTreeItemClick: vi.fn(),
   treeData: [],
@@ -174,7 +180,7 @@ vi.mock('./components/ArchiveHeader', () => ({
 }));
 
 vi.mock('./components/CitationList', () => ({
-  CitationList: () => null,
+  CitationList: (props: any) => mockCitationList(props),
 }));
 
 describe('App settings display-name flow', () => {
@@ -322,5 +328,73 @@ describe('App settings display-name flow', () => {
     });
 
     expect(screen.getByTestId('settings-display-name').textContent).toBe('Newer Local Draft');
+  });
+});
+
+describe('App book view chapter blocks wiring', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockHandleUpdateUsername.mockResolvedValue(true);
+    mockSetBaseFontPt.mockReset();
+    mockCitationList.mockReset();
+    authState.username = 'Committed Name';
+    archiveFilterState.selectedBookId = null;
+    archiveFilterState.isBookView = false;
+    archiveDataState.chapterBlocksByBook = {};
+
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      writable: true,
+      value: vi.fn().mockImplementation(() => ({
+        matches: false,
+        media: '(max-width: 1024px)',
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+  });
+
+  it('passes book-view chapter blocks only when a book is selected', async () => {
+    const { rerender } = render(<App />);
+    const firstProps = mockCitationList.mock.calls.at(-1)?.[0];
+
+    expect(archiveDataState.handleLoadChapterBlocks).not.toHaveBeenCalled();
+    expect(firstProps?.isBookView).toBe(false);
+    expect(firstProps?.chapterBlocks).toEqual([]);
+
+    archiveFilterState.selectedBookId = 'book-1';
+    archiveFilterState.isBookView = true;
+    archiveDataState.chapterBlocksByBook = {
+      'book-1': [
+        {
+          id: 'block-1',
+          bookId: 'book-1',
+          label: '3장',
+          pageSort: 12,
+          createdAtSort: 1,
+          createdAt: 1,
+        },
+      ],
+    };
+
+    rerender(<App />);
+    const secondProps = mockCitationList.mock.calls.at(-1)?.[0];
+
+    expect(archiveDataState.handleLoadChapterBlocks).toHaveBeenCalledWith('book-1');
+    expect(secondProps?.isBookView).toBe(true);
+    expect(secondProps?.chapterBlocks).toEqual([
+      {
+        id: 'block-1',
+        bookId: 'book-1',
+        label: '3장',
+        pageSort: 12,
+        createdAtSort: 1,
+        createdAt: 1,
+      },
+    ]);
   });
 });
