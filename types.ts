@@ -42,6 +42,10 @@ export interface ChapterBlock {
   createdAt: number;
 }
 
+export type BookViewItem =
+  | { type: 'citation'; id: string; citation: Citation; pageSort?: number; createdAtSort: number }
+  | { type: 'chapter_block'; id: string; block: ChapterBlock; pageSort?: number; createdAtSort: number };
+
 export interface CreateChapterBlockInput {
   bookId: string;
   label: string;
