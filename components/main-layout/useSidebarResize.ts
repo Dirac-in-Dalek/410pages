@@ -5,8 +5,8 @@ const LEFT_MAX = 264;
 const RIGHT_INIT_MIN = 180;
 const RIGHT_RESIZE_MIN = 200;
 const RIGHT_MAX = 320;
-const DEFAULT_LEFT = 264;
-const DEFAULT_RIGHT = 320;
+const DEFAULT_LEFT = 224;
+const DEFAULT_RIGHT = 288;
 
 const readStoredWidth = (key: string, fallback: number) => {
   if (typeof window === 'undefined') return fallback;
@@ -19,12 +19,12 @@ const readStoredWidth = (key: string, fallback: number) => {
 export const useSidebarResize = () => {
   const [leftWidth, setLeftWidth] = useState(() => {
     const width = readStoredWidth('leftSidebarWidth', DEFAULT_LEFT);
-    return Math.min(Math.max(width, LEFT_MIN), LEFT_MAX);
+    return Math.min(Math.max(width, LEFT_MIN), 240);
   });
 
   const [rightWidth, setRightWidth] = useState(() => {
     const width = readStoredWidth('rightSidebarWidth', DEFAULT_RIGHT);
-    return Math.min(Math.max(width, RIGHT_INIT_MIN), RIGHT_MAX);
+    return Math.min(Math.max(width, RIGHT_INIT_MIN), 300);
   });
 
   const [isResizingLeft, setIsResizingLeft] = useState(false);

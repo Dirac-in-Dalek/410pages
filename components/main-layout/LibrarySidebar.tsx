@@ -613,7 +613,7 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
         <div className={`w-[2px] h-full mx-auto transition-colors ${isResizing ? 'bg-[var(--accent)]' : 'group-hover:bg-[var(--accent-border)]'}`} />
       </div>
 
-      <div className="p-4 border-b border-[var(--border-main)] flex items-center justify-between">
+      <div className="p-3.5 border-b border-[var(--border-main)] flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="type-title-bounded font-semibold text-[var(--text-main)]">Library</span>
         </div>
@@ -650,13 +650,13 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
       </div>
 
       <div
-        className="flex-1 overflow-y-auto p-3"
+        className="flex-1 overflow-y-auto p-2.5"
         onDragOver={(e) => handleTreePanelDragOver(e, authorTreeItems)}
         onDrop={(e) => handleTreePanelDrop(e, authorTreeItems)}
       >
         <div
           className={`
-            type-label-bounded flex items-center p-2 rounded-md cursor-pointer mb-4 font-medium
+            type-label-bounded flex items-center px-2 py-1.5 rounded-md cursor-pointer mb-3 font-medium
             ${selectedProjectId === null ? 'bg-[var(--accent-active)] text-[var(--accent-active-text)] shadow-md border-transparent' : 'text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]'}
           `}
           title="Show all citations"

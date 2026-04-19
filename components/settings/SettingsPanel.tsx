@@ -88,7 +88,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   const initials = displayName.trim().slice(0, 2) || 'RT';
   const panelClasses = isMobile
     ? 'inset-x-0 bottom-0 top-16 rounded-t-[28px] border-t'
-    : 'right-0 top-0 h-full w-[min(520px,100vw)] border-l';
+    : 'right-0 top-0 h-full w-[min(460px,100vw)] border-l';
   const trimmedDisplayName = displayName.trim();
   const trimmedSavedDisplayName = savedDisplayName.trim();
   const hasPendingDisplayNameChange =
@@ -123,7 +123,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         className={`fixed z-50 bg-[var(--bg-card)] border-[var(--border-main)] shadow-[var(--shadow-panel)] ${panelClasses}`}
       >
         <div className="flex h-full flex-col overflow-hidden">
-          <header className="border-b border-[var(--border-main)] bg-[var(--bg-card)] px-6 py-5">
+          <header className="border-b border-[var(--border-main)] bg-[var(--bg-card)] px-5 py-4.5">
             <div className="flex items-center justify-between gap-4">
               <h2 className="type-display-bounded font-semibold tracking-[-0.02em] text-[var(--text-main)]">설정</h2>
               <button
@@ -139,8 +139,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               </button>
             </div>
 
-            <div className="mt-6 flex items-center gap-5">
-              <div className="type-title-bounded flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--accent-soft)] font-semibold text-[var(--accent)]">
+            <div className="mt-5 flex items-center gap-4">
+              <div className="type-title-bounded flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--accent-soft)] font-semibold text-[var(--accent)]">
                 {avatarUrl ? (
                   <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
                 ) : (
@@ -151,7 +151,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               <div className="min-w-0 flex-1">
                 <div className="mb-3 flex items-center gap-2">
                   <label
-                    className={`type-label-bounded rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] px-3 py-2 font-medium text-[var(--text-main)] transition-colors ${
+                    className={`type-label-bounded rounded-lg border border-[var(--border-main)] bg-[var(--bg-card)] px-3 py-1.5 font-medium text-[var(--text-main)] transition-colors ${
                       isSavingAvatar ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-[var(--sidebar-hover)]'
                     }`}
                   >
@@ -193,7 +193,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                       event.currentTarget.blur();
                     }}
                     aria-label="이름"
-                    className="type-body-bounded mt-2 w-full rounded-xl border border-[var(--border-main)] bg-[var(--bg-input)] px-3 py-2.5 outline-none transition-colors focus:border-[var(--accent-border)] focus:ring-2 focus:ring-[var(--accent-ring)]"
+                    className="type-body-bounded mt-2 w-full rounded-lg border border-[var(--border-main)] bg-[var(--bg-input)] px-3 py-2 outline-none transition-colors focus:border-[var(--accent-border)] focus:ring-2 focus:ring-[var(--accent-ring)]"
                   />
                 </label>
 
@@ -219,12 +219,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           </div>
 
           {onSignOut ? (
-            <div className="border-t border-[var(--border-main)] px-6 py-4">
+            <div className="border-t border-[var(--border-main)] px-5 py-3.5">
               <button
                 type="button"
                 onClick={onSignOut}
                 {...dismissIntentProps}
-                className="type-label-bounded w-full rounded-2xl border border-[var(--border-main)] bg-[var(--bg-card)] px-4 py-3 font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--sidebar-hover)] hover:text-red-500"
+                className="type-label-bounded w-full rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] px-4 py-2.5 font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--sidebar-hover)] hover:text-red-500"
               >
                 로그아웃
               </button>

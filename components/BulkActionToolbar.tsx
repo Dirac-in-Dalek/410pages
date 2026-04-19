@@ -49,8 +49,8 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
     if (selectedCount === 0) return null;
 
     return (
-        <div ref={toolbarRef} className="sticky top-0 z-20 bg-[var(--bg-main)]/95 backdrop-blur-sm mb-2 h-14 flex items-center">
-            <div className="w-full flex items-center justify-between bg-[var(--bg-card)] p-2 rounded-lg border border-[var(--border-main)] shadow-[var(--shadow-toolbar)] animate-in fade-in slide-in-from-top-1 duration-200 transition-all">
+        <div ref={toolbarRef} className="sticky top-0 z-20 bg-[var(--bg-main)]/95 backdrop-blur-sm mb-2 h-12 flex items-center">
+            <div className="w-full flex items-center justify-between bg-[var(--bg-card)] p-1.5 rounded-lg border border-[var(--border-main)] shadow-[var(--shadow-toolbar)] animate-in fade-in slide-in-from-top-1 duration-200 transition-all">
                 <div className="w-full flex items-center justify-between">
                     <div className="flex items-center gap-2 sm:gap-3 pl-1">
                         <button
@@ -78,7 +78,7 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
                                     setShowCopyMenu(false);
                                     setShowFolderMenu(!showFolderMenu);
                                 }}
-                                className="p-2 text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--sidebar-hover)] rounded-full transition-all"
+                                className="p-1.5 text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--sidebar-hover)] rounded-full transition-all"
                                 title="Move to Folder"
                             >
                                 <Folder size={18} />
@@ -142,7 +142,7 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
                                     setShowFolderMenu(false);
                                     setShowCopyMenu(!showCopyMenu);
                                 }}
-                                className={`p-2 rounded-full transition-all ${isCopying ? 'text-emerald-600 bg-emerald-50' : 'text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--sidebar-hover)]'}`}
+                                className={`p-1.5 rounded-full transition-all ${isCopying ? 'text-emerald-600 bg-emerald-50' : 'text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--sidebar-hover)]'}`}
                                 title="Copy to Clipboard"
                             >
                                 {isCopying ? <Check size={18} /> : <Copy size={18} />}
@@ -174,7 +174,7 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
 
                         <button
                             onClick={onDeleteRequest}
-                            className="p-2 text-[var(--text-muted)] hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
+                            className="p-1.5 text-[var(--text-muted)] hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
                             title="Delete Selected"
                         >
                             <Trash2 size={18} />
@@ -184,7 +184,7 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
 
                         <button
                             onClick={onCancel}
-                            className="p-2 text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--sidebar-hover)] rounded-full transition-colors"
+                            className="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--sidebar-hover)] rounded-full transition-colors"
                             title="Cancel Selection"
                         >
                             <X size={18} />

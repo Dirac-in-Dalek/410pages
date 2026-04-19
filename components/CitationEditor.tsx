@@ -147,7 +147,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
       )}
 
       {/* Main Text Input */}
-      <div className="p-4">
+      <div className="p-3.5">
         <textarea
           ref={textareaRef}
           value={text}
@@ -162,12 +162,12 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
             }
           }}
           placeholder={placeholder}
-          className="type-body w-full placeholder:text-[var(--text-muted)] text-[var(--text-main)] border-none resize-none focus:ring-0 bg-transparent p-0 min-h-[80px] overflow-y-auto"
+          className="type-body w-full placeholder:text-[var(--text-muted)] text-[var(--text-main)] border-none resize-none focus:ring-0 bg-transparent p-0 min-h-[72px] overflow-y-auto"
         />
       </div>
 
       {/* Metadata Bar */}
-      <div className="bg-[var(--bg-sidebar)] rounded-b-lg border-t border-[var(--border-main)] p-2 flex flex-wrap gap-2 items-center">
+      <div className="bg-[var(--bg-sidebar)] rounded-b-lg border-t border-[var(--border-main)] p-1.5 flex flex-wrap gap-2 items-center">
 
         {/* Author Input */}
         <div className="flex items-center bg-[var(--bg-card)] border border-[var(--border-main)] rounded-md px-2 py-1 flex-1 min-w-[140px] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] transition-all">
@@ -229,7 +229,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
             onClick={handleSubmit}
             disabled={readOnly || !text.trim()}
             className={`
-              ml-auto p-2 rounded-md transition-all
+              ml-auto p-1.5 rounded-md transition-all
               ${text.trim() && !readOnly ? 'bg-[var(--accent)] text-white shadow-md hover:bg-[var(--accent-strong)] hover:scale-105 active:scale-95' : 'bg-[var(--bg-sidebar)] text-[var(--text-muted)] cursor-not-allowed'}
             `}
           >

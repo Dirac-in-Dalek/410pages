@@ -10,7 +10,7 @@ type TextSettingsSectionProps = {
 };
 
 const optionButtonClass = (isActive: boolean) =>
-  `type-label-bounded rounded-xl border px-3 py-2 transition-colors ${
+  `type-label-bounded rounded-lg border px-3 py-1.5 transition-colors ${
     isActive
       ? 'border-transparent bg-[var(--accent-active)] text-[var(--accent-active-text)]'
       : 'border-[var(--border-main)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]'
@@ -60,7 +60,7 @@ export const FontSelectionList: React.FC<FontSelectionListProps> = ({
   }, [isOpen]);
 
   return (
-    <div ref={containerRef} className="relative w-full sm:w-[320px]">
+    <div ref={containerRef} className="relative w-full max-w-[18rem]">
       <button
         type="button"
         aria-label={`현재 서체: ${selectedOption.label}`}
@@ -84,7 +84,7 @@ export const FontSelectionList: React.FC<FontSelectionListProps> = ({
           id={listboxId}
           role="listbox"
           aria-label="서체 목록"
-          className="max-h-64 overflow-y-auto rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] p-1"
+          className="absolute right-0 top-[calc(100%+0.5rem)] z-20 max-h-64 w-full overflow-y-auto rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] p-1 shadow-[var(--shadow-panel)]"
         >
           {FONT_OPTIONS.map((option) => {
             const isActive = option.id === selectedFontFamily;
@@ -124,10 +124,8 @@ export const TextSettingsSection: React.FC<TextSettingsSectionProps> = ({
     </h3>
 
     <div className="rounded-2xl border border-[var(--border-main)] bg-[var(--bg-sidebar)] p-4 shadow-[var(--shadow-card)]">
-      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <p className="type-label font-medium text-[var(--text-main)]">서체</p>
-        </div>
+      <div className="mb-5 flex items-center justify-between gap-4">
+        <p className="type-label min-w-0 font-medium text-[var(--text-main)]">서체</p>
         <FontSelectionList selectedFontFamily={fontFamily} onFontFamilyChange={onFontFamilyChange} />
       </div>
 

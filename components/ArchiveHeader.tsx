@@ -33,16 +33,16 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
     const pageLabel = isPageActive ? `Page ${pageDirection === 'asc' ? '↑' : '↓'}` : 'Page';
 
     const getButtonClass = (isActive: boolean) => (
-        `type-label-bounded shrink-0 inline-flex items-center px-3 py-2 rounded-xl border transition-colors ${isActive
+        `type-label-bounded shrink-0 inline-flex items-center px-2.5 py-1.5 rounded-lg border transition-colors ${isActive
             ? 'border-[var(--text-main)] text-[var(--text-main)] bg-[var(--sidebar-hover)]'
             : 'border-[var(--border-main)] text-[var(--text-secondary)] hover:text-[var(--text-main)] hover:bg-[var(--sidebar-hover)]'
         }`
     );
 
     return (
-        <div className="pt-6 md:pt-10 pb-0">
+        <div className="pt-5 md:pt-8 pb-0">
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="flex items-start justify-between gap-3 mb-2.5">
                     <h2 className="type-display font-serif text-[var(--text-main)] truncate">
                         {title}
                     </h2>
@@ -67,9 +67,9 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
                         </button>
                     </div>
                 </div>
-                <div className="h-px bg-[var(--border-main)] mb-4 md:mb-6"></div>
+                <div className="h-px bg-[var(--border-main)] mb-3 md:mb-5"></div>
                 {showEditor && (
-                    <div className="mb-4">
+                    <div className="mb-3">
                         <CitationEditor
                             onAddCitation={onAddCitation}
                             prefillData={editorPrefill}

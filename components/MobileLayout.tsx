@@ -157,7 +157,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
     });
 
   const headerActionClass = (isActive: boolean) =>
-    `flex h-9 w-9 items-center justify-center rounded-full border transition-colors ${
+    `flex h-[2.125rem] w-[2.125rem] items-center justify-center rounded-full border transition-colors ${
       isActive
         ? 'bg-[var(--accent-active)] text-[var(--accent-active-text)] border-transparent'
         : 'border-[var(--border-main)] text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]'
@@ -166,7 +166,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   return (
     <div className="font-size-app h-[100dvh] w-full bg-[var(--bg-main)] text-[var(--text-main)] flex flex-col overflow-hidden">
       <header className="border-b border-[var(--border-main)] bg-[var(--bg-card)] pt-[env(safe-area-inset-top)]">
-        <div className="h-14 px-4 flex items-center justify-between gap-3">
+        <div className="h-[3.25rem] px-4 flex items-center justify-between gap-3">
           <h1 className="type-title-bounded truncate font-semibold">{title}</h1>
           <div className="flex items-center gap-2">
             <button
@@ -210,13 +210,13 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
 
       <aside
         className={`
-          fixed inset-y-0 left-0 w-[88vw] max-w-sm z-50 bg-[var(--bg-card)] border-r border-[var(--border-main)] shadow-xl
+          fixed inset-y-0 left-0 w-[84vw] max-w-[20rem] z-50 bg-[var(--bg-card)] border-r border-[var(--border-main)] shadow-xl
           transition-transform duration-300 ease-out
           ${isProjectsOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
         <div className="h-full flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
-          <div className="h-14 px-4 border-b border-[var(--border-main)] flex items-center justify-between">
+          <div className="h-[3.25rem] px-4 border-b border-[var(--border-main)] flex items-center justify-between">
             <h2 className="type-title-bounded font-semibold">Folders</h2>
             <button
               onClick={() => setIsProjectsOpen(false)}

@@ -47,7 +47,7 @@ export const ChapterBlockInsertButton: React.FC<ChapterBlockInsertButtonProps> =
       <button
         type="button"
         aria-label="Add chapter block"
-        className="inline-flex h-5 w-5 items-center justify-center text-base leading-none text-[var(--text-muted)] opacity-0 transition-opacity group-hover:opacity-100 hover:text-[var(--text-main)]"
+        className="inline-flex h-4 w-4 items-center justify-center text-sm leading-none text-[var(--text-muted)] opacity-0 transition-opacity group-hover:opacity-100 hover:text-[var(--text-main)]"
         onClick={onOpen}
       >
         +
@@ -59,7 +59,7 @@ export const ChapterBlockInsertButton: React.FC<ChapterBlockInsertButtonProps> =
     <form ref={formRef} className="flex items-center gap-2" onSubmit={handleSubmit}>
       <input
         aria-label="Chapter block label"
-        className="min-w-[11rem] rounded-full border border-[var(--border-main)] bg-[var(--bg-main)] px-3 py-1 type-body text-[var(--text-main)] outline-none focus:border-[var(--accent)]"
+        className="min-w-[9rem] rounded-lg border border-[var(--border-main)] bg-[var(--bg-main)] px-3 py-1 type-body text-[var(--text-main)] outline-none focus:border-[var(--accent)]"
         value={label}
         autoFocus
         placeholder="3장"
@@ -74,7 +74,7 @@ export const ChapterBlockInsertButton: React.FC<ChapterBlockInsertButtonProps> =
       <button
         type="submit"
         aria-label="Save chapter block"
-        className="rounded-full bg-[var(--text-main)] px-3 py-1 type-body text-[var(--bg-main)] disabled:opacity-50"
+        className="rounded-lg bg-[var(--text-main)] px-3 py-1 type-body text-[var(--bg-main)] disabled:opacity-50"
         disabled={!label.trim()}
       >
         Save
@@ -82,7 +82,7 @@ export const ChapterBlockInsertButton: React.FC<ChapterBlockInsertButtonProps> =
       <button
         type="button"
         aria-label="Cancel chapter block"
-        className="rounded-full px-2 py-1 text-sm text-[var(--text-muted)]"
+        className="rounded-lg px-2 py-1 text-sm text-[var(--text-muted)]"
         onClick={() => {
           setLabel('');
           onCancel?.();

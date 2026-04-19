@@ -353,9 +353,9 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
         <div className={`w-[2px] h-full mx-auto transition-colors ${isResizing ? 'bg-[var(--accent)]' : 'group-hover:bg-[var(--accent-border)]'}`} />
       </div>
 
-      <div className="h-16 flex items-center px-4 border-b border-[var(--border-main)] bg-[var(--bg-card)] gap-3">
+      <div className="h-14 flex items-center px-3.5 border-b border-[var(--border-main)] bg-[var(--bg-card)] gap-2.5">
         <div className="text-[var(--text-main)]">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M7 6 L12 3 H18 V18 L13 21 H7 V6" />
           </svg>
         </div>
@@ -385,7 +385,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
         <button
           onClick={onOpenPdfReader}
           aria-label="Open PDF Reader"
-          className="type-label-bounded w-full mb-3 flex items-center justify-center p-2.5 font-medium text-[var(--accent)] bg-[var(--bg-card)] hover:bg-[var(--sidebar-hover)] rounded-md border border-[var(--accent-border)] shadow-sm transition-all"
+          className="type-label-bounded w-full mb-3 flex items-center justify-center px-3 py-2 font-medium text-[var(--accent)] bg-[var(--bg-card)] hover:bg-[var(--sidebar-hover)] rounded-lg border border-[var(--accent-border)] shadow-sm transition-all"
         >
           <BookOpen size={16} className="mr-2" />
           Read PDF
@@ -398,7 +398,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
               setIsManageMode(!isManageMode);
               setDeletingProjectId(null);
             }}
-            className={`p-1 rounded transition-colors ${isManageMode ? 'bg-[var(--accent-soft)] text-[var(--accent)]' : 'hover:bg-[var(--sidebar-hover)] text-[var(--text-muted)]'}`}
+            className={`p-1.5 rounded-md transition-colors ${isManageMode ? 'bg-[var(--accent-soft)] text-[var(--accent)]' : 'hover:bg-[var(--sidebar-hover)] text-[var(--text-muted)]'}`}
             title="Manage Folders"
           >
             <Settings size={14} />
@@ -448,7 +448,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
                 ) : (
                   <div
                     className={`
-                      type-label-bounded group flex items-center p-2 rounded-md cursor-pointer mb-1 relative
+                    type-label-bounded group flex items-center px-2 py-1.5 rounded-md cursor-pointer mb-1 relative
                       transition-all duration-200 border
                       ${dragOverProjectId === project.id ? 'bg-[var(--accent-soft)] border-[var(--accent-border)] scale-[1.02] shadow-md z-10' : ''}
                       ${selectedProjectId === project.id && dragOverProjectId !== project.id ? 'bg-[var(--bg-card)] shadow-sm border-[var(--border-main)] text-[var(--accent-strong)] font-medium' : 'border-transparent text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]'}
@@ -481,9 +481,9 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
                           value={editingName}
                           onChange={(e) => setEditingName(e.target.value)}
                           onKeyDown={(e) => e.key === 'Enter' && submitRename()}
-                          className="type-body-bounded w-full border border-[var(--accent-border)] rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-[var(--accent-ring)] bg-[var(--bg-card)]"
+                          className="type-body-bounded w-full border border-[var(--accent-border)] rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[var(--accent-ring)] bg-[var(--bg-card)]"
                         />
-                        <button onClick={submitRename} className="ml-1 text-emerald-600"><Check size={14} /></button>
+                        <button onClick={submitRename} className="ml-1 rounded-md p-1 text-emerald-600 hover:bg-emerald-50"><Check size={14} /></button>
                       </div>
                     ) : (
                       <>
@@ -503,8 +503,8 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
                                 startRename(project.id, project.name);
                               }}
                               aria-label="Rename project"
-                              className="p-1 hover:bg-[var(--sidebar-hover)] rounded text-[var(--text-muted)]"
-                            >
+                            className="p-1.5 hover:bg-[var(--sidebar-hover)] rounded-md text-[var(--text-muted)]"
+                          >
                               <Edit2 size={12} />
                             </button>
                             <button
@@ -513,8 +513,8 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
                                 setDeletingProjectId(project.id);
                               }}
                               aria-label="Delete project"
-                              className="p-1 hover:bg-red-100 rounded text-red-500"
-                            >
+                            className="p-1.5 hover:bg-red-100 rounded-md text-red-500"
+                          >
                               <Trash2 size={12} />
                             </button>
                           </div>
@@ -535,7 +535,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
         </div>
 
         {isCreating ? (
-          <div className="mt-2 flex items-center p-2 bg-[var(--bg-card)] rounded-md border border-[var(--accent-border)] shadow-sm">
+          <div className="mt-2 flex items-center p-1.5 bg-[var(--bg-card)] rounded-md border border-[var(--accent-border)] shadow-sm">
             <input
               autoFocus
               placeholder="Project Name"
@@ -553,22 +553,22 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
         ) : (
           <button
             onClick={() => setIsCreating(true)}
-            className="type-label-bounded w-full mt-2 flex items-center p-2 text-[var(--text-muted)] hover:text-[var(--accent)] bg-[var(--bg-card)] hover:bg-[var(--sidebar-hover)] rounded-md border border-[var(--border-main)] shadow-sm transition-all"
+            className="type-label-bounded w-full mt-2 flex items-center px-2 py-1.5 text-[var(--text-muted)] hover:text-[var(--accent)] bg-[var(--bg-card)] hover:bg-[var(--sidebar-hover)] rounded-md border border-[var(--border-main)] shadow-sm transition-all"
           >
-            <Plus size={16} className="mr-2" />
+            <Plus size={15} className="mr-2" />
             New Project
           </button>
         )}
       </div>
 
-      <div className="mt-auto border-t border-[var(--border-main)] bg-[var(--bg-sidebar)] p-4 transition-colors duration-200">
+      <div className="mt-auto border-t border-[var(--border-main)] bg-[var(--bg-sidebar)] p-3.5 transition-colors duration-200">
         <button
           type="button"
           onClick={onOpenSettings}
-          className="flex w-full min-w-0 items-center justify-between rounded-2xl border border-[var(--border-main)] bg-[var(--bg-card)] px-3 py-3 text-left transition-colors hover:bg-[var(--sidebar-hover)]"
+          className="flex w-full min-w-0 items-center justify-between rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] px-3 py-2.5 text-left transition-colors hover:bg-[var(--sidebar-hover)]"
         >
           <div className="flex min-w-0 items-center gap-3">
-            <div className="type-label-bounded flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--accent-soft)] font-semibold text-[var(--accent)]">
+            <div className="type-label-bounded flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--accent-soft)] font-semibold text-[var(--accent)]">
               {avatarUrl ? (
                 <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
               ) : (

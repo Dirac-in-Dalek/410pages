@@ -362,17 +362,16 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   const notesButtonLabel = `Notes ${citation.notes.length}`;
 
   return (
-      <div
-        ref={cardRef}
-        onDoubleClick={handleCardDoubleClick}
-        className={`
-        group relative rounded-lg border mb-4 transition-all duration-200 flex items-start gap-2
+    <div
+      ref={cardRef}
+      onDoubleClick={handleCardDoubleClick}
+      className={`
+        group relative rounded-lg border mb-3 transition-all duration-200 flex items-start gap-2
         ${isSelected ? 'bg-[var(--accent-soft)] border-[var(--accent-border)] shadow-[var(--shadow-card)]' : 'bg-[var(--bg-card)] border-[var(--border-main)] shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)]'}
         ${isEditing ? 'cursor-default ring-2 ring-[var(--accent-ring)] border-transparent shadow-[var(--shadow-card-hover)] bg-[var(--bg-card)]' : ''}
         ${isSelf && !isSelected ? 'border-[var(--accent-border)]/60' : ''}
       `}
     >
-      {/* Checkbox */}
       {!isEditing && (
         <div className="pt-6 pl-3">
           <input
@@ -385,7 +384,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
       )}
 
       <div className="flex-1 min-w-0">
-        <div className="p-4 md:p-5">
+        <div className="p-3.5 md:p-4">
           {isEditing ? (
             <div className="space-y-4">
               <textarea
@@ -429,7 +428,6 @@ export const CitationCard: React.FC<CitationCardProps> = ({
             </div>
           ) : (
             <>
-              {/* Quote Content */}
               <blockquote
                 ref={quoteRef}
                 data-testid="citation-text"
@@ -446,14 +444,14 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsExpanded((prev) => !prev)}
-                  className="type-label-bounded inline-flex items-center gap-1 text-[var(--text-muted)] underline-offset-2 hover:text-[var(--text-main)] hover:underline"
+                  className="type-label-bounded mb-3 text-[var(--text-muted)] underline-offset-2 hover:text-[var(--text-main)] hover:underline"
                   aria-label={isExpanded ? 'Less' : 'More'}
                 >
                   {isExpanded ? 'Less' : 'More'}
                 </button>
               )}
 
-              <div className="mt-4 border-t border-[var(--border-main)]/70 pt-2">
+              <div className="mt-3 border-t border-[var(--border-main)]/70 pt-2">
                 <div className="flex flex-wrap items-center gap-2">
                   {metadataChips}
 
@@ -479,100 +477,92 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                   </div>
                 ) : null}
               </div>
-
-
             </>
           )}
         </div>
 
-        {/* Collapsible Notes Section */}
-        {
-          isNotesExpanded && (
-            <div className="border-t border-[var(--border-main)] bg-[var(--bg-sidebar)]/30 rounded-b-lg p-4">
-
-              {/* List of Existing Notes */}
-              <div className={`${citation.notes.length > 0 ? 'space-y-3 mb-4' : ''}`}>
-                {citation.notes.map(note => (
-                  <div
-                    key={note.id}
-                    className={`
+        {isNotesExpanded && (
+          <div className="border-t border-[var(--border-main)] bg-[var(--bg-sidebar)]/30 rounded-b-lg p-3.5">
+            <div className={`${citation.notes.length > 0 ? 'space-y-2.5 mb-3' : ''}`}>
+              {citation.notes.map(note => (
+                <div
+                  key={note.id}
+                  className={`
                   group/note relative type-body text-[var(--text-main)] bg-[var(--bg-card)] rounded border transition-all overflow-hidden
                   ${editingNoteId === note.id ? 'border-[var(--accent-border)] shadow-md ring-1 ring-[var(--accent-ring)]' : 'p-2 border-[var(--border-main)] hover:border-[var(--accent-border)] cursor-pointer'}
                 `}
-                    onClick={() => {
-                      if (editingNoteId !== note.id) {
-                        setEditingNoteId(note.id);
-                        setEditNoteContent(note.content);
-                      }
-                    }}
-                  >
-                    {editingNoteId === note.id ? (
-                      <div className="flex flex-col">
-                        <textarea
-                          ref={editNoteTextareaRef}
-                          autoFocus
-                          value={editNoteContent}
-                          onChange={(e) => setEditNoteContent(e.target.value)}
-                          className="type-body w-full bg-transparent text-[var(--text-main)] border-none p-3 focus:ring-0 focus:outline-none min-h-[80px] resize-none overflow-y-auto"
-                        />
-                        <div className="flex justify-end gap-3 p-2 bg-[var(--bg-sidebar)]/50 border-t border-[var(--border-main)]">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setEditingNoteId(null); }}
-                            className="type-label-bounded text-[var(--text-muted)] hover:text-[var(--text-main)]"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleSaveNoteEdit(note.id); }}
-                            className="type-label-bounded text-[var(--accent)] font-bold hover:text-[var(--accent-strong)]"
-                          >
-                            Save
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="whitespace-pre-wrap">{note.content}</div>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* Direct New Note Input */}
-              <div className="bg-[var(--bg-card)] rounded-md border border-[var(--border-main)] shadow-sm focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] transition-all">
-                <textarea
-                  ref={newNoteTextareaRef}
-                  value={newNote}
-                  onChange={(e) => setNewNote(e.target.value)}
-                  placeholder="Add a new note..."
-                  className="type-body w-full bg-transparent text-[var(--text-main)] border-none p-3 focus:ring-0 focus:outline-none min-h-[60px] resize-none overflow-y-auto"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      submitNote();
+                  onClick={() => {
+                    if (editingNoteId !== note.id) {
+                      setEditingNoteId(note.id);
+                      setEditNoteContent(note.content);
                     }
                   }}
-                />
-              </div>
-
-              {isEditing && (
-                <div className="flex justify-end gap-2 pt-4">
-                  <button
-                    onClick={() => void handleCancel()}
-                    className="type-label-bounded flex items-center gap-1 px-3 py-1.5 font-medium text-[var(--text-muted)] hover:bg-[var(--bg-sidebar)] rounded-md transition-colors"
-                  >
-                    <X size={14} /> Cancel
-                  </button>
-                  <button
-                    onClick={() => void handleSave()}
-                    className="type-label-bounded flex items-center gap-1 px-3 py-1.5 font-medium text-white bg-[var(--accent)] hover:bg-[var(--accent-strong)] rounded-md shadow-sm transition-colors"
-                  >
-                    <Check size={14} /> Save
-                  </button>
+                >
+                  {editingNoteId === note.id ? (
+                    <div className="flex flex-col">
+                      <textarea
+                        ref={editNoteTextareaRef}
+                        autoFocus
+                        value={editNoteContent}
+                        onChange={(e) => setEditNoteContent(e.target.value)}
+                        className="type-body w-full bg-transparent text-[var(--text-main)] border-none p-3 focus:ring-0 focus:outline-none min-h-[80px] resize-none overflow-y-auto"
+                      />
+                      <div className="flex justify-end gap-3 p-2 bg-[var(--bg-sidebar)]/50 border-t border-[var(--border-main)]">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setEditingNoteId(null); }}
+                          className="type-label-bounded text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleSaveNoteEdit(note.id); }}
+                          className="type-label-bounded text-[var(--accent)] font-bold hover:text-[var(--accent-strong)]"
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="whitespace-pre-wrap">{note.content}</div>
+                  )}
                 </div>
-              )}
+              ))}
             </div>
-          )
-        }
+
+            <div className="bg-[var(--bg-card)] rounded-md border border-[var(--border-main)] shadow-sm focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] transition-all">
+              <textarea
+                ref={newNoteTextareaRef}
+                value={newNote}
+                onChange={(e) => setNewNote(e.target.value)}
+                placeholder="Add a new note..."
+                className="type-body w-full bg-transparent text-[var(--text-main)] border-none p-3 focus:ring-0 focus:outline-none min-h-[60px] resize-none overflow-y-auto"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    submitNote();
+                  }
+                }}
+              />
+            </div>
+
+            {isEditing && (
+              <div className="flex justify-end gap-2 pt-4">
+                <button
+                  onClick={() => void handleCancel()}
+                  className="type-label-bounded flex items-center gap-1 px-3 py-1.5 font-medium text-[var(--text-muted)] hover:bg-[var(--bg-sidebar)] rounded-md transition-colors"
+                >
+                  <X size={14} /> Cancel
+                </button>
+                <button
+                  onClick={() => void handleSave()}
+                  className="type-label-bounded flex items-center gap-1 px-3 py-1.5 font-medium text-white bg-[var(--accent)] hover:bg-[var(--accent-strong)] rounded-md shadow-sm transition-colors"
+                >
+                  <Check size={14} /> Save
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
