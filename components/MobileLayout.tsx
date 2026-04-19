@@ -156,11 +156,11 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
       );
     });
 
-  const navButtonClass = (isActive: boolean) =>
-    `type-label-bounded w-full h-10 rounded-md border font-medium transition-colors inline-flex items-center justify-center gap-2 ${
+  const headerActionClass = (isActive: boolean) =>
+    `flex h-9 w-9 items-center justify-center rounded-full border transition-colors ${
       isActive
         ? 'bg-[var(--accent-active)] text-[var(--accent-active-text)] border-transparent'
-        : 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-main)] hover:bg-[var(--sidebar-hover)]'
+        : 'border-[var(--border-main)] text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]'
     }`;
 
   return (
@@ -168,31 +168,36 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
       <header className="border-b border-[var(--border-main)] bg-[var(--bg-card)] pt-[env(safe-area-inset-top)]">
         <div className="h-14 px-4 flex items-center justify-between gap-3">
           <h1 className="type-title-bounded truncate font-semibold">{title}</h1>
-          <button
-            type="button"
-            onClick={onOpenSettings}
-            className="p-2 rounded-md text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]"
-            aria-label="Open settings"
-          >
-            <Settings size={17} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={toggleProjectsPanel}
+              className={headerActionClass(isProjectsOpen)}
+              aria-label="Open folders"
+            >
+              <Folder size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={toggleLibraryPanel}
+              className={headerActionClass(isLibraryOpen)}
+              aria-label="Open library"
+            >
+              <Library size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={onOpenSettings}
+              className={headerActionClass(false)}
+              aria-label="Open settings"
+            >
+              <Settings size={17} />
+            </button>
+          </div>
         </div>
       </header>
 
-      <main className="flex-1 min-h-0 overflow-hidden pb-[calc(56px+env(safe-area-inset-bottom))]">{children}</main>
-
-      <nav className="border-t border-[var(--border-main)] bg-[var(--bg-card)] pb-[env(safe-area-inset-bottom)]">
-        <div className="h-14 px-3 grid grid-cols-2 gap-2 items-center">
-          <button type="button" onClick={toggleProjectsPanel} className={navButtonClass(isProjectsOpen)}>
-            <Folder size={15} />
-            Folders
-          </button>
-          <button type="button" onClick={toggleLibraryPanel} className={navButtonClass(isLibraryOpen)}>
-            <Library size={15} />
-            Library
-          </button>
-        </div>
-      </nav>
+      <main className="flex-1 min-h-0 overflow-hidden">{children}</main>
 
       {(isProjectsOpen || isLibraryOpen) && (
         <button
@@ -212,7 +217,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
       >
         <div className="h-full flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
           <div className="h-14 px-4 border-b border-[var(--border-main)] flex items-center justify-between">
-            <div className="type-title-bounded font-semibold">Folders</div>
+            <h2 className="type-title-bounded font-semibold">Folders</h2>
             <button
               onClick={() => setIsProjectsOpen(false)}
               className="p-2 rounded-md text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]"
@@ -341,7 +346,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
       >
         <div className="h-full flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
           <div className="h-14 px-4 border-b border-[var(--border-main)] flex items-center justify-between gap-3">
-            <div className="type-title-bounded font-semibold">Library</div>
+            <h2 className="type-title-bounded font-semibold">Library</h2>
             <button
               onClick={() => setIsLibraryOpen(false)}
               className="p-2 rounded-md text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]"

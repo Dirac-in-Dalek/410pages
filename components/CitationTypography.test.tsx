@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CitationCard } from './CitationCard';
 import { CitationEditor } from './CitationEditor';
 import type { Citation } from '../types';
@@ -16,6 +16,28 @@ const citation: Citation = {
   tags: [],
   createdAt: Date.now(),
 };
+
+beforeEach(() => {
+  vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockImplementation(function (this: HTMLElement) {
+    if (this.dataset.testid === 'citation-text') {
+      return (this.textContent?.length ?? 0) > 200 ? 120 : 40;
+    }
+
+    return 40;
+  });
+
+  vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockImplementation(function (this: HTMLElement) {
+    if (this.dataset.testid === 'citation-text') {
+      return 40;
+    }
+
+    return 40;
+  });
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe('Citation typography', () => {
   it('does not hardcode the archive editor text area to serif utility classes', () => {
@@ -255,5 +277,57 @@ describe('Citation typography', () => {
 
     expect(screen.getByPlaceholderText('Add a new note...')).not.toBeNull();
     expect(screen.getByDisplayValue('Draft note')).not.toBeNull();
+  });
+
+  it('starts long citations in a collapsed state with a More action', async () => {
+    render(
+      <CitationCard
+        citation={{
+          ...citation,
+          text: 'Long quote '.repeat(80),
+        }}
+        index={0}
+        username="Dalek"
+        isSelected={false}
+        onToggleSelect={vi.fn()}
+        onAddNote={vi.fn()}
+        onUpdateNote={vi.fn()}
+        onDeleteNote={vi.fn()}
+        onDelete={vi.fn()}
+        onUpdate={vi.fn()}
+      />
+    );
+
+    const moreButton = await screen.findByRole('button', { name: /more/i });
+    expect(moreButton).not.toBeNull();
+    expect(screen.getByTestId('citation-text').className).toContain('line-clamp-2');
+    expect(screen.getByTestId('citation-text').className).toContain('lg:line-clamp-3');
+  });
+
+  it('expands long citations when the More action is pressed', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <CitationCard
+        citation={{
+          ...citation,
+          text: 'Long quote '.repeat(80),
+        }}
+        index={0}
+        username="Dalek"
+        isSelected={false}
+        onToggleSelect={vi.fn()}
+        onAddNote={vi.fn()}
+        onUpdateNote={vi.fn()}
+        onDeleteNote={vi.fn()}
+        onDelete={vi.fn()}
+        onUpdate={vi.fn()}
+      />
+    );
+
+    await user.click(await screen.findByRole('button', { name: /more/i }));
+
+    expect(screen.getByRole('button', { name: /less/i })).not.toBeNull();
+    expect(screen.getByTestId('citation-text').className).not.toContain('line-clamp-2');
   });
 });
