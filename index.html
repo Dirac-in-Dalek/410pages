@@ -27,8 +27,28 @@
       const maxBaseFontPt = 40;
       const root = document.documentElement;
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const defaultPreferences = { theme: 'system', fontFamily: 'pretendard', baseFontPt: 16 };
+      const defaultPreferences = { theme: 'auto', fontFamily: 'pretendard', baseFontPt: 16 };
+      const supportedThemes = new Set([
+        'auto',
+        'day',
+        'night',
+        'warm-paper',
+        'soft-slate',
+        'terminal-green',
+      ]);
+      const legacyThemeMap = {
+        system: 'auto',
+        light: 'day',
+        dark: 'night',
+      };
       const legacyTextScaleMap = { sm: 14, md: 16, lg: 18 };
+      const themeColorByResolvedTheme = {
+        day: '#fcfcfb',
+        night: '#171717',
+        'warm-paper': '#f7f2e8',
+        'soft-slate': '#edf1f4',
+        'terminal-green': '#040804',
+      };
 
       const clampBaseFontPt = (value) => {
         const parsedValue = Number(value);
@@ -42,21 +62,24 @@
 
       const normalizePreferences = (value) => {
         const candidate = value && typeof value === 'object' ? value : {};
+        const normalizedTheme =
+          supportedThemes.has(candidate.theme)
+            ? candidate.theme
+            : legacyThemeMap[candidate.theme] || defaultPreferences.theme;
 
         return {
-          theme:
-            candidate.theme === 'light' || candidate.theme === 'dark' || candidate.theme === 'system'
-              ? candidate.theme
-              : defaultPreferences.theme,
+          theme: normalizedTheme,
           fontFamily: supportedFonts.has(candidate.fontFamily)
             ? candidate.fontFamily
             : defaultPreferences.fontFamily,
           baseFontPt:
             candidate.baseFontPt !== undefined
               ? clampBaseFontPt(candidate.baseFontPt)
-              : legacyTextScaleMap[candidate.textScale] || defaultPreferences.baseFontPt,
+              : legacyTextScaleMap[candidate.textScale] ?? defaultPreferences.baseFontPt,
         };
       };
+
+      const resolveTheme = (theme) => (theme === 'auto' ? (prefersDark ? 'night' : 'day') : theme);
 
       let preferences = defaultPreferences;
 
@@ -75,14 +98,19 @@
 
         if (!hasStoredPreferences) {
           const legacyTheme = localStorage.getItem(legacyThemeKey);
-          if (legacyTheme === 'system' || legacyTheme === 'light' || legacyTheme === 'dark') {
-            preferences = { ...defaultPreferences, theme: legacyTheme };
+          if (legacyTheme) {
+            preferences = {
+              ...defaultPreferences,
+              theme: supportedThemes.has(legacyTheme)
+                ? legacyTheme
+                : legacyThemeMap[legacyTheme] || defaultPreferences.theme,
+            };
           } else {
             const legacyDarkMode = localStorage.getItem(legacyDarkModeKey);
             if (legacyDarkMode !== null) {
               preferences = {
                 ...defaultPreferences,
-                theme: JSON.parse(legacyDarkMode) ? 'dark' : 'light',
+                theme: JSON.parse(legacyDarkMode) ? 'night' : 'day',
               };
             }
           }
@@ -98,13 +126,16 @@
       } catch (_) {
       }
 
-      const isDark = preferences.theme === 'dark' || (preferences.theme === 'system' && prefersDark);
+      const resolvedTheme = resolveTheme(preferences.theme);
+      const isDark = resolvedTheme === 'night' || resolvedTheme === 'terminal-green';
       root.classList.toggle('dark', isDark);
+      root.dataset.theme = resolvedTheme;
       root.dataset.font = preferences.fontFamily;
       root.style.setProperty('--font-base-pt', `${preferences.baseFontPt}pt`);
+      root.style.colorScheme = isDark ? 'dark' : 'light';
       const themeMeta = document.querySelector('meta[name="theme-color"]');
       if (themeMeta) {
-        themeMeta.setAttribute('content', isDark ? '#191919' : '#ffffff');
+        themeMeta.setAttribute('content', themeColorByResolvedTheme[resolvedTheme] || themeColorByResolvedTheme.day);
       }
     })();
   </script>

@@ -50,7 +50,7 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
 
     return (
         <div ref={toolbarRef} className="sticky top-0 z-20 bg-[var(--bg-main)]/95 backdrop-blur-sm mb-2 h-14 flex items-center">
-            <div className="w-full flex items-center justify-between bg-[var(--bg-card)] p-2 rounded-lg border border-[var(--border-main)] shadow-sm animate-in fade-in slide-in-from-top-1 duration-200 transition-all">
+            <div className="w-full flex items-center justify-between bg-[var(--bg-card)] p-2 rounded-lg border border-[var(--border-main)] shadow-[var(--shadow-toolbar)] animate-in fade-in slide-in-from-top-1 duration-200 transition-all">
                 <div className="w-full flex items-center justify-between">
                     <div className="flex items-center gap-2 sm:gap-3 pl-1">
                         <button
@@ -85,7 +85,7 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
                             </button>
 
                             {showFolderMenu && (
-                                <div className="absolute top-full right-0 mt-1 w-56 bg-[var(--bg-card)] text-[var(--text-main)] border border-[var(--border-main)] rounded-xl shadow-2xl z-[110] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                                <div className="absolute top-full right-0 mt-1 w-56 bg-[var(--bg-card)] text-[var(--text-main)] border border-[var(--border-main)] rounded-xl shadow-[var(--shadow-popover)] z-[110] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
                                     <div className="p-2 border-b border-[var(--border-main)] bg-[var(--bg-sidebar)]">
                                         {isCreatingFolder ? (
                                             <div className="flex items-center gap-1">
@@ -149,7 +149,7 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
                             </button>
 
                             {showCopyMenu && (
-                                <div className="absolute top-full right-0 mt-1 w-56 bg-[var(--bg-card)] text-[var(--text-main)] border border-[var(--border-main)] rounded-xl shadow-2xl z-[120] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                                <div className="absolute top-full right-0 mt-1 w-56 bg-[var(--bg-card)] text-[var(--text-main)] border border-[var(--border-main)] rounded-xl shadow-[var(--shadow-popover)] z-[120] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
                                     <button
                                         onClick={() => {
                                             void onCopy(false);

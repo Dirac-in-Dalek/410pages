@@ -4,8 +4,15 @@ import {
   normalizeFontPreference,
   type FontPreference,
 } from '../lib/fontRegistry';
+import {
+  DEFAULT_THEME,
+  normalizeThemePreference,
+  resolveThemePreference,
+  type ThemePreference,
+} from '../lib/themeRegistry';
 
-export type ThemePreference = 'system' | 'light' | 'dark';
+export type { FontPreference } from '../lib/fontRegistry';
+export type { ThemePreference } from '../lib/themeRegistry';
 export type TextScalePreference = 'sm' | 'md' | 'lg';
 
 export type UserPreferences = {
@@ -17,8 +24,6 @@ export type UserPreferences = {
 export const PREFERENCES_STORAGE_KEY = 'user-preferences';
 const LEGACY_THEME_STORAGE_KEY = 'theme-preference';
 const LEGACY_DARK_MODE_KEY = 'dark-mode';
-const DARK_THEME_COLOR = '#191919';
-const LIGHT_THEME_COLOR = '#ffffff';
 const DEFAULT_BASE_FONT_PT = 16;
 const MIN_BASE_FONT_PT = 10;
 const MAX_BASE_FONT_PT = 40;
@@ -29,13 +34,10 @@ const LEGACY_TEXT_SCALE_TO_BASE_FONT_PT: Record<TextScalePreference, number> = {
 };
 
 export const DEFAULT_PREFERENCES: UserPreferences = {
-  theme: 'system',
+  theme: DEFAULT_THEME,
   fontFamily: DEFAULT_FONT_ID,
   baseFontPt: DEFAULT_BASE_FONT_PT,
 };
-
-const isThemePreference = (value: unknown): value is ThemePreference =>
-  value === 'system' || value === 'light' || value === 'dark';
 
 const normalizeBaseFontPt = (value: unknown): number => {
   const parsedValue = typeof value === 'number' ? value : Number(value);
@@ -58,7 +60,7 @@ const getBaseFontPtFromLegacyTextScale = (textScale: unknown): number => {
 const normalizePreferences = (value: unknown): UserPreferences => {
   const candidate =
     typeof value === 'object' && value !== null
-      ? value as Partial<UserPreferences> & { textScale?: unknown }
+      ? (value as Partial<UserPreferences> & { textScale?: unknown })
       : {};
   const baseFontPt =
     candidate.baseFontPt !== undefined
@@ -66,17 +68,14 @@ const normalizePreferences = (value: unknown): UserPreferences => {
       : getBaseFontPtFromLegacyTextScale(candidate.textScale);
 
   return {
-    theme: isThemePreference(candidate.theme) ? candidate.theme : DEFAULT_PREFERENCES.theme,
+    theme: normalizeThemePreference(candidate.theme),
     fontFamily: normalizeFontPreference(candidate.fontFamily),
     baseFontPt,
   };
 };
 
-const getSystemTheme = (): 'light' | 'dark' =>
-  window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-
-const resolveTheme = (theme: ThemePreference): 'light' | 'dark' =>
-  theme === 'system' ? getSystemTheme() : theme;
+const getSystemThemeIsDark = (): boolean =>
+  window.matchMedia('(prefers-color-scheme: dark)').matches;
 
 const safeGetStorageItem = (key: string) => {
   try {
@@ -114,8 +113,8 @@ export const readStoredPreferences = (): UserPreferences => {
   }
 
   const legacyTheme = safeGetStorageItem(LEGACY_THEME_STORAGE_KEY);
-  if (isThemePreference(legacyTheme)) {
-    return { ...DEFAULT_PREFERENCES, theme: legacyTheme };
+  if (legacyTheme !== null) {
+    return { ...DEFAULT_PREFERENCES, theme: normalizeThemePreference(legacyTheme) };
   }
 
   const legacyDarkMode = safeGetStorageItem(LEGACY_DARK_MODE_KEY);
@@ -123,7 +122,7 @@ export const readStoredPreferences = (): UserPreferences => {
     try {
       return {
         ...DEFAULT_PREFERENCES,
-        theme: JSON.parse(legacyDarkMode) ? 'dark' : 'light',
+        theme: JSON.parse(legacyDarkMode) ? 'night' : 'day',
       };
     } catch {
       safeRemoveStorageItem(LEGACY_DARK_MODE_KEY);
@@ -135,15 +134,18 @@ export const readStoredPreferences = (): UserPreferences => {
 
 export const applyPreferencesToDocument = (preferences: UserPreferences) => {
   const root = document.documentElement;
-  const effectiveTheme = resolveTheme(preferences.theme);
+  const prefersDark = getSystemThemeIsDark();
+  const { resolvedTheme, isDark, themeColor } = resolveThemePreference(preferences.theme, prefersDark);
   const themeColorMeta = document.querySelector('meta[name="theme-color"]');
 
-  root.classList.toggle('dark', effectiveTheme === 'dark');
+  root.classList.toggle('dark', isDark);
+  root.dataset.theme = resolvedTheme;
   root.dataset.font = preferences.fontFamily;
   root.style.setProperty('--font-base-pt', `${preferences.baseFontPt}pt`);
+  root.style.colorScheme = isDark ? 'dark' : 'light';
 
   if (themeColorMeta) {
-    themeColorMeta.setAttribute('content', effectiveTheme === 'dark' ? DARK_THEME_COLOR : LIGHT_THEME_COLOR);
+    themeColorMeta.setAttribute('content', themeColor);
   }
 };
 
@@ -158,7 +160,7 @@ export const useUserPreferences = () => {
   }, [preferences]);
 
   useEffect(() => {
-    if (preferences.theme !== 'system') return;
+    if (preferences.theme !== 'auto') return;
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = () => applyPreferencesToDocument(preferences);
@@ -193,7 +195,7 @@ export const useUserPreferences = () => {
         setPreferences((current) => ({ ...current, theme })),
       setFontFamily: (fontFamily: FontPreference) =>
         setPreferences((current) => ({ ...current, fontFamily: normalizeFontPreference(fontFamily) })),
-      isDarkMode: resolveTheme(preferences.theme) === 'dark',
+      isDarkMode: resolveThemePreference(preferences.theme, getSystemThemeIsDark()).isDark,
     }),
     [preferences]
   );

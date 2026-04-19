@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ThemePreference } from '../../lib/themeRegistry';
 
 vi.mock('../../lib/avatarCrop', async () => {
   const actual = await vi.importActual<typeof import('../../lib/avatarCrop')>('../../lib/avatarCrop');
@@ -20,7 +21,7 @@ const baseProps = {
   displayName: '생활습관',
   avatarUrl: null,
   preferences: {
-    theme: 'system' as const,
+    theme: 'auto' as ThemePreference,
     fontFamily: 'pretendard' as const,
     baseFontPt: 16,
   },
@@ -103,13 +104,30 @@ describe('SettingsPanel', () => {
     expect(baseProps.onClose).toHaveBeenCalled();
   });
 
-  it('sends live theme changes', async () => {
+  it('keeps the theme selector collapsed until opened and sends live theme changes', async () => {
     const user = userEvent.setup();
     render(<SettingsPanel {...baseProps} />);
 
-    await user.click(screen.getByRole('button', { name: '다크' }));
+    const themeLabel = screen.getByText('테마');
+    const trigger = screen.getByRole('button', { name: '현재 테마: Auto' });
 
-    expect(baseProps.onThemeChange).toHaveBeenCalledWith('dark');
+    expect(themeLabel.parentElement?.contains(trigger)).toBe(true);
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(screen.queryByRole('listbox', { name: '테마 선택' })).toBeNull();
+
+    await user.click(trigger);
+
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByRole('option', { name: 'Day' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Night' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Warm Paper' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Soft Slate' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Terminal Green' })).toBeTruthy();
+
+    await user.click(screen.getByRole('option', { name: 'Night' }));
+
+    expect(baseProps.onThemeChange).toHaveBeenCalledWith('night');
+    expect(screen.queryByRole('listbox', { name: '테마 선택' })).toBeNull();
   });
 
   it('renders a numeric font-size slider with the current value', () => {
@@ -136,8 +154,10 @@ describe('SettingsPanel', () => {
       />
     );
 
+    const fontLabel = screen.getByText('서체');
     const trigger = screen.getByRole('button', { name: '현재 서체: 나눔고딕' });
 
+    expect(fontLabel.parentElement?.parentElement?.contains(trigger)).toBe(true);
     expect(trigger.getAttribute('aria-expanded')).toBe('false');
     expect(screen.queryByRole('button', { name: '나눔명조' })).toBeNull();
 
@@ -163,7 +183,7 @@ describe('SettingsPanel', () => {
     expect(screen.getByText('사진 변경').closest('label')?.className).toContain('type-label-bounded');
     expect(screen.getByRole('textbox', { name: '이름' }).className).toContain('type-body-bounded');
     expect(screen.getByRole('button', { name: '현재 서체: 프리텐다드' }).className).toContain('type-label-bounded');
-    expect(screen.getByText('라이트').className).toContain('type-label-bounded');
+    expect(screen.getByRole('button', { name: '현재 테마: Auto' }).className).toContain('type-label-bounded');
     expect(screen.getByText('로그아웃').className).toContain('type-label-bounded');
   });
 

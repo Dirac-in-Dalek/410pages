@@ -174,7 +174,7 @@ export const useArchiveFilter = (citations: Citation[], projects: Project[], use
 
         const sorted = sortByIndexThenLabel(Array.from(map.values()));
         if (authorOrder.length === 0) return sorted.map(row => row.id);
-        const rank = new Map(authorOrder.map((id, index) => [id, index]));
+        const rank = new Map<string, number>(authorOrder.map((id, index) => [id, index] as const));
         return [...sorted]
             .sort((a, b) => {
                 const aRank = rank.get(a.id);
@@ -205,7 +205,7 @@ export const useArchiveFilter = (citations: Citation[], projects: Project[], use
         const sorted = sortByIndexThenLabel(Array.from(map.values()));
         const order = bookOrderByAuthor[authorId] || [];
         if (order.length === 0) return sorted.map(row => row.id);
-        const rank = new Map(order.map((id, index) => [id, index]));
+        const rank = new Map<string, number>(order.map((id, index) => [id, index] as const));
         return [...sorted]
             .sort((a, b) => {
                 const aRank = rank.get(a.id);

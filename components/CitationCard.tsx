@@ -6,6 +6,7 @@ interface CitationCardProps {
   citation: Citation;
   index: number;
   username: string;
+  selectedFilter?: { type: 'author' | 'book'; value: string; author?: string } | null;
   projectNames?: string[];
   isSelected: boolean;
   onToggleSelect: (id: string, selected: boolean) => void;
@@ -19,6 +20,7 @@ interface CitationCardProps {
 export const CitationCard: React.FC<CitationCardProps> = ({
   citation,
   username,
+  selectedFilter = null,
   projectNames = [],
   isSelected,
   onToggleSelect,
@@ -50,6 +52,18 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
   const editNoteTextareaRef = useRef<HTMLTextAreaElement>(null);
   const newNoteTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const effectiveAuthor = citation.isSelf ? username : citation.author;
+  const normalizedAuthorFilter = selectedFilter?.type === 'author' ? selectedFilter.value.trim().toLocaleLowerCase() : null;
+  const normalizedBookFilter = selectedFilter?.type === 'book' ? selectedFilter.value.trim().toLocaleLowerCase() : null;
+  const normalizedCitationAuthor = effectiveAuthor.trim().toLocaleLowerCase();
+  const normalizedCitationBook = citation.book.trim().toLocaleLowerCase();
+  const isAuthorScoped = normalizedAuthorFilter !== null && normalizedAuthorFilter === normalizedCitationAuthor;
+  const isBookScoped =
+    normalizedBookFilter !== null &&
+    normalizedBookFilter === normalizedCitationBook &&
+    (!selectedFilter?.author || selectedFilter.author.trim().toLocaleLowerCase() === normalizedCitationAuthor);
+  const shouldHideAuthor = isAuthorScoped || isBookScoped;
+  const shouldHideBook = isBookScoped;
 
   // Auto-expand helper
   const adjustHeight = (ref: React.RefObject<HTMLTextAreaElement>) => {
@@ -299,14 +313,62 @@ export const CitationCard: React.FC<CitationCardProps> = ({
     return segments;
   };
 
+  const metadataChips = [
+    !shouldHideAuthor && (isSelf ? (
+      <span
+        key="author"
+        className="inline-flex items-center rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-2.5 py-1 text-[var(--accent-strong)]"
+      >
+        <User size={10} className="mr-1" />
+        {username}
+      </span>
+    ) : (
+      <span
+        key="author"
+        className="inline-flex items-center rounded-full border border-[var(--border-main)] bg-[var(--sidebar-active)] px-2.5 py-1 text-[var(--accent-strong)] dark:text-[var(--accent)]"
+      >
+        {citation.author}
+      </span>
+    )),
+    !shouldHideBook && citation.book ? (
+      <span
+        key="book"
+        className="inline-flex items-center rounded-full border border-[var(--border-main)] bg-[var(--bg-sidebar)] px-2.5 py-1 text-[var(--text-muted)]"
+      >
+        {citation.book}
+      </span>
+    ) : null,
+    citation.page ? (
+      <span
+        key="page"
+        className="inline-flex items-center rounded-full border border-[var(--border-main)] bg-[var(--bg-input)] px-2.5 py-1 font-mono text-[var(--text-muted)]"
+      >
+        p.{citation.page}
+      </span>
+    ) : null,
+  ].filter(Boolean);
+
+  const projectChips = projectNames.map((name) => (
+    <span
+      key={name}
+      className="inline-flex items-center rounded-full border border-[var(--border-main)] bg-[var(--sidebar-active)] px-2.5 py-1 text-[var(--text-secondary)]"
+    >
+      <Folder size={10} className="mr-1 opacity-80" />
+      {name}
+    </span>
+  ));
+  const hasProjectChips = projectChips.length > 0;
+
+  const notesButtonLabel = `Notes ${citation.notes.length}`;
+
   return (
-    <div
-      ref={cardRef}
-      onDoubleClick={handleCardDoubleClick}
-      className={`
+      <div
+        ref={cardRef}
+        onDoubleClick={handleCardDoubleClick}
+        className={`
         group relative rounded-lg border mb-4 transition-all duration-200 flex items-start gap-2
-        ${isSelected ? 'bg-[var(--accent-soft)] border-[var(--accent-border)]' : 'bg-[var(--bg-card)] border-[var(--border-main)] hover:shadow-md'}
-        ${isEditing ? 'cursor-default ring-2 ring-[var(--accent-ring)] border-transparent shadow-lg bg-[var(--bg-card)]' : ''}
+        ${isSelected ? 'bg-[var(--accent-soft)] border-[var(--accent-border)] shadow-[var(--shadow-card)]' : 'bg-[var(--bg-card)] border-[var(--border-main)] shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)]'}
+        ${isEditing ? 'cursor-default ring-2 ring-[var(--accent-ring)] border-transparent shadow-[var(--shadow-card-hover)] bg-[var(--bg-card)]' : ''}
         ${isSelf && !isSelected ? 'border-[var(--accent-border)]/60' : ''}
       `}
     >
@@ -323,7 +385,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
       )}
 
       <div className="flex-1 min-w-0">
-        <div className="p-5">
+        <div className="p-4 md:p-5">
           {isEditing ? (
             <div className="space-y-4">
               <textarea
@@ -384,57 +446,38 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsExpanded((prev) => !prev)}
-                  className="type-label-bounded mb-4 text-[var(--text-muted)] underline-offset-2 hover:text-[var(--text-main)] hover:underline"
+                  className="type-label-bounded inline-flex items-center gap-1 text-[var(--text-muted)] underline-offset-2 hover:text-[var(--text-main)] hover:underline"
                   aria-label={isExpanded ? 'Less' : 'More'}
                 >
                   {isExpanded ? 'Less' : 'More'}
                 </button>
               )}
 
-              {/* Metadata Tags */}
-              <div className="type-label-bounded flex flex-wrap items-center gap-2 font-sans mt-4">
-                {/* Author Tag */}
-                {isSelf ? (
-                  <span className="px-2 py-1 bg-[var(--accent-soft)] text-[var(--accent-strong)] rounded-md border border-[var(--accent-border)] font-medium flex items-center">
-                    <User size={10} className="mr-1" /> {username}
-                  </span>
-                ) : (
-                  <span className="px-2 py-1 bg-[var(--sidebar-active)] text-[var(--accent-strong)] dark:text-[var(--accent)] rounded-md border border-[var(--border-main)] font-medium">
-                    {citation.author}
-                  </span>
-                )}
+              <div className="mt-4 border-t border-[var(--border-main)]/70 pt-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  {metadataChips}
 
-                {/* Book & Page Tags (Always show if exist) */}
-                {citation.book && (
-                  <span className="px-2 py-1 bg-[var(--bg-sidebar)] text-[var(--text-muted)] rounded-md border border-[var(--border-main)]">
-                    {citation.book}
-                  </span>
-                )}
-                {citation.page && (
-                  <span className="px-2 py-1 bg-[var(--bg-input)] text-[var(--text-muted)] rounded-md border border-[var(--border-main)] font-mono">
-                    p.{citation.page}
-                  </span>
-                )}
+                  <button
+                    onClick={() => setIsNotesExpanded(!isNotesExpanded)}
+                    className={`
+                      ml-auto inline-flex items-center gap-1 rounded-full border px-2.5 py-1 transition-colors
+                      ${citation.notes.length > 0
+                        ? 'border-[var(--border-main)] bg-[var(--sidebar-active)] text-[var(--accent)] shadow-sm'
+                        : 'border-[var(--border-main)] bg-[var(--bg-card)] text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]'}
+                    `}
+                    aria-label={notesButtonLabel}
+                  >
+                    <MessageSquare size={12} />
+                    <span className="font-medium">{citation.notes.length}</span>
+                    {isNotesExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                  </button>
+                </div>
 
-                {/* Project Tags */}
-                {projectNames.map(name => (
-                  <span key={name} className="px-2 py-1 bg-[var(--sidebar-active)] text-[var(--accent)] dark:text-[var(--accent)] rounded-md border border-[var(--border-main)] flex items-center gap-1 font-medium italic">
-                    <Folder size={10} /> {name}
-                  </span>
-                ))}
-
-                {/* Notes Toggle */}
-                <button
-                  onClick={() => setIsNotesExpanded(!isNotesExpanded)}
-                  className={`
-                  ml-auto flex items-center gap-1 px-2 py-1 rounded-full transition-colors
-                  ${citation.notes.length > 0 ? 'text-[var(--accent)] dark:text-[var(--accent)] bg-[var(--sidebar-active)] border border-[var(--border-main)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}
-                `}
-                >
-                  <MessageSquare size={12} />
-                  <span className="font-medium">{citation.notes.length}</span>
-                  {isNotesExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                </button>
+                {hasProjectChips ? (
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    {projectChips}
+                  </div>
+                ) : null}
               </div>
 
 

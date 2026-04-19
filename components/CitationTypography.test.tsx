@@ -330,4 +330,48 @@ describe('Citation typography', () => {
     expect(screen.getByRole('button', { name: /less/i })).not.toBeNull();
     expect(screen.getByTestId('citation-text').className).not.toContain('line-clamp-2');
   });
+
+  it('hides the current author chip when the archive is already scoped to that author', () => {
+    render(
+      <CitationCard
+        citation={citation}
+        index={0}
+        username="Dalek"
+        selectedFilter={{ type: 'author', value: 'Charlie Munger' }}
+        isSelected={false}
+        onToggleSelect={vi.fn()}
+        onAddNote={vi.fn()}
+        onUpdateNote={vi.fn()}
+        onDeleteNote={vi.fn()}
+        onDelete={vi.fn()}
+        onUpdate={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByText('Charlie Munger')).toBeNull();
+    expect(screen.getByText("Poor Charlie's Almanack")).not.toBeNull();
+    expect(screen.getByText('p.147')).not.toBeNull();
+  });
+
+  it('hides both author and book chips when the archive is already scoped to that book', () => {
+    render(
+      <CitationCard
+        citation={citation}
+        index={0}
+        username="Dalek"
+        selectedFilter={{ type: 'book', value: "Poor Charlie's Almanack", author: 'Charlie Munger' }}
+        isSelected={false}
+        onToggleSelect={vi.fn()}
+        onAddNote={vi.fn()}
+        onUpdateNote={vi.fn()}
+        onDeleteNote={vi.fn()}
+        onDelete={vi.fn()}
+        onUpdate={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByText('Charlie Munger')).toBeNull();
+    expect(screen.queryByText("Poor Charlie's Almanack")).toBeNull();
+    expect(screen.getByText('p.147')).not.toBeNull();
+  });
 });

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, type Dispatch, type SetStateAction } from 'react';
 import { Citation, Project } from '../types';
 import { api } from '../lib/api';
 import { formatCitationCopyText, writeTextToClipboard } from '../lib/citationCopy';
@@ -7,8 +7,8 @@ export const useBulkSelection = (
     filteredCitations: Citation[],
     session: any,
     username: string,
-    setCitations: React.Dispatch<React.SetStateAction<Citation[]>>,
-    setProjects: React.Dispatch<React.SetStateAction<Project[]>>
+    setCitations: Dispatch<SetStateAction<Citation[]>>,
+    setProjects: Dispatch<SetStateAction<Project[]>>
 ) => {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isCopying, setIsCopying] = useState(false);

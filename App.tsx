@@ -270,6 +270,7 @@ const App: React.FC = () => {
             searchTerm={searchTerm}
             selectedIds={selectedIds}
             chapterBlocks={selectedBookId ? chapterBlocksByBook[selectedBookId] || [] : []}
+            selectedFilter={filter}
             isBookView={isBookView}
             sortField={sortField}
             dateDirection={dateDirection}

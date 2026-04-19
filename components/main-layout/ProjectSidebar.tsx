@@ -320,12 +320,12 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
   return (
     <aside
       style={{ width: `${width}px` }}
-      className="flex-shrink-0 border-r border-[var(--border-main)] bg-[var(--bg-sidebar)] flex flex-col z-20 shadow-sm transition-colors duration-200 relative"
+      className="flex-shrink-0 border-r border-[var(--border-main)] bg-[var(--bg-sidebar)] flex flex-col z-20 shadow-[var(--shadow-sidebar)] transition-colors duration-200 relative"
     >
       {contextMenu && (
         <div
           ref={contextMenuRef}
-          className="fixed z-50 bg-[var(--bg-card)] border border-[var(--border-main)] shadow-xl rounded-md py-1 w-32"
+          className="fixed z-50 bg-[var(--bg-card)] border border-[var(--border-main)] shadow-[var(--shadow-popover)] rounded-md py-1 w-32"
           style={{ top: contextMenu.y, left: contextMenu.x }}
         >
           <button

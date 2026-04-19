@@ -1,9 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import type {
-  FontPreference,
-  ThemePreference,
-  UserPreferences,
-} from '../../hooks/useUserPreferences';
+import type { FontPreference, UserPreferences } from '../../hooks/useUserPreferences';
+import type { ThemePreference } from '../../lib/themeRegistry';
 import { AvatarCropModal } from './AvatarCropModal';
 import { AppearanceSettingsSection } from './AppearanceSettingsSection';
 import { TextSettingsSection } from './TextSettingsSection';
@@ -123,7 +120,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         aria-label="설정"
         aria-modal="true"
         role="dialog"
-        className={`fixed z-50 bg-[var(--bg-card)] border-[var(--border-main)] shadow-2xl ${panelClasses}`}
+        className={`fixed z-50 bg-[var(--bg-card)] border-[var(--border-main)] shadow-[var(--shadow-panel)] ${panelClasses}`}
       >
         <div className="flex h-full flex-col overflow-hidden">
           <header className="border-b border-[var(--border-main)] bg-[var(--bg-card)] px-6 py-5">

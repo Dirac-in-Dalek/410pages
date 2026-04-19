@@ -297,7 +297,7 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
         aria-label="프로필 사진 편집"
         aria-modal="true"
         role="dialog"
-        className="w-full max-w-[520px] rounded-[28px] border border-[var(--border-main)] bg-[var(--bg-card)] p-6 shadow-2xl"
+        className="w-full max-w-[520px] rounded-[28px] border border-[var(--border-main)] bg-[var(--bg-card)] p-6 shadow-[var(--shadow-panel)]"
       >
         <div className="flex items-start justify-between gap-4">
           <div>

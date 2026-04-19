@@ -73,6 +73,7 @@ const installThrowingStorageStub = () => {
 };
 
 const resetDom = () => {
+  document.head.innerHTML = '<meta name="theme-color" content="#ffffff" />';
   document.documentElement.className = '';
   document.documentElement.removeAttribute('data-font');
   document.documentElement.style.removeProperty('--text-scale');
@@ -104,14 +105,33 @@ describe('useUserPreferences', () => {
   it('applies dark theme, font, and base font size to the root document', () => {
     applyPreferencesToDocument({
       ...DEFAULT_PREFERENCES,
-      theme: 'dark',
+      theme: 'night',
       fontFamily: 'serif',
       baseFontPt: 22,
     });
 
     expect(document.documentElement.classList.contains('dark')).toBe(true);
+    expect(document.documentElement.dataset.theme).toBe('night');
     expect(document.documentElement.dataset.font).toBe('serif');
     expect(document.documentElement.style.getPropertyValue('--font-base-pt')).toBe('22pt');
+    expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#171717');
+  });
+
+  it('resolves auto theme from the system color scheme', () => {
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      writable: true,
+      value: createMatchMediaStub(true),
+    });
+
+    applyPreferencesToDocument({
+      ...DEFAULT_PREFERENCES,
+      theme: 'auto',
+    });
+
+    expect(document.documentElement.classList.contains('dark')).toBe(true);
+    expect(document.documentElement.dataset.theme).toBe('night');
+    expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#171717');
   });
 
   it('migrates legacy text scale preferences to numeric base font sizes', () => {
@@ -121,7 +141,7 @@ describe('useUserPreferences', () => {
     );
 
     expect(readStoredPreferences()).toEqual({
-      theme: 'light',
+      theme: 'day',
       fontFamily: 'serif',
       baseFontPt: 18,
     });
@@ -130,7 +150,7 @@ describe('useUserPreferences', () => {
   it.each(FONT_IDS)('accepts known registry font id %s', (fontFamily) => {
     window.localStorage.setItem(
       PREFERENCES_STORAGE_KEY,
-      JSON.stringify({ theme: 'system', fontFamily, baseFontPt: 16 })
+      JSON.stringify({ theme: 'auto', fontFamily, baseFontPt: 16 })
     );
 
     expect(readStoredPreferences()).toMatchObject({
@@ -142,7 +162,7 @@ describe('useUserPreferences', () => {
   it('falls back to the default font when the stored id is unknown', () => {
     window.localStorage.setItem(
       PREFERENCES_STORAGE_KEY,
-      JSON.stringify({ theme: 'system', fontFamily: 'unknown-font', baseFontPt: 16 })
+      JSON.stringify({ theme: 'auto', fontFamily: 'unknown-font', baseFontPt: 16 })
     );
 
     expect(readStoredPreferences()).toMatchObject({
@@ -155,13 +175,13 @@ describe('useUserPreferences', () => {
     const { result } = renderHook(() => useUserPreferences());
 
     act(() => {
-      result.current.setTheme('light');
+      result.current.setTheme('day');
       result.current.setFontFamily('serif');
       result.current.setBaseFontPt(23.7);
     });
 
     expect(JSON.parse(window.localStorage.getItem(PREFERENCES_STORAGE_KEY) || '{}')).toMatchObject({
-      theme: 'light',
+      theme: 'day',
       fontFamily: 'serif',
       baseFontPt: 24,
     });
@@ -201,12 +221,13 @@ describe('useUserPreferences', () => {
     const { result } = renderHook(() => useUserPreferences());
 
     act(() => {
-      result.current.setTheme('dark');
+      result.current.setTheme('night');
       result.current.setFontFamily('serif');
       result.current.setBaseFontPt(40.2);
     });
 
     expect(document.documentElement.classList.contains('dark')).toBe(true);
+    expect(document.documentElement.dataset.theme).toBe('night');
     expect(document.documentElement.dataset.font).toBe('serif');
     expect(document.documentElement.style.getPropertyValue('--font-base-pt')).toBe('40pt');
   });

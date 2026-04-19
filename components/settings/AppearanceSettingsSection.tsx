@@ -1,55 +1,120 @@
-import React from 'react';
-import type { ThemePreference } from '../../hooks/useUserPreferences';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { getThemeOption, THEME_OPTIONS, type ThemePreference } from '../../lib/themeRegistry';
 
 type AppearanceSettingsSectionProps = {
   theme: ThemePreference;
   onThemeChange: (value: ThemePreference) => void;
 };
 
-const themeButtonClass = (isActive: boolean) =>
-  `type-label-bounded rounded-xl border px-3 py-2 transition-colors ${
+const themeOptionClass = (isActive: boolean) =>
+  `flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left transition-colors ${
     isActive
-      ? 'border-transparent bg-[var(--accent-active)] text-[var(--accent-active-text)]'
-      : 'border-[var(--border-main)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]'
+      ? 'bg-[var(--accent-soft)] text-[var(--text-main)]'
+      : 'text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]'
   }`;
 
 export const AppearanceSettingsSection: React.FC<AppearanceSettingsSectionProps> = ({
   theme,
   onThemeChange,
-}) => (
-  <section>
-    <h3 className="type-section mb-3 font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
-      화면
-    </h3>
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const listboxId = useId();
+  const selectedOption = useMemo(() => getThemeOption(theme) ?? THEME_OPTIONS[0], [theme]);
 
-    <div className="rounded-2xl border border-[var(--border-main)] bg-[var(--bg-main)] p-4 shadow-sm">
-      <p className="type-label mb-2 font-medium text-[var(--text-main)]">테마</p>
-      <div className="grid grid-cols-3 gap-2">
-        <button
-          type="button"
-          aria-pressed={theme === 'light'}
-          className={themeButtonClass(theme === 'light')}
-          onClick={() => onThemeChange('light')}
-        >
-          라이트
-        </button>
-        <button
-          type="button"
-          aria-pressed={theme === 'dark'}
-          className={themeButtonClass(theme === 'dark')}
-          onClick={() => onThemeChange('dark')}
-        >
-          다크
-        </button>
-        <button
-          type="button"
-          aria-pressed={theme === 'system'}
-          className={themeButtonClass(theme === 'system')}
-          onClick={() => onThemeChange('system')}
-        >
-          시스템
-        </button>
+  useEffect(() => {
+    if (!isOpen) {
+      return undefined;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (wrapperRef.current?.contains(event.target as Node)) {
+        return;
+      }
+
+      setIsOpen(false);
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
+
+  return (
+    <section>
+      <h3 className="type-section mb-3 font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+        화면
+      </h3>
+
+      <div className="rounded-2xl border border-[var(--border-main)] bg-[var(--bg-sidebar)] p-4 shadow-[var(--shadow-card)]">
+        <div className="flex items-center justify-between gap-4">
+          <p className="type-label min-w-0 font-medium text-[var(--text-main)]">테마</p>
+
+          <div ref={wrapperRef} className="relative w-full max-w-[18rem]">
+            <button
+              type="button"
+              aria-haspopup="listbox"
+              aria-expanded={isOpen}
+              aria-controls={listboxId}
+              aria-label={`현재 테마: ${selectedOption.label}`}
+              className="type-label-bounded flex w-full items-center justify-between gap-3 rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] px-4 py-3 text-left font-medium text-[var(--text-main)] shadow-[var(--shadow-card)] transition-colors hover:bg-[var(--sidebar-hover)]"
+              onClick={() => setIsOpen((value) => !value)}
+            >
+              <span className="block min-w-0 truncate">{selectedOption.label}</span>
+              <ChevronDown
+                size={16}
+                aria-hidden="true"
+                className={`shrink-0 text-[var(--text-muted)] transition-transform ${isOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
+
+            {isOpen ? (
+              <div
+                id={listboxId}
+                role="listbox"
+                aria-label="테마 선택"
+                className="absolute right-0 top-[calc(100%+0.5rem)] z-20 w-full rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] p-1 shadow-[var(--shadow-panel)]"
+              >
+                {THEME_OPTIONS.map((option) => {
+                  const isActive = option.id === theme;
+
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      role="option"
+                      aria-selected={isActive}
+                      className={themeOptionClass(isActive)}
+                      onClick={() => {
+                        onThemeChange(option.id);
+                        setIsOpen(false);
+                      }}
+                    >
+                      <span className="truncate">{option.label}</span>
+                      {isActive ? (
+                        <span aria-hidden="true" className="text-[var(--accent)]">
+                          ✓
+                        </span>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
+          </div>
+        </div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};

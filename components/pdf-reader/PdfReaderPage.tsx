@@ -110,7 +110,7 @@ const sanitizePersistedSession = (raw: unknown): PersistedReaderSession | null =
             typeof item.pageIndex === 'number' &&
             Array.isArray(item.rects)
         )
-        .map((item) => ({
+        .map((item): PdfRectHighlight => ({
           ...item,
           kind: item.kind === 'highlight' ? 'highlight' : 'underline'
         }))
@@ -937,7 +937,7 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
       return;
     }
 
-    const targetPages = Array.from(new Set(payload.segments.map((segment) => segment.pageNumber)));
+    const targetPages = Array.from(new Set<number>(payload.segments.map((segment) => segment.pageNumber)));
     let segmentMarks = targetPages
       .map((pageNumber) => {
         const pageNode = pageContainerRefs.current[pageNumber] || null;

@@ -89,7 +89,7 @@ const bulkSelectionState = {
 vi.mock('./hooks/useUserPreferences', () => ({
   useUserPreferences: () => ({
     preferences: {
-      theme: 'system',
+      theme: 'auto',
       fontFamily: 'pretendard',
       baseFontPt: 16,
     },

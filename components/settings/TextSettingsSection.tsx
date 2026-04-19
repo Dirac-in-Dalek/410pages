@@ -60,14 +60,14 @@ export const FontSelectionList: React.FC<FontSelectionListProps> = ({
   }, [isOpen]);
 
   return (
-    <div ref={containerRef} className="space-y-2">
+    <div ref={containerRef} className="relative w-full sm:w-[320px]">
       <button
         type="button"
         aria-label={`현재 서체: ${selectedOption.label}`}
         aria-expanded={isOpen}
         aria-haspopup="listbox"
         aria-controls={listboxId}
-        className="type-label-bounded flex w-full items-center justify-between rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] px-4 py-3 text-left text-[var(--text-main)] transition-colors hover:bg-[var(--sidebar-hover)]"
+        className="type-label-bounded flex w-full items-center justify-between rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] px-4 py-3 text-left text-[var(--text-main)] shadow-[var(--shadow-card)] transition-colors hover:bg-[var(--sidebar-hover)]"
         onClick={() => setIsOpen((current) => !current)}
       >
         <span className="block min-w-0 truncate" style={{ fontFamily: selectedOption.fontFamily }}>
@@ -123,9 +123,11 @@ export const TextSettingsSection: React.FC<TextSettingsSectionProps> = ({
       텍스트
     </h3>
 
-    <div className="rounded-2xl border border-[var(--border-main)] bg-[var(--bg-main)] p-4 shadow-sm">
-      <div className="mb-5">
-        <p className="type-label mb-2 font-medium text-[var(--text-main)]">서체</p>
+    <div className="rounded-2xl border border-[var(--border-main)] bg-[var(--bg-sidebar)] p-4 shadow-[var(--shadow-card)]">
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="type-label font-medium text-[var(--text-main)]">서체</p>
+        </div>
         <FontSelectionList selectedFontFamily={fontFamily} onFontFamilyChange={onFontFamilyChange} />
       </div>
 

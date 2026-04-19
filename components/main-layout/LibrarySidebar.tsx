@@ -138,7 +138,7 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
 
   const hasTreeDragType = (e: React.DragEvent) => {
     const types = Array.from(e.dataTransfer.types || []);
-    return types.some(type => type.toLowerCase() === 'application/x-library-tree-reorder');
+    return types.some((type) => String(type).toLowerCase() === 'application/x-library-tree-reorder');
   };
 
   const parseTreeDragMeta = (e: React.DragEvent): TreeDragMeta | null => {
@@ -604,7 +604,7 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
   return (
     <aside
       style={{ width: `${width}px` }}
-      className="border-l border-[var(--border-main)] bg-[var(--bg-card)] flex flex-col h-full sticky top-0 overflow-hidden transition-colors duration-200 relative"
+      className="border-l border-[var(--border-main)] bg-[var(--bg-card)] flex flex-col h-full sticky top-0 overflow-hidden shadow-[var(--shadow-sidebar)] transition-colors duration-200 relative"
     >
       <div
         onMouseDown={onStartResize}

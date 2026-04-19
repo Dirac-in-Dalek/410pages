@@ -18,6 +18,7 @@ interface CitationListProps {
     loading: boolean;
     searchTerm: string;
     selectedIds: Set<string>;
+    selectedFilter?: { type: 'author' | 'book'; value: string; author?: string } | null;
     onToggleSelect: (id: string, selected: boolean) => void;
     onAddNote: (citationId: string, content: string) => void;
     onUpdateNote: (citationId: string, noteId: string, content: string) => void;
@@ -47,10 +48,11 @@ export const CitationList: React.FC<CitationListProps> = ({
     onDeleteCitation,
     onUpdateCitation,
     chapterBlocks = [],
+    selectedFilter = null,
     isBookView = false,
-    sortField = 'page',
-    dateDirection = 'desc',
-    pageDirection = 'asc',
+    sortField = 'page' as 'date' | 'page',
+    dateDirection = 'desc' as 'asc' | 'desc',
+    pageDirection = 'asc' as 'asc' | 'desc',
     onCreateChapterBlock,
     onDeleteChapterBlock
 }) => {
@@ -128,6 +130,7 @@ export const CitationList: React.FC<CitationListProps> = ({
                                     index={index}
                                     citation={item.citation}
                                     username={username}
+                                    selectedFilter={selectedFilter}
                                     projectNames={citationProjects}
                                     isSelected={selectedIds.has(item.citation.id)}
                                     onToggleSelect={onToggleSelect}
