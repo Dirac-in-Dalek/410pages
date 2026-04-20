@@ -32,24 +32,28 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             ></div>
             <div className="relative bg-[var(--bg-card)] rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 fade-in duration-200">
                 <div className="p-6 pt-8 text-center">
-                    <div className={`mx-auto w-12 h-12 ${type === 'danger' ? 'bg-red-50 dark:bg-red-900/20 text-red-500' : 'bg-[var(--accent-soft)] text-[var(--accent)]'} rounded-full flex items-center justify-center mb-4`}>
+                    <div className={`mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full ${type === 'danger' ? 'bg-red-50 text-red-500 dark:bg-red-900/20' : 'bg-[var(--accent-soft)] text-[var(--accent)]'}`}>
                         {type === 'danger' ? <Trash2 size={24} /> : null}
                     </div>
-                    <h3 className="type-title font-bold text-[var(--text-main)] mb-2">{title}</h3>
-                    <div className="type-body text-[var(--text-muted)]">
+                    <h3 className="ui-title mb-2">{title}</h3>
+                    <div className="ui-body text-[var(--text-muted)]">
                         {message}
                     </div>
                 </div>
                 <div className="flex border-t border-[var(--border-main)]">
                     <button
                         onClick={onCancel}
-                        className="type-label-bounded flex-1 px-4 py-4 font-semibold text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)] transition-colors"
+                        className="ui-btn flex-1 rounded-none border-0 bg-transparent text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]"
                     >
                         {cancelText}
                     </button>
                     <button
                         onClick={onConfirm}
-                        className={`type-label-bounded flex-1 px-4 py-4 font-semibold text-white ${type === 'danger' ? 'bg-red-500 hover:bg-red-600' : 'bg-[var(--accent)] hover:bg-[var(--accent-strong)]'} transition-colors`}
+                        className={`ui-btn flex-1 rounded-none border-0 text-white ${
+                            type === 'danger'
+                                ? 'bg-red-500 hover:bg-red-600'
+                                : 'bg-[var(--accent)] hover:bg-[var(--accent-strong)]'
+                        }`}
                     >
                         {confirmText}
                     </button>

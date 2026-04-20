@@ -11,7 +11,7 @@ interface FilterState {
 type SortField = 'date' | 'page';
 type SortDirection = 'asc' | 'desc';
 
-const DEFAULT_ARCHIVE_TITLE = 'All Citations';
+const DEFAULT_ARCHIVE_TITLE = 'Dashboard';
 
 const getPageNumber = (citation: Citation): number | undefined => {
     if (typeof citation.pageSort === 'number') return citation.pageSort;

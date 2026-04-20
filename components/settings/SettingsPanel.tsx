@@ -125,13 +125,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         <div className="flex h-full flex-col overflow-hidden">
           <header className="border-b border-[var(--border-main)] bg-[var(--bg-card)] px-5 py-4.5">
             <div className="flex items-center justify-between gap-4">
-              <h2 className="type-display-bounded font-semibold tracking-[-0.02em] text-[var(--text-main)]">설정</h2>
+              <h2 className="ui-title">설정</h2>
               <button
                 type="button"
                 aria-label="닫기"
                 onClick={onClose}
                 {...dismissIntentProps}
-                className="rounded-full p-2 text-[var(--text-muted)] transition-colors hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]"
+                className="ui-btn ui-btn-icon ui-btn--ghost text-[var(--text-muted)] hover:text-[var(--text-main)]"
               >
                 <span aria-hidden="true" className="block text-lg leading-none">
                   ×
@@ -140,7 +140,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             </div>
 
             <div className="mt-5 flex items-center gap-4">
-              <div className="type-title-bounded flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--accent-soft)] font-semibold text-[var(--accent)]">
+              <div className="ui-action flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--accent-soft)] text-[var(--accent)]">
                 {avatarUrl ? (
                   <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
                 ) : (
@@ -151,7 +151,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               <div className="min-w-0 flex-1">
                 <div className="mb-3 flex items-center gap-2">
                   <label
-                    className={`type-label-bounded rounded-lg border border-[var(--border-main)] bg-[var(--bg-card)] px-3 py-1.5 font-medium text-[var(--text-main)] transition-colors ${
+                    className={`ui-btn ui-btn--ghost ${
                       isSavingAvatar ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-[var(--sidebar-hover)]'
                     }`}
                   >
@@ -174,12 +174,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     />
                   </label>
                   {avatarError ? (
-                    <p className="type-body-muted text-red-600">{avatarError}</p>
+                    <p className="ui-body text-red-600">{avatarError}</p>
                   ) : null}
                 </div>
 
-                <label className="type-label block font-medium text-[var(--text-main)]">
-                  이름
+                <label className="block">
+                  <span className="ui-label">이름</span>
                   <input
                     value={displayName}
                     onChange={(event) => onDisplayNameChange(event.target.value)}
@@ -193,12 +193,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                       event.currentTarget.blur();
                     }}
                     aria-label="이름"
-                    className="type-body-bounded mt-2 w-full rounded-lg border border-[var(--border-main)] bg-[var(--bg-input)] px-3 py-2 outline-none transition-colors focus:border-[var(--accent-border)] focus:ring-2 focus:ring-[var(--accent-ring)]"
+                    className="ui-body mt-2 w-full rounded-lg border border-[var(--border-main)] bg-[var(--bg-input)] px-3 py-2 outline-none transition-colors focus:border-[var(--accent-border)] focus:ring-2 focus:ring-[var(--accent-ring)]"
                   />
                 </label>
 
                 {displayNameError ? (
-                  <p className="type-body-muted mt-2 text-red-600">{displayNameError}</p>
+                  <p className="ui-body mt-2 text-red-600">{displayNameError}</p>
                 ) : null}
               </div>
             </div>
@@ -224,7 +224,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 type="button"
                 onClick={onSignOut}
                 {...dismissIntentProps}
-                className="type-label-bounded w-full rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] px-4 py-2.5 font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--sidebar-hover)] hover:text-red-500"
+                className="ui-btn w-full justify-center text-[var(--text-secondary)] hover:text-red-500"
               >
                 로그아웃
               </button>

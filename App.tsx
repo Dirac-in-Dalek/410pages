@@ -316,7 +316,7 @@ const App: React.FC = () => {
     return (
       <>
         <MobileLayout
-          title={viewTitle}
+          title="410pages"
           projects={projects}
           selectedProjectId={selectedProjectId}
           onProjectSelect={handleProjectSelect}

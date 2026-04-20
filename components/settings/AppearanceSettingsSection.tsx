@@ -7,12 +7,7 @@ type AppearanceSettingsSectionProps = {
   onThemeChange: (value: ThemePreference) => void;
 };
 
-const themeOptionClass = (isActive: boolean) =>
-  `flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left transition-colors ${
-    isActive
-      ? 'bg-[var(--accent-soft)] text-[var(--text-main)]'
-      : 'text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]'
-  }`;
+const themeOptionClass = () => 'ui-btn ui-btn-row ui-choice px-3 py-2';
 
 export const AppearanceSettingsSection: React.FC<AppearanceSettingsSectionProps> = ({
   theme,
@@ -53,13 +48,13 @@ export const AppearanceSettingsSection: React.FC<AppearanceSettingsSectionProps>
 
   return (
     <section>
-      <h3 className="type-section mb-3 font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+      <h3 className="ui-label mb-3 font-semibold text-[var(--text-muted)]">
         화면
       </h3>
 
       <div className="rounded-2xl border border-[var(--border-main)] bg-[var(--bg-sidebar)] p-4 shadow-[var(--shadow-card)]">
         <div className="flex items-center justify-between gap-4">
-          <p className="type-label min-w-0 font-medium text-[var(--text-main)]">테마</p>
+          <p className="ui-label min-w-0">테마</p>
 
           <div ref={wrapperRef} className="relative w-full max-w-[18rem]">
             <button
@@ -68,7 +63,7 @@ export const AppearanceSettingsSection: React.FC<AppearanceSettingsSectionProps>
               aria-expanded={isOpen}
               aria-controls={listboxId}
               aria-label={`현재 테마: ${selectedOption.label}`}
-              className="type-label-bounded flex w-full items-center justify-between gap-3 rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] px-4 py-3 text-left font-medium text-[var(--text-main)] shadow-[var(--shadow-card)] transition-colors hover:bg-[var(--sidebar-hover)]"
+              className="ui-btn ui-btn-row px-4 py-3 shadow-[var(--shadow-card)]"
               onClick={() => setIsOpen((value) => !value)}
             >
               <span className="block min-w-0 truncate">{selectedOption.label}</span>
@@ -95,7 +90,8 @@ export const AppearanceSettingsSection: React.FC<AppearanceSettingsSectionProps>
                       type="button"
                       role="option"
                       aria-selected={isActive}
-                      className={themeOptionClass(isActive)}
+                      data-active={isActive ? 'true' : undefined}
+                      className={themeOptionClass()}
                       onClick={() => {
                         onThemeChange(option.id);
                         setIsOpen(false);

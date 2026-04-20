@@ -162,15 +162,15 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
             }
           }}
           placeholder={placeholder}
-          className="type-body w-full placeholder:text-[var(--text-muted)] text-[var(--text-main)] border-none resize-none focus:ring-0 bg-transparent p-0 min-h-[72px] overflow-y-auto"
+          className="type-body-bounded w-full placeholder:text-[var(--text-muted)] text-[var(--text-main)] border-none resize-none focus:ring-0 bg-transparent p-0 min-h-[60px] overflow-y-auto"
         />
       </div>
 
       {/* Metadata Bar */}
-      <div className="bg-[var(--bg-sidebar)] rounded-b-lg border-t border-[var(--border-main)] p-1.5 flex flex-wrap gap-2 items-center">
+      <div className="bg-[var(--bg-sidebar)] rounded-b-lg border-t border-[var(--border-main)] p-1.5 flex flex-nowrap gap-1.5 items-center">
 
         {/* Author Input */}
-        <div className="flex items-center bg-[var(--bg-card)] border border-[var(--border-main)] rounded-md px-2 py-1 flex-1 min-w-[140px] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] transition-all">
+        <div className="flex min-w-0 flex-[1.2] items-center bg-[var(--bg-card)] border border-[var(--border-main)] rounded-md px-2 py-1 focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] transition-all">
           <User size={12} className={`mr-2 ${isSelf ? 'text-[var(--text-muted)]' : 'text-[var(--accent)]'}`} />
           <input
             type="text"
@@ -182,13 +182,13 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
               if (e.nativeEvent.isComposing) return;
               if (e.key === 'Enter') handleSubmit();
             }}
-            placeholder="Author (Leave blank for Self)"
+            placeholder="Author"
             className="type-label-bounded w-full border-none p-0 focus:ring-0 text-[var(--text-main)] placeholder:text-[var(--text-muted)] bg-transparent"
           />
         </div>
 
         {/* Book Input */}
-        <div className="flex items-center bg-[var(--bg-input)] border border-[var(--border-main)] rounded-md px-2 py-1 flex-1 min-w-[140px] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] transition-all">
+        <div className="flex min-w-0 flex-[1.2] items-center bg-[var(--bg-input)] border border-[var(--border-main)] rounded-md px-2 py-1 focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] transition-all">
           <BookIcon size={12} className="mr-2 text-[var(--text-muted)]" />
           <input
             type="text"
@@ -200,13 +200,13 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
               if (e.nativeEvent.isComposing) return;
               if (e.key === 'Enter') handleSubmit();
             }}
-            placeholder="Book or Source"
+            placeholder="Book"
             className="type-label-bounded w-full border-none p-0 focus:ring-0 text-[var(--text-main)] placeholder:text-[var(--text-muted)] bg-transparent"
           />
         </div>
 
         {/* Page Input */}
-        <div className="flex items-center bg-[var(--bg-input)] border border-[var(--border-main)] rounded-md px-2 py-1 w-24 focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] transition-all">
+        <div className="flex w-[5rem] min-w-0 items-center bg-[var(--bg-input)] border border-[var(--border-main)] rounded-md px-2 py-1 focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] transition-all">
           <Hash size={12} className="mr-2 text-[var(--text-muted)]" />
           <input
             type="text"
@@ -229,11 +229,11 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
             onClick={handleSubmit}
             disabled={readOnly || !text.trim()}
             className={`
-              ml-auto p-1.5 rounded-md transition-all
+              ml-auto inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-all
               ${text.trim() && !readOnly ? 'bg-[var(--accent)] text-white shadow-md hover:bg-[var(--accent-strong)] hover:scale-105 active:scale-95' : 'bg-[var(--bg-sidebar)] text-[var(--text-muted)] cursor-not-allowed'}
             `}
           >
-            <Send size={16} />
+            <Send size={15} />
           </button>
         )}
       </div>

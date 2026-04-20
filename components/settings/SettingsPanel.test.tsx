@@ -61,6 +61,27 @@ const renderWithDisplayNameState = (
   return props;
 };
 
+const renderWithFontSizeState = (
+  overrides: Partial<typeof baseProps> = {}
+) => {
+  const props = { ...baseProps, ...overrides };
+
+  const Harness: React.FC = () => {
+    const [baseFontPt, setBaseFontPt] = useState(props.preferences.baseFontPt);
+
+    return (
+      <SettingsPanel
+        {...props}
+        preferences={{ ...props.preferences, baseFontPt }}
+        onBaseFontPtChange={setBaseFontPt}
+      />
+    );
+  };
+
+  render(<Harness />);
+  return props;
+};
+
 describe('SettingsPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -130,19 +151,12 @@ describe('SettingsPanel', () => {
     expect(screen.queryByRole('listbox', { name: '테마 선택' })).toBeNull();
   });
 
-  it('renders a numeric font-size slider with the current value', () => {
+  it('shows the current font size as a status badge beside +/- controls', () => {
     render(<SettingsPanel {...baseProps} />);
 
-    const slider = screen.getByRole('slider', { name: '글자 크기' }) as HTMLInputElement;
-    const fontButton = screen.getByRole('button', { name: '현재 서체: 프리텐다드' });
-
-    expect(fontButton).toBeTruthy();
-    expect(slider).toBeTruthy();
-    expect(slider.min).toBe('10');
-    expect(slider.max).toBe('40');
-    expect(slider.step).toBe('1');
-    expect(slider.value).toBe('16');
-    expect(screen.getByText('16pt')).toBeTruthy();
+    expect(screen.getByRole('status').textContent).toBe('16pt');
+    expect(screen.getByRole('button', { name: '글자 크기 줄이기' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '글자 크기 늘리기' })).toBeTruthy();
   });
 
   it('shows the selected font as a collapsed trigger until the font picker is opened', async () => {
@@ -167,33 +181,38 @@ describe('SettingsPanel', () => {
     expect(screen.getByRole('button', { name: '나눔명조' })).toBeTruthy();
   });
 
-  it('applies shared typography token classes to the primary settings copy', () => {
+  it('applies shared ui typography primitives to the primary settings copy', () => {
     render(<SettingsPanel {...baseProps} />);
 
-    expect(screen.getByText('설정').className).toContain('type-display');
-    expect(screen.getByText('텍스트').className).toContain('type-section');
-    expect(screen.getByText('화면').className).toContain('type-section');
-    expect(screen.getByText('글자 크기').className).toContain('type-label');
+    expect(screen.getByText('설정').className).toContain('ui-title');
+    expect(screen.getByText('텍스트').className).toContain('ui-label');
+    expect(screen.getByText('화면').className).toContain('ui-label');
+    expect(screen.getByText('글자 크기').className).toContain('ui-label');
   });
 
-  it('uses bounded typography roles for constrained settings chrome', () => {
+  it('uses shared ui button and body primitives for constrained settings chrome', () => {
     render(<SettingsPanel {...baseProps} />);
 
-    expect(screen.getByText('설정').className).toContain('type-display-bounded');
-    expect(screen.getByText('사진 변경').closest('label')?.className).toContain('type-label-bounded');
-    expect(screen.getByRole('textbox', { name: '이름' }).className).toContain('type-body-bounded');
-    expect(screen.getByRole('button', { name: '현재 서체: 프리텐다드' }).className).toContain('type-label-bounded');
-    expect(screen.getByRole('button', { name: '현재 테마: Auto' }).className).toContain('type-label-bounded');
-    expect(screen.getByText('로그아웃').className).toContain('type-label-bounded');
+    expect(screen.getByText('사진 변경').closest('label')?.className).toContain('ui-btn');
+    expect(screen.getByText('사진 변경').closest('label')?.className).toContain('ui-btn--ghost');
+    expect(screen.getByText('사진 변경').closest('label')?.className).toContain('cursor-pointer');
+    expect(screen.getByRole('textbox', { name: '이름' }).className).toContain('ui-body');
+    expect(screen.getByRole('button', { name: '현재 서체: 프리텐다드' }).className).toContain('ui-btn');
+    expect(screen.getByRole('button', { name: '현재 테마: Auto' }).className).toContain('ui-btn');
+    expect(screen.getByText('로그아웃').className).toContain('ui-btn');
   });
 
-  it('calls onBaseFontPtChange when the font slider changes', () => {
-    render(<SettingsPanel {...baseProps} />);
+  it('changes font size with the shared +/- controls', async () => {
+    const user = userEvent.setup();
+    renderWithFontSizeState();
 
-    const slider = screen.getByRole('slider', { name: '글자 크기' });
-    fireEvent.change(slider, { target: { value: '22' } });
+    expect(screen.getByRole('status').textContent).toBe('16pt');
 
-    expect(baseProps.onBaseFontPtChange).toHaveBeenCalledWith(22);
+    await user.click(screen.getByRole('button', { name: '글자 크기 늘리기' }));
+    expect(screen.getByRole('status').textContent).toBe('17pt');
+
+    await user.click(screen.getByRole('button', { name: '글자 크기 줄이기' }));
+    expect(screen.getByRole('status').textContent).toBe('16pt');
   });
 
   it('renders the avatar change trigger as a native file-input label', () => {
@@ -365,5 +384,23 @@ describe('SettingsPanel', () => {
     expect(header?.className).toContain('bg-[var(--bg-card)]');
     expect(header?.className).not.toContain('bg-[linear-gradient');
     expect(header?.className).not.toContain('dark:bg-none');
+  });
+
+  it('disables the decrease control at the minimum font size', async () => {
+    renderWithFontSizeState({
+      preferences: { ...baseProps.preferences, baseFontPt: 10 },
+    });
+
+    expect((screen.getByRole('button', { name: '글자 크기 줄이기' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByRole('status').textContent).toBe('10pt');
+  });
+
+  it('disables the increase control at the maximum font size', async () => {
+    renderWithFontSizeState({
+      preferences: { ...baseProps.preferences, baseFontPt: 40 },
+    });
+
+    expect((screen.getByRole('button', { name: '글자 크기 늘리기' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByRole('status').textContent).toBe('40pt');
   });
 });
