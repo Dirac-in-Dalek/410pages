@@ -28,6 +28,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
   hideSubmit = false,
   placeholder = 'Write a quote, sentence, or field note...'
 }) => {
+  const EMPTY_TEXTAREA_HEIGHT = 72;
   const [text, setText] = useState('');
   const [author, setAuthor] = useState(''); // Keep empty as default for "Self"
   const [book, setBook] = useState('');
@@ -40,7 +41,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
     const textarea = textareaRef.current;
     if (textarea) {
       textarea.style.height = 'auto';
-      const newHeight = Math.min(textarea.scrollHeight, 400); // Max height 400px
+      const newHeight = text.trim().length > 0 ? Math.min(textarea.scrollHeight, 400) : EMPTY_TEXTAREA_HEIGHT;
       textarea.style.height = `${newHeight}px`;
     }
   }, [text]);
@@ -162,7 +163,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
             }
           }}
           placeholder={placeholder}
-          className="type-body-bounded w-full placeholder:text-[var(--text-muted)] text-[var(--text-main)] border-none resize-none focus:ring-0 bg-transparent p-0 min-h-[60px] overflow-y-auto"
+          className="type-body-bounded w-full placeholder:text-[var(--text-muted)] text-[var(--text-main)] border-none resize-none focus:ring-0 bg-transparent p-0 min-h-[72px] overflow-y-auto"
         />
       </div>
 

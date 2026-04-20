@@ -48,6 +48,13 @@ describe('Citation typography', () => {
     expect(editor.className).not.toContain('placeholder:font-sans');
   });
 
+  it('starts the archive editor at a fixed empty height before typing', () => {
+    render(<CitationEditor onAddCitation={vi.fn()} username="Dalek" />);
+
+    const editor = screen.getByPlaceholderText('Write a quote, sentence, or field note...');
+    expect((editor as HTMLTextAreaElement).style.height).toBe('72px');
+  });
+
   it('does not hardcode quote content or edit text area to serif utility classes', async () => {
     const user = userEvent.setup();
 
