@@ -79,7 +79,7 @@ describe('AvatarCropModal', () => {
     expect(topLeftHandle.getAttribute('style')).toContain('height: 18px');
   });
 
-  it('uses the shared primary button styling for save', () => {
+  it('uses the shared solid button primitive for save', () => {
     const file = new File(['avatar'], 'avatar.png', { type: 'image/png' });
     render(
       <AvatarCropModal
@@ -91,7 +91,7 @@ describe('AvatarCropModal', () => {
 
     const saveButton = screen.getByRole('button', { name: '저장' });
 
-    expect(saveButton.className).toContain('text-white');
-    expect(saveButton.className).toContain('hover:bg-[var(--accent-strong)]');
+    expect(saveButton.className).toContain('ui-btn');
+    expect(saveButton.className).toContain('ui-btn--solid');
   });
 });

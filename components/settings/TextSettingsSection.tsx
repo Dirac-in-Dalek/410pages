@@ -9,11 +9,15 @@ type TextSettingsSectionProps = {
   onBaseFontPtChange: (value: number) => void;
 };
 
+const MIN_FONT_PT = 10;
+const MAX_FONT_PT = 40;
+const FONT_PT_STEP = 1;
+
 const optionButtonClass = (isActive: boolean) =>
-  `type-label-bounded rounded-lg border px-3 py-1.5 transition-colors ${
+  `ui-btn ui-btn-row ui-choice px-3 py-2 ${
     isActive
-      ? 'border-transparent bg-[var(--accent-active)] text-[var(--accent-active-text)]'
-      : 'border-[var(--border-main)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]'
+      ? 'text-[var(--text-main)]'
+      : 'text-[var(--text-secondary)]'
   }`;
 
 type FontSelectionListProps = {
@@ -67,7 +71,7 @@ export const FontSelectionList: React.FC<FontSelectionListProps> = ({
         aria-expanded={isOpen}
         aria-haspopup="listbox"
         aria-controls={listboxId}
-        className="type-label-bounded flex w-full items-center justify-between rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] px-4 py-3 text-left text-[var(--text-main)] shadow-[var(--shadow-card)] transition-colors hover:bg-[var(--sidebar-hover)]"
+        className="ui-btn ui-btn-row px-4 py-3 shadow-[var(--shadow-card)]"
         onClick={() => setIsOpen((current) => !current)}
       >
         <span className="block min-w-0 truncate" style={{ fontFamily: selectedOption.fontFamily }}>
@@ -100,7 +104,7 @@ export const FontSelectionList: React.FC<FontSelectionListProps> = ({
                   setIsOpen(false);
                 }}
               >
-                <span className="type-label-bounded block w-full truncate" style={{ fontFamily: option.fontFamily }}>
+                <span className="block w-full truncate" style={{ fontFamily: option.fontFamily }}>
                   {option.label}
                 </span>
               </button>
@@ -117,43 +121,55 @@ export const TextSettingsSection: React.FC<TextSettingsSectionProps> = ({
   baseFontPt,
   onFontFamilyChange,
   onBaseFontPtChange,
-}) => (
-  <section className="mb-8">
-    <h3 className="type-section mb-3 font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">
-      텍스트
-    </h3>
+}) => {
+  const updateFontSize = (delta: number) => {
+    const nextValue = Math.min(MAX_FONT_PT, Math.max(MIN_FONT_PT, baseFontPt + delta));
+    if (nextValue !== baseFontPt) {
+      onBaseFontPtChange(nextValue);
+    }
+  };
 
-    <div className="rounded-2xl border border-[var(--border-main)] bg-[var(--bg-sidebar)] p-4 shadow-[var(--shadow-card)]">
-      <div className="mb-5 flex items-center justify-between gap-4">
-        <p className="type-label min-w-0 font-medium text-[var(--text-main)]">서체</p>
-        <FontSelectionList selectedFontFamily={fontFamily} onFontFamilyChange={onFontFamilyChange} />
-      </div>
+  return (
+    <section className="mb-8">
+      <h3 className="ui-label mb-3 font-semibold text-[var(--text-muted)]">
+        텍스트
+      </h3>
 
-      <div>
-        <div className="mb-2 flex items-center justify-between gap-3">
-          <label htmlFor="base-font-pt" className="type-label-bounded font-medium text-[var(--text-main)]">
-            글자 크기
-          </label>
-          <span aria-live="polite" className="type-label-bounded font-medium text-[var(--text-secondary)]">
-            {baseFontPt}pt
-          </span>
+      <div className="rounded-2xl border border-[var(--border-main)] bg-[var(--bg-sidebar)] p-4 shadow-[var(--shadow-card)]">
+        <div className="mb-5 flex items-center justify-between gap-4">
+          <p className="ui-label min-w-0">서체</p>
+          <FontSelectionList selectedFontFamily={fontFamily} onFontFamilyChange={onFontFamilyChange} />
         </div>
-        <input
-          id="base-font-pt"
-          type="range"
-          min={10}
-          max={40}
-          step={1}
-          value={baseFontPt}
-          aria-valuetext={`${baseFontPt}pt`}
-          className="w-full accent-[var(--accent)]"
-          onChange={(event) => onBaseFontPtChange(Number(event.currentTarget.value))}
-        />
-        <div className="type-body-muted mt-2 flex justify-between text-[var(--text-secondary)]">
-          <span>10pt</span>
-          <span>40pt</span>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <span className="ui-label">글자 크기</span>
+            <div className="flex items-center gap-2">
+              <span role="status" aria-live="polite" className="ui-label tabular-nums text-[var(--text-main)]">
+                {baseFontPt}pt
+              </span>
+              <button
+                type="button"
+                aria-label="글자 크기 늘리기"
+                className="ui-btn ui-btn-icon"
+                disabled={baseFontPt >= MAX_FONT_PT}
+                onClick={() => updateFontSize(FONT_PT_STEP)}
+              >
+                <span aria-hidden="true">+</span>
+              </button>
+              <button
+                type="button"
+                aria-label="글자 크기 줄이기"
+                className="ui-btn ui-btn-icon"
+                disabled={baseFontPt <= MIN_FONT_PT}
+                onClick={() => updateFontSize(-FONT_PT_STEP)}
+              >
+                <span aria-hidden="true">−</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};

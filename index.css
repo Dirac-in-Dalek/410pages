@@ -16,11 +16,13 @@
     --type-muted-size: calc(var(--font-base-pt) * 0.75);
     --type-label-size: calc(var(--font-base-pt) * 0.875);
     --type-body-size: calc(var(--font-base-pt) * 1);
+    --type-action-size: calc(var(--font-base-pt) * 0.875);
     --type-title-size: calc(var(--font-base-pt) * 1.25);
     --type-section-size: calc(var(--font-base-pt) * 1.125);
     --type-display-size: calc(var(--font-base-pt) * 1.5);
     --type-label-bounded-size: min(var(--type-label-size), 1rem);
     --type-body-bounded-size: min(var(--type-body-size), 1rem);
+    --type-action-bounded-size: min(var(--type-action-size), 1rem);
     --type-muted-bounded-size: min(var(--type-muted-size), 0.875rem);
     --type-title-bounded-size: min(var(--type-title-size), 1.125rem);
     --type-section-bounded-size: min(var(--type-section-size), 0.875rem);
@@ -357,17 +359,139 @@
     font-size: var(--type-muted-bounded-size);
     line-height: var(--type-muted-line-height);
   }
+
+  .ui-title {
+    font-size: var(--type-title-bounded-size);
+    line-height: var(--type-title-line-height);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text-main);
+  }
+
+  .ui-body {
+    font-size: var(--type-body-bounded-size);
+    line-height: var(--type-body-line-height);
+    color: var(--text-main);
+  }
+
+  .ui-label {
+    font-size: var(--type-label-bounded-size);
+    line-height: var(--type-label-line-height);
+    font-weight: 500;
+    color: var(--text-main);
+  }
+
+  .ui-action {
+    font-size: var(--type-action-bounded-size);
+    line-height: var(--type-label-line-height);
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    color: var(--text-main);
+  }
+
+  .ui-btn {
+    appearance: none;
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.875rem;
+    border: 1px solid var(--border-main);
+    background: var(--bg-card);
+    padding: 0.625rem 1rem;
+    font-family: var(--font-ui-active);
+    font-size: var(--type-action-bounded-size);
+    line-height: var(--type-label-line-height);
+    font-weight: 500;
+    color: var(--text-main);
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease,
+      transform 0.15s ease, box-shadow 0.15s ease;
+    cursor: pointer;
+  }
+
+  .ui-btn:hover {
+    background: var(--sidebar-hover);
+  }
+
+  .ui-btn:active {
+    transform: scale(0.98);
+  }
+
+  .ui-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--accent-ring);
+  }
+
+  .ui-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    transform: none;
+  }
+
+  .ui-btn--solid {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--accent-active-text);
+  }
+
+  .ui-btn--solid:hover {
+    border-color: var(--accent-strong);
+    background: var(--accent-strong);
+  }
+
+  .ui-btn--ghost {
+    border-color: transparent;
+    background: transparent;
+  }
+
+  .ui-btn--ghost:hover {
+    background: var(--sidebar-hover);
+  }
+
+  .ui-btn-icon {
+    min-height: 2.5rem;
+    width: 2.5rem;
+    padding: 0;
+  }
+
+  .ui-btn-row {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .ui-choice {
+    width: 100%;
+    justify-content: space-between;
+    border-color: transparent;
+    background: transparent;
+    color: var(--text-secondary);
+  }
+
+  .ui-choice:hover {
+    background: var(--sidebar-hover);
+    color: var(--text-main);
+  }
+
+  .ui-choice[aria-selected='true'],
+  .ui-choice[aria-pressed='true'],
+  .ui-choice[data-active='true'] {
+    background: var(--accent-soft);
+    color: var(--text-main);
+  }
 }
 
 .font-size-static {
   --type-muted-size: 0.75rem;
   --type-label-size: 0.875rem;
   --type-body-size: 1rem;
+  --type-action-size: 0.875rem;
   --type-title-size: 1.25rem;
   --type-section-size: 1.125rem;
   --type-display-size: 1.5rem;
   --type-label-bounded-size: 0.875rem;
   --type-body-bounded-size: 1rem;
+  --type-action-bounded-size: 0.875rem;
   --type-muted-bounded-size: 0.75rem;
   --type-title-bounded-size: 1.125rem;
   --type-section-bounded-size: 0.875rem;

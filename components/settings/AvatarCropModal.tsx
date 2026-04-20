@@ -301,8 +301,8 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="type-display-bounded text-[var(--text-main)]">프로필 사진 편집</h3>
-            <p className="type-body-muted mt-2 text-[var(--text-secondary)]">
+            <h3 className="ui-title">프로필 사진 편집</h3>
+            <p className="ui-body mt-2 text-[var(--text-secondary)]">
               원형 밖은 실제 프로필에 보이지 않습니다. 프레임을 움직이거나 모서리와 변을 잡아 크기를 조절하세요.
             </p>
           </div>
@@ -310,7 +310,7 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
             type="button"
             onClick={onCancel}
             disabled={isSaving}
-            className="rounded-full p-2 text-[var(--text-muted)] transition-colors hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]"
+            className="ui-btn ui-btn-icon ui-btn--ghost text-[var(--text-muted)] hover:text-[var(--text-main)]"
           >
             <span aria-hidden="true" className="block text-lg leading-none">
               ×
@@ -368,14 +368,14 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
           </div>
         </div>
 
-        {error ? <p className="type-body-muted mt-4 text-red-600">{error}</p> : null}
+        {error ? <p className="ui-body mt-4 text-red-600">{error}</p> : null}
 
         <div className="mt-6 flex justify-end gap-3">
           <button
             type="button"
             onClick={onCancel}
             disabled={isSaving}
-            className="type-label-bounded rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] px-4 py-2.5 text-[var(--text-main)] transition-colors hover:bg-[var(--sidebar-hover)] disabled:cursor-not-allowed disabled:opacity-60"
+            className="ui-btn"
           >
             취소
           </button>
@@ -383,7 +383,7 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
             type="button"
             onClick={handleSave}
             disabled={isSaving || !cropFrame || !imageRect}
-            className="type-label-bounded rounded-xl bg-[var(--accent)] px-4 py-2.5 text-white shadow-sm transition-colors hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
+            className="ui-btn ui-btn--solid"
           >
             저장
           </button>
