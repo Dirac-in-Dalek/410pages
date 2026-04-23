@@ -17,6 +17,8 @@ interface CitationEditorProps {
   readOnly?: boolean;
   hideSubmit?: boolean;
   placeholder?: string;
+  sequentialPageEntry?: boolean;
+  autoFocusText?: boolean;
 }
 
 export const CitationEditor: React.FC<CitationEditorProps> = ({
@@ -26,15 +28,19 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
   controlledValues,
   readOnly = false,
   hideSubmit = false,
-  placeholder = 'Write a quote, sentence, or field note...'
+  placeholder = 'Write a quote, sentence, or field note...',
+  sequentialPageEntry = false,
+  autoFocusText = false
 }) => {
   const EMPTY_TEXTAREA_HEIGHT = 72;
   const [text, setText] = useState('');
   const [author, setAuthor] = useState(''); // Keep empty as default for "Self"
   const [book, setBook] = useState('');
   const [page, setPage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const pageInputRef = useRef<HTMLInputElement>(null);
 
   // Auto-expand textarea
   useEffect(() => {
@@ -74,23 +80,72 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
     controlledValues?.text
   ]);
 
-  const handleSubmit = () => {
-    if (readOnly) return;
-    if (!text.trim()) return;
+  useEffect(() => {
+    if (!autoFocusText || readOnly) return;
 
-    onAddCitation({
-      text,
-      author,
-      book,
-      page: page || undefined,
-      tags: [],
+    const frameId = window.requestAnimationFrame(() => {
+      textareaRef.current?.focus({ preventScroll: true });
     });
 
-    // Reset
-    setText('');
-    setAuthor(prefillData?.author || '');
-    setBook(prefillData?.book || '');
-    setPage('');
+    return () => window.cancelAnimationFrame(frameId);
+  }, [autoFocusText, readOnly, prefillData?.author, prefillData?.book]);
+
+  const focusTextInput = () => {
+    window.requestAnimationFrame(() => {
+      textareaRef.current?.focus({ preventScroll: true });
+    });
+  };
+
+  const focusPageInput = () => {
+    pageInputRef.current?.focus({ preventScroll: true });
+  };
+
+  const isSequentialPageEntryActive =
+    sequentialPageEntry && !readOnly && Boolean(author.trim()) && Boolean(book.trim());
+
+  const handleSubmit = async () => {
+    if (readOnly) return false;
+    if (isSubmitting) return false;
+    if (!text.trim()) return false;
+
+    try {
+      setIsSubmitting(true);
+      const result = await Promise.resolve(
+        onAddCitation({
+          text,
+          author,
+          book,
+          page: page || undefined,
+          tags: [],
+        })
+      );
+
+      if (
+        result &&
+        typeof result === 'object' &&
+        'ok' in result &&
+        (result as { ok?: boolean }).ok === false
+      ) {
+        return false;
+      }
+
+      // Reset
+      setText('');
+      setAuthor(prefillData?.author || '');
+      setBook(prefillData?.book || '');
+      setPage('');
+
+      if (isSequentialPageEntryActive) {
+        focusTextInput();
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error adding citation from editor:', error);
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -152,15 +207,23 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
         <textarea
           ref={textareaRef}
           value={text}
-          readOnly={readOnly}
+          readOnly={readOnly || isSubmitting}
           onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if (readOnly) return;
+          onKeyDown={async (e) => {
+            if (readOnly || isSubmitting) return;
             if (e.nativeEvent.isComposing) return;
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              handleSubmit();
+            if (e.key !== 'Enter') return;
+
+            if (e.shiftKey) return;
+
+            e.preventDefault();
+
+            if (isSequentialPageEntryActive) {
+              focusPageInput();
+              return;
             }
+
+            await handleSubmit();
           }}
           placeholder={placeholder}
           className="type-body-bounded w-full placeholder:text-[var(--text-muted)] text-[var(--text-main)] border-none resize-none focus:ring-0 bg-transparent p-0 min-h-[72px] overflow-y-auto"
@@ -176,12 +239,16 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
           <input
             type="text"
             value={author}
-            readOnly={readOnly}
+            readOnly={readOnly || isSubmitting}
             onChange={(e) => setAuthor(e.target.value)}
-            onKeyDown={(e) => {
-              if (readOnly) return;
+            onKeyDown={async (e) => {
+              if (readOnly || isSubmitting) return;
               if (e.nativeEvent.isComposing) return;
-              if (e.key === 'Enter') handleSubmit();
+              if (e.key !== 'Enter') return;
+
+              e.preventDefault();
+
+              await handleSubmit();
             }}
             placeholder="Author"
             className="type-label-bounded w-full border-none p-0 focus:ring-0 text-[var(--text-main)] placeholder:text-[var(--text-muted)] bg-transparent"
@@ -194,12 +261,15 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
           <input
             type="text"
             value={book}
-            readOnly={readOnly}
+            readOnly={readOnly || isSubmitting}
             onChange={(e) => setBook(e.target.value)}
-            onKeyDown={(e) => {
-              if (readOnly) return;
+            onKeyDown={async (e) => {
+              if (readOnly || isSubmitting) return;
               if (e.nativeEvent.isComposing) return;
-              if (e.key === 'Enter') handleSubmit();
+              if (e.key !== 'Enter') return;
+
+              e.preventDefault();
+              await handleSubmit();
             }}
             placeholder="Book"
             className="type-label-bounded w-full border-none p-0 focus:ring-0 text-[var(--text-main)] placeholder:text-[var(--text-muted)] bg-transparent"
@@ -210,14 +280,20 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
         <div className="flex w-[5rem] min-w-0 items-center bg-[var(--bg-input)] border border-[var(--border-main)] rounded-md px-2 py-1 focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] transition-all">
           <Hash size={12} className="mr-2 text-[var(--text-muted)]" />
           <input
+            ref={pageInputRef}
             type="text"
             value={page}
-            readOnly={readOnly}
+            readOnly={readOnly || isSubmitting}
             onChange={(e) => setPage(e.target.value)}
-            onKeyDown={(e) => {
-              if (readOnly) return;
+            onKeyDown={async (e) => {
+              if (readOnly || isSubmitting) return;
               if (e.nativeEvent.isComposing) return;
-              if (e.key === 'Enter') handleSubmit();
+              if (e.key !== 'Enter') return;
+
+              e.preventDefault();
+              if (e.shiftKey) return;
+
+              await handleSubmit();
             }}
             placeholder="Page"
             className="type-label-bounded w-full border-none p-0 focus:ring-0 text-[var(--text-main)] placeholder:text-[var(--text-muted)] bg-transparent"
@@ -227,11 +303,13 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
         {/* Submit Button */}
         {!hideSubmit && (
           <button
-            onClick={handleSubmit}
-            disabled={readOnly || !text.trim()}
+            onClick={() => {
+              void handleSubmit();
+            }}
+            disabled={readOnly || isSubmitting || !text.trim()}
             className={`
               ml-auto inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-all
-              ${text.trim() && !readOnly ? 'bg-[var(--accent)] text-white shadow-md hover:bg-[var(--accent-strong)] hover:scale-105 active:scale-95' : 'bg-[var(--bg-sidebar)] text-[var(--text-muted)] cursor-not-allowed'}
+              ${text.trim() && !readOnly && !isSubmitting ? 'bg-[var(--accent)] text-white shadow-md hover:bg-[var(--accent-strong)] hover:scale-105 active:scale-95' : 'bg-[var(--bg-sidebar)] text-[var(--text-muted)] cursor-not-allowed'}
             `}
           >
             <Send size={15} />

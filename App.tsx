@@ -224,6 +224,7 @@ const App: React.FC = () => {
         showEditor={!searchTerm && !selectedProjectId}
         username={username}
         editorPrefill={editorPrefill}
+        isBookView={isBookView}
         onAddCitation={handleAddCitation}
         sortField={sortField}
         dateDirection={dateDirection}

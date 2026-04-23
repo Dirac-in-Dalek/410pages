@@ -7,6 +7,7 @@ interface ArchiveHeaderProps {
     showEditor: boolean;
     username: string;
     editorPrefill?: { author: string, book: string };
+    isBookView?: boolean;
     onAddCitation: (data: AddCitationInput) => void | Promise<unknown>;
     sortField: 'date' | 'page';
     dateDirection: 'asc' | 'desc';
@@ -20,6 +21,7 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
     showEditor,
     username,
     editorPrefill,
+    isBookView = false,
     onAddCitation,
     sortField,
     dateDirection,
@@ -74,6 +76,8 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
                             onAddCitation={onAddCitation}
                             prefillData={editorPrefill}
                             username={username}
+                            sequentialPageEntry={isBookView}
+                            autoFocusText={isBookView}
                         />
                     </div>
                 )}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CitationCard } from './CitationCard';
@@ -53,6 +53,157 @@ describe('Citation typography', () => {
 
     const editor = screen.getByPlaceholderText('Write a quote, sentence, or field note...');
     expect((editor as HTMLTextAreaElement).style.height).toBe('72px');
+  });
+
+  it('moves focus from quote to page before submitting in sequential book-entry mode', async () => {
+    const user = userEvent.setup();
+    const onAddCitation = vi.fn().mockResolvedValue({ ok: true, citationId: 'citation-2' });
+
+    render(
+      <CitationEditor
+        onAddCitation={onAddCitation}
+        username="Dalek"
+        prefillData={{ author: 'Charlie Munger', book: "Poor Charlie's Almanack" }}
+        sequentialPageEntry
+        autoFocusText
+      />
+    );
+
+    const editor = screen.getByPlaceholderText('Write a quote, sentence, or field note...');
+    const pageInput = screen.getByPlaceholderText('Page');
+
+    await waitFor(() => expect(document.activeElement).toBe(editor));
+    await user.type(editor, 'A practical idea');
+    await user.keyboard('{Enter}');
+
+    expect(onAddCitation).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(pageInput);
+  });
+
+  it('submits from the page field and returns focus to the quote field in sequential mode', async () => {
+    const user = userEvent.setup();
+    const onAddCitation = vi.fn().mockResolvedValue({ ok: true, citationId: 'citation-3' });
+
+    render(
+      <CitationEditor
+        onAddCitation={onAddCitation}
+        username="Dalek"
+        prefillData={{ author: 'Charlie Munger', book: "Poor Charlie's Almanack" }}
+        sequentialPageEntry
+        autoFocusText
+      />
+    );
+
+    const editor = screen.getByPlaceholderText('Write a quote, sentence, or field note...');
+    const pageInput = screen.getByPlaceholderText('Page');
+
+    await user.type(editor, 'Another quote');
+    await user.keyboard('{Enter}');
+    await user.type(pageInput, '147');
+    await user.keyboard('{Enter}');
+
+    await waitFor(() => {
+      expect(onAddCitation).toHaveBeenCalledWith({
+        text: 'Another quote',
+        author: 'Charlie Munger',
+        book: "Poor Charlie's Almanack",
+        page: '147',
+        tags: []
+      });
+      expect((editor as HTMLTextAreaElement).value).toBe('');
+      expect((pageInput as HTMLInputElement).value).toBe('');
+      expect(document.activeElement).toBe(editor);
+    });
+  });
+
+  it('keeps shift-enter as a newline in the quote field during sequential mode', async () => {
+    const user = userEvent.setup();
+    const onAddCitation = vi.fn();
+
+    render(
+      <CitationEditor
+        onAddCitation={onAddCitation}
+        username="Dalek"
+        prefillData={{ author: 'Charlie Munger', book: "Poor Charlie's Almanack" }}
+        sequentialPageEntry
+      />
+    );
+
+    const editor = screen.getByPlaceholderText('Write a quote, sentence, or field note...');
+
+    await user.type(editor, 'Line 1');
+    await user.keyboard('{Shift>}{Enter}{/Shift}');
+
+    expect((editor as HTMLTextAreaElement).value).toBe('Line 1\n');
+    expect(onAddCitation).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(editor);
+  });
+
+  it('does nothing on shift-enter in the page field during sequential mode', async () => {
+    const user = userEvent.setup();
+    const onAddCitation = vi.fn();
+
+    render(
+      <CitationEditor
+        onAddCitation={onAddCitation}
+        username="Dalek"
+        prefillData={{ author: 'Charlie Munger', book: "Poor Charlie's Almanack" }}
+        sequentialPageEntry
+      />
+    );
+
+    const editor = screen.getByPlaceholderText('Write a quote, sentence, or field note...');
+    const pageInput = screen.getByPlaceholderText('Page');
+
+    await user.type(editor, 'Line 1');
+    await user.keyboard('{Enter}');
+    await user.type(pageInput, '147');
+    await user.keyboard('{Shift>}{Enter}{/Shift}');
+
+    expect(onAddCitation).not.toHaveBeenCalled();
+    expect((pageInput as HTMLInputElement).value).toBe('147');
+    expect(document.activeElement).toBe(pageInput);
+  });
+
+  it('ignores repeated submit attempts while a save is still pending', async () => {
+    const user = userEvent.setup();
+    let resolveSave: ((value: { ok: true; citationId: string }) => void) | undefined;
+    const onAddCitation = vi.fn().mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveSave = resolve;
+        })
+    );
+
+    render(
+      <CitationEditor
+        onAddCitation={onAddCitation}
+        username="Dalek"
+        prefillData={{ author: 'Charlie Munger', book: "Poor Charlie's Almanack" }}
+        sequentialPageEntry
+      />
+    );
+
+    const editor = screen.getByPlaceholderText('Write a quote, sentence, or field note...');
+    const pageInput = screen.getByPlaceholderText('Page');
+    const submitButton = screen.getByRole('button');
+
+    await user.type(editor, 'One slow quote');
+    await user.keyboard('{Enter}');
+    await user.type(pageInput, '147');
+    await user.keyboard('{Enter}');
+    await user.keyboard('{Enter}');
+    await user.click(submitButton);
+
+    expect(onAddCitation).toHaveBeenCalledTimes(1);
+    expect(submitButton.hasAttribute('disabled')).toBe(true);
+
+    resolveSave?.({ ok: true, citationId: 'citation-4' });
+
+    await waitFor(() => {
+      expect((editor as HTMLTextAreaElement).value).toBe('');
+      expect((pageInput as HTMLInputElement).value).toBe('');
+    });
   });
 
   it('does not hardcode quote content or edit text area to serif utility classes', async () => {
