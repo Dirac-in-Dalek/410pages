@@ -1,0 +1,45 @@
+import type { ComponentProps } from 'react';
+import { ArchiveScreen } from '../../features/archive/ui/ArchiveScreen';
+import type { ArchiveScreenFactoryInput } from '../contract/appShellScreenContract';
+
+export const createArchiveScreenProps = (
+  input: ArchiveScreenFactoryInput
+): ComponentProps<typeof ArchiveScreen> => ({
+  isMobileApp: input.isMobileApp,
+  title: input.title,
+  showEditor: !input.searchTerm && !input.selectedProjectId,
+  username: input.username,
+  editorPrefill: input.editorPrefill,
+  isBookView: input.isBookView,
+  sortField: input.sortField,
+  dateDirection: input.dateDirection,
+  pageDirection: input.pageDirection,
+  onAddCitation: input.onAddCitation,
+  onDateSortClick: input.onDateSortClick,
+  onPageSortClick: input.onPageSortClick,
+  projects: input.projects,
+  citations: input.citations,
+  chapterBlocks: input.selectedBookId ? input.chapterBlocksByBook[input.selectedBookId] || [] : [],
+  loading: input.dataLoading || input.authLoading,
+  searchTerm: input.searchTerm,
+  selectedIds: input.selectedIds,
+  selectedFilter: input.selectedFilter,
+  isCopying: input.isCopying,
+  isBatchDeleteOpen: input.isBatchDeleteOpen,
+  onSelectAll: input.onSelectAll,
+  onCopy: input.onCopy,
+  onDeleteRequest: input.onBatchDeleteRequest,
+  onDeleteConfirm: input.onBatchDeleteConfirm,
+  onDeleteCancel: input.onBatchDeleteCancel,
+  onCancelSelection: input.onCancelSelection,
+  onAddToProject: input.onAddToProject,
+  onCreateAndAddToProject: input.onCreateAndAddToProject,
+  onCreateChapterBlock: input.onCreateChapterBlock,
+  onDeleteChapterBlock: input.onDeleteChapterBlock,
+  onToggleSelect: input.onToggleSelect,
+  onAddNote: input.onAddNote,
+  onUpdateNote: input.onUpdateNote,
+  onDeleteNote: input.onDeleteNote,
+  onDeleteCitation: input.onDeleteCitation,
+  onUpdateCitation: input.onUpdateCitation,
+});

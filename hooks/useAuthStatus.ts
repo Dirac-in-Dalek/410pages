@@ -1,231 +1,142 @@
 import { useEffect, useState } from 'react';
-import { api } from '../lib/api';
-import { avatarDebugError, avatarDebugInfo } from '../lib/avatarDebug';
 import {
-    clearAutoLoginEnabled,
-    clearSupabaseSessionArtifacts,
-    reconcileSupabaseSessionArtifacts,
-} from '../lib/authStorage';
+    clearPersistedAuthSession,
+    reconcilePersistedAuthSession,
+} from '../features/auth/logic/sessionLifecycle';
+import {
+    buildFallbackProfileSnapshot,
+    fetchProfileSnapshot,
+    saveProfileDisplayName,
+    uploadProfileAvatar,
+} from '../features/profile/logic/profileAccount';
+import { DEFAULT_USERNAME, clearCachedDisplayName } from '../features/profile/policy/displayNameCache';
 import { getSupabaseClient, SUPABASE_AUTH_STORAGE_KEY } from '../lib/supabase';
 
-const DEFAULT_USERNAME = 'Researcher';
-const PROFILE_DISPLAY_NAME_STORAGE_PREFIX = 'profileDisplayName:';
-
-function getDisplayNameStorageKey(userId: string) {
-    return `${PROFILE_DISPLAY_NAME_STORAGE_PREFIX}${userId}`;
-}
-
-function readCachedDisplayName(userId: string): string | null {
-    if (typeof window === 'undefined') {
-        return null;
-    }
-
-    try {
-        const cached = window.localStorage.getItem(getDisplayNameStorageKey(userId))?.trim();
-        return cached || null;
-    } catch {
-        return null;
-    }
-}
-
-function writeCachedDisplayName(userId: string, displayName: string): void {
-    if (typeof window === 'undefined') {
-        return;
-    }
-
-    try {
-        window.localStorage.setItem(getDisplayNameStorageKey(userId), displayName);
-    } catch {
-        // Ignore localStorage write failures in restricted environments.
-    }
-}
-
-function clearCachedDisplayName(userId: string): void {
-    if (typeof window === 'undefined') {
-        return;
-    }
-
-    try {
-        window.localStorage.removeItem(getDisplayNameStorageKey(userId));
-    } catch {
-        // Ignore localStorage write failures in restricted environments.
-    }
-}
-
-function readSessionDisplayName(session: any): string | null {
-    const metadataName = session?.user?.user_metadata?.username;
-    return typeof metadataName === 'string' && metadataName.trim() ? metadataName.trim() : null;
-}
-
-function resolveDisplayNameFallback(userId: string, session: any): string {
-    return readCachedDisplayName(userId) || readSessionDisplayName(session) || DEFAULT_USERNAME;
-}
-
 export const useAuthStatus = () => {
-    const [session, setSession] = useState<any>(null);
-    const [username, setUsername] = useState(DEFAULT_USERNAME);
-    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-    const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState<any>(null);
+  const [username, setUsername] = useState(DEFAULT_USERNAME);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-    const fetchProfile = async (userId: string, activeSession: any) => {
-        const fallbackUsername = resolveDisplayNameFallback(userId, activeSession);
+  const fetchProfile = async (userId: string, activeSession: any) => {
+    const fallbackProfile = buildFallbackProfileSnapshot(userId, activeSession);
 
-        try {
-            const { data, error } = await getSupabaseClient()
-                .from('profiles')
-                .select('username, avatar_path, avatar_url')
-                .eq('id', userId)
-                .single();
+    try {
+      const profile = await fetchProfileSnapshot(userId, activeSession);
+      setUsername(profile.username);
+      setAvatarUrl(profile.avatarUrl);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      setUsername(fallbackProfile.username);
+      setAvatarUrl(fallbackProfile.avatarUrl);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-            if (error) {
-                throw error;
-            }
+  const applySession = (nextSession: any) => {
+    setSession(nextSession);
 
-            const nextUsername = typeof data?.username === 'string' && data.username.trim()
-                ? data.username.trim()
-                : fallbackUsername;
-            const nextAvatarPath = api.resolveStoredProfileAvatarPath(data?.avatar_path || data?.avatar_url || null);
+    if (nextSession?.user?.id) {
+      const fallbackProfile = buildFallbackProfileSnapshot(nextSession.user.id, nextSession);
+      setUsername(fallbackProfile.username);
+      setLoading(true);
+      void fetchProfile(nextSession.user.id, nextSession);
+      return;
+    }
 
-            setUsername(nextUsername);
-            setAvatarUrl(nextAvatarPath ? api.getProfileAvatarPublicUrl(nextAvatarPath) : null);
-            writeCachedDisplayName(userId, nextUsername);
-        } catch (error) {
-            console.error('Error fetching profile:', error);
-            setUsername(fallbackUsername);
-            setAvatarUrl(null);
-        } finally {
-            setLoading(false);
-        }
-    };
+    setUsername(DEFAULT_USERNAME);
+    setAvatarUrl(null);
+    setLoading(false);
+  };
 
-    const handleUpdateUsername = async (newUsername: string) => {
-        if (!session) return;
-        const trimmed = newUsername.trim();
-        if (!trimmed) return false;
-        if (trimmed === username.trim()) return true;
+  const handleUpdateUsername = async (newUsername: string) => {
+    if (!session) return;
 
-        try {
-            await api.updateProfile(session.user.id, { username: trimmed });
-            setUsername(trimmed);
-            writeCachedDisplayName(session.user.id, trimmed);
-            return true;
-        } catch (error) {
-            console.error('Error updating username:', error);
-            return false;
-        }
-    };
+    try {
+      const result = await saveProfileDisplayName(session.user.id, username, newUsername);
 
-    const handleUpdateAvatar = async (file: File) => {
-        if (!session || !file) return false;
+      if (result.ok && result.changed && result.username) {
+        setUsername(result.username);
+      }
 
-        try {
-            avatarDebugInfo('upload flow started', {
-                userId: session.user.id,
-                fileName: file.name,
-                fileSize: file.size,
-                fileType: file.type,
-            });
-            const nextAvatarPath = await api.uploadProfileAvatar(session.user.id, file);
-            avatarDebugInfo('storage upload succeeded', {
-                userId: session.user.id,
-                avatarPath: nextAvatarPath,
-            });
-            const avatarVersion = Date.now();
-            await api.updateProfile(session.user.id, { avatar_path: nextAvatarPath });
-            avatarDebugInfo('profile update succeeded', {
-                userId: session.user.id,
-                avatarPath: nextAvatarPath,
-                avatarVersion,
-            });
-            setAvatarUrl(api.getProfileAvatarPublicUrl(nextAvatarPath, avatarVersion));
-            return true;
-        } catch (error) {
-            avatarDebugError('upload flow failed', error);
-            return false;
-        }
-    };
+      return result.ok;
+    } catch (error) {
+      console.error('Error updating username:', error);
+      return false;
+    }
+  };
 
-    const handleSignOut = async () => {
-        setLoading(true);
+  const handleUpdateAvatar = async (file: File) => {
+    if (!session || !file) return false;
 
-        try {
-            const { error } = await getSupabaseClient().auth.signOut();
+    try {
+      setAvatarUrl(await uploadProfileAvatar(session.user.id, file));
+      return true;
+    } catch (error) {
+      console.error('Error updating avatar:', error);
+      return false;
+    }
+  };
 
-            if (error) {
-                throw error;
-            }
-        } catch (error) {
-            console.error('Error signing out:', error);
-        } finally {
-            clearAutoLoginEnabled();
+  const handleSignOut = async () => {
+    setLoading(true);
 
-            if (SUPABASE_AUTH_STORAGE_KEY) {
-                clearSupabaseSessionArtifacts(SUPABASE_AUTH_STORAGE_KEY);
-            }
+    try {
+      const { error } = await getSupabaseClient().auth.signOut();
 
-            setSession(null);
-            if (session?.user?.id) {
-                clearCachedDisplayName(session.user.id);
-            }
-            setUsername(DEFAULT_USERNAME);
-            setAvatarUrl(null);
-            setLoading(false);
-        }
-    };
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      console.error('Error signing out:', error);
+    } finally {
+      clearPersistedAuthSession(SUPABASE_AUTH_STORAGE_KEY);
 
-    useEffect(() => {
-        if (SUPABASE_AUTH_STORAGE_KEY) {
-            reconcileSupabaseSessionArtifacts(SUPABASE_AUTH_STORAGE_KEY);
-        }
+      setSession(null);
+      if (session?.user?.id) {
+        clearCachedDisplayName(session.user.id);
+      }
+      setUsername(DEFAULT_USERNAME);
+      setAvatarUrl(null);
+      setLoading(false);
+    }
+  };
 
-        const supabase = getSupabaseClient();
+  useEffect(() => {
+    reconcilePersistedAuthSession(SUPABASE_AUTH_STORAGE_KEY);
 
-        supabase.auth.getSession()
-            .then(({ data: { session } }) => {
-                setSession(session);
-                if (session) {
-                    setUsername(resolveDisplayNameFallback(session.user.id, session));
-                    setLoading(true);
-                    fetchProfile(session.user.id, session);
-                } else {
-                    setUsername(DEFAULT_USERNAME);
-                    setAvatarUrl(null);
-                    setLoading(false);
-                }
-            })
-            .catch((error) => {
-                console.error('Error restoring session:', error);
-                setSession(null);
-                setUsername(DEFAULT_USERNAME);
-                setLoading(false);
-            });
+    const supabase = getSupabaseClient();
 
-        const {
-            data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
-            setSession(session);
-            if (session) {
-                setUsername(resolveDisplayNameFallback(session.user.id, session));
-                setLoading(true);
-                fetchProfile(session.user.id, session);
-            } else {
-                setUsername(DEFAULT_USERNAME);
-                setAvatarUrl(null);
-                setLoading(false);
-            }
-        });
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        applySession(session);
+      })
+      .catch((error) => {
+        console.error('Error restoring session:', error);
+        setSession(null);
+        setUsername(DEFAULT_USERNAME);
+        setLoading(false);
+      });
 
-        return () => subscription.unsubscribe();
-    }, []);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      applySession(session);
+    });
 
-    return {
-        session,
-        username,
-        avatarUrl,
-        loading,
-        setLoading,
-        handleUpdateUsername,
-        handleUpdateAvatar,
-        handleSignOut
-    };
+    return () => subscription.unsubscribe();
+  }, []);
+
+  return {
+    session,
+    username,
+    avatarUrl,
+    loading,
+    setLoading,
+    handleUpdateUsername,
+    handleUpdateAvatar,
+    handleSignOut,
+  };
 };

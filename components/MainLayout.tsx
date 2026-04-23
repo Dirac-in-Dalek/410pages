@@ -1,8 +1,8 @@
 import React from 'react';
 import { Project, SidebarItem } from '../types';
-import { LibrarySidebar } from './main-layout/LibrarySidebar';
-import { ProjectSidebar } from './main-layout/ProjectSidebar';
 import { useSidebarResize } from './main-layout/useSidebarResize';
+import { LibrarySidebar } from '../features/archive/ui/LibrarySidebar';
+import { ProjectSidebar } from '../features/archive/ui/ProjectSidebar';
 
 interface MainLayoutProps {
   children: React.ReactNode;

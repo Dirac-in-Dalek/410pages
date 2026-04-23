@@ -8,7 +8,7 @@ const mockGetProfileAvatarPublicUrl = vi.fn();
 const mockResolveStoredProfileAvatarPath = vi.fn();
 const mockGetSession = vi.fn();
 const mockOnAuthStateChange = vi.fn();
-const mockUpdateUser = vi.fn();
+const mockSignOut = vi.fn();
 const mockProfileSingle = vi.fn();
 const mockEq = vi.fn();
 const mockSelect = vi.fn();
@@ -28,8 +28,7 @@ vi.mock('../lib/supabase', () => ({
     auth: {
       getSession: mockGetSession,
       onAuthStateChange: mockOnAuthStateChange,
-      updateUser: mockUpdateUser,
-      signOut: vi.fn().mockResolvedValue({ error: null }),
+      signOut: mockSignOut,
     },
     from: vi.fn(() => ({
       select: mockSelect,
@@ -37,30 +36,44 @@ vi.mock('../lib/supabase', () => ({
   }),
 }));
 
-vi.mock('../lib/authStorage', () => ({
-  clearAutoLoginEnabled: vi.fn(),
-  clearSupabaseSessionArtifacts: vi.fn(),
-  reconcileSupabaseSessionArtifacts: vi.fn(),
-}));
-
 describe('useAuthStatus', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    const storage = new Map<string, string>();
+    const localStorageState = new Map<string, string>();
+    const sessionStorageState = new Map<string, string>();
+
     Object.defineProperty(window, 'localStorage', {
       configurable: true,
       value: {
-        clear: () => storage.clear(),
-        getItem: (key: string) => storage.get(key) ?? null,
-        key: (index: number) => Array.from(storage.keys())[index] ?? null,
+        clear: () => localStorageState.clear(),
+        getItem: (key: string) => localStorageState.get(key) ?? null,
+        key: (index: number) => Array.from(localStorageState.keys())[index] ?? null,
         removeItem: (key: string) => {
-          storage.delete(key);
+          localStorageState.delete(key);
         },
         setItem: (key: string, value: string) => {
-          storage.set(key, String(value));
+          localStorageState.set(key, String(value));
         },
         get length() {
-          return storage.size;
+          return localStorageState.size;
+        },
+      },
+    });
+
+    Object.defineProperty(window, 'sessionStorage', {
+      configurable: true,
+      value: {
+        clear: () => sessionStorageState.clear(),
+        getItem: (key: string) => sessionStorageState.get(key) ?? null,
+        key: (index: number) => Array.from(sessionStorageState.keys())[index] ?? null,
+        removeItem: (key: string) => {
+          sessionStorageState.delete(key);
+        },
+        setItem: (key: string, value: string) => {
+          sessionStorageState.set(key, String(value));
+        },
+        get length() {
+          return sessionStorageState.size;
         },
       },
     });
@@ -87,7 +100,7 @@ describe('useAuthStatus', () => {
       },
     });
 
-    mockUpdateUser.mockResolvedValue({ error: null });
+    mockSignOut.mockResolvedValue({ error: null });
     mockResolveStoredProfileAvatarPath.mockImplementation((path: string | null) => path);
     mockGetProfileAvatarPublicUrl.mockImplementation((path: string) => `https://cdn.example.com/${path}`);
   });
@@ -181,5 +194,36 @@ describe('useAuthStatus', () => {
     });
 
     expect(window.localStorage.getItem('profileDisplayName:user-1')).toBe('Updated Name');
+  });
+
+  it('clears cached profile state and auth policy storage on sign out', async () => {
+    window.localStorage.setItem('autoLoginEnabled', 'true');
+
+    mockProfileSingle.mockResolvedValue({
+      data: {
+        username: 'Yoo Hankyul',
+        avatar_path: 'user-1/avatar',
+      },
+      error: null,
+    });
+
+    const { result } = renderHook(() => useAuthStatus());
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(window.localStorage.getItem('profileDisplayName:user-1')).toBe('Yoo Hankyul');
+
+    await act(async () => {
+      await result.current.handleSignOut();
+    });
+
+    expect(mockSignOut).toHaveBeenCalled();
+    expect(window.localStorage.getItem('autoLoginEnabled')).toBeNull();
+    expect(window.localStorage.getItem('profileDisplayName:user-1')).toBeNull();
+    expect(result.current.session).toBeNull();
+    expect(result.current.username).toBe('Researcher');
+    expect(result.current.avatarUrl).toBeNull();
   });
 });

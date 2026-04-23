@@ -3,6 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ThemePreference } from '../../lib/themeRegistry';
+import { SettingsPanel } from '../../features/settings/ui/SettingsPanel';
 
 vi.mock('../../lib/avatarCrop', async () => {
   const actual = await vi.importActual<typeof import('../../lib/avatarCrop')>('../../lib/avatarCrop');
@@ -12,8 +13,6 @@ vi.mock('../../lib/avatarCrop', async () => {
     cropAvatarFile: vi.fn(async (_src, file: File) => file),
   };
 });
-
-import { SettingsPanel } from './SettingsPanel';
 
 const baseProps = {
   isOpen: true,

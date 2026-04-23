@@ -86,7 +86,7 @@ const bulkSelectionState = {
   setSelectedIds: vi.fn(),
 };
 
-vi.mock('./hooks/useUserPreferences', () => ({
+vi.mock('./features/settings/logic/useUserPreferences', () => ({
   useUserPreferences: () => ({
     preferences: {
       theme: 'auto',
@@ -103,8 +103,8 @@ vi.mock('./hooks/useAuthStatus', () => ({
   useAuthStatus: () => authState,
 }));
 
-vi.mock('./hooks/useArchiveData', () => ({
-  useArchiveData: () => archiveDataState,
+vi.mock('./features/archive/logic/useArchiveDataController', () => ({
+  useArchiveDataController: () => archiveDataState,
 }));
 
 vi.mock('./hooks/useArchiveFilter', () => ({
@@ -130,7 +130,7 @@ vi.mock('./components/MobileLayout', () => ({
   MobileLayout: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock('./components/settings/SettingsPanel', () => ({
+vi.mock('./features/settings/ui/SettingsPanel', () => ({
   SettingsPanel: (props: any) =>
     props.isOpen ? (
       <div>
@@ -176,11 +176,11 @@ vi.mock('./components/ConfirmModal', () => ({
   ConfirmModal: () => null,
 }));
 
-vi.mock('./components/ArchiveHeader', () => ({
+vi.mock('./features/archive/ui/ArchiveHeader', () => ({
   ArchiveHeader: () => null,
 }));
 
-vi.mock('./components/CitationList', () => ({
+vi.mock('./features/archive/ui/CitationList', () => ({
   CitationList: (props: any) => mockCitationList(props),
 }));
 

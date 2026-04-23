@@ -3,8 +3,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { MobileLayout } from './MobileLayout';
-import { ProjectSidebar } from './main-layout/ProjectSidebar';
 import type { Project, SidebarItem } from '../types';
+import { ProjectSidebar } from '../features/archive/ui/ProjectSidebar';
 
 const projects: Project[] = [
   {
@@ -53,11 +53,11 @@ describe('Constrained typography', () => {
 
     expect(screen.getByPlaceholderText('Project Name').className).toContain('type-body-bounded');
 
-    await user.click(screen.getByRole('button', { name: 'Manage Folders' }));
+    await user.click(screen.getByRole('button', { name: 'Manage folders' }));
     await user.click(screen.getByRole('button', { name: 'Delete project' }));
 
-    expect(screen.getByRole('button', { name: 'Cancel' }).className).toContain('type-body-muted-bounded');
-    expect(screen.getByRole('button', { name: 'Remove' }).className).toContain('type-body-muted-bounded');
+    expect(screen.getByRole('button', { name: 'Cancel' }).className).toContain('ui-btn');
+    expect(screen.getByRole('button', { name: 'Remove' }).className).toContain('type-label-bounded');
   });
 
   it('bounds body text in mobile layout inputs and count badges', async () => {

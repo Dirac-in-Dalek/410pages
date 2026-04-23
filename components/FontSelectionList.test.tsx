@@ -2,8 +2,8 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { FontSelectionList } from './settings/TextSettingsSection';
 import { FONT_OPTIONS } from '../lib/fontRegistry';
+import { FontSelectionList } from '../features/settings/ui/TextSettingsSection';
 
 describe('FontSelectionList', () => {
   it('starts collapsed and shows the current font label in the trigger', () => {

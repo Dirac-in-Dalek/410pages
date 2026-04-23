@@ -2,10 +2,10 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { CitationList } from './CitationList';
 import type { ChapterBlock, Citation, Project } from '../types';
+import { CitationList } from '../features/archive/ui/CitationList';
 
-vi.mock('./CitationCard', () => ({
+vi.mock('../features/archive/ui/CitationCard', () => ({
   CitationCard: ({ citation }: { citation: Citation }) => (
     <div data-testid={`citation-${citation.id}`}>{citation.text}</div>
   ),

@@ -1,13 +1,13 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_FONT_ID, FONT_IDS } from '../lib/fontRegistry';
+import { useUserPreferences } from '../features/settings/logic/useUserPreferences';
+import { applyPreferencesToDocument } from '../features/settings/logic/preferencesDocument';
+import { readStoredPreferences } from '../features/settings/logic/preferencesStorage';
 import {
   DEFAULT_PREFERENCES,
   PREFERENCES_STORAGE_KEY,
-  applyPreferencesToDocument,
-  readStoredPreferences,
-  useUserPreferences,
-} from './useUserPreferences';
+} from '../features/settings/policy/userPreferences';
 
 const createMatchMediaStub = (matches = false) =>
   vi.fn().mockImplementation(() => ({

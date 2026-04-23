@@ -1,8 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
-import { AvatarCropModal } from './AvatarCropModal';
+import { AvatarCropModal } from '../../features/settings/ui/AvatarCropModal';
 
 describe('AvatarCropModal', () => {
   beforeEach(() => {

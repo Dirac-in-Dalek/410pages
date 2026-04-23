@@ -2,9 +2,9 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { CitationCard } from './CitationCard';
-import { CitationEditor } from './CitationEditor';
 import type { Citation } from '../types';
+import { CitationCard } from '../features/archive/ui/CitationCard';
+import { CitationEditor } from '../features/citation-entry/ui/CitationEditor';
 
 const citation: Citation = {
   id: 'citation-1',
