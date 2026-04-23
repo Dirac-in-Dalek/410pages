@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { AvatarCropFrame, AvatarCropHandle, AvatarImageRect } from '../../lib/avatarCrop';
 import {
-  clampAvatarCropFrame,
   createInitialAvatarCropFrame,
   cropAvatarFile,
   getContainedImageRect,
@@ -112,6 +111,11 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
   const [cropFrame, setCropFrame] = useState<AvatarCropFrame | null>(null);
   const [error, setError] = useState<string | null>(null);
   const interactionRef = useRef<InteractionState | null>(null);
+  const imageRectRef = useRef<AvatarImageRect | null>(null);
+
+  useEffect(() => {
+    imageRectRef.current = imageRect;
+  }, [imageRect]);
 
   useEffect(() => {
     if (!file) {
@@ -148,49 +152,133 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
     };
   }, [previewUrl]);
 
+  useEffect(() => {
+    if (!previewUrl) {
+      return undefined;
+    }
+
+    avatarDebugInfo('crop modal environment', {
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
+      hasPointerEvent: typeof window.PointerEvent === 'function',
+      htmlElementHasSetPointerCapture:
+        typeof HTMLElement !== 'undefined' &&
+        typeof HTMLElement.prototype.setPointerCapture === 'function',
+      htmlElementHasReleasePointerCapture:
+        typeof HTMLElement !== 'undefined' &&
+        typeof HTMLElement.prototype.releasePointerCapture === 'function',
+    });
+
+    const updateCropFrame = (pointerId: number, clientX: number, clientY: number) => {
+      const interaction = interactionRef.current;
+      const activeImageRect = imageRectRef.current;
+      if (!interaction || !activeImageRect || interaction.pointerId !== pointerId) {
+        return;
+      }
+
+      const deltaX = clientX - interaction.originX;
+      const deltaY = clientY - interaction.originY;
+
+      avatarDebugInfo('window pointermove accepted', {
+        pointerId,
+        clientX,
+        clientY,
+        interactionType: interaction.type,
+        deltaX,
+        deltaY,
+      });
+
+      setCropFrame((currentFrame) => {
+        const baseFrame = currentFrame || interaction.startFrame;
+        if (!baseFrame) {
+          return currentFrame;
+        }
+
+        if (interaction.type === 'move') {
+          return moveAvatarCropFrame(interaction.startFrame, deltaX, deltaY, activeImageRect);
+        }
+
+        return resizeAvatarCropFrame(
+          interaction.startFrame,
+          interaction.handle,
+          deltaX,
+          deltaY,
+          activeImageRect
+        );
+      });
+    };
+
+    const handleWindowPointerMove = (event: PointerEvent) => {
+      updateCropFrame(event.pointerId, event.clientX, event.clientY);
+    };
+
+    const stopInteraction = (event?: PointerEvent) => {
+      if (event && interactionRef.current && interactionRef.current.pointerId !== event.pointerId) {
+        avatarDebugInfo('window pointer end ignored', {
+          receivedPointerId: event.pointerId,
+          activePointerId: interactionRef.current.pointerId,
+          eventType: event.type,
+        });
+        return;
+      }
+
+      avatarDebugInfo('window pointer end cleared interaction', {
+        eventType: event?.type ?? 'manual-clear',
+        pointerId: event?.pointerId ?? null,
+        interactionType: interactionRef.current?.type ?? null,
+      });
+      interactionRef.current = null;
+    };
+
+    window.addEventListener('pointermove', handleWindowPointerMove);
+    window.addEventListener('pointerup', stopInteraction);
+    window.addEventListener('pointercancel', stopInteraction);
+
+    return () => {
+      window.removeEventListener('pointermove', handleWindowPointerMove);
+      window.removeEventListener('pointerup', stopInteraction);
+      window.removeEventListener('pointercancel', stopInteraction);
+      interactionRef.current = null;
+    };
+  }, [previewUrl]);
+
   if (!file || !previewUrl) {
     return null;
   }
 
-  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!interactionRef.current || !imageRect || interactionRef.current.pointerId !== event.pointerId) {
-      return;
-    }
-
-    event.preventDefault();
-    const deltaX = event.clientX - interactionRef.current.originX;
-    const deltaY = event.clientY - interactionRef.current.originY;
-
-    setCropFrame((currentFrame) => {
-      const baseFrame = currentFrame || interactionRef.current?.startFrame;
-      if (!baseFrame) {
-        return currentFrame;
-      }
-
-      if (interactionRef.current?.type === 'move') {
-        return moveAvatarCropFrame(interactionRef.current.startFrame, deltaX, deltaY, imageRect);
-      }
-
-      return resizeAvatarCropFrame(
-        interactionRef.current.startFrame,
-        interactionRef.current.handle,
-        deltaX,
-        deltaY,
-        imageRect
-      );
+  const trySetPointerCapture = (
+    element: HTMLDivElement | HTMLButtonElement,
+    pointerId: number
+  ) => {
+    const hasSetPointerCapture = typeof element.setPointerCapture === 'function';
+    avatarDebugInfo('setPointerCapture availability', {
+      tagName: element.tagName,
+      pointerId,
+      hasSetPointerCapture,
+      prototypeHasSetPointerCapture:
+        typeof HTMLElement !== 'undefined' &&
+        typeof HTMLElement.prototype.setPointerCapture === 'function',
     });
-  };
 
-  const stopInteraction = (event?: React.PointerEvent<HTMLDivElement>) => {
-    if (
-      event &&
-      interactionRef.current &&
-      interactionRef.current.pointerId !== event.pointerId
-    ) {
+    if (!hasSetPointerCapture) {
       return;
     }
 
-    interactionRef.current = null;
+    try {
+      element.setPointerCapture(pointerId);
+      avatarDebugInfo('setPointerCapture succeeded', {
+        tagName: element.tagName,
+        pointerId,
+      });
+    } catch (error) {
+      avatarDebugError('setPointerCapture failed', {
+        tagName: element.tagName,
+        pointerId,
+        error:
+          error instanceof Error
+            ? { name: error.name, message: error.message }
+            : { message: String(error) },
+      });
+    }
   };
 
   const startMove = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -199,7 +287,14 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
     }
 
     event.preventDefault();
-    event.currentTarget.setPointerCapture(event.pointerId);
+    avatarDebugInfo('move pointerdown', {
+      pointerId: event.pointerId,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      pointerType: event.pointerType,
+      cropFrame,
+    });
+    trySetPointerCapture(event.currentTarget, event.pointerId);
     interactionRef.current = {
       type: 'move',
       originX: event.clientX,
@@ -216,7 +311,15 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
       return;
     }
 
-    event.currentTarget.setPointerCapture(event.pointerId);
+    avatarDebugInfo('resize pointerdown', {
+      handle,
+      pointerId: event.pointerId,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      pointerType: event.pointerType,
+      cropFrame,
+    });
+    trySetPointerCapture(event.currentTarget, event.pointerId);
     interactionRef.current = {
       type: 'resize',
       handle,
@@ -323,9 +426,6 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
           <div
             className="relative overflow-hidden rounded-[28px] border border-[var(--border-main)] bg-[var(--bg-main)] touch-none select-none overscroll-contain"
             style={{ width: `${EDITOR_SIZE}px`, height: `${EDITOR_SIZE}px` }}
-            onPointerMove={handlePointerMove}
-            onPointerUp={stopInteraction}
-            onPointerCancel={stopInteraction}
           >
             <img
               src={previewUrl}

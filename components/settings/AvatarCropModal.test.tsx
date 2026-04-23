@@ -94,4 +94,36 @@ describe('AvatarCropModal', () => {
     expect(saveButton.className).toContain('ui-btn');
     expect(saveButton.className).toContain('ui-btn--solid');
   });
+
+  it('starts handle interactions safely even when pointer capture is unavailable', () => {
+    const file = new File(['avatar'], 'avatar.png', { type: 'image/png' });
+    render(
+      <AvatarCropModal
+        file={file}
+        onCancel={vi.fn()}
+        onSave={vi.fn(async () => undefined)}
+      />
+    );
+
+    const previewImage = screen.getByAltText('편집 중인 프로필 사진');
+    Object.defineProperty(previewImage, 'naturalWidth', { configurable: true, value: 1200 });
+    Object.defineProperty(previewImage, 'naturalHeight', { configurable: true, value: 1200 });
+    fireEvent.load(previewImage);
+
+    const moveFrame = previewImage.parentElement?.querySelector('.cursor-move') as HTMLDivElement | null;
+    const topHandle = screen.getByRole('button', { name: 'top 핸들' }) as HTMLButtonElement;
+
+    expect(moveFrame).toBeTruthy();
+    if (!moveFrame) {
+      return;
+    }
+
+    Object.defineProperty(moveFrame, 'setPointerCapture', { configurable: true, value: undefined });
+    Object.defineProperty(topHandle, 'setPointerCapture', { configurable: true, value: undefined });
+
+    fireEvent.pointerDown(moveFrame, { pointerId: 1, clientX: 120, clientY: 120 });
+    fireEvent.pointerDown(topHandle, { pointerId: 2, clientX: 120, clientY: 60 });
+
+    expect(screen.getByRole('dialog', { name: '프로필 사진 편집' })).toBeTruthy();
+  });
 });

@@ -18,3 +18,4 @@ View your app in AI Studio: https://ai.studio/apps/drive/1oZbsL9-xtqAIRJsutvx64-
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+4. If Supabase schema drift shows up in the browser, apply `supabase_schema.sql` or the matching migration in `supabase/migrations/`
