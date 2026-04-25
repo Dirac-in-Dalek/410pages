@@ -134,13 +134,13 @@ export const TextSettingsSection: React.FC<TextSettingsSectionProps> = ({
 
       <div className="rounded-2xl border border-[var(--border-main)] bg-[var(--bg-sidebar)] p-4 shadow-[var(--shadow-card)]">
         <div className="mb-5 flex items-center justify-between gap-4">
-          <p className="ui-label min-w-0">서체</p>
+          <p className="ui-label shrink-0 whitespace-nowrap">서체</p>
           <FontSelectionList selectedFontFamily={fontFamily} onFontFamilyChange={onFontFamilyChange} />
         </div>
 
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-3">
-            <span className="ui-label">글자 크기</span>
+            <span className="ui-label shrink-0 whitespace-nowrap">글자 크기</span>
             <div className="flex items-center gap-2">
               <span role="status" aria-live="polite" className="ui-label tabular-nums text-[var(--text-main)]">
                 {baseFontPt}pt

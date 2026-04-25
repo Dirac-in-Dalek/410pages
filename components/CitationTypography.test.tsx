@@ -55,6 +55,15 @@ describe('Citation typography', () => {
     expect((editor as HTMLTextAreaElement).style.height).toBe('72px');
   });
 
+  it('keeps quote text away from the focus edge', () => {
+    render(<CitationEditor onAddCitation={vi.fn()} username="Dalek" />);
+
+    const editor = screen.getByPlaceholderText('Write a quote, sentence, or field note...');
+    expect(editor.className).toContain('px-2');
+    expect(editor.className).toContain('py-1.5');
+    expect(editor.className).toContain('focus:outline-none');
+  });
+
   it('moves focus from quote to page before submitting in sequential book-entry mode', async () => {
     const user = userEvent.setup();
     const onAddCitation = vi.fn().mockResolvedValue({ ok: true, citationId: 'citation-2' });

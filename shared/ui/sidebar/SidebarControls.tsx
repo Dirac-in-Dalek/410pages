@@ -40,6 +40,7 @@ type EditorialInlineRenameFieldProps = {
   onCancel: () => void;
   onBlur?: () => void;
   placeholder?: string;
+  actionsPlacement?: 'inline' | 'below';
 };
 
 export const EditorialInlineRenameField: React.FC<EditorialInlineRenameFieldProps> = ({
@@ -49,8 +50,15 @@ export const EditorialInlineRenameField: React.FC<EditorialInlineRenameFieldProp
   onCancel,
   onBlur,
   placeholder,
+  actionsPlacement = 'inline',
 }) => (
-  <div className="flex min-w-0 flex-1 items-center gap-1" onClick={(event) => event.stopPropagation()}>
+  <div
+    className={[
+      'flex min-w-0 flex-1 gap-1',
+      actionsPlacement === 'below' ? 'flex-col items-stretch' : 'items-center',
+    ].join(' ')}
+    onClick={(event) => event.stopPropagation()}
+  >
     <input
       autoFocus
       value={value}
@@ -68,12 +76,19 @@ export const EditorialInlineRenameField: React.FC<EditorialInlineRenameFieldProp
       }}
       className="type-body-bounded min-w-0 flex-1 rounded-[0.85rem] border border-[var(--accent-border)] bg-[var(--bg-card)] px-2.5 py-[0.3125rem] text-[var(--text-main)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-ring)]"
     />
-    <EditorialIconActionButton ariaLabel="Confirm rename" onClick={() => onSubmit()}>
-      <Check size={14} />
-    </EditorialIconActionButton>
-    <EditorialIconActionButton ariaLabel="Cancel rename" onClick={() => onCancel()}>
-      <X size={14} />
-    </EditorialIconActionButton>
+    <div
+      className={[
+        'flex gap-1',
+        actionsPlacement === 'below' ? 'justify-end' : 'items-center',
+      ].join(' ')}
+    >
+      <EditorialIconActionButton ariaLabel="Confirm rename" onClick={() => onSubmit()}>
+        <Check size={14} />
+      </EditorialIconActionButton>
+      <EditorialIconActionButton ariaLabel="Cancel rename" onClick={() => onCancel()}>
+        <X size={14} />
+      </EditorialIconActionButton>
+    </div>
   </div>
 );
 

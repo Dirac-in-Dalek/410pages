@@ -42,7 +42,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
   return (
     <div
       className={`
-        relative rounded-[1.25rem] border transition-all duration-300 p-0.5
+        relative rounded-[1.25rem] border p-0.5 transition-all duration-300 focus-within:border-[var(--accent-border)] focus-within:ring-2 focus-within:ring-[var(--accent-ring)]
         ${isDraggingOver ? 'border-[var(--accent-border)] bg-[var(--accent-soft)] ring-4 ring-[var(--accent-ring)]' : 'border-[var(--border-main)] bg-[var(--bg-card)] shadow-[var(--shadow-toolbar)]'}
       `}
       onDragOver={handleDragOver}
@@ -80,7 +80,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
             await handleSubmit();
           }}
           placeholder={placeholder}
-          className="type-body-bounded w-full placeholder:text-[var(--text-muted)] text-[var(--text-main)] border-none resize-none focus:ring-0 bg-transparent p-0 min-h-[52px] overflow-y-auto"
+          className="type-body-bounded min-h-[52px] w-full resize-none overflow-y-auto border-none bg-transparent px-2 py-1.5 text-[var(--text-main)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-0"
         />
       </div>
 

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Check, Plus, X } from 'lucide-react';
 
 interface ChapterBlockInsertButtonProps {
   isEditing: boolean;
@@ -47,22 +48,28 @@ export const ChapterBlockInsertButton: React.FC<ChapterBlockInsertButtonProps> =
       <button
         type="button"
         aria-label="Add chapter block"
-        className="inline-flex h-4 w-4 items-center justify-center text-sm leading-none text-[var(--text-muted)] opacity-0 transition-opacity group-hover:opacity-100 hover:text-[var(--text-main)]"
+        className="flex h-full w-full items-center gap-2 text-[var(--text-muted)] opacity-0 transition-opacity duration-150 group-hover:opacity-100 focus-visible:opacity-100"
         onClick={onOpen}
       >
-        +
+        <span className="h-px flex-1 bg-[var(--border-main)]" />
+        <span className="inline-flex h-5 items-center gap-1 rounded-full border border-[var(--border-main)] bg-[var(--bg-card)] px-2 text-[0.68rem] font-medium text-[var(--text-secondary)] shadow-[0_1px_2px_rgba(28,22,16,0.04)] transition-colors hover:border-[var(--accent-border)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]">
+          <Plus size={12} />
+          Insert
+        </span>
+        <span className="h-px flex-1 bg-[var(--border-main)]" />
       </button>
     );
   }
 
   return (
-    <form ref={formRef} className="flex items-center gap-2" onSubmit={handleSubmit}>
+    <form ref={formRef} className="flex w-full items-center gap-2 py-1.5" onSubmit={handleSubmit}>
+      <span className="h-px flex-1 bg-[var(--border-main)]" />
       <input
         aria-label="Chapter block label"
-        className="min-w-[9rem] rounded-lg border border-[var(--border-main)] bg-[var(--bg-main)] px-3 py-1 type-body text-[var(--text-main)] outline-none focus:border-[var(--accent)]"
+        className="type-body-bounded h-8 min-w-0 flex-[1.2] rounded-full border border-[var(--accent-border)] bg-[var(--bg-card)] px-3 text-[var(--text-main)] outline-none shadow-[0_1px_2px_rgba(28,22,16,0.04)] placeholder:text-[var(--text-muted)] focus:ring-2 focus:ring-[var(--accent-ring)]"
         value={label}
         autoFocus
-        placeholder="3장"
+        placeholder="Chapter title"
         onChange={(event) => setLabel(event.target.value)}
         onKeyDown={(event) => {
           if (event.key === 'Escape') {
@@ -74,22 +81,23 @@ export const ChapterBlockInsertButton: React.FC<ChapterBlockInsertButtonProps> =
       <button
         type="submit"
         aria-label="Save chapter block"
-        className="rounded-lg bg-[var(--text-main)] px-3 py-1 type-body text-[var(--bg-main)] disabled:opacity-50"
+        className="ui-btn ui-btn-icon h-8 w-8 min-h-0 rounded-full border-transparent bg-[var(--accent)] text-white hover:bg-[var(--accent-strong)] disabled:opacity-40"
         disabled={!label.trim()}
       >
-        Save
+        <Check size={14} />
       </button>
       <button
         type="button"
         aria-label="Cancel chapter block"
-        className="rounded-lg px-2 py-1 text-sm text-[var(--text-muted)]"
+        className="ui-btn ui-btn-icon h-8 w-8 min-h-0 rounded-full text-[var(--text-muted)]"
         onClick={() => {
           setLabel('');
           onCancel?.();
         }}
       >
-        ×
+        <X size={14} />
       </button>
+      <span className="h-px flex-1 bg-[var(--border-main)]" />
     </form>
   );
 };

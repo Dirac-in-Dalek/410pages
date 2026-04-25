@@ -401,6 +401,7 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
             isBookRow
               ? 'min-h-[1.95rem] rounded-[0.8rem] py-1 text-[13.5px] font-normal text-[var(--text-muted)]'
               : '',
+            editingNodeId === item.id ? 'items-start py-2' : '',
           ]
             .filter(Boolean)
             .join(' ')}
@@ -452,6 +453,7 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
               onCancel={cancelNodeEdit}
               onBlur={() => saveNodeEdit(item)}
               placeholder={item.type === 'author' ? 'Author name' : 'Book name'}
+              actionsPlacement="below"
             />
           ) : (
             <>

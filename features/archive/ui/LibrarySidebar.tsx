@@ -1,5 +1,5 @@
 import React from 'react';
-import { FolderOpen, Search } from 'lucide-react';
+import { FolderOpen } from 'lucide-react';
 import type { LibrarySidebarProps } from '../contract/librarySidebarContract';
 import { LibrarySidebarTree } from './LibrarySidebarTree';
 
@@ -8,8 +8,6 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
   onTreeItemClick,
   onProjectSelect,
   selectedProjectId,
-  onSearch,
-  searchTerm = '',
   selectedFilter = null,
   onReorderAuthorAt,
   onReorderBookAt,
@@ -35,23 +33,12 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
         />
       </div>
 
-      <div className="border-b border-[var(--border-main)] px-3.5 pb-2.5 pt-3.5">
-        <div className="mb-2.5">
+      <div className="border-b border-[var(--border-main)] px-3.5 pb-3 pt-3.5">
+        <div>
           <span className="type-title-bounded block text-[1.45rem] font-semibold tracking-[-0.03em] text-[var(--text-main)]">
             Library
           </span>
-          <p className="mt-0.5 text-[0.88rem] text-[var(--text-secondary)]">Catalog</p>
         </div>
-
-        <label className="flex items-center rounded-full border border-transparent bg-[var(--bg-input)] px-3.5 py-2 transition-colors focus-within:border-[var(--accent-border)]">
-          <Search size={15} className="mr-2 shrink-0 text-[var(--text-muted)]" />
-          <input
-            value={searchTerm}
-            onChange={(event) => onSearch?.(event.target.value)}
-            placeholder="Filter authors or books..."
-            className="type-body-bounded w-full border-none bg-transparent p-0 text-[var(--text-main)] placeholder:text-[var(--text-muted)] focus:ring-0"
-          />
-        </label>
       </div>
 
       <LibrarySidebarTree
@@ -64,9 +51,6 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
         onRenameBook={onRenameBook}
         headerContent={
           <div className="mb-5">
-            <div className="mb-2.5 px-1 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
-              Scope
-            </div>
             <button
               type="button"
               onClick={() => onProjectSelect(null)}

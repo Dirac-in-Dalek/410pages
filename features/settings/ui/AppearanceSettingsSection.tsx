@@ -53,7 +53,7 @@ export const AppearanceSettingsSection: React.FC<AppearanceSettingsSectionProps>
 
       <div className="rounded-2xl border border-[var(--border-main)] bg-[var(--bg-sidebar)] p-4 shadow-[var(--shadow-card)]">
         <div className="flex items-center justify-between gap-4">
-          <p className="ui-label min-w-0">테마</p>
+          <p className="ui-label shrink-0 whitespace-nowrap">테마</p>
 
           <div ref={wrapperRef} className="relative w-full max-w-[18rem]">
             <button

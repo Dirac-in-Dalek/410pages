@@ -90,6 +90,7 @@ export const ProjectSidebarRow: React.FC<ProjectSidebarRowProps> = ({
         <div
           className={`
             type-label-bounded group relative mb-1 flex cursor-pointer items-center rounded-[0.9rem] border px-3 py-2 transition-all duration-200 active:scale-[0.985]
+            ${isManageMode && editingProjectId !== project.id ? 'flex-wrap items-start' : ''}
             ${dragOverProjectId === project.id ? 'z-10 scale-[1.01] border-[var(--accent-border)] bg-[var(--accent-soft)] shadow-[0_8px_18px_rgba(209,15,37,0.08)]' : ''}
             ${selectedProjectId === project.id && dragOverProjectId !== project.id ? 'border-[var(--border-main)] bg-[var(--sidebar-active)] text-[var(--text-main)] shadow-[0_1px_2px_rgba(28,22,16,0.06)]' : 'border-transparent bg-transparent text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]'}
           `}
@@ -137,7 +138,7 @@ export const ProjectSidebarRow: React.FC<ProjectSidebarRowProps> = ({
               </span>
 
               {isManageMode ? (
-                <div className="ml-2 flex items-center space-x-1">
+                <div className="mt-2 flex w-full justify-end gap-1">
                   <EditorialIconActionButton
                     onClick={(event) => {
                       event.stopPropagation();

@@ -209,7 +209,6 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
                 >
                   <Folder size={15} className="mr-2" />
                   <span className="truncate flex-1 text-left">{project.name}</span>
-                  <span className="type-body-muted-bounded opacity-80">{project.citationIds.length}</span>
                 </EditorialListButton>
               ))}
             </div>

@@ -84,9 +84,10 @@ describe('CitationList chapter blocks', () => {
     );
 
     expect(screen.getByText('First quote')).toBeTruthy();
-    expect(screen.getByText('Chapter')).toBeTruthy();
+    expect(screen.queryByText('Chapter')).toBeNull();
     expect(screen.getByText('3장')).toBeTruthy();
     expect(screen.getByText('Second quote')).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: 'Add chapter block' })).toHaveLength(1);
     expect(screen.getByTestId('citation-citation-1').compareDocumentPosition(screen.getByText('3장'))).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(screen.getByText('3장').compareDocumentPosition(screen.getByTestId('citation-citation-2'))).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
