@@ -17,21 +17,24 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
 }) => {
     const isDateActive = sortField === 'date';
     const isPageActive = sortField === 'page';
-    const dateLabel = isDateActive ? `Date ${dateDirection === 'asc' ? '↑' : '↓'}` : 'Date';
-    const pageLabel = isPageActive ? `Page ${pageDirection === 'asc' ? '↑' : '↓'}` : 'Page';
+    const dateLabel = isDateActive ? `Date ${dateDirection === 'asc' ? '↓' : '↑'}` : 'Date';
+    const pageLabel = isPageActive ? `Page ${pageDirection === 'asc' ? '↓' : '↑'}` : 'Page';
 
     const getButtonClass = (isActive: boolean) =>
-        `type-label-bounded shrink-0 inline-flex items-center px-2.5 py-1.5 rounded-lg border transition-colors ${
+        `type-label-bounded shrink-0 inline-flex items-center rounded-full border px-3.5 py-1.5 transition-colors active:scale-95 ${
             isActive
-                ? 'border-[var(--text-main)] text-[var(--text-main)] bg-[var(--sidebar-hover)]'
-                : 'border-[var(--border-main)] text-[var(--text-secondary)] hover:text-[var(--text-main)] hover:bg-[var(--sidebar-hover)]'
+                ? 'border-[var(--border-main)] bg-[var(--bg-card)] text-[var(--text-main)] shadow-[var(--shadow-card)]'
+                : 'border-[var(--border-main)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]'
         }`;
 
     return (
-        <div className="pt-5 md:pt-8 pb-0">
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-start justify-between gap-3 mb-2.5">
-                    <h2 className="type-display font-serif text-[var(--text-main)] truncate">{title}</h2>
+        <div className="pt-5 md:pt-6 lg:pt-7 pb-1">
+            <div className="mx-auto max-w-5xl px-6 xl:px-8">
+                <div className="mb-3 flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                        <h2 className="truncate text-[1.8rem] font-semibold tracking-[-0.03em] text-[var(--text-main)]">{title}</h2>
+                        <p className="mt-1 text-[0.9rem] text-[var(--text-secondary)]">Capture, sort, and revisit your saved notes.</p>
+                    </div>
                     <div className="shrink-0 inline-flex items-center gap-2">
                         <button
                             type="button"
@@ -53,9 +56,8 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
                         </button>
                     </div>
                 </div>
-                <div className="h-px bg-[var(--border-main)] mb-3 md:mb-5"></div>
                 {showEditor ? (
-                    <div className="mb-3">
+                    <div className="mb-3 md:mb-4">
                         <CitationEditor
                             onAddCitation={onAddCitation}
                             prefillData={editorPrefill}

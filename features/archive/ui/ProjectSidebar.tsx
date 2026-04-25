@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Edit2, Settings, Trash2 } from 'lucide-react';
+import { Edit2, Trash2 } from 'lucide-react';
 import type { Project } from '../../../types';
 import type {
   ProjectDropIndicator,
@@ -13,7 +13,6 @@ import {
   PROJECT_SORT_MIME,
   resolveProjectDragIndex,
 } from '../../../shared/lib/projectSidebar';
-import { EditorialProfileCard } from '../../../shared/ui/sidebar/SidebarPrimitives';
 import { ProjectSidebarProjectsSection } from './ProjectSidebarProjectsSection';
 
 export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
@@ -25,11 +24,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
   onRenameProject,
   onDeleteProject,
   onReorderProjects,
-  username = 'Researcher',
-  avatarUrl = null,
-  onSignOut,
   onOpenPdfReader,
-  onOpenSettings,
   width,
   isResizing,
   onStartResize,
@@ -282,7 +277,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
   return (
     <aside
       style={{ width: `${width}px` }}
-      className="flex-shrink-0 border-r border-[var(--border-main)] bg-[var(--bg-sidebar)] flex flex-col z-20 shadow-[var(--shadow-sidebar)] transition-colors duration-200 relative"
+      className="relative z-20 flex flex-shrink-0 flex-col border-r border-[var(--border-main)] bg-[var(--bg-sidebar)] shadow-[var(--shadow-sidebar)] transition-colors duration-200"
     >
       {contextMenu && (
         <div
@@ -320,20 +315,8 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
         <div className={`w-[2px] h-full mx-auto transition-colors ${isResizing ? 'bg-[var(--accent)]' : 'group-hover:bg-[var(--accent-border)]'}`} />
       </div>
 
-      <div className="h-14 flex items-center px-3.5 border-b border-[var(--border-main)] bg-[var(--bg-card)] gap-2.5">
-        <div className="text-[var(--text-main)]">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M7 6 L12 3 H18 V18 L13 21 H7 V6" />
-          </svg>
-        </div>
-        <h1 className="brand-wordmark type-title-bounded font-semibold text-[var(--text-main)]">
-          <span className="brand-number">410</span>
-          <span className="brand-text">pages</span>
-        </h1>
-      </div>
-
       <div
-        className="flex-1 overflow-y-auto p-3"
+        className="flex-1 overflow-y-auto px-3 py-4"
         onDragOver={(event) => handleProjectsPanelDragOver(event, projects.map((project) => project.id))}
         onDrop={(event) => handleProjectsPanelDrop(event, projects.map((project) => project.id))}
         onDragLeave={(event) => {
@@ -397,18 +380,6 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
         />
       </div>
 
-      <div className="mt-auto border-t border-[var(--border-main)] bg-[var(--bg-sidebar)] p-3.5 transition-colors duration-200">
-        <EditorialProfileCard username={username} avatarUrl={avatarUrl} subtitle="Personal settings">
-          <button
-            type="button"
-            onClick={onOpenSettings}
-            className="ui-btn w-full justify-between"
-          >
-            <span>Open settings</span>
-            <Settings size={16} />
-          </button>
-        </EditorialProfileCard>
-      </div>
     </aside>
   );
 };

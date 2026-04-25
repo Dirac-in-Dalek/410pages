@@ -104,8 +104,8 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
       onPageSortClick={onPageSortClick}
     />
 
-    <div className={isMobileApp ? 'pb-28 mt-3' : 'pb-20 mt-4'}>
-      <div className={isMobileApp ? 'max-w-5xl mx-auto px-3' : 'max-w-5xl mx-auto px-4 sm:px-6 lg:px-8'}>
+    <div className={isMobileApp ? 'pb-28 mt-3' : 'pb-20 mt-1 md:mt-2'}>
+      <div className={isMobileApp ? 'max-w-5xl mx-auto px-3' : 'max-w-5xl mx-auto px-6 xl:px-8'}>
         <BulkActionToolbar
           selectedCount={selectedIds.size}
           totalCount={citations.length}

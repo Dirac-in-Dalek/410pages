@@ -365,6 +365,8 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
     const rowTitle = canReorder
       ? `Drag to reorder ${rowTypeLabel}. Double-click to rename.`
       : item.label;
+    const isBookRow = item.type === 'book';
+    const isRootRow = item.type === 'root';
 
     return (
       <div
@@ -380,8 +382,28 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
           title={rowTitle}
           showBefore={showBefore}
           showAfter={showAfter}
-          activeClassName="bg-[var(--sidebar-active)] text-[var(--text-main)] font-medium shadow-sm"
-          inactiveClassName="hover:bg-[var(--sidebar-hover)] text-[var(--text-muted)]"
+          activeClassName={
+            isBookRow
+              ? 'bg-[var(--sidebar-hover)] text-[var(--text-main)]'
+              : 'bg-[var(--sidebar-active)] text-[var(--text-main)] shadow-[0_1px_2px_rgba(31,29,27,0.05)]'
+          }
+          inactiveClassName={
+            isBookRow
+              ? 'text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)]'
+              : 'text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)]'
+          }
+          indicatorOffset={18}
+          baseClassName={[
+            isRootRow ? 'mb-1.5 rounded-[0.85rem] bg-[var(--bg-main)] font-medium' : '',
+            item.type === 'author'
+              ? 'min-h-[2.35rem] font-medium tracking-[-0.01em]'
+              : '',
+            isBookRow
+              ? 'min-h-[1.95rem] rounded-[0.8rem] py-1 text-[13.5px] font-normal text-[var(--text-muted)]'
+              : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
           onToggle={(event) => toggleNode(item.id, event)}
           onClick={() => {
             if (editingNodeId === item.id) return;
@@ -413,13 +435,13 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
           onDragEnd={resetTreeDragState}
         >
           {item.type === 'root' && (
-            <User className="mr-2 h-4 w-4 flex-shrink-0 text-[var(--accent)]" />
+            <User className="mr-1.5 h-3.5 w-3.5 flex-shrink-0 text-[var(--text-secondary)]" />
           )}
           {item.type === 'author' && (
-            <User className="mr-2 h-4 w-4 flex-shrink-0 text-[var(--text-muted)]" />
+            <User className="mr-1.5 h-3.5 w-3.5 flex-shrink-0 text-[var(--text-muted)]" />
           )}
           {item.type === 'book' && (
-            <Book className="mr-2 h-4 w-4 flex-shrink-0 text-[var(--text-muted)]" />
+            <Book className="mr-1.5 h-[0.8125rem] w-[0.8125rem] flex-shrink-0 text-[var(--text-muted)]" />
           )}
 
           {editingNodeId === item.id ? (
@@ -433,21 +455,21 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
             />
           ) : (
             <>
-              <span className="truncate flex-1 min-w-0">{item.label}</span>
+              <span className="min-w-0 flex-1 truncate">{item.label}</span>
               {(item.type === 'author' || item.type === 'book') && (
                 <EditorialIconActionButton
                   onClick={(event) => startNodeEdit(item, event)}
                   className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                   ariaLabel={`Rename ${item.type}`}
                 >
-                  <Edit2 size={13} />
+                  <Edit2 size={12} />
                 </EditorialIconActionButton>
               )}
             </>
           )}
         </LibraryTreeRow>
 
-        {item.children?.length && isExpanded && (
+        {item.type !== 'root' && item.children?.length && isExpanded && (
           <div>{renderTree(item.children, depth + 1, item.data?.authorId)}</div>
         )}
       </div>
@@ -466,6 +488,12 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
       return (
         <>
           {roots.map((item) => renderTreeRow(item, depth))}
+          {roots.length > 0 && authors.length > 0 ? (
+            <div
+              aria-hidden="true"
+              className="mx-2 my-3 h-px rounded-full bg-[var(--border-main)]"
+            />
+          ) : null}
           <div
             onDragOver={(event) =>
               handleTreeListDragOver(event, { items: authors, listType: 'author' })
@@ -511,12 +539,12 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
 
   return (
     <div
-      className="flex-1 overflow-y-auto p-2.5"
+      className="flex-1 overflow-y-auto px-4 pb-5 pt-3"
       onDragOver={(event) => handleTreePanelDragOver(event, authorTreeItems)}
       onDrop={(event) => handleTreePanelDrop(event, authorTreeItems)}
     >
       {headerContent}
-      <div className="type-section-bounded mb-2 px-2 font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+      <div className="mb-2.5 px-1 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
         Authors & Books
       </div>
       {renderTree(treeData)}

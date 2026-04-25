@@ -1,12 +1,7 @@
 import React from 'react';
-import { FolderOpen } from 'lucide-react';
+import { FolderOpen, Search } from 'lucide-react';
 import type { LibrarySidebarProps } from '../contract/librarySidebarContract';
 import { LibrarySidebarTree } from './LibrarySidebarTree';
-import {
-  EditorialListButton,
-  EditorialSearchField,
-  EditorialSectionLabel,
-} from '../../../shared/ui/sidebar/SidebarPrimitives';
 
 export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
   treeData,
@@ -27,7 +22,7 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
   return (
     <aside
       style={{ width: `${width}px` }}
-      className="border-l border-[var(--border-main)] bg-[var(--bg-card)] flex flex-col h-full sticky top-0 overflow-hidden shadow-[var(--shadow-sidebar)] transition-colors duration-200 relative"
+      className="relative flex h-full flex-col overflow-hidden border-l border-[var(--border-main)] bg-[var(--bg-sidebar)] shadow-[var(--shadow-sidebar)] transition-colors duration-200"
     >
       <div
         onMouseDown={onStartResize}
@@ -40,16 +35,23 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
         />
       </div>
 
-      <div className="border-b border-[var(--border-main)] p-3.5">
-        <span className="type-title-bounded mb-3 block font-semibold text-[var(--text-main)]">
-          Library
-        </span>
+      <div className="border-b border-[var(--border-main)] px-3.5 pb-2.5 pt-3.5">
+        <div className="mb-2.5">
+          <span className="type-title-bounded block text-[1.45rem] font-semibold tracking-[-0.03em] text-[var(--text-main)]">
+            Library
+          </span>
+          <p className="mt-0.5 text-[0.88rem] text-[var(--text-secondary)]">Catalog</p>
+        </div>
 
-        <EditorialSearchField
-          value={searchTerm}
-          onChange={onSearch}
-          placeholder="Search everything..."
-        />
+        <label className="flex items-center rounded-full border border-transparent bg-[var(--bg-input)] px-3.5 py-2 transition-colors focus-within:border-[var(--accent-border)]">
+          <Search size={15} className="mr-2 shrink-0 text-[var(--text-muted)]" />
+          <input
+            value={searchTerm}
+            onChange={(event) => onSearch?.(event.target.value)}
+            placeholder="Filter authors or books..."
+            className="type-body-bounded w-full border-none bg-transparent p-0 text-[var(--text-main)] placeholder:text-[var(--text-muted)] focus:ring-0"
+          />
+        </label>
       </div>
 
       <LibrarySidebarTree
@@ -61,17 +63,24 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
         onRenameAuthor={onRenameAuthor}
         onRenameBook={onRenameBook}
         headerContent={
-          <>
-            <EditorialSectionLabel>Scope</EditorialSectionLabel>
-            <EditorialListButton
-              active={selectedProjectId === null}
-              className="mb-3 flex items-center gap-2 font-medium"
+          <div className="mb-5">
+            <div className="mb-2.5 px-1 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
+              Scope
+            </div>
+            <button
+              type="button"
               onClick={() => onProjectSelect(null)}
+              className={[
+                'flex w-full items-center gap-2.5 rounded-[0.85rem] px-3 py-[0.55rem] text-left text-[14px] font-medium transition-[background-color,color,box-shadow,transform] duration-150 active:scale-[0.98]',
+                selectedProjectId === null
+                  ? 'bg-[var(--accent-active)] text-[var(--accent-active-text)] shadow-[var(--shadow-card)]'
+                  : 'bg-[var(--sidebar-hover)] text-[var(--text-main)] hover:bg-[var(--sidebar-active)]',
+              ].join(' ')}
             >
-              <FolderOpen size={16} className="shrink-0" />
+              <FolderOpen size={15} className="shrink-0" />
               <span>All Citations</span>
-            </EditorialListButton>
-          </>
+            </button>
+          </div>
         }
       />
     </aside>

@@ -42,8 +42,8 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
   return (
     <div
       className={`
-        relative rounded-xl border-2 transition-all duration-300 p-1
-        ${isDraggingOver ? 'border-[var(--accent-border)] bg-[var(--accent-soft)] ring-4 ring-[var(--accent-ring)]' : 'border-[var(--border-main)] bg-[var(--bg-card)] shadow-sm'}
+        relative rounded-[1.25rem] border transition-all duration-300 p-0.5
+        ${isDraggingOver ? 'border-[var(--accent-border)] bg-[var(--accent-soft)] ring-4 ring-[var(--accent-ring)]' : 'border-[var(--border-main)] bg-[var(--bg-card)] shadow-[var(--shadow-toolbar)]'}
       `}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -58,7 +58,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
         </div>
       )}
 
-      <div className="p-3.5">
+      <div className="px-3 pt-3 pb-2.5">
         <textarea
           ref={textareaRef}
           value={values.text}
@@ -80,12 +80,12 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
             await handleSubmit();
           }}
           placeholder={placeholder}
-          className="type-body-bounded w-full placeholder:text-[var(--text-muted)] text-[var(--text-main)] border-none resize-none focus:ring-0 bg-transparent p-0 min-h-[72px] overflow-y-auto"
+          className="type-body-bounded w-full placeholder:text-[var(--text-muted)] text-[var(--text-main)] border-none resize-none focus:ring-0 bg-transparent p-0 min-h-[52px] overflow-y-auto"
         />
       </div>
 
-      <div className="bg-[var(--bg-sidebar)] rounded-b-lg border-t border-[var(--border-main)] p-1.5 flex flex-nowrap gap-1.5 items-center">
-        <div className="flex min-w-0 flex-[1.2] items-center bg-[var(--bg-card)] border border-[var(--border-main)] rounded-md px-2 py-1 focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] transition-all">
+      <div className="rounded-[0_0_1rem_1rem] border-t border-[var(--border-main)] bg-[var(--bg-card)] p-1.5 flex flex-nowrap gap-1.5 items-center">
+        <div className="flex min-w-0 flex-[1.15] items-center bg-[var(--bg-input)] border border-[var(--border-main)] rounded-[0.9rem] px-2.5 py-[0.3125rem] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] transition-all">
           <User size={12} className={`mr-2 ${isSelf ? 'text-[var(--text-muted)]' : 'text-[var(--accent)]'}`} />
           <input
             type="text"
@@ -105,7 +105,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
           />
         </div>
 
-        <div className="flex min-w-0 flex-[1.2] items-center bg-[var(--bg-input)] border border-[var(--border-main)] rounded-md px-2 py-1 focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] transition-all">
+        <div className="flex min-w-0 flex-[1.15] items-center bg-[var(--bg-input)] border border-[var(--border-main)] rounded-[0.9rem] px-2.5 py-[0.3125rem] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] transition-all">
           <BookIcon size={12} className="mr-2 text-[var(--text-muted)]" />
           <input
             type="text"
@@ -125,7 +125,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
           />
         </div>
 
-        <div className="flex w-[5rem] min-w-0 items-center bg-[var(--bg-input)] border border-[var(--border-main)] rounded-md px-2 py-1 focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] transition-all">
+        <div className="flex w-[4.75rem] min-w-0 items-center bg-[var(--bg-input)] border border-[var(--border-main)] rounded-[0.9rem] px-2.5 py-[0.3125rem] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] transition-all">
           <Hash size={12} className="mr-2 text-[var(--text-muted)]" />
           <input
             ref={pageInputRef}
@@ -155,8 +155,8 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
             }}
             disabled={!canSubmit}
             className={`
-              ml-auto inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-all
-              ${canSubmit ? 'bg-[var(--accent)] text-white shadow-md hover:bg-[var(--accent-strong)] hover:scale-105 active:scale-95' : 'bg-[var(--bg-sidebar)] text-[var(--text-muted)] cursor-not-allowed'}
+              ml-auto inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[0.9rem] transition-all
+              ${canSubmit ? 'bg-[var(--accent)] text-white shadow-sm hover:bg-[var(--accent-strong)] hover:scale-105 active:scale-95' : 'bg-[var(--bg-input)] text-[var(--text-muted)] cursor-not-allowed'}
             `}
           >
             <Send size={15} />

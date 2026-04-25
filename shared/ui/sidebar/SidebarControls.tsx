@@ -22,7 +22,7 @@ export const EditorialIconActionButton: React.FC<EditorialIconActionButtonProps>
     onClick={onClick}
     aria-label={ariaLabel}
     className={[
-      'ui-btn ui-btn-icon h-7 w-7 min-h-0 rounded-md border-transparent',
+      'ui-btn ui-btn-icon h-[1.625rem] w-[1.625rem] min-h-0 rounded-lg border-transparent',
       danger
         ? 'text-red-500 hover:bg-red-100'
         : 'text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]',
@@ -66,7 +66,7 @@ export const EditorialInlineRenameField: React.FC<EditorialInlineRenameFieldProp
           onCancel();
         }
       }}
-      className="type-body-bounded min-w-0 flex-1 rounded-lg border border-[var(--accent-border)] bg-[var(--bg-card)] px-2.5 py-1.5 text-[var(--text-main)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-ring)]"
+      className="type-body-bounded min-w-0 flex-1 rounded-[0.85rem] border border-[var(--accent-border)] bg-[var(--bg-card)] px-2.5 py-[0.3125rem] text-[var(--text-main)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-ring)]"
     />
     <EditorialIconActionButton ariaLabel="Confirm rename" onClick={() => onSubmit()}>
       <Check size={14} />

@@ -122,7 +122,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         className={`fixed z-50 bg-[var(--bg-card)] border-[var(--border-main)] shadow-[var(--shadow-panel)] ${panelClasses}`}
       >
         <div className="flex h-full flex-col overflow-hidden">
-          <header className="border-b border-[var(--border-main)] bg-[var(--bg-card)] px-5 py-4.5">
+          <header className="border-b border-[var(--border-main)] bg-[var(--bg-card)] px-5 py-4">
             <div className="flex items-center justify-between gap-4">
               <h2 className="ui-title">설정</h2>
               <button
@@ -137,69 +137,87 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 </span>
               </button>
             </div>
-
-            <div className="mt-5 flex items-center gap-4">
-              <div className="ui-action flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--accent-soft)] text-[var(--accent)]">
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  initials
-                )}
-              </div>
-
-              <div className="min-w-0 flex-1">
-                <div className="mb-3 flex items-center gap-2">
-                  <label
-                    className={`ui-btn ui-btn--ghost ${
-                      isSavingAvatar ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-[var(--sidebar-hover)]'
-                    }`}
-                  >
-                    사진 변경
-                    <input
-                      type="file"
-                      accept="image/*"
-                      aria-label="프로필 사진 업로드"
-                      className="hidden"
-                      disabled={isSavingAvatar}
-                      onChange={(event) => {
-                        const file = event.target.files?.[0];
-                        event.currentTarget.value = '';
-                        if (!file) {
-                          return;
-                        }
-
-                        setPendingAvatarFile(file);
-                      }}
-                    />
-                  </label>
-                  {avatarError ? <p className="ui-body text-red-600">{avatarError}</p> : null}
-                </div>
-
-                <label className="block">
-                  <span className="ui-label">이름</span>
-                  <input
-                    value={displayName}
-                    onChange={(event) => onDisplayNameChange(event.target.value)}
-                    onBlur={() => commitDisplayName({ isBlurTriggered: true })}
-                    onKeyDown={(event) => {
-                      if (event.key !== 'Enter' || event.nativeEvent.isComposing) {
-                        return;
-                      }
-
-                      event.preventDefault();
-                      event.currentTarget.blur();
-                    }}
-                    aria-label="이름"
-                    className="ui-body mt-2 w-full rounded-lg border border-[var(--border-main)] bg-[var(--bg-input)] px-3 py-2 outline-none transition-colors focus:border-[var(--accent-border)] focus:ring-2 focus:ring-[var(--accent-ring)]"
-                  />
-                </label>
-
-                {displayNameError ? <p className="ui-body mt-2 text-red-600">{displayNameError}</p> : null}
-              </div>
-            </div>
           </header>
 
-          <div className="flex-1 overflow-y-auto px-6 py-5">
+          <div className="flex-1 space-y-6 overflow-y-auto px-6 py-5">
+            <section>
+              <h3 className="ui-label mb-3 font-semibold text-[var(--text-muted)]">계정</h3>
+
+              <div className="rounded-2xl border border-[var(--border-main)] bg-[var(--bg-sidebar)] p-4 shadow-[var(--shadow-card)]">
+                <div className="flex items-start gap-4">
+                  <div className="flex w-24 shrink-0 flex-col items-center gap-2">
+                    <div className="ui-action flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--accent-soft)] text-[var(--accent)]">
+                      {avatarUrl ? (
+                        <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        initials
+                      )}
+                    </div>
+
+                    <label
+                      className={`ui-btn ui-btn--ghost min-h-8 px-3 py-1.5 text-[0.85rem] ${
+                        isSavingAvatar ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-[var(--sidebar-hover)]'
+                      }`}
+                    >
+                      사진 변경
+                      <input
+                        type="file"
+                        accept="image/*"
+                        aria-label="프로필 사진 업로드"
+                        className="hidden"
+                        disabled={isSavingAvatar}
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+                          event.currentTarget.value = '';
+                          if (!file) {
+                            return;
+                          }
+
+                          setPendingAvatarFile(file);
+                        }}
+                      />
+                    </label>
+
+                    {avatarError ? <p className="ui-body text-center text-red-600">{avatarError}</p> : null}
+                  </div>
+
+                  <div className="min-w-0 flex-1 pt-1">
+                    <label className="block">
+                      <span className="ui-label">이름</span>
+                      <input
+                        value={displayName}
+                        onChange={(event) => onDisplayNameChange(event.target.value)}
+                        onBlur={() => commitDisplayName({ isBlurTriggered: true })}
+                        onKeyDown={(event) => {
+                          if (event.key !== 'Enter' || event.nativeEvent.isComposing) {
+                            return;
+                          }
+
+                          event.preventDefault();
+                          event.currentTarget.blur();
+                        }}
+                        aria-label="이름"
+                        className="ui-body mt-2 w-full rounded-lg border border-[var(--border-main)] bg-[var(--bg-input)] px-3 py-2 outline-none transition-colors focus:border-[var(--accent-border)] focus:ring-2 focus:ring-[var(--accent-ring)]"
+                      />
+                    </label>
+
+                    {displayNameError ? <p className="ui-body mt-2 text-red-600">{displayNameError}</p> : null}
+
+                    {onSignOut ? (
+                      <button
+                        type="button"
+                        onClick={onSignOut}
+                        {...dismissIntentProps}
+                        className="ui-btn mt-3 w-full justify-center text-[var(--text-secondary)] hover:text-red-500"
+                      >
+                        로그아웃
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            </section>
+
             <TextSettingsSection
               fontFamily={preferences.fontFamily}
               baseFontPt={preferences.baseFontPt}
@@ -209,19 +227,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
             <AppearanceSettingsSection theme={preferences.theme} onThemeChange={onThemeChange} />
           </div>
-
-          {onSignOut ? (
-            <div className="border-t border-[var(--border-main)] px-5 py-3.5">
-              <button
-                type="button"
-                onClick={onSignOut}
-                {...dismissIntentProps}
-                className="ui-btn w-full justify-center text-[var(--text-secondary)] hover:text-red-500"
-              >
-                로그아웃
-              </button>
-            </div>
-          ) : null}
         </div>
       </aside>
 

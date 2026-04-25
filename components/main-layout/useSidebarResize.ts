@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 
-const LEFT_MIN = 160;
-const LEFT_MAX = 264;
-const RIGHT_INIT_MIN = 180;
-const RIGHT_RESIZE_MIN = 200;
-const RIGHT_MAX = 320;
-const DEFAULT_LEFT = 224;
-const DEFAULT_RIGHT = 288;
+const LEFT_MIN = 156;
+const LEFT_MAX = 220;
+const RIGHT_INIT_MIN = 176;
+const RIGHT_RESIZE_MIN = 192;
+const RIGHT_MAX = 256;
+const DEFAULT_LEFT = 184;
+const DEFAULT_RIGHT = 216;
 
 const readStoredWidth = (key: string, fallback: number) => {
   if (typeof window === 'undefined') return fallback;
@@ -19,12 +19,12 @@ const readStoredWidth = (key: string, fallback: number) => {
 export const useSidebarResize = () => {
   const [leftWidth, setLeftWidth] = useState(() => {
     const width = readStoredWidth('leftSidebarWidth', DEFAULT_LEFT);
-    return Math.min(Math.max(width, LEFT_MIN), 240);
+    return Math.min(Math.max(width, LEFT_MIN), LEFT_MAX);
   });
 
   const [rightWidth, setRightWidth] = useState(() => {
     const width = readStoredWidth('rightSidebarWidth', DEFAULT_RIGHT);
-    return Math.min(Math.max(width, RIGHT_INIT_MIN), 300);
+    return Math.min(Math.max(width, RIGHT_INIT_MIN), RIGHT_MAX);
   });
 
   const [isResizingLeft, setIsResizingLeft] = useState(false);

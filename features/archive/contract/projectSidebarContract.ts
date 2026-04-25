@@ -15,11 +15,7 @@ export interface ProjectSidebarProps {
   onRenameProject: (id: string, name: string) => void;
   onDeleteProject: (id: string) => void;
   onReorderProjects: (dragIndex: number, hoverIndex: number) => void;
-  username?: string;
-  avatarUrl?: string | null;
-  onSignOut?: () => void;
   onOpenPdfReader: () => void;
-  onOpenSettings: () => void;
   width: number;
   isResizing: boolean;
   onStartResize: () => void;

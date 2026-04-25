@@ -86,12 +86,19 @@ export const ProjectSidebarProjectsSection: React.FC<ProjectSidebarProjectsSecti
   isProjectSortDrag,
 }) => (
   <>
+    <div className="mb-4 px-1">
+      <h2 className="type-title-bounded text-[1.45rem] font-semibold tracking-[-0.03em] text-[var(--text-main)]">
+        Projects
+      </h2>
+      <p className="mt-0.5 text-[0.88rem] text-[var(--text-secondary)]">Workspace</p>
+    </div>
+
     <EditorialListButton
       onClick={onOpenPdfReader}
-      className="mb-3 flex items-center justify-center gap-2 border-[var(--accent-border)] font-medium text-[var(--accent)]"
+      className="mb-3 flex h-10 items-center justify-center gap-2 rounded-full border-[var(--border-main)] bg-[var(--bg-card)] px-3.5 text-[0.92rem] font-medium text-[var(--text-main)] shadow-[0_1px_2px_rgba(28,22,16,0.04)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]"
       aria-label="Open PDF Reader"
     >
-      <BookOpen size={16} className="mr-2" />
+      <BookOpen size={16} className="mr-1.5" />
       Read PDF
     </EditorialListButton>
 
@@ -106,7 +113,11 @@ export const ProjectSidebarProjectsSection: React.FC<ProjectSidebarProjectsSecti
       </EditorialToolbarButton>
     </div>
 
-    <div onDragOver={(event) => onProjectListDragOver(event, projects)} onDrop={(event) => onProjectListDrop(event, projects)}>
+    <div
+      className="space-y-0.5"
+      onDragOver={(event) => onProjectListDragOver(event, projects)}
+      onDrop={(event) => onProjectListDrop(event, projects)}
+    >
       {projects.map((project, index) => (
         <ProjectSidebarRow
           key={project.id}
@@ -143,6 +154,7 @@ export const ProjectSidebarProjectsSection: React.FC<ProjectSidebarProjectsSecti
     <ProjectCreateComposer
       isCreating={isCreating}
       value={newProjectName}
+      createLabel="New Project"
       onStart={onStartCreate}
       onChange={onNewProjectNameChange}
       onSubmit={onSubmitCreate}

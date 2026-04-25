@@ -100,7 +100,7 @@ export const EditorialSearchField: React.FC<EditorialSearchFieldProps> = ({
   onChange,
   placeholder,
 }) => (
-  <div className="flex items-center rounded-xl border border-[var(--border-main)] bg-[var(--bg-input)] px-3 py-2.5 shadow-[var(--shadow-card)]">
+  <div className="flex items-center rounded-[0.9rem] border border-[var(--border-main)] bg-[var(--bg-input)] px-[0.7rem] py-[0.45rem] shadow-[var(--shadow-card)]">
     <Search size={14} className="mr-2 text-[var(--text-muted)]" />
     <input
       value={value}
@@ -140,7 +140,7 @@ export const EditorialListButton: React.FC<EditorialListButtonProps> = ({
     type={type}
     onClick={onClick}
     className={[
-      'type-label-bounded w-full rounded-xl border px-3 py-2.5 text-left transition-colors active:scale-95',
+      'type-label-bounded w-full rounded-[0.85rem] border px-[0.7rem] py-[0.45rem] text-left transition-colors active:scale-95',
       active
         ? 'border-transparent bg-[var(--accent-active)] text-[var(--accent-active-text)]'
         : 'border-[var(--border-main)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]',
@@ -159,7 +159,7 @@ type EditorialSectionLabelProps = {
 export const EditorialSectionLabel: React.FC<EditorialSectionLabelProps> = ({
   children,
 }) => (
-  <div className="type-section-bounded mb-2 px-1 uppercase tracking-[0.12em] text-[var(--text-muted)]">
+  <div className="type-section-bounded mb-1.5 px-1 uppercase tracking-[0.09em] text-[var(--text-muted)]">
     {children}
   </div>
 );
@@ -177,9 +177,9 @@ export const EditorialProfileCard: React.FC<EditorialProfileCardProps> = ({
   subtitle = 'Research workspace',
   children,
 }) => (
-  <div className="mt-auto rounded-2xl border border-[var(--border-main)] bg-[var(--bg-card)] p-3 shadow-[var(--shadow-card)]">
-    <div className="mb-3 flex items-center gap-3">
-      <div className="type-label-bounded flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--accent-soft)] font-semibold text-[var(--accent)]">
+  <div className="mt-auto rounded-[1rem] border border-[var(--border-main)] bg-[var(--bg-card)] p-2.5 shadow-[var(--shadow-card)]">
+    <div className="mb-2 flex items-center gap-2.5">
+      <div className="type-label-bounded flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--accent-soft)] font-semibold text-[var(--accent)]">
         {avatarUrl ? (
           <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
         ) : (
@@ -187,10 +187,10 @@ export const EditorialProfileCard: React.FC<EditorialProfileCardProps> = ({
         )}
       </div>
       <div className="min-w-0">
-        <div className="type-label-bounded truncate font-medium text-[var(--text-main)]">
+        <div className="type-label-bounded truncate text-[0.95rem] font-medium text-[var(--text-main)]">
           {username}
         </div>
-        <div className="type-body-muted text-[var(--text-muted)]">{subtitle}</div>
+        <div className="type-body-muted leading-tight text-[0.82rem] text-[var(--text-muted)]">{subtitle}</div>
       </div>
     </div>
     {children}

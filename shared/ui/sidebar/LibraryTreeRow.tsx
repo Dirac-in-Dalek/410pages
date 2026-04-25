@@ -52,19 +52,28 @@ export const LibraryTreeRow: React.FC<LibraryTreeRowProps> = ({
 }) => {
   const paddingLeft = getLibraryTreePaddingLeft(depth);
   const hasChildren = Boolean(item.children?.length);
+  const guideOffset = Math.max(paddingLeft - 12, 10);
 
   return (
-    <div>
+    <div className="relative">
       {showBefore && (
         <div
-          className="h-[2px] mb-0.5 rounded-full bg-[var(--accent)]"
+          className="mb-1 h-px rounded-full bg-[var(--accent-border)]"
           style={{ marginLeft: `${paddingLeft + indicatorOffset}px` }}
         />
       )}
 
+      {depth > 0 ? (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute bottom-1 top-1 w-px bg-[var(--border-main)]"
+          style={{ left: `${guideOffset}px` }}
+        />
+      ) : null}
+
       <div
         className={[
-          'type-label-bounded flex items-center py-1.5 px-2 cursor-pointer select-none rounded-md my-0.5 transition-colors duration-150 group',
+          'group my-0.5 flex cursor-pointer select-none items-center rounded-[0.8rem] px-2.5 py-1.5 text-[14px] transition-[background-color,color,box-shadow,transform] duration-150 active:scale-[0.985]',
           isActive ? activeClassName : inactiveClassName,
           baseClassName,
         ].join(' ')}
@@ -81,7 +90,7 @@ export const LibraryTreeRow: React.FC<LibraryTreeRowProps> = ({
         onDragEnd={onDragEnd}
       >
         <span
-          className="mr-1 text-[var(--text-muted)] hover:text-[var(--text-main)] p-0.5 rounded cursor-pointer"
+          className="mr-1.5 flex h-[1.125rem] w-[1.125rem] shrink-0 items-center justify-center rounded-full text-[var(--text-muted)] transition-colors hover:text-[var(--text-main)]"
           onClick={(event) => {
             if (hasChildren && onToggle) {
               onToggle(event);
@@ -89,9 +98,9 @@ export const LibraryTreeRow: React.FC<LibraryTreeRowProps> = ({
           }}
         >
           {hasChildren ? (
-            isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />
+            isExpanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />
           ) : (
-            <span className="w-[14px] inline-block" />
+            <span className="inline-block w-[13px]" />
           )}
         </span>
 
@@ -100,7 +109,7 @@ export const LibraryTreeRow: React.FC<LibraryTreeRowProps> = ({
 
       {showAfter && (
         <div
-          className="h-[2px] mt-0.5 rounded-full bg-[var(--accent)]"
+          className="mt-1 h-px rounded-full bg-[var(--accent-border)]"
           style={{ marginLeft: `${paddingLeft + indicatorOffset}px` }}
         />
       )}

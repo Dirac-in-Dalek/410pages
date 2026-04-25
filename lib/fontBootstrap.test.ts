@@ -138,7 +138,7 @@ describe('index bootstrap', () => {
 
     expect(document.documentElement.dataset.theme).toBe('warm-paper');
     expect(document.documentElement.classList.contains('dark')).toBe(false);
-    expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#f7f2e8');
+    expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#f7f1e8');
   });
 
   it('falls back to the registry default font during classic first paint', () => {

@@ -89,10 +89,9 @@ export const ProjectSidebarRow: React.FC<ProjectSidebarRowProps> = ({
       ) : (
         <div
           className={`
-            type-label-bounded group flex items-center px-2 py-1.5 rounded-md cursor-pointer mb-1 relative
-            transition-all duration-200 border
-            ${dragOverProjectId === project.id ? 'bg-[var(--accent-soft)] border-[var(--accent-border)] scale-[1.02] shadow-md z-10' : ''}
-            ${selectedProjectId === project.id && dragOverProjectId !== project.id ? 'bg-[var(--bg-card)] shadow-sm border-[var(--border-main)] text-[var(--accent-strong)] font-medium' : 'border-transparent text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]'}
+            type-label-bounded group relative mb-1 flex cursor-pointer items-center rounded-[0.9rem] border px-3 py-2 transition-all duration-200 active:scale-[0.985]
+            ${dragOverProjectId === project.id ? 'z-10 scale-[1.01] border-[var(--accent-border)] bg-[var(--accent-soft)] shadow-[0_8px_18px_rgba(209,15,37,0.08)]' : ''}
+            ${selectedProjectId === project.id && dragOverProjectId !== project.id ? 'border-[var(--border-main)] bg-[var(--sidebar-active)] text-[var(--text-main)] shadow-[0_1px_2px_rgba(28,22,16,0.06)]' : 'border-transparent bg-transparent text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]'}
           `}
           onClick={() => !isManageMode && onProjectSelect(project.id)}
           onContextMenu={(event) => onContextMenu(event, project.id)}
@@ -125,18 +124,20 @@ export const ProjectSidebarRow: React.FC<ProjectSidebarRowProps> = ({
           ) : (
             <>
               {isManageMode ? (
-                <GripVertical size={14} className="mr-2 text-[var(--text-muted)] cursor-grab" />
+                <GripVertical size={13} className="mr-2.5 cursor-grab text-[var(--text-muted)]" />
               ) : (
                 <Folder
                   size={16}
-                  className={`mr-2 flex-shrink-0 ${selectedProjectId === project.id ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'}`}
+                  className={`mr-2.5 flex-shrink-0 ${selectedProjectId === project.id ? 'text-[var(--text-main)]' : 'text-[var(--text-muted)]'}`}
                 />
               )}
 
-              <span className="truncate flex-1">{project.name}</span>
+              <span className="min-w-0 flex-1 truncate text-[0.93rem] leading-none">
+                {project.name}
+              </span>
 
               {isManageMode ? (
-                <div className="flex items-center ml-2 space-x-1">
+                <div className="ml-2 flex items-center space-x-1">
                   <EditorialIconActionButton
                     onClick={(event) => {
                       event.stopPropagation();
@@ -157,11 +158,7 @@ export const ProjectSidebarRow: React.FC<ProjectSidebarRowProps> = ({
                     <Trash2 size={12} />
                   </EditorialIconActionButton>
                 </div>
-              ) : (
-                <span className="type-body-muted-bounded ml-auto bg-[var(--sidebar-active)] text-[var(--text-muted)] py-0.5 px-1.5 rounded-full border border-[var(--border-main)] group-hover:hidden transition-colors">
-                  {project.citationIds.length}
-                </span>
-              )}
+              ) : null}
             </>
           )}
         </div>

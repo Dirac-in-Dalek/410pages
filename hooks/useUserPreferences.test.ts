@@ -114,7 +114,7 @@ describe('useUserPreferences', () => {
     expect(document.documentElement.dataset.theme).toBe('night');
     expect(document.documentElement.dataset.font).toBe('serif');
     expect(document.documentElement.style.getPropertyValue('--font-base-pt')).toBe('22pt');
-    expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#171717');
+    expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#181614');
   });
 
   it('resolves auto theme from the system color scheme', () => {
@@ -131,7 +131,7 @@ describe('useUserPreferences', () => {
 
     expect(document.documentElement.classList.contains('dark')).toBe(true);
     expect(document.documentElement.dataset.theme).toBe('night');
-    expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#171717');
+    expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#181614');
   });
 
   it('migrates legacy text scale preferences to numeric base font sizes', () => {
