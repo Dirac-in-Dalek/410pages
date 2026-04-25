@@ -8,6 +8,7 @@ import type {
   Project,
 } from '../../../types';
 import { ArchiveHeader } from './ArchiveHeader';
+import { getArchiveReadingColumnClass } from './archiveReadingColumn';
 import { CitationList } from './CitationList';
 
 type ArchiveScreenProps = {
@@ -88,72 +89,76 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
   onDeleteNote,
   onDeleteCitation,
   onUpdateCitation,
-}) => (
-  <div className="h-full overflow-y-auto">
-    <ArchiveHeader
-      title={title}
-      showEditor={showEditor}
-      username={username}
-      editorPrefill={editorPrefill}
-      isBookView={isBookView}
-      onAddCitation={onAddCitation}
-      sortField={sortField}
-      dateDirection={dateDirection}
-      pageDirection={pageDirection}
-      onDateSortClick={onDateSortClick}
-      onPageSortClick={onPageSortClick}
-    />
+}) => {
+  const columnClassName = getArchiveReadingColumnClass({ isBookView, isMobileApp });
 
-    <div className={isMobileApp ? 'pb-28 mt-3' : 'pb-20 mt-1 md:mt-2'}>
-      <div className={isMobileApp ? 'max-w-5xl mx-auto px-3' : 'max-w-5xl mx-auto px-6 xl:px-8'}>
-        <BulkActionToolbar
-          selectedCount={selectedIds.size}
-          totalCount={citations.length}
-          projects={projects}
-          isCopying={isCopying}
-          onSelectAll={onSelectAll}
-          onCopy={onCopy}
-          onDeleteRequest={onDeleteRequest}
-          onCancel={onCancelSelection}
-          onAddToProject={onAddToProject}
-          onCreateAndAddToProject={onCreateAndAddToProject}
-        />
+  return (
+    <div className="h-full overflow-y-auto">
+      <ArchiveHeader
+        title={title}
+        showEditor={showEditor}
+        username={username}
+        editorPrefill={editorPrefill}
+        isBookView={isBookView}
+        onAddCitation={onAddCitation}
+        sortField={sortField}
+        dateDirection={dateDirection}
+        pageDirection={pageDirection}
+        onDateSortClick={onDateSortClick}
+        onPageSortClick={onPageSortClick}
+      />
 
-        <ConfirmModal
-          isOpen={isBatchDeleteOpen}
-          title="Delete citations?"
-          message={
-            <>
-              <span className="font-bold text-[var(--text-main)]">{selectedIds.size}</span> citation(s) will be permanently deleted. This action cannot be undone.
-            </>
-          }
-          onConfirm={onDeleteConfirm}
-          onCancel={onDeleteCancel}
-        />
+      <div className={isMobileApp ? 'pb-28 mt-3' : 'pb-20 mt-1 md:mt-2'}>
+        <div className={columnClassName}>
+          <BulkActionToolbar
+            selectedCount={selectedIds.size}
+            totalCount={citations.length}
+            projects={projects}
+            isCopying={isCopying}
+            onSelectAll={onSelectAll}
+            onCopy={onCopy}
+            onDeleteRequest={onDeleteRequest}
+            onCancel={onCancelSelection}
+            onAddToProject={onAddToProject}
+            onCreateAndAddToProject={onCreateAndAddToProject}
+          />
 
-        <CitationList
-          citations={citations}
-          projects={projects}
-          username={username}
-          loading={loading}
-          searchTerm={searchTerm}
-          selectedIds={selectedIds}
-          chapterBlocks={chapterBlocks}
-          selectedFilter={selectedFilter}
-          isBookView={isBookView}
-          sortField={sortField}
-          dateDirection={dateDirection}
-          pageDirection={pageDirection}
-          onCreateChapterBlock={onCreateChapterBlock}
-          onDeleteChapterBlock={onDeleteChapterBlock}
-          onToggleSelect={onToggleSelect}
-          onAddNote={onAddNote}
-          onUpdateNote={onUpdateNote}
-          onDeleteNote={onDeleteNote}
-          onDeleteCitation={onDeleteCitation}
-          onUpdateCitation={onUpdateCitation}
-        />
+          <ConfirmModal
+            isOpen={isBatchDeleteOpen}
+            title="Delete citations?"
+            message={
+              <>
+                <span className="font-bold text-[var(--text-main)]">{selectedIds.size}</span> citation(s) will be permanently deleted. This action cannot be undone.
+              </>
+            }
+            onConfirm={onDeleteConfirm}
+            onCancel={onDeleteCancel}
+          />
+
+          <CitationList
+            citations={citations}
+            projects={projects}
+            username={username}
+            loading={loading}
+            searchTerm={searchTerm}
+            selectedIds={selectedIds}
+            chapterBlocks={chapterBlocks}
+            selectedFilter={selectedFilter}
+            isBookView={isBookView}
+            sortField={sortField}
+            dateDirection={dateDirection}
+            pageDirection={pageDirection}
+            onCreateChapterBlock={onCreateChapterBlock}
+            onDeleteChapterBlock={onDeleteChapterBlock}
+            onToggleSelect={onToggleSelect}
+            onAddNote={onAddNote}
+            onUpdateNote={onUpdateNote}
+            onDeleteNote={onDeleteNote}
+            onDeleteCitation={onDeleteCitation}
+            onUpdateCitation={onUpdateCitation}
+          />
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};

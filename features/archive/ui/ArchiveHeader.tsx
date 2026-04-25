@@ -1,6 +1,7 @@
 import React from 'react';
 import { CitationEditor } from '../../citation-entry/ui/CitationEditor';
 import type { ArchiveHeaderProps } from '../contract/archiveUiContract';
+import { getArchiveReadingColumnClass } from './archiveReadingColumn';
 
 export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
     title,
@@ -19,6 +20,7 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
     const isPageActive = sortField === 'page';
     const dateLabel = isDateActive ? `Date ${dateDirection === 'asc' ? '↓' : '↑'}` : 'Date';
     const pageLabel = isPageActive ? `Page ${pageDirection === 'asc' ? '↓' : '↑'}` : 'Page';
+    const columnClassName = getArchiveReadingColumnClass({ isBookView });
 
     const getButtonClass = (isActive: boolean) =>
         `type-label-bounded shrink-0 inline-flex items-center rounded-full border px-3.5 py-1.5 transition-colors active:scale-95 ${
@@ -29,7 +31,7 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
 
     return (
         <div className="pt-5 md:pt-6 lg:pt-7 pb-1">
-            <div className="mx-auto max-w-5xl px-6 xl:px-8">
+            <div className={columnClassName}>
                 <div className="mb-3 flex items-start justify-between gap-4">
                     <div className="min-w-0">
                         <h2 className="truncate text-[1.8rem] font-semibold tracking-[-0.03em] text-[var(--text-main)]">{title}</h2>
