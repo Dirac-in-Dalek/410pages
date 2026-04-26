@@ -62,11 +62,11 @@ export const ChapterBlockInsertButton: React.FC<ChapterBlockInsertButtonProps> =
   }
 
   return (
-    <form ref={formRef} className="flex w-full items-center gap-2 py-1.5" onSubmit={handleSubmit}>
+    <form ref={formRef} className="flex w-full items-center gap-2 py-2" onSubmit={handleSubmit}>
       <span className="h-px flex-1 bg-[var(--border-main)]" />
       <input
         aria-label="Chapter block label"
-        className="type-body-bounded h-8 min-w-0 flex-[1.2] rounded-full border border-[var(--accent-border)] bg-[var(--bg-card)] px-3 text-[var(--text-main)] outline-none shadow-[0_1px_2px_rgba(28,22,16,0.04)] placeholder:text-[var(--text-muted)] focus:ring-2 focus:ring-[var(--accent-ring)]"
+        className="type-body-bounded h-10 min-w-0 flex-[1.2] rounded-full border border-[var(--accent-border)] bg-[var(--bg-card)] px-4 leading-tight text-[var(--text-main)] outline-none shadow-[0_1px_2px_rgba(28,22,16,0.04)] placeholder:text-[var(--text-muted)] focus:ring-2 focus:ring-[var(--accent-ring)]"
         value={label}
         autoFocus
         placeholder="Chapter title"
@@ -81,7 +81,7 @@ export const ChapterBlockInsertButton: React.FC<ChapterBlockInsertButtonProps> =
       <button
         type="submit"
         aria-label="Save chapter block"
-        className="ui-btn ui-btn-icon h-8 w-8 min-h-0 rounded-full border-transparent bg-[var(--accent)] text-white hover:bg-[var(--accent-strong)] disabled:opacity-40"
+        className="ui-btn ui-btn-icon h-10 w-10 min-h-0 rounded-full border-transparent bg-[var(--accent)] text-white hover:bg-[var(--accent-strong)] disabled:opacity-40"
         disabled={!label.trim()}
       >
         <Check size={14} />
@@ -89,7 +89,7 @@ export const ChapterBlockInsertButton: React.FC<ChapterBlockInsertButtonProps> =
       <button
         type="button"
         aria-label="Cancel chapter block"
-        className="ui-btn ui-btn-icon h-8 w-8 min-h-0 rounded-full text-[var(--text-muted)]"
+        className="ui-btn ui-btn-icon h-10 w-10 min-h-0 rounded-full text-[var(--text-muted)]"
         onClick={() => {
           setLabel('');
           onCancel?.();

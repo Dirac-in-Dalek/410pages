@@ -355,6 +355,93 @@ describe('Citation typography', () => {
     ).not.toBe(0);
   });
 
+  it('shows cancel and confirm controls inside the standalone note input', async () => {
+    const user = userEvent.setup();
+    const onAddNote = vi.fn();
+
+    render(
+      <CitationCard
+        citation={citation}
+        index={0}
+        username="Dalek"
+        isSelected={false}
+        onToggleSelect={vi.fn()}
+        onAddNote={onAddNote}
+        onUpdateNote={vi.fn()}
+        onDeleteNote={vi.fn()}
+        onDelete={vi.fn()}
+        onUpdate={vi.fn()}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: /notes 0/i }));
+
+    const noteInput = screen.getByPlaceholderText('Add a new note...');
+    expect(noteInput.className).toContain('type-note');
+    expect(screen.getByRole('button', { name: /cancel/i })).not.toBeNull();
+    expect((screen.getByRole('button', { name: /confirm/i }) as HTMLButtonElement).disabled).toBe(true);
+
+    await user.type(noteInput, 'Fresh memo');
+    await user.click(screen.getByRole('button', { name: /confirm/i }));
+
+    expect(onAddNote).toHaveBeenCalledWith('citation-1', 'Fresh memo');
+  });
+
+  it('closes the standalone note input when cancel is pressed with existing memos', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <CitationCard
+        citation={{
+          ...citation,
+          notes: [{ id: 'note-1', content: 'A compact memo', createdAt: Date.now() }],
+        }}
+        index={0}
+        username="Dalek"
+        isSelected={false}
+        onToggleSelect={vi.fn()}
+        onAddNote={vi.fn()}
+        onUpdateNote={vi.fn()}
+        onDeleteNote={vi.fn()}
+        onDelete={vi.fn()}
+        onUpdate={vi.fn()}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: /notes 1/i }));
+    await user.type(screen.getByPlaceholderText('Add a new note...'), 'Draft memo');
+    await user.click(screen.getByRole('button', { name: /cancel/i }));
+
+    expect(screen.queryByPlaceholderText('Add a new note...')).toBeNull();
+    expect(screen.queryByDisplayValue('Draft memo')).toBeNull();
+  });
+
+  it('uses smaller note typography for saved memo text', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <CitationCard
+        citation={{
+          ...citation,
+          notes: [{ id: 'note-1', content: 'A compact memo', createdAt: Date.now() }],
+        }}
+        index={0}
+        username="Dalek"
+        isSelected={false}
+        onToggleSelect={vi.fn()}
+        onAddNote={vi.fn()}
+        onUpdateNote={vi.fn()}
+        onDeleteNote={vi.fn()}
+        onDelete={vi.fn()}
+        onUpdate={vi.fn()}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: /notes 1/i }));
+
+    expect(screen.getByText('A compact memo').parentElement?.className).toContain('type-note');
+  });
+
   it('cancels both quote editing and memo input together', async () => {
     const user = userEvent.setup();
 

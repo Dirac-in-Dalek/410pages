@@ -282,6 +282,48 @@ describe('CitationList chapter blocks', () => {
     expect(screen.queryByRole('button', { name: 'Add chapter block' })).toBeNull();
   });
 
+  it('opens extra vertical space around the chapter input while editing', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <CitationList
+        {...baseProps}
+        citations={[
+          citation({
+            id: 'citation-1',
+            text: 'First quote',
+            author: 'Author A',
+            book: 'Book A',
+            bookId: 'book-1',
+            pageSort: 100,
+            createdAt: 1000,
+          }),
+          citation({
+            id: 'citation-2',
+            text: 'Second quote',
+            author: 'Author B',
+            book: 'Book A',
+            bookId: 'book-1',
+            pageSort: 200,
+            createdAt: 2000,
+          }),
+        ]}
+        chapterBlocks={[]}
+        isBookView
+        sortField="page"
+      />
+    );
+
+    const trigger = screen.getAllByRole('button', { name: 'Add chapter block' })[0];
+    expect(trigger.parentElement?.className).toContain('h-5');
+
+    await user.click(trigger);
+
+    const input = screen.getByRole('textbox', { name: 'Chapter block label' });
+    expect(input.className).toContain('h-10');
+    expect(input.parentElement?.parentElement?.className).toContain('min-h-12');
+  });
+
   it('closes the insert form when clicking outside', async () => {
     const user = userEvent.setup();
 

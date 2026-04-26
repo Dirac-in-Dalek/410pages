@@ -125,6 +125,13 @@ export const CitationCard: React.FC<CitationCardProps> = ({
     setIsNotesExpanded(true);
   };
 
+  const handleCancelNewNote = () => {
+    setNewNote('');
+    if (!isEditing) {
+      setIsNotesExpanded(false);
+    }
+  };
+
   const handleSaveNoteEdit = (noteId: string) => {
     if (!editNoteContent.trim()) {
       onDeleteNote(citation.id, noteId);
@@ -485,7 +492,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                     <div
                       key={note.id}
                       className={`
-                      group/note relative type-body text-[var(--text-main)] bg-[var(--bg-card)] rounded border transition-all overflow-hidden
+                      group/note relative type-note text-[var(--text-main)] bg-[var(--bg-card)] rounded border transition-all overflow-hidden
                       ${editingNoteId === note.id ? 'border-[var(--accent-border)] shadow-md ring-1 ring-[var(--accent-ring)]' : 'p-1.5 border-[var(--border-main)] hover:border-[var(--accent-border)] cursor-pointer'}
                     `}
                       onClick={() => {
@@ -502,7 +509,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                             autoFocus
                             value={editNoteContent}
                             onChange={(event) => setEditNoteContent(event.target.value)}
-                            className="type-body min-h-[70px] w-full resize-none overflow-y-auto border-none bg-transparent p-2.5 text-[var(--text-main)] focus:outline-none focus:ring-0"
+                            className="type-note min-h-[70px] w-full resize-none overflow-y-auto border-none bg-transparent p-2.5 text-[var(--text-main)] focus:outline-none focus:ring-0"
                           />
                           <div className="flex justify-end gap-2.5 border-t border-[var(--border-main)] bg-[var(--bg-sidebar)]/50 p-1.5">
                             <button
@@ -532,7 +539,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                     value={newNote}
                     onChange={(event) => setNewNote(event.target.value)}
                     placeholder="Add a new note..."
-                    className="type-body min-h-[52px] w-full resize-none overflow-y-auto border-none bg-transparent p-2.5 text-[var(--text-main)] focus:outline-none focus:ring-0"
+                    className="type-note min-h-[52px] w-full resize-none overflow-y-auto border-none bg-transparent p-2.5 text-[var(--text-main)] focus:outline-none focus:ring-0"
                     onKeyDown={(event) => {
                       if (event.key === 'Enter' && !event.shiftKey) {
                         event.preventDefault();
@@ -540,6 +547,29 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                       }
                     }}
                   />
+                  {!isEditing ? (
+                    <div className="flex items-center justify-end gap-1.5 border-t border-[var(--border-main)]/80 bg-[var(--bg-sidebar)]/45 px-2 py-1.5">
+                      <button
+                        type="button"
+                        onClick={handleCancelNewNote}
+                        className="type-label-bounded inline-flex items-center gap-1 rounded-md px-2.5 py-[0.3125rem] text-[0.82rem] font-medium text-[var(--text-muted)] transition-all hover:bg-[var(--bg-sidebar)] hover:text-[var(--text-main)] active:scale-95"
+                      >
+                        <X size={14} /> Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={submitNote}
+                        disabled={!newNote.trim()}
+                        className={`type-label-bounded inline-flex items-center gap-1 rounded-md px-2.5 py-[0.3125rem] text-[0.82rem] font-medium shadow-sm transition-all active:scale-95 ${
+                          newNote.trim()
+                            ? 'bg-[var(--accent)] text-white hover:bg-[var(--accent-strong)]'
+                            : 'cursor-not-allowed bg-[var(--bg-input)] text-[var(--text-muted)] shadow-none'
+                        }`}
+                      >
+                        <Check size={14} /> Confirm
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               </>
             ) : null}

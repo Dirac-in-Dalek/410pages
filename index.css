@@ -320,6 +320,11 @@
     line-height: var(--type-body-line-height);
   }
 
+  .type-note {
+    font-size: calc(var(--type-body-size) * 0.92);
+    line-height: var(--type-body-line-height);
+  }
+
   .type-body-bounded {
     font-size: var(--type-body-bounded-size);
     line-height: var(--type-body-line-height);

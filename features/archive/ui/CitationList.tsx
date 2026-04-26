@@ -139,7 +139,7 @@ export const CitationList: React.FC<CitationListProps> = ({
                                 />
                             )}
                             {isBookView && index < bookViewItems.length - 1 && canShowInsertAfter && (activeInsertId === null || activeInsertId === `after-${item.id}`) ? (
-                                <div className="group -mt-2.5 flex h-5 items-center justify-center">
+                                <div className={`group flex items-center justify-center ${activeInsertId === `after-${item.id}` ? 'my-1.5 min-h-12' : '-mt-2.5 h-5'}`}>
                                     <ChapterBlockInsertButton
                                         isEditing={activeInsertId === `after-${item.id}`}
                                         onOpen={() => setActiveInsertId(`after-${item.id}`)}
@@ -158,7 +158,7 @@ export const CitationList: React.FC<CitationListProps> = ({
                     );
                 })}
                 {isBookView && bookViewItems.length > 0 && bookViewItems[bookViewItems.length - 1].type !== 'chapter_block' && (activeInsertId === null || activeInsertId === 'end') ? (
-                    <div className="group -mt-2.5 flex h-5 items-center justify-center">
+                    <div className={`group flex items-center justify-center ${activeInsertId === 'end' ? 'my-1.5 min-h-12' : '-mt-2.5 h-5'}`}>
                         <ChapterBlockInsertButton
                             isEditing={activeInsertId === 'end'}
                             onOpen={() => setActiveInsertId('end')}
