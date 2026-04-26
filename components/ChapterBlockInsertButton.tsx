@@ -14,15 +14,23 @@ export const ChapterBlockInsertButton: React.FC<ChapterBlockInsertButtonProps> =
   onCancel,
   onSubmit,
 }) => {
-  const [label, setLabel] = useState('');
+  const [canSubmit, setCanSubmit] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const resetInput = () => {
+    if (inputRef.current) {
+      inputRef.current.value = '';
+    }
+    setCanSubmit(false);
+  };
 
   useEffect(() => {
     if (!isEditing) return;
 
     const handlePointerDown = (event: MouseEvent) => {
       if (formRef.current?.contains(event.target as Node)) return;
-      setLabel('');
+      resetInput();
       onCancel?.();
     };
 
@@ -35,11 +43,11 @@ export const ChapterBlockInsertButton: React.FC<ChapterBlockInsertButtonProps> =
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const trimmed = label.trim();
+    const trimmed = inputRef.current?.value.trim() ?? '';
     if (!trimmed) return;
 
     await Promise.resolve(onSubmit(trimmed));
-    setLabel('');
+    resetInput();
     onCancel?.();
   };
 
@@ -65,15 +73,20 @@ export const ChapterBlockInsertButton: React.FC<ChapterBlockInsertButtonProps> =
     <form ref={formRef} className="flex w-full items-center gap-2 py-2" onSubmit={handleSubmit}>
       <span className="h-px flex-1 bg-[var(--border-main)]" />
       <input
+        ref={inputRef}
         aria-label="Chapter block label"
         className="type-body-bounded h-10 min-w-0 flex-[1.2] rounded-full border border-[var(--accent-border)] bg-[var(--bg-card)] px-4 leading-tight text-[var(--text-main)] outline-none shadow-[0_1px_2px_rgba(28,22,16,0.04)] placeholder:text-[var(--text-muted)] focus:ring-2 focus:ring-[var(--accent-ring)]"
-        value={label}
         autoFocus
         placeholder="Chapter title"
-        onChange={(event) => setLabel(event.target.value)}
+        onInput={(event) => setCanSubmit(event.currentTarget.value.trim().length > 0)}
         onKeyDown={(event) => {
+          if (event.key === 'Enter' && event.nativeEvent.isComposing) {
+            event.preventDefault();
+            return;
+          }
+
           if (event.key === 'Escape') {
-            setLabel('');
+            resetInput();
             onCancel?.();
           }
         }}
@@ -82,7 +95,7 @@ export const ChapterBlockInsertButton: React.FC<ChapterBlockInsertButtonProps> =
         type="submit"
         aria-label="Save chapter block"
         className="ui-btn ui-btn-icon h-10 w-10 min-h-0 rounded-full border-transparent bg-[var(--accent)] text-white hover:bg-[var(--accent-strong)] disabled:opacity-40"
-        disabled={!label.trim()}
+        disabled={!canSubmit}
       >
         <Check size={14} />
       </button>
@@ -91,7 +104,7 @@ export const ChapterBlockInsertButton: React.FC<ChapterBlockInsertButtonProps> =
         aria-label="Cancel chapter block"
         className="ui-btn ui-btn-icon h-10 w-10 min-h-0 rounded-full text-[var(--text-muted)]"
         onClick={() => {
-          setLabel('');
+          resetInput();
           onCancel?.();
         }}
       >

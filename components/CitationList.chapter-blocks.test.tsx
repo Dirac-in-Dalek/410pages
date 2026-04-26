@@ -205,6 +205,50 @@ describe('CitationList chapter blocks', () => {
     });
   });
 
+  it('keeps the chapter label input uncontrolled so IME composition can own the text', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <CitationList
+        {...baseProps}
+        citations={[
+          citation({
+            id: 'citation-1',
+            text: 'First quote',
+            author: 'Author A',
+            book: 'Book A',
+            bookId: 'book-1',
+            pageSort: 100,
+            createdAt: 1000,
+          }),
+          citation({
+            id: 'citation-2',
+            text: 'Second quote',
+            author: 'Author B',
+            book: 'Book A',
+            bookId: 'book-1',
+            pageSort: 200,
+            createdAt: 2000,
+          }),
+        ]}
+        chapterBlocks={[]}
+        isBookView
+        sortField="page"
+      />
+    );
+
+    await user.click(screen.getAllByRole('button', { name: 'Add chapter block' })[0]);
+
+    const input = screen.getByRole('textbox', { name: 'Chapter block label' });
+    expect(input.getAttribute('value')).toBeNull();
+
+    await user.type(input, '대한민국');
+
+    expect((input as HTMLInputElement).value).toBe('대한민국');
+    expect(input.getAttribute('value')).toBeNull();
+    expect((screen.getByRole('button', { name: 'Save chapter block' }) as HTMLButtonElement).disabled).toBe(false);
+  });
+
   it('still shows an insert control when the book view has only one citation', async () => {
     const user = userEvent.setup();
     const onCreateChapterBlock = vi.fn();
