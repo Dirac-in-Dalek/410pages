@@ -22,7 +22,8 @@ const baseProps = {
   preferences: {
     theme: 'auto' as ThemePreference,
     fontFamily: 'pretendard' as const,
-    baseFontPt: 16,
+    baseFontPt: 13,
+    citationWidthRem: 44,
   },
   savedDisplayName: '생활습관',
   onClose: vi.fn(),
@@ -31,6 +32,7 @@ const baseProps = {
   onThemeChange: vi.fn(),
   onFontFamilyChange: vi.fn(),
   onBaseFontPtChange: vi.fn(),
+  onCitationWidthRemChange: vi.fn(),
   onAvatarChange: vi.fn().mockResolvedValue(undefined),
   onSignOut: vi.fn(),
   isSavingDisplayName: false,
@@ -73,6 +75,27 @@ const renderWithFontSizeState = (
         {...props}
         preferences={{ ...props.preferences, baseFontPt }}
         onBaseFontPtChange={setBaseFontPt}
+      />
+    );
+  };
+
+  render(<Harness />);
+  return props;
+};
+
+const renderWithCitationWidthState = (
+  overrides: Partial<typeof baseProps> = {}
+) => {
+  const props = { ...baseProps, ...overrides };
+
+  const Harness: React.FC = () => {
+    const [citationWidthRem, setCitationWidthRem] = useState(props.preferences.citationWidthRem);
+
+    return (
+      <SettingsPanel
+        {...props}
+        preferences={{ ...props.preferences, citationWidthRem }}
+        onCitationWidthRemChange={setCitationWidthRem}
       />
     );
   };
@@ -153,7 +176,7 @@ describe('SettingsPanel', () => {
   it('shows the current font size as a status badge beside +/- controls', () => {
     render(<SettingsPanel {...baseProps} />);
 
-    expect(screen.getByRole('status').textContent).toBe('16pt');
+    expect(screen.getByRole('status', { name: '현재 글자 크기' }).textContent).toBe('13pt');
     expect(screen.getByRole('button', { name: '글자 크기 줄이기' })).toBeTruthy();
     expect(screen.getByRole('button', { name: '글자 크기 늘리기' })).toBeTruthy();
   });
@@ -205,13 +228,13 @@ describe('SettingsPanel', () => {
     const user = userEvent.setup();
     renderWithFontSizeState();
 
-    expect(screen.getByRole('status').textContent).toBe('16pt');
+    expect(screen.getByRole('status', { name: '현재 글자 크기' }).textContent).toBe('13pt');
 
     await user.click(screen.getByRole('button', { name: '글자 크기 늘리기' }));
-    expect(screen.getByRole('status').textContent).toBe('17pt');
+    expect(screen.getByRole('status', { name: '현재 글자 크기' }).textContent).toBe('14pt');
 
     await user.click(screen.getByRole('button', { name: '글자 크기 줄이기' }));
-    expect(screen.getByRole('status').textContent).toBe('16pt');
+    expect(screen.getByRole('status', { name: '현재 글자 크기' }).textContent).toBe('13pt');
   });
 
   it('renders the avatar change trigger as a native file-input label', () => {
@@ -391,7 +414,7 @@ describe('SettingsPanel', () => {
     });
 
     expect((screen.getByRole('button', { name: '글자 크기 줄이기' }) as HTMLButtonElement).disabled).toBe(true);
-    expect(screen.getByRole('status').textContent).toBe('10pt');
+    expect(screen.getByRole('status', { name: '현재 글자 크기' }).textContent).toBe('10pt');
   });
 
   it('disables the increase control at the maximum font size', async () => {
@@ -400,6 +423,35 @@ describe('SettingsPanel', () => {
     });
 
     expect((screen.getByRole('button', { name: '글자 크기 늘리기' }) as HTMLButtonElement).disabled).toBe(true);
-    expect(screen.getByRole('status').textContent).toBe('40pt');
+    expect(screen.getByRole('status', { name: '현재 글자 크기' }).textContent).toBe('40pt');
+  });
+
+  it('adjusts citation width from the text settings section', async () => {
+    const user = userEvent.setup();
+    renderWithCitationWidthState();
+
+    await user.click(screen.getByRole('button', { name: '인용구 너비 늘리기' }));
+
+    expect(screen.getByRole('status', { name: '현재 인용구 너비' }).textContent).toBe('45rem');
+  });
+
+  it('disables citation width controls at the configured bounds', () => {
+    const { rerender } = render(
+      <SettingsPanel
+        {...baseProps}
+        preferences={{ ...baseProps.preferences, citationWidthRem: 35 }}
+      />
+    );
+
+    expect((screen.getByRole('button', { name: '인용구 너비 줄이기' }) as HTMLButtonElement).disabled).toBe(true);
+
+    rerender(
+      <SettingsPanel
+        {...baseProps}
+        preferences={{ ...baseProps.preferences, citationWidthRem: 50 }}
+      />
+    );
+
+    expect((screen.getByRole('button', { name: '인용구 너비 늘리기' }) as HTMLButtonElement).disabled).toBe(true);
   });
 });

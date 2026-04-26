@@ -6,13 +6,18 @@ import type { FontPreference } from '../contract/userPreferences';
 type TextSettingsSectionProps = {
   fontFamily: FontPreference;
   baseFontPt: number;
+  citationWidthRem: number;
   onFontFamilyChange: (value: FontPreference) => void;
   onBaseFontPtChange: (value: number) => void;
+  onCitationWidthRemChange: (value: number) => void;
 };
 
 const MIN_FONT_PT = 10;
 const MAX_FONT_PT = 40;
 const FONT_PT_STEP = 1;
+const MIN_CITATION_WIDTH_REM = 35;
+const MAX_CITATION_WIDTH_REM = 50;
+const CITATION_WIDTH_STEP_REM = 1;
 
 const optionButtonClass = (isActive: boolean) =>
   `ui-btn ui-btn-row ui-choice px-3 py-2 ${
@@ -118,13 +123,25 @@ export const FontSelectionList: React.FC<FontSelectionListProps> = ({
 export const TextSettingsSection: React.FC<TextSettingsSectionProps> = ({
   fontFamily,
   baseFontPt,
+  citationWidthRem,
   onFontFamilyChange,
   onBaseFontPtChange,
+  onCitationWidthRemChange,
 }) => {
   const updateFontSize = (delta: number) => {
     const nextValue = Math.min(MAX_FONT_PT, Math.max(MIN_FONT_PT, baseFontPt + delta));
     if (nextValue !== baseFontPt) {
       onBaseFontPtChange(nextValue);
+    }
+  };
+
+  const updateCitationWidth = (delta: number) => {
+    const nextValue = Math.min(
+      MAX_CITATION_WIDTH_REM,
+      Math.max(MIN_CITATION_WIDTH_REM, citationWidthRem + delta)
+    );
+    if (nextValue !== citationWidthRem) {
+      onCitationWidthRemChange(nextValue);
     }
   };
 
@@ -142,7 +159,12 @@ export const TextSettingsSection: React.FC<TextSettingsSectionProps> = ({
           <div className="flex items-center justify-between gap-3">
             <span className="ui-label shrink-0 whitespace-nowrap">글자 크기</span>
             <div className="flex items-center gap-2">
-              <span role="status" aria-live="polite" className="ui-label tabular-nums text-[var(--text-main)]">
+              <span
+                role="status"
+                aria-label="현재 글자 크기"
+                aria-live="polite"
+                className="ui-label tabular-nums text-[var(--text-main)]"
+              >
                 {baseFontPt}pt
               </span>
               <button
@@ -160,6 +182,38 @@ export const TextSettingsSection: React.FC<TextSettingsSectionProps> = ({
                 className="ui-btn ui-btn-icon"
                 disabled={baseFontPt <= MIN_FONT_PT}
                 onClick={() => updateFontSize(-FONT_PT_STEP)}
+              >
+                <span aria-hidden="true">−</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-3">
+            <span className="ui-label shrink-0 whitespace-nowrap">인용구 너비</span>
+            <div className="flex items-center gap-2">
+              <span
+                role="status"
+                aria-label="현재 인용구 너비"
+                aria-live="polite"
+                className="ui-label tabular-nums text-[var(--text-main)]"
+              >
+                {citationWidthRem}rem
+              </span>
+              <button
+                type="button"
+                aria-label="인용구 너비 늘리기"
+                className="ui-btn ui-btn-icon"
+                disabled={citationWidthRem >= MAX_CITATION_WIDTH_REM}
+                onClick={() => updateCitationWidth(CITATION_WIDTH_STEP_REM)}
+              >
+                <span aria-hidden="true">+</span>
+              </button>
+              <button
+                type="button"
+                aria-label="인용구 너비 줄이기"
+                className="ui-btn ui-btn-icon"
+                disabled={citationWidthRem <= MIN_CITATION_WIDTH_REM}
+                onClick={() => updateCitationWidth(-CITATION_WIDTH_STEP_REM)}
               >
                 <span aria-hidden="true">−</span>
               </button>

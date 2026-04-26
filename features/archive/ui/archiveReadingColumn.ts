@@ -11,6 +11,6 @@ export const getArchiveReadingColumnClass = ({
 
   return [
     'mx-auto w-full px-5 sm:px-6 xl:px-0',
-    'max-w-[44rem]',
+    'max-w-[var(--citation-column-width)]',
   ].join(' ');
 };

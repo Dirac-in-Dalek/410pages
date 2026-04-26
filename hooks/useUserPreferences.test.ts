@@ -78,6 +78,7 @@ const resetDom = () => {
   document.documentElement.removeAttribute('data-font');
   document.documentElement.style.removeProperty('--text-scale');
   document.documentElement.style.removeProperty('--font-base-pt');
+  document.documentElement.style.removeProperty('--citation-column-width');
   installStorageStub();
   window.localStorage.clear();
   Object.defineProperty(window, 'matchMedia', {
@@ -108,12 +109,14 @@ describe('useUserPreferences', () => {
       theme: 'night',
       fontFamily: 'serif',
       baseFontPt: 22,
+      citationWidthRem: 47,
     });
 
     expect(document.documentElement.classList.contains('dark')).toBe(true);
     expect(document.documentElement.dataset.theme).toBe('night');
     expect(document.documentElement.dataset.font).toBe('serif');
     expect(document.documentElement.style.getPropertyValue('--font-base-pt')).toBe('22pt');
+    expect(document.documentElement.style.getPropertyValue('--citation-column-width')).toBe('47rem');
     expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#181614');
   });
 
@@ -144,6 +147,7 @@ describe('useUserPreferences', () => {
       theme: 'day',
       fontFamily: 'serif',
       baseFontPt: 18,
+      citationWidthRem: 44,
     });
   });
 
@@ -178,12 +182,34 @@ describe('useUserPreferences', () => {
       result.current.setTheme('day');
       result.current.setFontFamily('serif');
       result.current.setBaseFontPt(23.7);
+      result.current.setCitationWidthRem(48.3);
     });
 
     expect(JSON.parse(window.localStorage.getItem(PREFERENCES_STORAGE_KEY) || '{}')).toMatchObject({
       theme: 'day',
       fontFamily: 'serif',
       baseFontPt: 24,
+      citationWidthRem: 48,
+    });
+  });
+
+  it('clamps citation width to the configured bounds', () => {
+    const { result } = renderHook(() => useUserPreferences());
+
+    act(() => {
+      result.current.setCitationWidthRem(60.2);
+    });
+
+    expect(JSON.parse(window.localStorage.getItem(PREFERENCES_STORAGE_KEY) || '{}')).toMatchObject({
+      citationWidthRem: 50,
+    });
+
+    act(() => {
+      result.current.setCitationWidthRem(30.2);
+    });
+
+    expect(JSON.parse(window.localStorage.getItem(PREFERENCES_STORAGE_KEY) || '{}')).toMatchObject({
+      citationWidthRem: 35,
     });
   });
 
@@ -224,11 +250,13 @@ describe('useUserPreferences', () => {
       result.current.setTheme('night');
       result.current.setFontFamily('serif');
       result.current.setBaseFontPt(40.2);
+      result.current.setCitationWidthRem(36.2);
     });
 
     expect(document.documentElement.classList.contains('dark')).toBe(true);
     expect(document.documentElement.dataset.theme).toBe('night');
     expect(document.documentElement.dataset.font).toBe('serif');
     expect(document.documentElement.style.getPropertyValue('--font-base-pt')).toBe('40pt');
+    expect(document.documentElement.style.getPropertyValue('--citation-column-width')).toBe('36rem');
   });
 });

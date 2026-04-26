@@ -12,6 +12,7 @@ create table if not exists profiles (
 
 alter table profiles add column if not exists avatar_path text;
 alter table profiles add column if not exists avatar_url text;
+alter table profiles add column if not exists preferences jsonb;
 
 alter table profiles enable row level security;
 

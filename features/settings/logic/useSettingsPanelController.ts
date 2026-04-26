@@ -13,6 +13,7 @@ export const useSettingsPanelController = ({
   onThemeChange,
   onFontFamilyChange,
   onBaseFontPtChange,
+  onCitationWidthRemChange,
   onUpdateUsername,
   onUpdateAvatar,
   onSignOut,
@@ -153,6 +154,7 @@ export const useSettingsPanelController = ({
       onThemeChange,
       onFontFamilyChange,
       onBaseFontPtChange,
+      onCitationWidthRemChange,
       onSignOut,
     }),
     [
@@ -168,6 +170,7 @@ export const useSettingsPanelController = ({
       isSavingDisplayName,
       isSettingsOpen,
       onBaseFontPtChange,
+      onCitationWidthRemChange,
       onFontFamilyChange,
       onSignOut,
       onThemeChange,

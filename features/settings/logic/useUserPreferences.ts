@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { SetStateAction } from 'react';
 import { normalizeFontPreference } from '../../../lib/fontRegistry';
 import { resolveThemePreference } from '../../../lib/themeRegistry';
 import type {
@@ -9,16 +10,67 @@ import type {
 } from '../contract/userPreferences';
 import { LEGACY_TEXT_SCALE_TO_BASE_FONT_PT } from '../policy/userPreferences';
 import { applyPreferencesToDocument, getSystemThemeIsDark } from './preferencesDocument';
-import { normalizeBaseFontPt } from './preferencesNormalization';
+import { normalizeBaseFontPt, normalizeCitationWidthRem } from './preferencesNormalization';
+import { persistServerPreferences, readServerPreferences } from './preferencesServer';
 import { persistPreferences, readStoredPreferences } from './preferencesStorage';
 
-export const useUserPreferences = () => {
+export const useUserPreferences = (userId?: string | null) => {
   const [preferences, setPreferences] = useState<UserPreferences>(() => readStoredPreferences());
+  const [serverReadyUserId, setServerReadyUserId] = useState<string | null>(null);
+  const localChangeVersionRef = useRef(0);
+
+  const setLocalPreferences = useCallback((value: SetStateAction<UserPreferences>) => {
+    localChangeVersionRef.current += 1;
+    setPreferences(value);
+  }, []);
 
   useEffect(() => {
     applyPreferencesToDocument(preferences);
     persistPreferences(preferences);
   }, [preferences]);
+
+  useEffect(() => {
+    if (!userId) {
+      setServerReadyUserId(null);
+      return undefined;
+    }
+
+    let isCancelled = false;
+    const loadStartedAtVersion = localChangeVersionRef.current;
+    setServerReadyUserId(null);
+
+    readServerPreferences(userId)
+      .then((serverPreferences) => {
+        if (isCancelled) {
+          return;
+        }
+
+        if (serverPreferences && localChangeVersionRef.current === loadStartedAtVersion) {
+          setPreferences(serverPreferences);
+        }
+
+        setServerReadyUserId(userId);
+      })
+      .catch((error) => {
+        if (!isCancelled) {
+          console.error('Error loading user preferences:', error);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId || serverReadyUserId !== userId) {
+      return;
+    }
+
+    persistServerPreferences(userId, preferences).catch((error) => {
+      console.error('Error saving user preferences:', error);
+    });
+  }, [preferences, serverReadyUserId, userId]);
 
   useEffect(() => {
     if (preferences.theme !== 'auto') {
@@ -46,22 +98,30 @@ export const useUserPreferences = () => {
   return useMemo(
     () => ({
       preferences,
-      setPreferences,
+      setPreferences: setLocalPreferences,
       setBaseFontPt: (baseFontPt: number) =>
-        setPreferences((current) => ({ ...current, baseFontPt: normalizeBaseFontPt(baseFontPt) })),
+        setLocalPreferences((current) => ({
+          ...current,
+          baseFontPt: normalizeBaseFontPt(baseFontPt),
+        })),
+      setCitationWidthRem: (citationWidthRem: number) =>
+        setLocalPreferences((current) => ({
+          ...current,
+          citationWidthRem: normalizeCitationWidthRem(citationWidthRem),
+        })),
       setTextScale: (textScale: TextScalePreference) =>
-        setPreferences((current) => ({
+        setLocalPreferences((current) => ({
           ...current,
           baseFontPt: normalizeBaseFontPt(LEGACY_TEXT_SCALE_TO_BASE_FONT_PT[textScale]),
         })),
-      setTheme: (theme: ThemePreference) => setPreferences((current) => ({ ...current, theme })),
+      setTheme: (theme: ThemePreference) => setLocalPreferences((current) => ({ ...current, theme })),
       setFontFamily: (fontFamily: FontPreference) =>
-        setPreferences((current) => ({
+        setLocalPreferences((current) => ({
           ...current,
           fontFamily: normalizeFontPreference(fontFamily),
         })),
       isDarkMode: resolveThemePreference(preferences.theme, getSystemThemeIsDark()).isDark,
     }),
-    [preferences]
+    [preferences, setLocalPreferences]
   );
 };

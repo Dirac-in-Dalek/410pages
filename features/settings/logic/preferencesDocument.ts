@@ -14,6 +14,7 @@ export const applyPreferencesToDocument = (preferences: UserPreferences) => {
   root.dataset.theme = resolvedTheme;
   root.dataset.font = preferences.fontFamily;
   root.style.setProperty('--font-base-pt', `${preferences.baseFontPt}pt`);
+  root.style.setProperty('--citation-column-width', `${preferences.citationWidthRem}rem`);
   root.style.colorScheme = isDark ? 'dark' : 'light';
 
   if (themeColorMeta) {

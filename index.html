@@ -17,17 +17,37 @@
       const supportedFonts = new Set([
         'pretendard',
         'serif',
+        'noto-sans-kr',
+        'ibm-plex-sans-kr',
+        'gothic-a1',
+        'gowun-dodum',
         'nanum-gothic',
         'nanum-myeongjo',
+        'gowun-batang',
+        'hahmlet',
+        'song-myung',
+        'sunflower',
         'nanum-gothic-coding',
-        'nanum-brush-script',
-        'nanum-pen-script',
+        'jetbrains-mono',
+        'fira-code',
+        'source-code-pro',
+        'roboto-mono',
+        'do-hyeon',
+        'jua',
+        'black-han-sans',
       ]);
       const minBaseFontPt = 10;
       const maxBaseFontPt = 40;
+      const minCitationWidthRem = 35;
+      const maxCitationWidthRem = 50;
       const root = document.documentElement;
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const defaultPreferences = { theme: 'auto', fontFamily: 'pretendard', baseFontPt: 16 };
+      const defaultPreferences = {
+        theme: 'auto',
+        fontFamily: 'pretendard',
+        baseFontPt: 13,
+        citationWidthRem: 44,
+      };
       const supportedThemes = new Set([
         'auto',
         'day',
@@ -60,6 +80,16 @@
         return Math.min(maxBaseFontPt, Math.max(minBaseFontPt, Math.round(parsedValue)));
       };
 
+      const clampCitationWidthRem = (value) => {
+        const parsedValue = Number(value);
+
+        if (!Number.isFinite(parsedValue)) {
+          return defaultPreferences.citationWidthRem;
+        }
+
+        return Math.min(maxCitationWidthRem, Math.max(minCitationWidthRem, Math.round(parsedValue)));
+      };
+
       const normalizePreferences = (value) => {
         const candidate = value && typeof value === 'object' ? value : {};
         const normalizedTheme =
@@ -76,6 +106,7 @@
             candidate.baseFontPt !== undefined
               ? clampBaseFontPt(candidate.baseFontPt)
               : legacyTextScaleMap[candidate.textScale] ?? defaultPreferences.baseFontPt,
+          citationWidthRem: clampCitationWidthRem(candidate.citationWidthRem),
         };
       };
 
@@ -132,6 +163,7 @@
       root.dataset.theme = resolvedTheme;
       root.dataset.font = preferences.fontFamily;
       root.style.setProperty('--font-base-pt', `${preferences.baseFontPt}pt`);
+      root.style.setProperty('--citation-column-width', `${preferences.citationWidthRem}rem`);
       root.style.colorScheme = isDark ? 'dark' : 'light';
       const themeMeta = document.querySelector('meta[name="theme-color"]');
       if (themeMeta) {

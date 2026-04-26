@@ -428,7 +428,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                 ref={quoteRef}
                 data-testid="citation-text"
                 className={[
-                  'type-body relative z-10 select-text whitespace-pre-wrap text-[var(--text-main)] leading-[1.55]',
+                  'citation-copy type-body relative z-10 select-text whitespace-pre-wrap text-[var(--text-main)] leading-[1.55]',
                   isExpanded ? 'mb-1.5' : 'mb-1.5 line-clamp-2 lg:line-clamp-3'
                 ].join(' ')}
                 onMouseUp={handleTextSelection}

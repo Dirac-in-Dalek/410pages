@@ -19,12 +19,13 @@ import { useAppViewMode } from './logic/useAppViewMode';
 import { useResponsiveMode } from './useResponsiveMode';
 
 const AppShell: React.FC = () => {
-  const { preferences, setTheme, setFontFamily, setBaseFontPt } = useUserPreferences();
   const { isMobileApp } = useResponsiveMode();
   const {
     session, username, avatarUrl, loading: authLoading,
     handleUpdateUsername, handleUpdateAvatar, handleSignOut
   } = useAuthStatus();
+  const { preferences, setTheme, setFontFamily, setBaseFontPt, setCitationWidthRem } =
+    useUserPreferences(session?.user?.id ?? null);
 
   const {
     projects, setProjects, citations, setCitations, chapterBlocksByBook, loading: dataLoading,
@@ -66,6 +67,7 @@ const AppShell: React.FC = () => {
     onThemeChange: setTheme,
     onFontFamilyChange: setFontFamily,
     onBaseFontPtChange: setBaseFontPt,
+    onCitationWidthRemChange: setCitationWidthRem,
     onUpdateUsername: handleUpdateUsername,
     onUpdateAvatar: handleUpdateAvatar,
     onSignOut: handleSignOut,

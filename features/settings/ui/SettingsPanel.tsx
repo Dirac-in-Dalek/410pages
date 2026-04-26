@@ -22,6 +22,7 @@ export type SettingsPanelProps = {
   onThemeChange: (value: ThemePreference) => void;
   onFontFamilyChange: (value: FontPreference) => void;
   onBaseFontPtChange: (value: number) => void;
+  onCitationWidthRemChange: (value: number) => void;
   onSignOut?: () => void;
 };
 
@@ -43,6 +44,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onThemeChange,
   onFontFamilyChange,
   onBaseFontPtChange,
+  onCitationWidthRemChange,
   onSignOut,
 }) => {
   const dismissingPanelRef = useRef(false);
@@ -221,8 +223,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             <TextSettingsSection
               fontFamily={preferences.fontFamily}
               baseFontPt={preferences.baseFontPt}
+              citationWidthRem={preferences.citationWidthRem}
               onFontFamilyChange={onFontFamilyChange}
               onBaseFontPtChange={onBaseFontPtChange}
+              onCitationWidthRemChange={onCitationWidthRemChange}
             />
 
             <AppearanceSettingsSection theme={preferences.theme} onThemeChange={onThemeChange} />

@@ -6,6 +6,7 @@ import App from './App';
 
 const mockHandleUpdateUsername = vi.fn();
 const mockSetBaseFontPt = vi.fn();
+const mockSetCitationWidthRem = vi.fn();
 const mockCitationList = vi.fn();
 const createDeferred = <T,>() => {
   let resolve!: (value: T | PromiseLike<T>) => void;
@@ -91,11 +92,13 @@ vi.mock('./features/settings/logic/useUserPreferences', () => ({
     preferences: {
       theme: 'auto',
       fontFamily: 'pretendard',
-      baseFontPt: 16,
+      baseFontPt: 13,
+      citationWidthRem: 44,
     },
     setTheme: vi.fn(),
     setFontFamily: vi.fn(),
     setBaseFontPt: mockSetBaseFontPt,
+    setCitationWidthRem: mockSetCitationWidthRem,
   }),
 }));
 
@@ -153,6 +156,9 @@ vi.mock('./features/settings/ui/SettingsPanel', () => ({
         <button type="button" onClick={() => props.onBaseFontPtChange(22)}>
           change-font-size
         </button>
+        <button type="button" onClick={() => props.onCitationWidthRemChange(48)}>
+          change-citation-width
+        </button>
         <button type="button" onClick={props.onClose}>
           close-settings
         </button>
@@ -189,6 +195,7 @@ describe('App settings display-name flow', () => {
     vi.clearAllMocks();
     mockHandleUpdateUsername.mockResolvedValue(true);
     mockSetBaseFontPt.mockReset();
+    mockSetCitationWidthRem.mockReset();
     authState.username = 'Committed Name';
 
     Object.defineProperty(window, 'matchMedia', {
@@ -254,6 +261,16 @@ describe('App settings display-name flow', () => {
     await user.click(screen.getByRole('button', { name: 'change-font-size' }));
 
     expect(mockSetBaseFontPt).toHaveBeenCalledWith(22);
+  });
+
+  it('wires settings citation width changes to setCitationWidthRem', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole('button', { name: 'open-settings' }));
+    await user.click(screen.getByRole('button', { name: 'change-citation-width' }));
+
+    expect(mockSetCitationWidthRem).toHaveBeenCalledWith(48);
   });
 
   it('clears the save error after a successful retry', async () => {
@@ -337,6 +354,7 @@ describe('App book view chapter blocks wiring', () => {
     vi.clearAllMocks();
     mockHandleUpdateUsername.mockResolvedValue(true);
     mockSetBaseFontPt.mockReset();
+    mockSetCitationWidthRem.mockReset();
     mockCitationList.mockReset();
     authState.username = 'Committed Name';
     archiveFilterState.selectedBookId = null;

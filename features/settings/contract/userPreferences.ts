@@ -9,4 +9,5 @@ export type UserPreferences = {
   theme: ThemePreference;
   fontFamily: FontPreference;
   baseFontPt: number;
+  citationWidthRem: number;
 };

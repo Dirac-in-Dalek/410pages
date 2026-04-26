@@ -8,6 +8,7 @@ export type SettingsPanelControllerDependencies = {
   onThemeChange: (value: ThemePreference) => void;
   onFontFamilyChange: (value: FontPreference) => void;
   onBaseFontPtChange: (value: number) => void;
+  onCitationWidthRemChange: (value: number) => void;
   onUpdateUsername: (value: string) => boolean | void | Promise<boolean | void>;
   onUpdateAvatar: (file: File) => boolean | void | Promise<boolean | void>;
   onSignOut?: () => void;
@@ -31,6 +32,7 @@ export type SettingsPanelBindings = {
   onThemeChange: (value: ThemePreference) => void;
   onFontFamilyChange: (value: FontPreference) => void;
   onBaseFontPtChange: (value: number) => void;
+  onCitationWidthRemChange: (value: number) => void;
   onSignOut?: () => void;
 };
 

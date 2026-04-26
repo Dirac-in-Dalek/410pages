@@ -1,6 +1,7 @@
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
-@import url('https://fonts.googleapis.com/css2?family=Nanum+Brush+Script&family=Nanum+Gothic:wght@400;700;800&family=Nanum+Gothic+Coding:wght@400;700&family=Nanum+Myeongjo:wght@400;700;800&family=Nanum+Pen+Script&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&family=Nanum+Gothic+Coding:wght@400;700&family=Nanum+Myeongjo:wght@400;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Do+Hyeon&family=Fira+Code:wght@400;500;600;700&family=Gothic+A1:wght@400;500;600;700;800&family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&family=Hahmlet:wght@400;500;600;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Jua&family=Noto+Sans+KR:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;600;700&family=Song+Myung&family=Source+Code+Pro:wght@400;500;600;700&family=Sunflower:wght@300;500;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -12,7 +13,8 @@
     --font-display: 'Noto Serif KR', 'Iowan Old Style', 'Times New Roman', serif;
     --font-ui-active: var(--font-ui);
     --font-display-active: var(--font-display);
-    --font-base-pt: 16pt;
+    --font-base-pt: 13pt;
+    --citation-column-width: 44rem;
     --type-muted-size: calc(var(--font-base-pt) * 0.75);
     --type-label-size: calc(var(--font-base-pt) * 0.875);
     --type-body-size: calc(var(--font-base-pt) * 1);
@@ -204,6 +206,26 @@
     --font-display-active: 'Noto Serif KR', 'Iowan Old Style', 'Times New Roman', serif;
   }
 
+  :root[data-font='noto-sans-kr'] {
+    --font-ui-active: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    --font-display-active: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  }
+
+  :root[data-font='ibm-plex-sans-kr'] {
+    --font-ui-active: 'IBM Plex Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    --font-display-active: 'IBM Plex Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  }
+
+  :root[data-font='gothic-a1'] {
+    --font-ui-active: 'Gothic A1', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    --font-display-active: 'Gothic A1', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  }
+
+  :root[data-font='gowun-dodum'] {
+    --font-ui-active: 'Gowun Dodum', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    --font-display-active: 'Gowun Dodum', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  }
+
   :root[data-font='nanum-gothic'] {
     --font-ui-active: 'Nanum Gothic', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
     --font-display-active: 'Nanum Gothic', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
@@ -214,19 +236,64 @@
     --font-display-active: 'Nanum Myeongjo', 'Iowan Old Style', 'Times New Roman', serif;
   }
 
+  :root[data-font='gowun-batang'] {
+    --font-ui-active: 'Gowun Batang', 'Iowan Old Style', 'Times New Roman', serif;
+    --font-display-active: 'Gowun Batang', 'Iowan Old Style', 'Times New Roman', serif;
+  }
+
+  :root[data-font='hahmlet'] {
+    --font-ui-active: 'Hahmlet', 'Noto Serif KR', 'Iowan Old Style', serif;
+    --font-display-active: 'Hahmlet', 'Noto Serif KR', 'Iowan Old Style', serif;
+  }
+
+  :root[data-font='song-myung'] {
+    --font-ui-active: 'Song Myung', 'Noto Serif KR', 'Iowan Old Style', serif;
+    --font-display-active: 'Song Myung', 'Noto Serif KR', 'Iowan Old Style', serif;
+  }
+
+  :root[data-font='sunflower'] {
+    --font-ui-active: 'Sunflower', 'Noto Serif KR', 'Iowan Old Style', serif;
+    --font-display-active: 'Sunflower', 'Noto Serif KR', 'Iowan Old Style', serif;
+  }
+
   :root[data-font='nanum-gothic-coding'] {
     --font-ui-active: 'Nanum Gothic Coding', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
     --font-display-active: 'Nanum Gothic Coding', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
   }
 
-  :root[data-font='nanum-brush-script'] {
-    --font-ui-active: 'Nanum Brush Script', 'Nanum Pen Script', 'Apple Chancery', 'Segoe Script', cursive;
-    --font-display-active: 'Nanum Brush Script', 'Nanum Pen Script', 'Apple Chancery', 'Segoe Script', cursive;
+  :root[data-font='jetbrains-mono'] {
+    --font-ui-active: 'JetBrains Mono', 'Nanum Gothic Coding', 'SFMono-Regular', Consolas, monospace;
+    --font-display-active: 'JetBrains Mono', 'Nanum Gothic Coding', 'SFMono-Regular', Consolas, monospace;
   }
 
-  :root[data-font='nanum-pen-script'] {
-    --font-ui-active: 'Nanum Pen Script', 'Nanum Brush Script', 'Apple Chancery', 'Segoe Script', cursive;
-    --font-display-active: 'Nanum Pen Script', 'Nanum Brush Script', 'Apple Chancery', 'Segoe Script', cursive;
+  :root[data-font='fira-code'] {
+    --font-ui-active: 'Fira Code', 'Nanum Gothic Coding', 'SFMono-Regular', Consolas, monospace;
+    --font-display-active: 'Fira Code', 'Nanum Gothic Coding', 'SFMono-Regular', Consolas, monospace;
+  }
+
+  :root[data-font='source-code-pro'] {
+    --font-ui-active: 'Source Code Pro', 'Nanum Gothic Coding', 'SFMono-Regular', Consolas, monospace;
+    --font-display-active: 'Source Code Pro', 'Nanum Gothic Coding', 'SFMono-Regular', Consolas, monospace;
+  }
+
+  :root[data-font='roboto-mono'] {
+    --font-ui-active: 'Roboto Mono', 'Nanum Gothic Coding', 'SFMono-Regular', Consolas, monospace;
+    --font-display-active: 'Roboto Mono', 'Nanum Gothic Coding', 'SFMono-Regular', Consolas, monospace;
+  }
+
+  :root[data-font='do-hyeon'] {
+    --font-ui-active: 'Do Hyeon', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    --font-display-active: 'Do Hyeon', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  }
+
+  :root[data-font='jua'] {
+    --font-ui-active: 'Jua', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    --font-display-active: 'Jua', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  }
+
+  :root[data-font='black-han-sans'] {
+    --font-ui-active: 'Black Han Sans', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    --font-display-active: 'Black Han Sans', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   }
 
   * {
@@ -261,6 +328,13 @@
     font-family: var(--font-display-active);
     line-height: 1.68;
     letter-spacing: 0.001em;
+  }
+
+  .citation-copy {
+    text-align: justify;
+    text-align-last: left;
+    word-break: keep-all;
+    overflow-wrap: break-word;
   }
 
   input,

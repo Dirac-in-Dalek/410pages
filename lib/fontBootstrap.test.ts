@@ -44,6 +44,7 @@ const resetDom = () => {
   document.documentElement.className = '';
   document.documentElement.removeAttribute('data-font');
   document.documentElement.style.removeProperty('--font-base-pt');
+  document.documentElement.style.removeProperty('--citation-column-width');
   installStorageStub();
   window.localStorage.clear();
   Object.defineProperty(window, 'matchMedia', {
@@ -115,17 +116,50 @@ describe('index bootstrap', () => {
     expect(getDeclaredDefaultFontId(script)).toBe(DEFAULT_FONT_ID);
   });
 
-  it('accepts expanded nanum font ids during classic first paint', () => {
+  it('accepts mono font ids during classic first paint', () => {
     window.localStorage.setItem(
       'user-preferences',
-      JSON.stringify({ theme: 'system', fontFamily: 'nanum-brush-script', baseFontPt: 18 })
+      JSON.stringify({ theme: 'system', fontFamily: 'jetbrains-mono', baseFontPt: 18 })
     );
 
     runBootstrapScript();
 
-    expect(document.documentElement.dataset.font).toBe('nanum-brush-script');
+    expect(document.documentElement.dataset.font).toBe('jetbrains-mono');
     expect(document.documentElement.style.getPropertyValue('--font-base-pt')).toBe('18pt');
+    expect(document.documentElement.style.getPropertyValue('--citation-column-width')).toBe('44rem');
     expect(document.documentElement.classList.contains('dark')).toBe(false);
+  });
+
+  it('applies stored citation width during classic first paint', () => {
+    window.localStorage.setItem(
+      'user-preferences',
+      JSON.stringify({
+        theme: 'auto',
+        fontFamily: 'pretendard',
+        baseFontPt: 16,
+        citationWidthRem: 49,
+      })
+    );
+
+    runBootstrapScript();
+
+    expect(document.documentElement.style.getPropertyValue('--citation-column-width')).toBe('49rem');
+  });
+
+  it('clamps stored citation width during classic first paint', () => {
+    window.localStorage.setItem(
+      'user-preferences',
+      JSON.stringify({
+        theme: 'auto',
+        fontFamily: 'pretendard',
+        baseFontPt: 16,
+        citationWidthRem: 80,
+      })
+    );
+
+    runBootstrapScript();
+
+    expect(document.documentElement.style.getPropertyValue('--citation-column-width')).toBe('50rem');
   });
 
   it('supports the new theme ids during classic first paint', () => {
