@@ -59,6 +59,14 @@
         'warm-paper',
         'soft-slate',
         'terminal-green',
+        'airbnb-light',
+        'airbnb-dark',
+        'bach-light',
+        'bach-dark',
+        'mahler-light',
+        'mahler-dark',
+        'shostakovich-light',
+        'shostakovich-dark',
       ]);
       const legacyThemeMap = {
         system: 'auto',
@@ -72,7 +80,23 @@
         'warm-paper': '#f7f1e8',
         'soft-slate': '#f4f7f8',
         'terminal-green': '#07100a',
+        'airbnb-light': '#fff7f6',
+        'airbnb-dark': '#171012',
+        'bach-light': '#f3ead8',
+        'bach-dark': '#100d09',
+        'mahler-light': '#f1ece7',
+        'mahler-dark': '#110c11',
+        'shostakovich-light': '#eeece6',
+        'shostakovich-dark': '#090909',
       };
+      const darkThemes = new Set([
+        'night',
+        'terminal-green',
+        'airbnb-dark',
+        'bach-dark',
+        'mahler-dark',
+        'shostakovich-dark',
+      ]);
 
       const clampBaseFontPt = (value) => {
         const parsedValue = Number(value);
@@ -162,7 +186,7 @@
       }
 
       const resolvedTheme = resolveTheme(preferences.theme);
-      const isDark = resolvedTheme === 'night' || resolvedTheme === 'terminal-green';
+      const isDark = darkThemes.has(resolvedTheme);
       root.classList.toggle('dark', isDark);
       root.dataset.theme = resolvedTheme;
       root.dataset.font = preferences.fontFamily;

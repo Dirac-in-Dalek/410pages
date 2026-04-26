@@ -1,4 +1,18 @@
-export type ThemePreference = 'auto' | 'day' | 'night' | 'warm-paper' | 'soft-slate' | 'terminal-green';
+export type ThemePreference =
+  | 'auto'
+  | 'day'
+  | 'night'
+  | 'warm-paper'
+  | 'soft-slate'
+  | 'terminal-green'
+  | 'airbnb-light'
+  | 'airbnb-dark'
+  | 'bach-light'
+  | 'bach-dark'
+  | 'mahler-light'
+  | 'mahler-dark'
+  | 'shostakovich-light'
+  | 'shostakovich-dark';
 
 export type ThemeScheme = 'light' | 'dark' | 'auto';
 
@@ -88,6 +102,102 @@ export const THEME_OPTIONS = [
       background: '#07100a',
       accent: '#7ee264',
       border: '#24412a',
+    },
+  },
+  {
+    id: 'airbnb-light',
+    label: 'Airbnb Light',
+    description: 'Soft white with coral.',
+    scheme: 'light',
+    themeColor: '#fff7f6',
+    preview: {
+      background: '#fff7f6',
+      accent: '#ff385c',
+      border: '#f2d9d8',
+    },
+  },
+  {
+    id: 'airbnb-dark',
+    label: 'Airbnb Dark',
+    description: 'Charcoal with coral.',
+    scheme: 'dark',
+    themeColor: '#171012',
+    preview: {
+      background: '#171012',
+      accent: '#ff5a78',
+      border: '#3a252a',
+    },
+  },
+  {
+    id: 'bach-light',
+    label: 'Bach Light',
+    description: 'Vellum score and organ wood.',
+    scheme: 'light',
+    themeColor: '#f3ead8',
+    preview: {
+      background: '#f3ead8',
+      accent: '#806231',
+      border: '#d8c7aa',
+    },
+  },
+  {
+    id: 'bach-dark',
+    label: 'Bach Dark',
+    description: 'Organ loft in candlelight.',
+    scheme: 'dark',
+    themeColor: '#100d09',
+    preview: {
+      background: '#100d09',
+      accent: '#d5af63',
+      border: '#45351f',
+    },
+  },
+  {
+    id: 'mahler-light',
+    label: 'Mahler Light',
+    description: 'Vienna program and velvet.',
+    scheme: 'light',
+    themeColor: '#f1ece7',
+    preview: {
+      background: '#f1ece7',
+      accent: '#8a2638',
+      border: '#d9cbc9',
+    },
+  },
+  {
+    id: 'mahler-dark',
+    label: 'Mahler Dark',
+    description: 'Velvet hall with brass.',
+    scheme: 'dark',
+    themeColor: '#110c11',
+    preview: {
+      background: '#110c11',
+      accent: '#d8a24f',
+      border: '#45303b',
+    },
+  },
+  {
+    id: 'shostakovich-light',
+    label: 'Shostakovich Light',
+    description: 'Bureau paper and Soviet red.',
+    scheme: 'light',
+    themeColor: '#eeece6',
+    preview: {
+      background: '#eeece6',
+      accent: '#a90f25',
+      border: '#d7d0c5',
+    },
+  },
+  {
+    id: 'shostakovich-dark',
+    label: 'Shostakovich Dark',
+    description: 'Iron black and Soviet red.',
+    scheme: 'dark',
+    themeColor: '#090909',
+    preview: {
+      background: '#090909',
+      accent: '#c8102e',
+      border: '#332f2b',
     },
   },
 ] as const satisfies readonly ThemeOption[];

@@ -1,6 +1,7 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { getThemeOption, THEME_OPTIONS } from '../../../lib/themeRegistry';
+import type { ThemeOption, ThemeScheme } from '../../../lib/themeRegistry';
 import type { ThemePreference } from '../contract/userPreferences';
 
 type AppearanceSettingsSectionProps = {
@@ -9,6 +10,19 @@ type AppearanceSettingsSectionProps = {
 };
 
 const themeOptionClass = () => 'ui-btn ui-btn-row ui-choice px-3 py-2';
+
+const THEME_GROUPS: Array<{ scheme: ThemeScheme; label: string }> = [
+  { scheme: 'auto', label: '자동' },
+  { scheme: 'light', label: '라이트' },
+  { scheme: 'dark', label: '다크' },
+];
+
+const GROUPED_THEME_OPTIONS = THEME_GROUPS.map((group) => ({
+  ...group,
+  options: THEME_OPTIONS.filter((option) => option.scheme === group.scheme),
+})).filter((group) => group.options.length > 0) as Array<
+  { scheme: ThemeScheme; label: string; options: readonly ThemeOption[] }
+>;
 
 export const AppearanceSettingsSection: React.FC<AppearanceSettingsSectionProps> = ({
   theme,
@@ -80,31 +94,38 @@ export const AppearanceSettingsSection: React.FC<AppearanceSettingsSectionProps>
                 aria-label="테마 선택"
                 className="absolute right-0 top-[calc(100%+0.5rem)] z-20 w-full rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] p-1 shadow-[var(--shadow-panel)]"
               >
-                {THEME_OPTIONS.map((option) => {
-                  const isActive = option.id === theme;
+                {GROUPED_THEME_OPTIONS.map((group) => (
+                  <div key={group.scheme} role="presentation" className="py-1 first:pt-0 last:pb-0">
+                    <div className="px-3 py-1 text-[0.72rem] font-semibold text-[var(--text-muted)]">
+                      {group.label}
+                    </div>
+                    {group.options.map((option) => {
+                      const isActive = option.id === theme;
 
-                  return (
-                    <button
-                      key={option.id}
-                      type="button"
-                      role="option"
-                      aria-selected={isActive}
-                      data-active={isActive ? 'true' : undefined}
-                      className={themeOptionClass()}
-                      onClick={() => {
-                        onThemeChange(option.id);
-                        setIsOpen(false);
-                      }}
-                    >
-                      <span className="truncate">{option.label}</span>
-                      {isActive ? (
-                        <span aria-hidden="true" className="text-[var(--accent)]">
-                          ✓
-                        </span>
-                      ) : null}
-                    </button>
-                  );
-                })}
+                      return (
+                        <button
+                          key={option.id}
+                          type="button"
+                          role="option"
+                          aria-selected={isActive}
+                          data-active={isActive ? 'true' : undefined}
+                          className={themeOptionClass()}
+                          onClick={() => {
+                            onThemeChange(option.id);
+                            setIsOpen(false);
+                          }}
+                        >
+                          <span className="truncate">{option.label}</span>
+                          {isActive ? (
+                            <span aria-hidden="true" className="text-[var(--accent)]">
+                              ✓
+                            </span>
+                          ) : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
               </div>
             ) : null}
           </div>

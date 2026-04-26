@@ -161,11 +161,21 @@ describe('SettingsPanel', () => {
     await user.click(trigger);
 
     expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByText('라이트')).toBeTruthy();
+    expect(screen.getByText('다크')).toBeTruthy();
     expect(screen.getByRole('option', { name: 'Day' })).toBeTruthy();
     expect(screen.getByRole('option', { name: 'Night' })).toBeTruthy();
     expect(screen.getByRole('option', { name: 'Warm Paper' })).toBeTruthy();
     expect(screen.getByRole('option', { name: 'Soft Slate' })).toBeTruthy();
     expect(screen.getByRole('option', { name: 'Terminal Green' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Airbnb Light' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Airbnb Dark' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Bach Light' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Bach Dark' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Mahler Light' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Mahler Dark' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Shostakovich Light' })).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Shostakovich Dark' })).toBeTruthy();
 
     await user.click(screen.getByRole('option', { name: 'Night' }));
 

@@ -165,14 +165,14 @@ describe('index bootstrap', () => {
   it('supports the new theme ids during classic first paint', () => {
     window.localStorage.setItem(
       'user-preferences',
-      JSON.stringify({ theme: 'warm-paper', fontFamily: 'pretendard', baseFontPt: 18 })
+      JSON.stringify({ theme: 'shostakovich-dark', fontFamily: 'pretendard', baseFontPt: 18 })
     );
 
     runBootstrapScript();
 
-    expect(document.documentElement.dataset.theme).toBe('warm-paper');
-    expect(document.documentElement.classList.contains('dark')).toBe(false);
-    expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#f7f1e8');
+    expect(document.documentElement.dataset.theme).toBe('shostakovich-dark');
+    expect(document.documentElement.classList.contains('dark')).toBe(true);
+    expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#090909');
   });
 
   it('falls back to the registry default font during classic first paint', () => {
