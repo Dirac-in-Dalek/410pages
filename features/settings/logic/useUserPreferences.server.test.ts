@@ -107,7 +107,7 @@ describe('useUserPreferences server sync', () => {
         'user-1',
         expect.objectContaining({
           theme: 'auto',
-          fontFamily: 'pretendard',
+          fontFamily: 'nanum-myeongjo',
           baseFontPt: 13,
           citationWidthRem: 44,
         })

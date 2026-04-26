@@ -1,7 +1,7 @@
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
 @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&family=Nanum+Gothic+Coding:wght@400;700&family=Nanum+Myeongjo:wght@400;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Do+Hyeon&family=Fira+Code:wght@400;500;600;700&family=Gothic+A1:wght@400;500;600;700;800&family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&family=Hahmlet:wght@400;500;600;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Jua&family=Noto+Sans+KR:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;600;700&family=Song+Myung&family=Source+Code+Pro:wght@400;500;600;700&family=Sunflower:wght@300;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Asta+Sans:wght@300;400;500;600;700;800&family=Black+Han+Sans&family=Diphylleia&family=Do+Hyeon&family=Fira+Code:wght@400;500;600;700&family=Gothic+A1:wght@400;500;600;700;800&family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&family=Grandiflora+One&family=Hahmlet:wght@400;500;600;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Jua&family=Noto+Sans+KR:wght@400;500;600;700&family=Orbit&family=Roboto+Mono:wght@400;500;600;700&family=Song+Myung&family=Source+Code+Pro:wght@400;500;600;700&family=Sunflower:wght@300;500;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -211,6 +211,11 @@
     --font-display-active: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   }
 
+  :root[data-font='asta-sans'] {
+    --font-ui-active: 'Asta Sans', 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
+    --font-display-active: 'Asta Sans', 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
+  }
+
   :root[data-font='ibm-plex-sans-kr'] {
     --font-ui-active: 'IBM Plex Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
     --font-display-active: 'IBM Plex Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
@@ -231,14 +236,29 @@
     --font-display-active: 'Nanum Gothic', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
   }
 
+  :root[data-font='orbit'] {
+    --font-ui-active: 'Orbit', 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
+    --font-display-active: 'Orbit', 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
+  }
+
   :root[data-font='nanum-myeongjo'] {
     --font-ui-active: 'Nanum Myeongjo', 'Iowan Old Style', 'Times New Roman', serif;
     --font-display-active: 'Nanum Myeongjo', 'Iowan Old Style', 'Times New Roman', serif;
   }
 
+  :root[data-font='diphylleia'] {
+    --font-ui-active: 'Diphylleia', 'Noto Serif KR', 'Iowan Old Style', serif;
+    --font-display-active: 'Diphylleia', 'Noto Serif KR', 'Iowan Old Style', serif;
+  }
+
   :root[data-font='gowun-batang'] {
     --font-ui-active: 'Gowun Batang', 'Iowan Old Style', 'Times New Roman', serif;
     --font-display-active: 'Gowun Batang', 'Iowan Old Style', 'Times New Roman', serif;
+  }
+
+  :root[data-font='grandiflora-one'] {
+    --font-ui-active: 'Grandiflora One', 'Noto Serif KR', 'Iowan Old Style', serif;
+    --font-display-active: 'Grandiflora One', 'Noto Serif KR', 'Iowan Old Style', serif;
   }
 
   :root[data-font='hahmlet'] {
@@ -252,8 +272,8 @@
   }
 
   :root[data-font='sunflower'] {
-    --font-ui-active: 'Sunflower', 'Noto Serif KR', 'Iowan Old Style', serif;
-    --font-display-active: 'Sunflower', 'Noto Serif KR', 'Iowan Old Style', serif;
+    --font-ui-active: 'Sunflower', 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
+    --font-display-active: 'Sunflower', 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
   }
 
   :root[data-font='nanum-gothic-coding'] {

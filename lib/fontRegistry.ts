@@ -1,4 +1,4 @@
-export type FontCategory = 'sans' | 'serif' | 'nanum' | 'display' | 'mono';
+export type FontCategory = 'sans' | 'serif' | 'display' | 'mono';
 
 export type FontOption<Id extends string = string> = {
   id: Id;
@@ -17,7 +17,7 @@ export const FONT_OPTIONS = [
   },
   {
     id: 'serif',
-    label: '명조',
+    label: 'Noto Serif KR',
     fontFamily: "'Noto Serif KR', 'Iowan Old Style', 'Times New Roman', serif",
     category: 'serif',
   },
@@ -25,6 +25,12 @@ export const FONT_OPTIONS = [
     id: 'noto-sans-kr',
     label: 'Noto Sans KR',
     fontFamily: "'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif",
+    category: 'sans',
+  },
+  {
+    id: 'asta-sans',
+    label: 'Asta Sans',
+    fontFamily: "'Asta Sans', 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif",
     category: 'sans',
   },
   {
@@ -49,18 +55,36 @@ export const FONT_OPTIONS = [
     id: 'nanum-gothic',
     label: '나눔고딕',
     fontFamily: "'Nanum Gothic', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif",
-    category: 'nanum',
+    category: 'sans',
+  },
+  {
+    id: 'orbit',
+    label: 'Orbit',
+    fontFamily: "'Orbit', 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif",
+    category: 'sans',
   },
   {
     id: 'nanum-myeongjo',
     label: '나눔명조',
     fontFamily: "'Nanum Myeongjo', 'Iowan Old Style', 'Times New Roman', serif",
-    category: 'nanum',
+    category: 'serif',
+  },
+  {
+    id: 'diphylleia',
+    label: 'Diphylleia',
+    fontFamily: "'Diphylleia', 'Noto Serif KR', 'Iowan Old Style', serif",
+    category: 'serif',
   },
   {
     id: 'gowun-batang',
     label: '고운바탕',
     fontFamily: "'Gowun Batang', 'Iowan Old Style', 'Times New Roman', serif",
+    category: 'serif',
+  },
+  {
+    id: 'grandiflora-one',
+    label: 'Grandiflora One',
+    fontFamily: "'Grandiflora One', 'Noto Serif KR', 'Iowan Old Style', serif",
     category: 'serif',
   },
   {
@@ -78,8 +102,8 @@ export const FONT_OPTIONS = [
   {
     id: 'sunflower',
     label: '해바라기',
-    fontFamily: "'Sunflower', 'Noto Serif KR', 'Iowan Old Style', serif",
-    category: 'serif',
+    fontFamily: "'Sunflower', 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif",
+    category: 'sans',
   },
   {
     id: 'nanum-gothic-coding',
@@ -133,7 +157,7 @@ export const FONT_OPTIONS = [
 
 export type FontPreference = (typeof FONT_OPTIONS)[number]['id'];
 
-export const DEFAULT_FONT_ID: FontPreference = 'pretendard';
+export const DEFAULT_FONT_ID: FontPreference = 'nanum-myeongjo';
 
 export const FONT_OPTION_BY_ID = new Map<FontPreference, (typeof FONT_OPTIONS)[number]>(
   FONT_OPTIONS.map((option) => [option.id, option])

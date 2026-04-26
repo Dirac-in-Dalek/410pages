@@ -43,6 +43,8 @@ describe('FontSelectionList', () => {
       expect(screen.getByRole('button', { name: option.label })).toBeTruthy();
     }
 
+    expect(screen.getByText('산세리프')).toBeTruthy();
+    expect(screen.getByText('세리프')).toBeTruthy();
     expect(screen.getByRole('button', { name: '나눔명조' }).getAttribute('aria-pressed')).toBe('true');
     expect(screen.getByRole('button', { name: '프리텐다드' }).getAttribute('aria-pressed')).toBe('false');
 
@@ -74,9 +76,9 @@ describe('FontSelectionList', () => {
     expect(screen.getByRole('button', { name: '프리텐다드' })).toBe(document.activeElement);
 
     await user.tab();
-    expect(screen.getByRole('button', { name: '명조' })).toBe(document.activeElement);
+    expect(screen.getByRole('button', { name: 'Noto Sans KR' })).toBe(document.activeElement);
 
     await user.keyboard(' ');
-    expect(onFontFamilyChange).toHaveBeenCalledWith('serif');
+    expect(onFontFamilyChange).toHaveBeenCalledWith('noto-sans-kr');
   });
 });

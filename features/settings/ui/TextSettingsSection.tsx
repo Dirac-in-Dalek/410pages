@@ -1,6 +1,7 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { FONT_OPTIONS, getFontOption } from '../../../lib/fontRegistry';
+import type { FontCategory, FontOption } from '../../../lib/fontRegistry';
 import type { FontPreference } from '../contract/userPreferences';
 
 type TextSettingsSectionProps = {
@@ -23,6 +24,20 @@ const optionButtonClass = (isActive: boolean) =>
   `ui-btn ui-btn-row ui-choice px-3 py-2 ${
     isActive ? 'text-[var(--text-main)]' : 'text-[var(--text-secondary)]'
   }`;
+
+const FONT_GROUPS: Array<{ category: FontCategory; label: string }> = [
+  { category: 'sans', label: '산세리프' },
+  { category: 'serif', label: '세리프' },
+  { category: 'mono', label: '코딩' },
+  { category: 'display', label: '디스플레이' },
+];
+
+const GROUPED_FONT_OPTIONS = FONT_GROUPS.map((group) => ({
+  ...group,
+  options: FONT_OPTIONS.filter((option) => option.category === group.category),
+})).filter((group) => group.options.length > 0) as Array<
+  { category: FontCategory; label: string; options: readonly FontOption<FontPreference>[] }
+>;
 
 type FontSelectionListProps = {
   selectedFontFamily: FontPreference;
@@ -94,26 +109,33 @@ export const FontSelectionList: React.FC<FontSelectionListProps> = ({
           aria-label="서체 목록"
           className="absolute right-0 top-[calc(100%+0.5rem)] z-20 max-h-64 w-full overflow-y-auto rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] p-1 shadow-[var(--shadow-panel)]"
         >
-          {FONT_OPTIONS.map((option) => {
-            const isActive = option.id === selectedFontFamily;
+          {GROUPED_FONT_OPTIONS.map((group) => (
+            <div key={group.category} role="presentation" className="py-1 first:pt-0 last:pb-0">
+              <div className="px-3 py-1 text-[0.72rem] font-semibold text-[var(--text-muted)]">
+                {group.label}
+              </div>
+              {group.options.map((option) => {
+                const isActive = option.id === selectedFontFamily;
 
-            return (
-              <button
-                key={option.id}
-                type="button"
-                aria-pressed={isActive}
-                className={`${optionButtonClass(isActive)} flex w-full items-center justify-start text-left`}
-                onClick={() => {
-                  onFontFamilyChange(option.id);
-                  setIsOpen(false);
-                }}
-              >
-                <span className="block w-full truncate" style={{ fontFamily: option.fontFamily }}>
-                  {option.label}
-                </span>
-              </button>
-            );
-          })}
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    aria-pressed={isActive}
+                    className={`${optionButtonClass(isActive)} flex w-full items-center justify-start text-left`}
+                    onClick={() => {
+                      onFontFamilyChange(option.id);
+                      setIsOpen(false);
+                    }}
+                  >
+                    <span className="block w-full truncate" style={{ fontFamily: option.fontFamily }}>
+                      {option.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          ))}
         </div>
       ) : null}
     </div>
