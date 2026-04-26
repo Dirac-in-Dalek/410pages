@@ -258,19 +258,19 @@
   :root[data-theme='bach-light'] {
     --bg-main: #f3ead8;
     --bg-sidebar: #fff8ec;
-    --bg-card: #fffdf5;
-    --bg-input: #eadcc3;
+    --bg-card: #fffdf7;
+    --bg-input: #fbf3e7;
     --text-main: #211b14;
     --text-secondary: #655844;
     --text-muted: #927e60;
-    --border-main: #d8c7aa;
-    --sidebar-hover: #efe2cb;
-    --sidebar-active: #e3cfab;
+    --border-main: #ddceb5;
+    --sidebar-hover: #f4ead8;
+    --sidebar-active: #ead9b9;
     --accent: #806231;
     --accent-strong: #654914;
-    --accent-soft: rgba(128, 98, 49, 0.13);
-    --accent-border: rgba(128, 98, 49, 0.30);
-    --accent-ring: rgba(128, 98, 49, 0.20);
+    --accent-soft: rgba(128, 98, 49, 0.10);
+    --accent-border: rgba(128, 98, 49, 0.22);
+    --accent-ring: rgba(128, 98, 49, 0.14);
     --accent-active: #806231;
     --accent-active-text: #fff8e8;
     --highlight-bg: rgba(128, 98, 49, 0.14);
@@ -281,7 +281,7 @@
     --shadow-popover: inset 0 1px 0 rgba(255, 255, 255, 0.78), 0 1px 0 rgba(58, 43, 22, 0.08), 0 16px 36px rgba(58, 43, 22, 0.15);
     --shadow-toolbar: inset 0 1px 0 rgba(255, 255, 255, 0.72), 0 14px 28px rgba(58, 43, 22, 0.10);
     --theme-canvas-texture: linear-gradient(90deg, rgba(98, 68, 30, 0.045) 1px, transparent 1px), repeating-linear-gradient(0deg, rgba(128, 98, 49, 0.035) 0 1px, transparent 1px 9px), radial-gradient(circle at 16% 12%, rgba(255, 250, 235, 0.55), transparent 28%);
-    --theme-surface-texture: repeating-linear-gradient(90deg, rgba(128, 98, 49, 0.030) 0 1px, transparent 1px 11px), linear-gradient(180deg, rgba(255, 255, 255, 0.42), transparent 44%);
+    --theme-surface-texture: repeating-linear-gradient(90deg, rgba(128, 98, 49, 0.012) 0 1px, transparent 1px 14px), linear-gradient(180deg, rgba(255, 255, 255, 0.34), transparent 48%);
     --theme-texture-size: 32px 32px, 100% 9px, 100% 100%;
     color-scheme: light;
   }
@@ -290,7 +290,7 @@
     --bg-main: #100d09;
     --bg-sidebar: #1a130c;
     --bg-card: #231a10;
-    --bg-input: #2d2114;
+    --bg-input: #251b10;
     --text-main: #f1e6cf;
     --text-secondary: #cab995;
     --text-muted: #928160;
@@ -299,9 +299,9 @@
     --sidebar-active: #3a2b18;
     --accent: #d5af63;
     --accent-strong: #f1cd80;
-    --accent-soft: rgba(213, 175, 99, 0.17);
-    --accent-border: rgba(213, 175, 99, 0.36);
-    --accent-ring: rgba(213, 175, 99, 0.24);
+    --accent-soft: rgba(213, 175, 99, 0.13);
+    --accent-border: rgba(213, 175, 99, 0.28);
+    --accent-ring: rgba(213, 175, 99, 0.18);
     --accent-active: #8b6725;
     --accent-active-text: #fff8e8;
     --highlight-bg: rgba(213, 175, 99, 0.18);
@@ -312,7 +312,7 @@
     --shadow-popover: inset 0 1px 0 rgba(241, 205, 128, 0.09), 0 1px 0 rgba(0, 0, 0, 0.34), 0 18px 42px rgba(0, 0, 0, 0.48);
     --shadow-toolbar: inset 0 1px 0 rgba(241, 205, 128, 0.06), 0 16px 32px rgba(0, 0, 0, 0.34);
     --theme-canvas-texture: repeating-linear-gradient(90deg, rgba(213, 175, 99, 0.035) 0 1px, transparent 1px 16px), linear-gradient(180deg, rgba(213, 175, 99, 0.035), transparent 34%), radial-gradient(circle at 22% 0%, rgba(213, 175, 99, 0.11), transparent 26%);
-    --theme-surface-texture: repeating-linear-gradient(0deg, rgba(241, 205, 128, 0.025) 0 1px, transparent 1px 8px), linear-gradient(90deg, rgba(255, 236, 185, 0.040), transparent 38%);
+    --theme-surface-texture: repeating-linear-gradient(0deg, rgba(241, 205, 128, 0.014) 0 1px, transparent 1px 11px), linear-gradient(90deg, rgba(255, 236, 185, 0.026), transparent 42%);
     --theme-texture-size: 48px 48px, 100% 100%, 100% 100%;
     color-scheme: dark;
   }
@@ -590,10 +590,13 @@
   }
 
   [class*='bg-[var(--bg-sidebar)]'],
-  [class*='bg-[var(--bg-card)]'],
-  [class*='bg-[var(--bg-input)]'] {
+  [class*='bg-[var(--bg-card)]'] {
     background-image: var(--theme-surface-texture);
     background-size: var(--theme-texture-size);
+  }
+
+  [class*='bg-[var(--bg-input)]'] {
+    background-image: none;
   }
 
   blockquote {

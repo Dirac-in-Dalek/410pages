@@ -101,7 +101,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
               await handleSubmit();
             }}
             placeholder="Author"
-            className="type-label-bounded w-full border-none p-0 focus:ring-0 text-[var(--text-main)] placeholder:text-[var(--text-muted)] bg-transparent"
+            className="type-label-bounded w-full border-none p-0 text-[var(--text-main)] placeholder:text-[var(--text-muted)] bg-transparent focus:outline-none focus:ring-0"
           />
         </div>
 
@@ -121,7 +121,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
               await handleSubmit();
             }}
             placeholder="Book"
-            className="type-label-bounded w-full border-none p-0 focus:ring-0 text-[var(--text-main)] placeholder:text-[var(--text-muted)] bg-transparent"
+            className="type-label-bounded w-full border-none p-0 text-[var(--text-main)] placeholder:text-[var(--text-muted)] bg-transparent focus:outline-none focus:ring-0"
           />
         </div>
 
@@ -144,7 +144,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
               await handleSubmit();
             }}
             placeholder="Page"
-            className="type-label-bounded w-full border-none p-0 focus:ring-0 text-[var(--text-main)] placeholder:text-[var(--text-muted)] bg-transparent"
+            className="type-label-bounded w-full border-none p-0 text-[var(--text-main)] placeholder:text-[var(--text-muted)] bg-transparent focus:outline-none focus:ring-0"
           />
         </div>
 

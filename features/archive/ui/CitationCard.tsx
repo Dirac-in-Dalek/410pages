@@ -388,7 +388,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                 autoFocus
                 value={editText}
                 onChange={(event) => setEditText(event.target.value)}
-                className="type-body min-h-[84px] w-full resize-none overflow-y-auto rounded-md border border-[var(--border-main)] bg-[var(--bg-input)] p-2 text-[var(--text-main)] focus:border-[var(--accent-border)] focus:ring-2 focus:ring-[var(--accent-ring)]"
+                className="type-body min-h-[84px] w-full resize-none overflow-y-auto rounded-md border border-[var(--border-main)] bg-[var(--bg-input)] p-2 text-[var(--text-main)] focus:border-[var(--accent-border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)]"
                 style={{ height: 'auto' }}
               />
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -399,7 +399,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                     value={editAuthor}
                     onChange={(event) => setEditAuthor(event.target.value)}
                     placeholder="Self"
-                    className="type-label-bounded w-full rounded-md border border-[var(--border-main)] bg-[var(--bg-input)] p-2 text-[var(--text-main)] focus:border-[var(--accent-border)]"
+                    className="type-label-bounded w-full rounded-md border border-[var(--border-main)] bg-[var(--bg-input)] p-2 text-[var(--text-main)] focus:border-[var(--accent-border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)]"
                   />
                 </div>
                 <div className="col-span-1">
@@ -408,7 +408,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                     type="text"
                     value={editBook}
                     onChange={(event) => setEditBook(event.target.value)}
-                    className="type-label-bounded w-full rounded-md border border-[var(--border-main)] bg-[var(--bg-input)] p-2 text-[var(--text-main)] focus:border-[var(--accent-border)]"
+                    className="type-label-bounded w-full rounded-md border border-[var(--border-main)] bg-[var(--bg-input)] p-2 text-[var(--text-main)] focus:border-[var(--accent-border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)]"
                   />
                 </div>
                 <div className="col-span-1">
@@ -417,7 +417,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                     type="text"
                     value={editPage}
                     onChange={(event) => setEditPage(event.target.value)}
-                    className="type-label-bounded w-full rounded-md border border-[var(--border-main)] bg-[var(--bg-input)] p-2 text-[var(--text-main)] focus:border-[var(--accent-border)]"
+                    className="type-label-bounded w-full rounded-md border border-[var(--border-main)] bg-[var(--bg-input)] p-2 text-[var(--text-main)] focus:border-[var(--accent-border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)]"
                   />
                 </div>
               </div>
