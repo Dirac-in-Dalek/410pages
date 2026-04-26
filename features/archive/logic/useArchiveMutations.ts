@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type {
   AddCitationInput,
@@ -49,6 +49,7 @@ import {
   patchCitation,
   patchCitations,
   prependCitation,
+  replaceCitationById,
   removeCitationFromProjects,
   renameProject,
   reorderProjectsLocally,
@@ -56,10 +57,17 @@ import {
   applyRenameBookToCitations,
   updateCitationNote,
 } from './archiveLocalPatch';
+import {
+  createOptimisticCitation,
+  createRetryCitationInput,
+  extractCitationPageSort,
+  isOptimisticCitationId,
+} from './optimisticCitation';
 
 type UseArchiveMutationsOptions = {
   session: ArchiveSession;
   projects: Project[];
+  citations: Citation[];
   setProjects: Dispatch<SetStateAction<Project[]>>;
   setCitations: Dispatch<SetStateAction<Citation[]>>;
   setChapterBlocksByBook: Dispatch<SetStateAction<ChapterBlocksByBook>>;
@@ -79,11 +87,39 @@ const createNoSessionBulkResult = (): BulkSourceUpdateResult => ({
 export const useArchiveMutations = ({
   session,
   projects,
+  citations,
   setProjects,
   setCitations,
   setChapterBlocksByBook,
   fetchData,
 }: UseArchiveMutationsOptions): ArchiveMutationController => {
+  const optimisticSaveInFlightRef = useRef(new Set<string>());
+
+  const persistOptimisticCitation = useCallback(
+    async (optimisticCitationId: string, data: AddCitationInput) => {
+      if (optimisticSaveInFlightRef.current.has(optimisticCitationId)) {
+        return;
+      }
+
+      optimisticSaveInFlightRef.current.add(optimisticCitationId);
+      try {
+        if (!session) {
+          setCitations((current) => patchCitation(current, optimisticCitationId, { saveStatus: 'failed' }));
+          return;
+        }
+
+        const newCitation = await addCitationRecord(session.user.id, data);
+        setCitations((current) => replaceCitationById(current, optimisticCitationId, newCitation));
+      } catch (error) {
+        console.error('Error adding citation:', error);
+        setCitations((current) => patchCitation(current, optimisticCitationId, { saveStatus: 'failed' }));
+      } finally {
+        optimisticSaveInFlightRef.current.delete(optimisticCitationId);
+      }
+    },
+    [session, setCitations]
+  );
+
   const handleAddCitation = useCallback(
     async (data: AddCitationInput): Promise<AddCitationResult> => {
       if (!session) {
@@ -102,9 +138,45 @@ export const useArchiveMutations = ({
     [session, setCitations]
   );
 
+  const handleAddCitationOptimistic = useCallback(
+    async (data: AddCitationInput): Promise<AddCitationResult> => {
+      if (!session) {
+        return createNoSessionResult();
+      }
+
+      const optimisticCitation = createOptimisticCitation(data);
+      setCitations((current) => prependCitation(current, optimisticCitation));
+      void persistOptimisticCitation(optimisticCitation.id, data);
+
+      return { ok: true, citationId: optimisticCitation.id };
+    },
+    [persistOptimisticCitation, session, setCitations]
+  );
+
+  const handleRetryCitationSave = useCallback(
+    async (citationId: string) => {
+      if (!session || !isOptimisticCitationId(citationId)) {
+        return;
+      }
+
+      const citation = citations.find((entry) => entry.id === citationId);
+      if (!citation) {
+        return;
+      }
+
+      const retryInput = createRetryCitationInput(citation);
+      setCitations((current) => patchCitation(current, citationId, { saveStatus: 'saving' }));
+      void persistOptimisticCitation(citationId, retryInput);
+    },
+    [citations, persistOptimisticCitation, session, setCitations]
+  );
+
   const handleAddNote = useCallback(
     async (citationId: string, content: string) => {
       if (!session) {
+        return;
+      }
+      if (isOptimisticCitationId(citationId)) {
         return;
       }
 
@@ -123,6 +195,9 @@ export const useArchiveMutations = ({
       if (!session) {
         return;
       }
+      if (isOptimisticCitationId(citationId)) {
+        return;
+      }
 
       try {
         await updateNoteRecord(session.user.id, noteId, content);
@@ -137,6 +212,9 @@ export const useArchiveMutations = ({
   const handleDeleteNote = useCallback(
     async (citationId: string, noteId: string) => {
       if (!session) {
+        return;
+      }
+      if (isOptimisticCitationId(citationId)) {
         return;
       }
 
@@ -155,6 +233,11 @@ export const useArchiveMutations = ({
       if (!session) {
         return;
       }
+      if (isOptimisticCitationId(citationId)) {
+        setCitations((current) => deleteCitationById(current, citationId));
+        setProjects((current) => removeCitationFromProjects(current, citationId));
+        return;
+      }
 
       try {
         await deleteCitationRecord(session.user.id, citationId);
@@ -170,6 +253,17 @@ export const useArchiveMutations = ({
   const handleUpdateCitation = useCallback(
     async (citationId: string, data: Partial<Citation>) => {
       if (!session) {
+        return;
+      }
+      if (isOptimisticCitationId(citationId)) {
+        const localPatch: Partial<Citation> = { ...data };
+        if (data.page !== undefined) {
+          localPatch.pageSort = extractCitationPageSort(data.page);
+        }
+        if (data.author !== undefined) {
+          localPatch.isSelf = !data.author.trim();
+        }
+        setCitations((current) => patchCitation(current, citationId, localPatch));
         return;
       }
 
@@ -367,6 +461,9 @@ export const useArchiveMutations = ({
       if (!session) {
         return;
       }
+      if (isOptimisticCitationId(citationId)) {
+        return;
+      }
 
       try {
         await addCitationToProjectRecord(session.user.id, projectId, citationId);
@@ -380,6 +477,8 @@ export const useArchiveMutations = ({
 
   return {
     handleAddCitation,
+    handleAddCitationOptimistic,
+    handleRetryCitationSave,
     handleAddNote,
     handleUpdateNote,
     handleDeleteNote,

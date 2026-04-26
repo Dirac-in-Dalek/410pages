@@ -1,4 +1,4 @@
-import { useState, useCallback, type Dispatch, type SetStateAction } from 'react';
+import { useState, useCallback, useEffect, type Dispatch, type SetStateAction } from 'react';
 import { Citation, Project } from '../types';
 import { api } from '../lib/api';
 import { formatCitationCopyText, writeTextToClipboard } from '../lib/citationCopy';
@@ -12,6 +12,19 @@ export const useBulkSelection = (
 ) => {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isCopying, setIsCopying] = useState(false);
+
+    useEffect(() => {
+        const visibleIds = new Set<string>(filteredCitations.map((citation) => citation.id));
+        setSelectedIds((current: Set<string>) => {
+            const next = new Set<string>();
+            current.forEach((id) => {
+                if (visibleIds.has(id)) {
+                    next.add(id);
+                }
+            });
+            return next.size === current.size ? current : next;
+        });
+    }, [filteredCitations]);
 
     const handleToggleSelect = useCallback((id: string, selected: boolean) => {
         setSelectedIds(prev => {

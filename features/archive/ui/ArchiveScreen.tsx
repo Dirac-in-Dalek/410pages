@@ -22,6 +22,7 @@ type ArchiveScreenProps = {
   dateDirection: 'asc' | 'desc';
   pageDirection: 'asc' | 'desc';
   onAddCitation: (data: any) => void | Promise<unknown>;
+  onRetryCitationSave: (citationId: string) => void | Promise<unknown>;
   onDateSortClick: () => void;
   onPageSortClick: () => void;
   projects: Project[];
@@ -62,6 +63,7 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
   dateDirection,
   pageDirection,
   onAddCitation,
+  onRetryCitationSave,
   onDateSortClick,
   onPageSortClick,
   projects,
@@ -156,6 +158,7 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
             onDeleteNote={onDeleteNote}
             onDeleteCitation={onDeleteCitation}
             onUpdateCitation={onUpdateCitation}
+            onRetryCitationSave={onRetryCitationSave}
           />
         </div>
       </div>

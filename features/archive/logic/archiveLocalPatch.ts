@@ -12,6 +12,12 @@ import type {
 
 export const prependCitation = (citations: Citation[], citation: Citation) => [citation, ...citations];
 
+export const replaceCitationById = (
+  citations: Citation[],
+  citationId: string,
+  nextCitation: Citation
+) => citations.map((citation) => (citation.id === citationId ? nextCitation : citation));
+
 export const appendCitationNote = (citations: Citation[], citationId: string, note: Note) =>
   citations.map((citation) =>
     citation.id === citationId ? { ...citation, notes: [...citation.notes, note] } : citation

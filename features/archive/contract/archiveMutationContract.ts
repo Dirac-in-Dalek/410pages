@@ -51,6 +51,8 @@ export type ArchiveQueryController = {
 
 export type ArchiveMutationController = {
   handleAddCitation: (data: AddCitationInput) => Promise<AddCitationResult>;
+  handleAddCitationOptimistic: (data: AddCitationInput) => Promise<AddCitationResult>;
+  handleRetryCitationSave: (citationId: string) => Promise<void>;
   handleAddNote: (citationId: string, content: string) => Promise<void>;
   handleUpdateNote: (citationId: string, noteId: string, content: string) => Promise<void>;
   handleDeleteNote: (citationId: string, noteId: string) => Promise<void>;

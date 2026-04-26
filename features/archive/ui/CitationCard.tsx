@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, ChevronDown, ChevronUp, User, X, Check, Folder } from 'lucide-react';
+import { AlertCircle, Copy, MessageSquare, ChevronDown, ChevronUp, User, X, Check, Folder, RefreshCw } from 'lucide-react';
 import { Highlight } from '../../../types';
+import { formatCitationRecoveryText, writeTextToClipboard } from '../../../lib/citationCopy';
+import { CITATION_SAVE_FAILED_MESSAGE } from '../logic/optimisticCitation';
 import type { CitationCardProps } from '../contract/citationCardContract';
 
 export const CitationCard: React.FC<CitationCardProps> = ({
@@ -13,10 +15,12 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   onAddNote,
   onUpdateNote,
   onDeleteNote,
-  onUpdate
+  onUpdate,
+  onRetrySave
 }) => {
   const [isNotesExpanded, setIsNotesExpanded] = useState(false);
   const [newNote, setNewNote] = useState('');
+  const [recoveryCopied, setRecoveryCopied] = useState(false);
 
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editNoteContent, setEditNoteContent] = useState('');
@@ -47,6 +51,9 @@ export const CitationCard: React.FC<CitationCardProps> = ({
     (!selectedFilter?.author || selectedFilter.author.trim().toLocaleLowerCase() === normalizedCitationAuthor);
   const shouldHideAuthor = isAuthorScoped || isBookScoped;
   const shouldHideBook = isBookScoped;
+  const isSaveFailed = citation.saveStatus === 'failed';
+  const isSavingCitation = citation.saveStatus === 'saving';
+  const isUnsaved = isSaveFailed || isSavingCitation;
 
   const adjustHeight = (ref: React.RefObject<HTMLTextAreaElement>) => {
     if (ref.current) {
@@ -111,6 +118,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   const isSelf = citation.isSelf ?? (citation.author === username || !citation.author || citation.author === 'Self');
 
   const submitNote = () => {
+    if (isUnsaved) return;
     if (!newNote.trim()) return;
     onAddNote(citation.id, newNote);
     setNewNote('');
@@ -145,7 +153,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
     }));
 
     const trimmedNote = newNote.trim();
-    if (trimmedNote) {
+    if (trimmedNote && !isUnsaved) {
       await Promise.resolve(onAddNote(citation.id, trimmedNote));
     }
 
@@ -153,6 +161,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   };
 
   const openEditor = () => {
+    if (isSavingCitation) return;
     setIsEditing(true);
     setIsNotesExpanded(true);
     setEditingNoteId(null);
@@ -185,6 +194,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
 
   const handleCardDoubleClick = (event: React.MouseEvent<HTMLDivElement>) => {
     if (isEditing) return;
+    if (isSavingCitation) return;
 
     const target = event.target as HTMLElement;
     if (target.closest('button, input, textarea, select, option, label, a')) {
@@ -193,6 +203,16 @@ export const CitationCard: React.FC<CitationCardProps> = ({
 
     window.getSelection()?.removeAllRanges();
     openEditor();
+  };
+
+  const handleCopyRecoveryText = async () => {
+    try {
+      await writeTextToClipboard(formatCitationRecoveryText(citation, username));
+      setRecoveryCopied(true);
+      window.setTimeout(() => setRecoveryCopied(false), 1600);
+    } catch (error) {
+      console.error('Failed to copy failed citation:', error);
+    }
   };
 
   const handleTextSelection = (event: React.MouseEvent<HTMLElement>) => {
@@ -343,8 +363,11 @@ export const CitationCard: React.FC<CitationCardProps> = ({
           <input
             type="checkbox"
             checked={isSelected}
+            disabled={isSavingCitation}
             onChange={(event) => onToggleSelect(citation.id, event.target.checked)}
-            className="w-4 h-4 rounded border-[var(--border-main)] text-[var(--accent)] focus:ring-[var(--accent-ring)] cursor-pointer"
+            className={`w-4 h-4 rounded border-[var(--border-main)] text-[var(--accent)] focus:ring-[var(--accent-ring)] ${
+              isSavingCitation ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+            }`}
           />
         </div>
       )}
@@ -422,10 +445,16 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                   {metadataChips}
 
                   <button
-                    onClick={() => setIsNotesExpanded(!isNotesExpanded)}
+                    onClick={() => {
+                      if (isUnsaved) return;
+                      setIsNotesExpanded(!isNotesExpanded);
+                    }}
+                    disabled={isUnsaved}
                     className={`
-                      ml-auto inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[0.84rem] transition-colors
-                      ${citation.notes.length > 0
+                      ml-auto inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[0.84rem] transition-colors active:scale-95
+                      ${isUnsaved
+                        ? 'cursor-not-allowed border-[var(--border-main)] bg-[var(--bg-input)] text-[var(--text-muted)] opacity-60'
+                        : citation.notes.length > 0
                         ? 'border-[var(--border-main)] bg-[var(--sidebar-active)] text-[var(--accent)] shadow-sm'
                         : 'border-[var(--border-main)] bg-[var(--bg-card)] text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]'}
                     `}
@@ -449,67 +478,71 @@ export const CitationCard: React.FC<CitationCardProps> = ({
 
         {isNotesExpanded && (
           <div className="rounded-b-[0.75rem] border-t border-[var(--border-main)] bg-[var(--bg-sidebar)]/30 p-2.5">
-            <div className={`${citation.notes.length > 0 ? 'mb-2.5 space-y-2' : ''}`}>
-              {citation.notes.map((note) => (
-                <div
-                  key={note.id}
-                  className={`
-                  group/note relative type-body text-[var(--text-main)] bg-[var(--bg-card)] rounded border transition-all overflow-hidden
-                  ${editingNoteId === note.id ? 'border-[var(--accent-border)] shadow-md ring-1 ring-[var(--accent-ring)]' : 'p-1.5 border-[var(--border-main)] hover:border-[var(--accent-border)] cursor-pointer'}
-                `}
-                  onClick={() => {
-                    if (editingNoteId !== note.id) {
-                      setEditingNoteId(note.id);
-                      setEditNoteContent(note.content);
-                    }
-                  }}
-                >
-                  {editingNoteId === note.id ? (
-                    <div className="flex flex-col">
-                      <textarea
-                        ref={editNoteTextareaRef}
-                        autoFocus
-                        value={editNoteContent}
-                        onChange={(event) => setEditNoteContent(event.target.value)}
-                        className="type-body min-h-[70px] w-full resize-none overflow-y-auto border-none bg-transparent p-2.5 text-[var(--text-main)] focus:outline-none focus:ring-0"
-                      />
-                      <div className="flex justify-end gap-2.5 border-t border-[var(--border-main)] bg-[var(--bg-sidebar)]/50 p-1.5">
-                        <button
-                          onClick={(event) => { event.stopPropagation(); setEditingNoteId(null); }}
-                          className="type-label-bounded text-[0.82rem] text-[var(--text-muted)] hover:text-[var(--text-main)]"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={(event) => { event.stopPropagation(); handleSaveNoteEdit(note.id); }}
-                          className="type-label-bounded text-[0.82rem] font-bold text-[var(--accent)] hover:text-[var(--accent-strong)]"
-                        >
-                          Save
-                        </button>
-                      </div>
+            {!isUnsaved ? (
+              <>
+                <div className={`${citation.notes.length > 0 ? 'mb-2.5 space-y-2' : ''}`}>
+                  {citation.notes.map((note) => (
+                    <div
+                      key={note.id}
+                      className={`
+                      group/note relative type-body text-[var(--text-main)] bg-[var(--bg-card)] rounded border transition-all overflow-hidden
+                      ${editingNoteId === note.id ? 'border-[var(--accent-border)] shadow-md ring-1 ring-[var(--accent-ring)]' : 'p-1.5 border-[var(--border-main)] hover:border-[var(--accent-border)] cursor-pointer'}
+                    `}
+                      onClick={() => {
+                        if (editingNoteId !== note.id) {
+                          setEditingNoteId(note.id);
+                          setEditNoteContent(note.content);
+                        }
+                      }}
+                    >
+                      {editingNoteId === note.id ? (
+                        <div className="flex flex-col">
+                          <textarea
+                            ref={editNoteTextareaRef}
+                            autoFocus
+                            value={editNoteContent}
+                            onChange={(event) => setEditNoteContent(event.target.value)}
+                            className="type-body min-h-[70px] w-full resize-none overflow-y-auto border-none bg-transparent p-2.5 text-[var(--text-main)] focus:outline-none focus:ring-0"
+                          />
+                          <div className="flex justify-end gap-2.5 border-t border-[var(--border-main)] bg-[var(--bg-sidebar)]/50 p-1.5">
+                            <button
+                              onClick={(event) => { event.stopPropagation(); setEditingNoteId(null); }}
+                              className="type-label-bounded text-[0.82rem] text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={(event) => { event.stopPropagation(); handleSaveNoteEdit(note.id); }}
+                              className="type-label-bounded text-[0.82rem] font-bold text-[var(--accent)] hover:text-[var(--accent-strong)]"
+                            >
+                              Save
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="whitespace-pre-wrap">{note.content}</div>
+                      )}
                     </div>
-                  ) : (
-                    <div className="whitespace-pre-wrap">{note.content}</div>
-                  )}
+                  ))}
                 </div>
-              ))}
-            </div>
 
-            <div className="rounded-[0.9rem] border border-[var(--border-main)] bg-[var(--bg-card)] shadow-sm transition-all focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)]">
-              <textarea
-                ref={newNoteTextareaRef}
-                value={newNote}
-                onChange={(event) => setNewNote(event.target.value)}
-                placeholder="Add a new note..."
-                className="type-body min-h-[52px] w-full resize-none overflow-y-auto border-none bg-transparent p-2.5 text-[var(--text-main)] focus:outline-none focus:ring-0"
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' && !event.shiftKey) {
-                    event.preventDefault();
-                    submitNote();
-                  }
-                }}
-              />
-            </div>
+                <div className="rounded-[0.9rem] border border-[var(--border-main)] bg-[var(--bg-card)] shadow-sm transition-all focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)]">
+                  <textarea
+                    ref={newNoteTextareaRef}
+                    value={newNote}
+                    onChange={(event) => setNewNote(event.target.value)}
+                    placeholder="Add a new note..."
+                    className="type-body min-h-[52px] w-full resize-none overflow-y-auto border-none bg-transparent p-2.5 text-[var(--text-main)] focus:outline-none focus:ring-0"
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' && !event.shiftKey) {
+                        event.preventDefault();
+                        submitNote();
+                      }
+                    }}
+                  />
+                </div>
+              </>
+            ) : null}
 
             {isEditing && (
               <div className="flex justify-end gap-2 pt-3">
@@ -529,6 +562,35 @@ export const CitationCard: React.FC<CitationCardProps> = ({
             )}
           </div>
         )}
+
+        {isSaveFailed ? (
+          <div className="mx-2.5 mb-2.5 rounded-[0.65rem] border border-red-200 bg-red-50 px-2.5 py-2 text-red-900 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-100">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 items-center gap-1.5 text-[0.82rem] font-medium">
+                <AlertCircle size={14} className="shrink-0" />
+                <span>{CITATION_SAVE_FAILED_MESSAGE}</span>
+              </div>
+              <div className="flex shrink-0 items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => void handleCopyRecoveryText()}
+                  className="type-label-bounded inline-flex items-center gap-1 rounded-md bg-white/70 px-2 py-1 text-[0.78rem] font-medium text-red-900 shadow-sm transition-transform active:scale-95 dark:bg-white/10 dark:text-red-100"
+                >
+                  <Copy size={12} />
+                  {recoveryCopied ? '복사됨' : '복사'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void Promise.resolve(onRetrySave(citation.id))}
+                  className="type-label-bounded inline-flex items-center gap-1 rounded-md bg-red-700 px-2 py-1 text-[0.78rem] font-semibold text-white shadow-sm transition-transform active:scale-95 dark:bg-red-400 dark:text-red-950"
+                >
+                  <RefreshCw size={12} />
+                  다시 저장하기
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );

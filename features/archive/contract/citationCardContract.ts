@@ -13,4 +13,5 @@ export interface CitationCardProps {
   onDeleteNote: (citationId: string, noteId: string) => void;
   onDelete: (id: string) => void;
   onUpdate: (id: string, data: Partial<Citation>) => void | Promise<unknown>;
+  onRetrySave: (id: string) => void | Promise<unknown>;
 }

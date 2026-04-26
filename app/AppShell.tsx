@@ -28,7 +28,7 @@ const AppShell: React.FC = () => {
 
   const {
     projects, setProjects, citations, setCitations, chapterBlocksByBook, loading: dataLoading,
-    fetchData, handleAddCitation, handleAddNote, handleUpdateNote,
+    fetchData, handleAddCitation, handleAddCitationOptimistic, handleRetryCitationSave, handleAddNote, handleUpdateNote,
     handleDeleteNote, handleDeleteCitation, handleUpdateCitation,
     handleBulkUpdateCitationSource,
     handleCreateProject, handleRenameProject, handleDeleteProject, handleRenameAuthor, handleRenameBook,
@@ -82,7 +82,8 @@ const AppShell: React.FC = () => {
     sortField,
     dateDirection,
     pageDirection,
-    onAddCitation: handleAddCitation,
+    onAddCitation: handleAddCitationOptimistic,
+    onRetryCitationSave: handleRetryCitationSave,
     onDateSortClick: handleDateSortClick,
     onPageSortClick: handlePageSortClick,
     projects,

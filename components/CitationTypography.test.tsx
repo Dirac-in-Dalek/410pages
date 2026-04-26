@@ -267,6 +267,40 @@ describe('Citation typography', () => {
     expect(screen.getByPlaceholderText('Add a new note...')).not.toBeNull();
   });
 
+  it('keeps failed optimistic cards visible with retry and no memo input', async () => {
+    const user = userEvent.setup();
+    const onRetrySave = vi.fn();
+
+    render(
+      <CitationCard
+        citation={{
+          ...citation,
+          id: 'optimistic-citation-1',
+          saveStatus: 'failed',
+        }}
+        index={0}
+        username="Dalek"
+        isSelected={false}
+        onToggleSelect={vi.fn()}
+        onAddNote={vi.fn()}
+        onUpdateNote={vi.fn()}
+        onDeleteNote={vi.fn()}
+        onDelete={vi.fn()}
+        onUpdate={vi.fn()}
+        onRetrySave={onRetrySave}
+      />
+    );
+
+    expect(screen.getByText('저장에 실패했습니다. 다시 시도해주세요.')).not.toBeNull();
+
+    await user.dblClick(screen.getByText('Font preference should affect this quote.'));
+
+    expect(screen.queryByPlaceholderText('Add a new note...')).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: /다시 저장하기/i }));
+    expect(onRetrySave).toHaveBeenCalledWith('optimistic-citation-1');
+  });
+
   it('does not render per-card copy, edit, or delete buttons in the resting card UI', () => {
     render(
       <CitationCard

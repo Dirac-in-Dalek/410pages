@@ -24,6 +24,7 @@ export const CitationList: React.FC<CitationListProps> = ({
     onDeleteNote,
     onDeleteCitation,
     onUpdateCitation,
+    onRetryCitationSave,
     chapterBlocks = [],
     selectedFilter = null,
     isBookView = false,
@@ -126,6 +127,7 @@ export const CitationList: React.FC<CitationListProps> = ({
                                     onDeleteNote={onDeleteNote}
                                     onDelete={onDeleteCitation}
                                     onUpdate={onUpdateCitation}
+                                    onRetrySave={onRetryCitationSave}
                                 />
                             ) : (
                                 <ChapterBlockCard

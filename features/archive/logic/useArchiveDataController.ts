@@ -22,6 +22,7 @@ export const useArchiveDataController = (session: ArchiveSession): ArchiveDataCo
   const mutations = useArchiveMutations({
     session,
     projects,
+    citations,
     setProjects,
     setCitations,
     setChapterBlocksByBook,

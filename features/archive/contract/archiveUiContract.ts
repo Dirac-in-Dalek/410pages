@@ -28,6 +28,7 @@ export interface CitationListProps {
     onDeleteNote: (citationId: string, noteId: string) => void;
     onDeleteCitation: (id: string) => void;
     onUpdateCitation: (id: string, data: Partial<Citation>) => void;
+    onRetryCitationSave: (citationId: string) => void | Promise<unknown>;
     chapterBlocks?: ChapterBlock[];
     isBookView?: boolean;
     sortField?: 'date' | 'page';

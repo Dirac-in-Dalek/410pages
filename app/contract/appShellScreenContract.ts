@@ -41,6 +41,7 @@ export interface ArchiveScreenFactoryInput {
   dateDirection: 'asc' | 'desc';
   pageDirection: 'asc' | 'desc';
   onAddCitation: (citation: AddCitationInput) => void | Promise<unknown>;
+  onRetryCitationSave: (citationId: string) => void | Promise<unknown>;
   onDateSortClick: () => void;
   onPageSortClick: () => void;
   projects: Project[];

@@ -27,9 +27,10 @@ export interface Citation {
   tags: string[];
   highlights?: Highlight[];
   createdAt: number;
+  saveStatus?: 'saving' | 'failed';
 }
 
-export type AddCitationInput = Omit<Citation, 'id' | 'createdAt' | 'notes'>;
+export type AddCitationInput = Omit<Citation, 'id' | 'createdAt' | 'notes' | 'saveStatus'>;
 export type AddCitationResult = { ok: true; citationId: string } | { ok: false; error: unknown };
 export type BulkSourceUpdateResult = { ok: true; updatedCount: number } | { ok: false; error: unknown };
 

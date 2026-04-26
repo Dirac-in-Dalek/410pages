@@ -15,6 +15,7 @@ export const createArchiveScreenProps = (
   dateDirection: input.dateDirection,
   pageDirection: input.pageDirection,
   onAddCitation: input.onAddCitation,
+  onRetryCitationSave: input.onRetryCitationSave,
   onDateSortClick: input.onDateSortClick,
   onPageSortClick: input.onPageSortClick,
   projects: input.projects,
