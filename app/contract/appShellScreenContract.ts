@@ -5,6 +5,7 @@ import type {
   ChapterBlock,
   Citation,
   CitationSourceInput,
+  CreateBookInput,
   CreateChapterBlockInput,
   Project,
   SidebarItem,
@@ -99,6 +100,7 @@ export interface MobileLayoutFactoryInput {
   selectedProjectId: string | null;
   onProjectSelect: (projectId: string | null) => void;
   onCreateProject: (name: string) => void;
+  onCreateBook: (input: CreateBookInput) => Promise<unknown> | unknown;
   treeData: SidebarItem[];
   onTreeItemClick: (item: SidebarItem) => void;
   username: string;
@@ -120,6 +122,7 @@ export interface MainLayoutFactoryInput {
   onDeleteProject: (id: string) => void;
   onRenameAuthor: (authorId: string, name: string) => void;
   onRenameBook: (bookId: string, name: string) => void;
+  onCreateBook: (input: CreateBookInput) => Promise<unknown> | unknown;
   onReorderProjects: (dragIndex: number, hoverIndex: number) => void;
   treeData: SidebarItem[];
   onTreeItemClick: (item: SidebarItem) => void;
@@ -130,7 +133,6 @@ export interface MainLayoutFactoryInput {
   searchTerm: string;
   selectedFilter: ArchiveSelectedFilter;
   onSearch: (term: string) => void;
-  onReorderAuthorAt: (dragAuthor: string, dropIndex: number) => void;
   onReorderBookAt: (author: string, dragBook: string, dropIndex: number) => void;
   onOpenReader: () => void;
   onOpenSettings: () => void;

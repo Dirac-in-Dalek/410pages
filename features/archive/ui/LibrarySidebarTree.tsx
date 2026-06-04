@@ -34,7 +34,6 @@ type LibrarySidebarTreeProps = Pick<
   | 'treeData'
   | 'onTreeItemClick'
   | 'selectedFilter'
-  | 'onReorderAuthorAt'
   | 'onReorderBookAt'
   | 'onRenameAuthor'
   | 'onRenameBook'
@@ -46,7 +45,6 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
   treeData,
   onTreeItemClick,
   selectedFilter = null,
-  onReorderAuthorAt,
   onReorderBookAt,
   onRenameAuthor,
   onRenameBook,
@@ -126,7 +124,6 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
     indicator: LibraryTreeDropIndicator
   ) => {
     if (indicator.listType === 'author') {
-      onReorderAuthorAt?.(dragMeta.id, indicator.dropIndex);
       return;
     }
 
@@ -217,9 +214,7 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
     );
     const dropIndex = position === 'before' ? row.index : row.index + 1;
 
-    if (row.listType === 'author') {
-      onReorderAuthorAt?.(dragMeta.id, dropIndex);
-    } else if (row.parentAuthor) {
+    if (row.listType === 'book' && row.parentAuthor) {
       onReorderBookAt?.(row.parentAuthor, dragMeta.id, dropIndex);
     }
 
@@ -336,20 +331,14 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
     const isExpanded = expandedNodes.has(item.id);
     const isActive = isLibraryTreeItemActive(item, selectedFilter);
     const treeMeta: LibraryTreeDragMeta | undefined =
-      item.type === 'author'
-        ? item.data?.authorId
-          ? { type: 'library-tree', itemType: 'author', id: item.data.authorId }
-          : undefined
-        : item.type === 'book'
-          ? item.data?.bookId && item.data?.authorId
-            ? {
-                type: 'library-tree',
-                itemType: 'book',
-                id: item.data.bookId,
-                authorId: item.data.authorId,
-              }
-            : undefined
-          : undefined;
+      item.type === 'book' && item.data?.bookId && item.data?.authorId
+        ? {
+            type: 'library-tree',
+            itemType: 'book',
+            id: item.data.bookId,
+            authorId: item.data.authorId,
+          }
+        : undefined;
 
     const showBefore =
       isTreeDragging &&

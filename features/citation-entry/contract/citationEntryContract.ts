@@ -24,6 +24,7 @@ export interface CitationEditorProps {
   placeholder?: string;
   sequentialPageEntry?: boolean;
   autoFocusText?: boolean;
+  hideSourceFields?: boolean;
 }
 
 export type CitationEntryDropPayload = {

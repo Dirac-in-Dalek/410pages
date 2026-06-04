@@ -3,14 +3,16 @@ import type { Dispatch, SetStateAction } from 'react';
 import type {
   AddCitationInput,
   AddCitationResult,
+  BookSource,
   BulkSourceUpdateResult,
   Citation,
   CitationSourceInput,
+  CreateBookInput,
   CreateChapterBlockInput,
   Project,
 } from '../../../types';
 import { renameAuthor as renameAuthorRecord } from '../../../shared/api/authorApi';
-import { renameBook as renameBookRecord, type RenameBookResult } from '../../../shared/api/bookApi';
+import { createBook as createBookRecord, renameBook as renameBookRecord, type RenameBookResult } from '../../../shared/api/bookApi';
 import {
   createChapterBlock as createChapterBlockRecord,
   deleteChapterBlock as deleteChapterBlockRecord,
@@ -39,6 +41,7 @@ import type {
 } from '../contract/archiveMutationContract';
 import {
   appendChapterBlock,
+  appendBookSource,
   appendCitationNote,
   appendProject,
   attachCitationToProject,
@@ -70,6 +73,7 @@ type UseArchiveMutationsOptions = {
   citations: Citation[];
   setProjects: Dispatch<SetStateAction<Project[]>>;
   setCitations: Dispatch<SetStateAction<Citation[]>>;
+  setBooks: Dispatch<SetStateAction<BookSource[]>>;
   setChapterBlocksByBook: Dispatch<SetStateAction<ChapterBlocksByBook>>;
   fetchData: () => Promise<void>;
 };
@@ -90,6 +94,7 @@ export const useArchiveMutations = ({
   citations,
   setProjects,
   setCitations,
+  setBooks,
   setChapterBlocksByBook,
   fetchData,
 }: UseArchiveMutationsOptions): ArchiveMutationController => {
@@ -301,6 +306,32 @@ export const useArchiveMutations = ({
     [session, setCitations]
   );
 
+  const handleCreateBook = useCallback(
+    async (input: CreateBookInput) => {
+      if (!session) {
+        return undefined;
+      }
+
+      const title = input.title.trim();
+      if (!title) {
+        return undefined;
+      }
+
+      try {
+        const newBook = await createBookRecord(session.user.id, {
+          author: input.author,
+          title,
+        });
+        setBooks((current) => appendBookSource(current, newBook));
+        return newBook;
+      } catch (error) {
+        console.error('Error creating book:', error);
+        return undefined;
+      }
+    },
+    [session, setBooks]
+  );
+
   const handleCreateProject = useCallback(
     async (name: string) => {
       if (!session) {
@@ -485,6 +516,7 @@ export const useArchiveMutations = ({
     handleDeleteCitation,
     handleUpdateCitation,
     handleBulkUpdateCitationSource,
+    handleCreateBook,
     handleCreateProject,
     handleRenameProject,
     handleDeleteProject,

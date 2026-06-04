@@ -1,5 +1,5 @@
 import { getSupabaseClient } from './supabase';
-import { ChapterBlock, Citation, CitationSourceInput, CreateChapterBlockInput, Note, Project } from '../types';
+import { BookSource, ChapterBlock, Citation, CitationSourceInput, CreateBookInput, CreateChapterBlockInput, Note, Project } from '../types';
 
 export const PROFILE_AVATAR_BUCKET = 'profile-avatars';
 const PROFILE_AVATAR_PUBLIC_PATH_PREFIX = `/storage/v1/object/public/${PROFILE_AVATAR_BUCKET}/`;
@@ -24,6 +24,24 @@ type ChapterBlockRow = {
     created_at: string;
 };
 
+type BookSourceRow = {
+    id: string;
+    title: string;
+    sort_index: number | null;
+    created_at: string;
+    author?: {
+        id: string;
+        name: string;
+        sort_index: number | null;
+        is_self: boolean;
+    } | Array<{
+        id: string;
+        name: string;
+        sort_index: number | null;
+        is_self: boolean;
+    }> | null;
+};
+
 const mapChapterBlockRow = (row: ChapterBlockRow): ChapterBlock => ({
     id: row.id,
     bookId: row.book_id,
@@ -32,6 +50,20 @@ const mapChapterBlockRow = (row: ChapterBlockRow): ChapterBlock => ({
     createdAtSort: row.created_at_sort,
     createdAt: new Date(row.created_at).getTime(),
 });
+
+const mapBookSourceRow = (row: BookSourceRow): BookSource => {
+    const author = Array.isArray(row.author) ? row.author[0] : row.author;
+    return {
+        id: row.id,
+        title: row.title,
+        sortIndex: row.sort_index ?? null,
+        createdAt: new Date(row.created_at).getTime(),
+        authorId: author?.id || '',
+        author: author?.name || '',
+        authorSortIndex: author?.sort_index ?? null,
+        isSelf: author?.is_self || false,
+    };
+};
 
 export const resolveStoredProfileAvatarPath = (avatarPath?: string | null) => {
     if (!avatarPath) {
@@ -266,6 +298,48 @@ export const api = {
         if (error) throw error;
 
         return objectPath;
+    },
+
+    async fetchBooks(userId: string) {
+        const { data, error } = await getSupabaseClient()
+            .from('books')
+            .select(`
+        id,
+        title,
+        sort_index,
+        created_at,
+        author:authors(id, name, sort_index, is_self)
+      `)
+            .eq('user_id', userId)
+            .order('sort_index', { ascending: true, nullsFirst: false })
+            .order('created_at', { ascending: true });
+        if (error) throw error;
+        return (data || []).map((row: BookSourceRow) => mapBookSourceRow(row));
+    },
+
+    async createBook(userId: string, input: CreateBookInput) {
+        const title = input.title.trim();
+        if (!title) throw new Error('Book title is required');
+
+        const resolvedSource = await resolveCitationSource(userId, {
+            author: input.author,
+            book: title,
+        });
+
+        if (!resolvedSource.bookId) {
+            throw new Error('Book title is required');
+        }
+
+        return {
+            id: resolvedSource.bookId,
+            title: resolvedSource.bookTitle,
+            sortIndex: resolvedSource.bookSortIndex,
+            createdAt: Date.now(),
+            authorId: resolvedSource.authorId,
+            author: resolvedSource.authorName,
+            authorSortIndex: resolvedSource.authorSortIndex,
+            isSelf: resolvedSource.isSelf,
+        } as BookSource;
     },
 
     async fetchChapterBlocks(userId: string, bookId: string) {

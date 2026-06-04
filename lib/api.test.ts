@@ -20,12 +20,60 @@ const mockChapterBlocksInsert = vi.fn(() => ({
 const mockChapterBlocksDelete = vi.fn(() => ({
   eq: mockChapterBlocksDeleteEq,
 }));
+const mockProfileSingle = vi.fn();
+const mockProfileEq = vi.fn(() => profileQuery);
+const mockProfileSelect = vi.fn(() => profileQuery);
+const profileQuery = {
+  select: mockProfileSelect,
+  eq: mockProfileEq,
+  single: mockProfileSingle,
+};
+const mockAuthorsMaybeSingle = vi.fn();
+const mockAuthorsEq = vi.fn(() => authorsQuery);
+const mockAuthorsSelect = vi.fn(() => authorsQuery);
+const authorsQuery = {
+  select: mockAuthorsSelect,
+  eq: mockAuthorsEq,
+  maybeSingle: mockAuthorsMaybeSingle,
+};
+const mockBooksSingle = vi.fn();
+const mockBooksInsertSelect = vi.fn(() => ({
+  single: mockBooksSingle,
+}));
+const mockBooksInsert = vi.fn(() => ({
+  select: mockBooksInsertSelect,
+}));
+const mockBooksMaybeSingle = vi.fn();
+const mockBooksLimit = vi.fn(() => booksQuery);
+const mockBooksOrder = vi.fn(() => booksQuery);
+const mockBooksEq = vi.fn(() => booksQuery);
+const mockBooksSelect = vi.fn(() => booksQuery);
+const booksQuery = {
+  select: mockBooksSelect,
+  eq: mockBooksEq,
+  order: mockBooksOrder,
+  limit: mockBooksLimit,
+  maybeSingle: mockBooksMaybeSingle,
+  insert: mockBooksInsert,
+};
 const chapterBlocksQuery = {
   select: mockChapterBlocksSelect,
   eq: mockChapterBlocksEq,
   order: mockChapterBlocksOrder,
 };
 const mockChapterBlocksFrom = vi.fn((table: string) => {
+  if (table === 'profiles') {
+    return profileQuery;
+  }
+
+  if (table === 'authors') {
+    return authorsQuery;
+  }
+
+  if (table === 'books') {
+    return booksQuery;
+  }
+
   if (table === 'chapter_blocks') {
     return {
       ...chapterBlocksQuery,
@@ -132,6 +180,122 @@ describe('api.createChapterBlock', () => {
       label: '3장',
       pageSort: 336,
       createdAtSort: 1700.5,
+    });
+  });
+});
+
+describe('api.fetchBooks', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (mockBooksOrder as any)
+      .mockReturnValueOnce(booksQuery)
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: 'book-1',
+            title: 'Book A',
+            sort_index: 2,
+            created_at: '2026-04-07T10:00:00.000Z',
+            author: {
+              id: 'author-1',
+              name: 'Author A',
+              sort_index: 1,
+              is_self: false,
+            },
+          },
+        ],
+        error: null,
+      });
+  });
+
+  it('fetches persisted books with author metadata', async () => {
+    const books = await api.fetchBooks('user-1');
+
+    expect(mockChapterBlocksFrom).toHaveBeenCalledWith('books');
+    expect(mockBooksSelect).toHaveBeenCalledWith(`
+        id,
+        title,
+        sort_index,
+        created_at,
+        author:authors(id, name, sort_index, is_self)
+      `);
+    expect(mockBooksEq).toHaveBeenCalledWith('user_id', 'user-1');
+    expect(mockBooksOrder).toHaveBeenNthCalledWith(1, 'sort_index', {
+      ascending: true,
+      nullsFirst: false,
+    });
+    expect(mockBooksOrder).toHaveBeenNthCalledWith(2, 'created_at', {
+      ascending: true,
+    });
+    expect(books).toEqual([
+      {
+        id: 'book-1',
+        title: 'Book A',
+        sortIndex: 2,
+        createdAt: new Date('2026-04-07T10:00:00.000Z').getTime(),
+        authorId: 'author-1',
+        author: 'Author A',
+        authorSortIndex: 1,
+        isSelf: false,
+      },
+    ]);
+  });
+});
+
+describe('api.createBook', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockProfileSingle.mockResolvedValue({
+      data: { username: 'Me' },
+      error: null,
+    });
+    mockAuthorsMaybeSingle.mockResolvedValue({
+      data: {
+        id: 'author-1',
+        name: 'Author A',
+        sort_index: 1,
+        is_self: false,
+      },
+      error: null,
+    });
+    mockBooksMaybeSingle
+      .mockResolvedValueOnce({ data: null, error: null })
+      .mockResolvedValueOnce({ data: { sort_index: 2 }, error: null });
+    mockBooksSingle.mockResolvedValue({
+      data: {
+        id: 'book-2',
+        title: 'Book B',
+        sort_index: 3,
+        created_at: '2026-04-07T10:10:00.000Z',
+        author: {
+          id: 'author-1',
+          name: 'Author A',
+          sort_index: 1,
+          is_self: false,
+        },
+      },
+      error: null,
+    });
+  });
+
+  it('creates a persisted book under the resolved author', async () => {
+    const book = await api.createBook('user-1', {
+      author: 'Author A',
+      title: 'Book B',
+    });
+
+    expect(mockBooksInsert).toHaveBeenCalledWith({
+      title: 'Book B',
+      author_id: 'author-1',
+      user_id: 'user-1',
+      sort_index: 3,
+    });
+    expect(book).toMatchObject({
+      id: 'book-2',
+      title: 'Book B',
+      authorId: 'author-1',
+      author: 'Author A',
+      sortIndex: 3,
     });
   });
 });

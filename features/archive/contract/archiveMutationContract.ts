@@ -2,9 +2,11 @@ import type { Dispatch, SetStateAction } from 'react';
 import type {
   AddCitationInput,
   AddCitationResult,
+  BookSource,
   BulkSourceUpdateResult,
   ChapterBlock,
   Citation,
+  CreateBookInput,
   CitationSourceInput,
   CreateChapterBlockInput,
   Project,
@@ -62,6 +64,7 @@ export type ArchiveMutationController = {
     citationIds: string[],
     source: CitationSourceInput
   ) => Promise<BulkSourceUpdateResult>;
+  handleCreateBook: (input: CreateBookInput) => Promise<BookSource | undefined>;
   handleCreateProject: (name: string) => Promise<void>;
   handleRenameProject: (id: string, name: string) => Promise<void>;
   handleDeleteProject: (id: string) => Promise<void>;
@@ -79,5 +82,7 @@ export type ArchiveDataController = ArchiveQueryController &
     setProjects: Dispatch<SetStateAction<Project[]>>;
     citations: Citation[];
     setCitations: Dispatch<SetStateAction<Citation[]>>;
+    books: BookSource[];
+    setBooks: Dispatch<SetStateAction<BookSource[]>>;
     chapterBlocksByBook: ChapterBlocksByBook;
   };
