@@ -1,15 +1,13 @@
 import type {
   AddCitationInput,
-  AddCitationResult,
-  BulkSourceUpdateResult,
   ChapterBlock,
   Citation,
-  CitationSourceInput,
   CreateBookInput,
   CreateChapterBlockInput,
   Project,
   SidebarItem,
 } from '../../types';
+import type { PdfReaderPageProps } from '../../features/reader/contract/pdfReaderContract';
 
 export type AppViewMode = 'archive' | 'reader';
 
@@ -75,23 +73,9 @@ export interface ArchiveScreenFactoryInput {
   onUpdateCitation: (id: string, data: Partial<Citation>) => void | Promise<unknown>;
 }
 
-export interface ReaderScreenFactoryInput {
-  username: string;
-  citations: Citation[];
-  projects: Project[];
+export interface ReaderScreenFactoryInput extends Omit<PdfReaderPageProps, 'loading'> {
   dataLoading: boolean;
   authLoading: boolean;
-  onBack: () => void;
-  onAddCitation: (citation: AddCitationInput) => Promise<AddCitationResult>;
-  onAddNote: (citationId: string, content: string) => void;
-  onUpdateNote: (citationId: string, noteId: string, content: string) => void;
-  onDeleteNote: (citationId: string, noteId: string) => void;
-  onDeleteCitation: (id: string) => void;
-  onUpdateCitation: (id: string, data: Partial<Citation>) => void;
-  onBulkUpdateCitationSource: (
-    citationIds: string[],
-    source: CitationSourceInput
-  ) => Promise<BulkSourceUpdateResult>;
 }
 
 export interface MobileLayoutFactoryInput {

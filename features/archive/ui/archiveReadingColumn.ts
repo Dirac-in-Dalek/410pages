@@ -1,5 +1,4 @@
 export const getArchiveReadingColumnClass = ({
-  isBookView,
   isMobileApp = false,
 }: {
   isBookView: boolean;

@@ -2,11 +2,11 @@ import { MutableRefObject, useCallback } from 'react';
 import type { ReaderVirtualRange } from '../../../types';
 import type { PageContainerMap, PageRatioMap, ReaderViewportWindow } from '../contract/pdfReaderContract';
 
-export const VIRTUAL_OVERSCAN_PAGES = 6;
-export const DEFAULT_PAGE_RATIO = 1.41;
-export const PAGE_VERTICAL_GAP = 20;
+const VIRTUAL_OVERSCAN_PAGES = 6;
+const DEFAULT_PAGE_RATIO = 1.41;
+const PAGE_VERTICAL_GAP = 20;
 
-export const getEstimatedPdfPageHeight = ({
+const getEstimatedPdfPageHeight = ({
   pageNumber,
   pageWidth,
   pageRatios
@@ -20,7 +20,7 @@ export const getEstimatedPdfPageHeight = ({
   return Math.max(320, Math.round(width * ratio));
 };
 
-export const computeReaderViewWindow = ({
+const computeReaderViewWindow = ({
   scrollTop,
   clientHeight,
   numPages,
@@ -94,7 +94,7 @@ export const computeReaderViewWindow = ({
   };
 };
 
-export const computeReaderScrollTarget = ({
+const computeReaderScrollTarget = ({
   pageNumber,
   numPages,
   pageWidth,

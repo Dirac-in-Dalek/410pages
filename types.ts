@@ -124,12 +124,6 @@ export interface PdfRectHighlight {
   createdAt: number;
 }
 
-export interface ReaderPaneLayout {
-  leftWidth: number;
-  rightWidth: number;
-  isLeftCollapsed: boolean;
-}
-
 export interface ReaderVirtualRange {
   start: number;
   end: number;

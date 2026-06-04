@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { BookSource, Citation, Project } from '../types';
 import { useArchiveViewState } from '../features/archive/logic/useArchiveViewState';
 import { reorderByIndex } from '../features/archive/logic/archiveSort';
-import { reorderBooks } from '../shared/api';
+import { reorderBooks } from '../shared/api/bookApi';
 
 export const useArchiveFilter = (citations: Citation[], books: BookSource[], projects: Project[], username: string, userId?: string) => {
     const {

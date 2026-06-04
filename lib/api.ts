@@ -937,7 +937,7 @@ export const api = {
         if (error) throw error;
     },
 
-    async addCitationToProject(userId: string, projectId: string, citationId: string) {
+    async addCitationToProject(_userId: string, projectId: string, citationId: string) {
         const { error } = await getSupabaseClient()
             .from('project_citations')
             .upsert({ project_id: projectId, citation_id: citationId });
@@ -945,7 +945,7 @@ export const api = {
         if (error) throw error;
     },
 
-    async addCitationsToProject(userId: string, projectId: string, citationIds: string[]) {
+    async addCitationsToProject(_userId: string, projectId: string, citationIds: string[]) {
         if (citationIds.length === 0) return;
 
         const records = citationIds.map(cid => ({

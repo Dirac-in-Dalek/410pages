@@ -1,5 +1,4 @@
 import type {
-  PdfHighlightRect,
   PdfReaderMeta,
   PdfRectHighlight
 } from '../../../types';
@@ -109,7 +108,7 @@ export const buildMetaFormFromState = (
 export const extractTitleFromFileName = (fileName: string) =>
   fileName.replace(/\.[^.]+$/, '').trim();
 
-export const normalizeSelectionText = (rawText: string) =>
+const normalizeSelectionText = (rawText: string) =>
   rawText.replace(/\s+/g, ' ').replace(/\u00A0/g, ' ').trim();
 
 export const normalizeDocumentField = (value: string) =>
@@ -121,184 +120,6 @@ export const parsePositiveInt = (value: string): number | undefined => {
   if (!Number.isFinite(parsed) || parsed <= 0) return undefined;
   return parsed;
 };
-
-export const toElement = (node: Node): Element | null =>
-  node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
-
-export const clamp = (value: number, min: number, max: number) =>
-  Math.max(min, Math.min(value, max));
-
-const median = (values: number[]): number => {
-  if (values.length === 0) return 0;
-  const sorted = [...values].sort((a, b) => a - b);
-  return sorted[Math.floor(sorted.length / 2)] || 0;
-};
-
-const resolveReferenceLineHeight = (
-  pageNode: HTMLElement,
-  fallback: number
-): number => {
-  const textLayer = pageNode.querySelector('.react-pdf__Page__textContent');
-  if (!textLayer) return fallback;
-
-  const spanHeights = Array.from(textLayer.querySelectorAll('span'))
-    .map((node) => (node as HTMLElement).getBoundingClientRect().height)
-    .filter((height) => Number.isFinite(height) && height > 0.5);
-
-  const base = median(spanHeights);
-  return base > 0 ? base : fallback;
-};
-
-export const createHighlightRects = (
-  range: Range,
-  pageNode: HTMLElement | null
-): PdfHighlightRect[] => {
-  if (!pageNode) return [];
-  const pageRect = pageNode.getBoundingClientRect();
-  if (pageRect.width === 0 || pageRect.height === 0) return [];
-
-  const rawRects = Array.from(range.getClientRects())
-    .map((rect) => {
-      const left = clamp(rect.left - pageRect.left, 0, pageRect.width);
-      const right = clamp(rect.right - pageRect.left, 0, pageRect.width);
-      const top = clamp(rect.top - pageRect.top, 0, pageRect.height);
-      const bottom = clamp(rect.bottom - pageRect.top, 0, pageRect.height);
-
-      const width = right - left;
-      const height = bottom - top;
-
-      return {
-        left,
-        right,
-        top,
-        bottom,
-        width,
-        height
-      };
-    })
-    .filter((rect) => rect.width > 0.5 && rect.height > 0.5);
-
-  if (rawRects.length === 0) return [];
-
-  const fallbackHeight = median(rawRects.map((rect) => rect.height));
-  const referenceHeight = Math.max(
-    1,
-    resolveReferenceLineHeight(pageNode, fallbackHeight || 12)
-  );
-  const lineThreshold = Math.max(2, referenceHeight * 0.65);
-  const mergeGap = Math.max(2, referenceHeight * 0.4);
-
-  const orderedRects = [...rawRects].sort((a, b) => {
-    const aCenter = a.top + a.height / 2;
-    const bCenter = b.top + b.height / 2;
-    if (Math.abs(aCenter - bCenter) > lineThreshold) return aCenter - bCenter;
-    return a.left - b.left;
-  });
-
-  const lineGroups: Array<{
-    anchorCenter: number;
-    rects: typeof rawRects;
-  }> = [];
-  orderedRects.forEach((rect) => {
-    const center = rect.top + rect.height / 2;
-    const last = lineGroups[lineGroups.length - 1];
-    if (!last || Math.abs(center - last.anchorCenter) > lineThreshold) {
-      lineGroups.push({ anchorCenter: center, rects: [rect] });
-      return;
-    }
-    last.rects.push(rect);
-  });
-
-  const normalizedRects: Array<{
-    left: number;
-    right: number;
-    top: number;
-    height: number;
-  }> = [];
-  lineGroups.forEach((line) => {
-    const lineRects = [...line.rects].sort((a, b) => a.left - b.left);
-    if (lineRects.length === 0) return;
-
-    const centers = lineRects.map((rect) => rect.top + rect.height / 2);
-    const lineCenter = median(centers);
-    const lineHeight = referenceHeight;
-    const lineTop = clamp(
-      lineCenter - lineHeight / 2,
-      0,
-      Math.max(0, pageRect.height - lineHeight)
-    );
-
-    let currentLeft = lineRects[0].left;
-    let currentRight = lineRects[0].right;
-
-    for (let i = 1; i < lineRects.length; i += 1) {
-      const next = lineRects[i];
-      if (next.left - currentRight <= mergeGap) {
-        currentRight = Math.max(currentRight, next.right);
-      } else {
-        normalizedRects.push({
-          left: currentLeft,
-          right: currentRight,
-          top: lineTop,
-          height: lineHeight
-        });
-        currentLeft = next.left;
-        currentRight = next.right;
-      }
-    }
-
-    normalizedRects.push({
-      left: currentLeft,
-      right: currentRight,
-      top: lineTop,
-      height: lineHeight
-    });
-  });
-
-  return normalizedRects
-    .map((rect) => ({
-      leftPct: rect.left / pageRect.width,
-      topPct: rect.top / pageRect.height,
-      widthPct: (rect.right - rect.left) / pageRect.width,
-      heightPct: Math.min(rect.height / pageRect.height, 1)
-    }))
-    .filter((rect) => rect.widthPct > 0 && rect.heightPct > 0);
-};
-
-export const intersectHighlightRects = (
-  source: PdfHighlightRect[],
-  clips: PdfHighlightRect[]
-): PdfHighlightRect[] => {
-  const intersections: PdfHighlightRect[] = [];
-  source.forEach((left) => {
-    clips.forEach((right) => {
-      const x1 = Math.max(left.leftPct, right.leftPct);
-      const x2 = Math.min(
-        left.leftPct + left.widthPct,
-        right.leftPct + right.widthPct
-      );
-      const y1 = Math.max(left.topPct, right.topPct);
-      const y2 = Math.min(
-        left.topPct + left.heightPct,
-        right.topPct + right.heightPct
-      );
-
-      const widthPct = x2 - x1;
-      const heightPct = y2 - y1;
-      if (widthPct <= 0 || heightPct <= 0) return;
-
-      intersections.push({
-        leftPct: x1,
-        topPct: y1,
-        widthPct,
-        heightPct
-      });
-    });
-  });
-  return intersections;
-};
-
-export const constrainRangeToStableEnd = (range: Range): Range => range;
 
 const normalizeWithMap = (value: string): { text: string; indexMap: number[] } => {
   const chars: string[] = [];
