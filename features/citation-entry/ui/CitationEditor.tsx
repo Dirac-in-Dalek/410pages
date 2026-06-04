@@ -13,6 +13,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
   placeholder = 'Write a quote, sentence, or field note...',
   sequentialPageEntry = false,
   autoFocusText = false,
+  hideSourceFields = false,
 }) => {
   const {
     values,
@@ -85,45 +86,49 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
       </div>
 
       <div className="rounded-[0_0_1rem_1rem] border-t border-[var(--border-main)] bg-[var(--bg-card)] p-1.5 flex flex-nowrap gap-1.5 items-center">
-        <div className="flex min-w-0 flex-[1.15] items-center bg-[var(--bg-input)] border border-[var(--border-main)] rounded-[0.9rem] px-2.5 py-[0.3125rem] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] transition-all">
-          <User size={12} className={`mr-2 ${isSelf ? 'text-[var(--text-muted)]' : 'text-[var(--accent)]'}`} />
-          <input
-            type="text"
-            value={values.author}
-            readOnly={readOnly || isSubmitting}
-            onChange={(event) => updateValue('author', event.target.value)}
-            onKeyDown={async (event) => {
-              if (readOnly || isSubmitting) return;
-              if (event.nativeEvent.isComposing) return;
-              if (event.key !== 'Enter') return;
+        {!hideSourceFields && (
+          <>
+            <div className="flex min-w-0 flex-[1.15] items-center bg-[var(--bg-input)] border border-[var(--border-main)] rounded-[0.9rem] px-2.5 py-[0.3125rem] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] transition-all">
+              <User size={12} className={`mr-2 ${isSelf ? 'text-[var(--text-muted)]' : 'text-[var(--accent)]'}`} />
+              <input
+                type="text"
+                value={values.author}
+                readOnly={readOnly || isSubmitting}
+                onChange={(event) => updateValue('author', event.target.value)}
+                onKeyDown={async (event) => {
+                  if (readOnly || isSubmitting) return;
+                  if (event.nativeEvent.isComposing) return;
+                  if (event.key !== 'Enter') return;
 
-              event.preventDefault();
-              await handleSubmit();
-            }}
-            placeholder="Author"
-            className="type-label-bounded w-full border-none p-0 text-[var(--text-main)] placeholder:text-[var(--text-muted)] bg-transparent focus:outline-none focus:ring-0"
-          />
-        </div>
+                  event.preventDefault();
+                  await handleSubmit();
+                }}
+                placeholder="Author"
+                className="type-label-bounded w-full border-none p-0 text-[var(--text-main)] placeholder:text-[var(--text-muted)] bg-transparent focus:outline-none focus:ring-0"
+              />
+            </div>
 
-        <div className="flex min-w-0 flex-[1.15] items-center bg-[var(--bg-input)] border border-[var(--border-main)] rounded-[0.9rem] px-2.5 py-[0.3125rem] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] transition-all">
-          <BookIcon size={12} className="mr-2 text-[var(--text-muted)]" />
-          <input
-            type="text"
-            value={values.book}
-            readOnly={readOnly || isSubmitting}
-            onChange={(event) => updateValue('book', event.target.value)}
-            onKeyDown={async (event) => {
-              if (readOnly || isSubmitting) return;
-              if (event.nativeEvent.isComposing) return;
-              if (event.key !== 'Enter') return;
+            <div className="flex min-w-0 flex-[1.15] items-center bg-[var(--bg-input)] border border-[var(--border-main)] rounded-[0.9rem] px-2.5 py-[0.3125rem] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] transition-all">
+              <BookIcon size={12} className="mr-2 text-[var(--text-muted)]" />
+              <input
+                type="text"
+                value={values.book}
+                readOnly={readOnly || isSubmitting}
+                onChange={(event) => updateValue('book', event.target.value)}
+                onKeyDown={async (event) => {
+                  if (readOnly || isSubmitting) return;
+                  if (event.nativeEvent.isComposing) return;
+                  if (event.key !== 'Enter') return;
 
-              event.preventDefault();
-              await handleSubmit();
-            }}
-            placeholder="Book"
-            className="type-label-bounded w-full border-none p-0 text-[var(--text-main)] placeholder:text-[var(--text-muted)] bg-transparent focus:outline-none focus:ring-0"
-          />
-        </div>
+                  event.preventDefault();
+                  await handleSubmit();
+                }}
+                placeholder="Book"
+                className="type-label-bounded w-full border-none p-0 text-[var(--text-main)] placeholder:text-[var(--text-muted)] bg-transparent focus:outline-none focus:ring-0"
+              />
+            </div>
+          </>
+        )}
 
         <div className="flex w-[4.75rem] min-w-0 items-center bg-[var(--bg-input)] border border-[var(--border-main)] rounded-[0.9rem] px-2.5 py-[0.3125rem] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] transition-all">
           <Hash size={12} className="mr-2 text-[var(--text-muted)]" />

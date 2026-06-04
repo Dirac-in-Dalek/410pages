@@ -8,9 +8,7 @@ import {
   EditorialInlineRenameField,
 } from '../../../shared/ui/sidebar/SidebarControls';
 
-type ProjectSidebarRowProps = {
-  project: Project;
-  index: number;
+export type ProjectSidebarRowControls = {
   selectedProjectId: string | null;
   isManageMode: boolean;
   dragOverProjectId: string | null;
@@ -35,6 +33,11 @@ type ProjectSidebarRowProps = {
   onProjectRowDrop: (event: React.DragEvent, projectId: string, index: number) => void;
   onProjectDragEnd: () => void;
   isProjectSortDrag: (event: React.DragEvent) => boolean;
+};
+
+type ProjectSidebarRowProps = ProjectSidebarRowControls & {
+  project: Project;
+  index: number;
 };
 
 export const ProjectSidebarRow: React.FC<ProjectSidebarRowProps> = ({

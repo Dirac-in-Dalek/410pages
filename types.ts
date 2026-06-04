@@ -34,6 +34,22 @@ export type AddCitationInput = Omit<Citation, 'id' | 'createdAt' | 'notes' | 'sa
 export type AddCitationResult = { ok: true; citationId: string } | { ok: false; error: unknown };
 export type BulkSourceUpdateResult = { ok: true; updatedCount: number } | { ok: false; error: unknown };
 
+export interface BookSource {
+  id: string;
+  title: string;
+  sortIndex: number | null;
+  createdAt: number;
+  authorId: string;
+  author: string;
+  authorSortIndex: number | null;
+  isSelf: boolean;
+}
+
+export type CreateBookInput = {
+  author: string;
+  title: string;
+};
+
 export interface ChapterBlock {
   id: string;
   bookId: string;
@@ -106,12 +122,6 @@ export interface PdfRectHighlight {
   kind?: 'underline' | 'highlight';
   rects: PdfHighlightRect[];
   createdAt: number;
-}
-
-export interface ReaderPaneLayout {
-  leftWidth: number;
-  rightWidth: number;
-  isLeftCollapsed: boolean;
 }
 
 export interface ReaderVirtualRange {

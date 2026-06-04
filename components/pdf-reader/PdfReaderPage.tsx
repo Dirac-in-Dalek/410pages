@@ -9,7 +9,6 @@ import {
   AddCitationInput,
   Citation,
   PdfDraftSelection,
-  PdfHighlightRect,
   PdfReaderMeta,
   PdfRectHighlight,
   ReaderVirtualRange
@@ -25,29 +24,24 @@ import type {
 import {
   buildMetaFormFromState,
   extractTitleFromFileName,
-  clamp,
   normalizeDocumentField,
   parsePositiveInt,
   readPersistedReaderSession,
   resolveReaderPageLabel,
   resolveSelectionRangeInCitation,
 } from '../../features/reader/policy/pdfReaderPolicy';
-import { createHighlightRects, usePdfSelection } from '../../features/reader/logic/usePdfSelection';
+import { createHighlightRects, MIN_CAPTURE_LENGTH, usePdfSelection } from '../../features/reader/logic/usePdfSelection';
 import { usePdfViewport } from '../../features/reader/logic/usePdfViewport';
 import { PdfThumbnailSidebar } from './PdfThumbnailSidebar';
 import { useReaderPaneLayout } from './useReaderPaneLayout';
 
 configurePdfWorker();
 
-const MIN_CAPTURE_LENGTH = 3;
 const DUPLICATE_WINDOW_MS = 1200;
-const VIRTUAL_OVERSCAN_PAGES = 6;
-const DEFAULT_PAGE_RATIO = 1.41;
-const PAGE_VERTICAL_GAP = 20;
 const READER_SESSION_STORAGE_KEY = 'pdfReaderSession.v1';
-const UNDERLINE_DRAG_HIT_TOLERANCE_PX = 8;
 
 const defaultMeta: PdfReaderMeta = { author: '', title: '' };
+const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(value, max));
 
 let readerRuntimeCache: { pdfUrl: string | null } = {
   pdfUrl: null

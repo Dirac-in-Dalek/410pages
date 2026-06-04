@@ -1,14 +1,13 @@
 import type {
   AddCitationInput,
-  AddCitationResult,
-  BulkSourceUpdateResult,
   ChapterBlock,
   Citation,
-  CitationSourceInput,
+  CreateBookInput,
   CreateChapterBlockInput,
   Project,
   SidebarItem,
 } from '../../types';
+import type { PdfReaderPageProps } from '../../features/reader/contract/pdfReaderContract';
 
 export type AppViewMode = 'archive' | 'reader';
 
@@ -74,23 +73,9 @@ export interface ArchiveScreenFactoryInput {
   onUpdateCitation: (id: string, data: Partial<Citation>) => void | Promise<unknown>;
 }
 
-export interface ReaderScreenFactoryInput {
-  username: string;
-  citations: Citation[];
-  projects: Project[];
+export interface ReaderScreenFactoryInput extends Omit<PdfReaderPageProps, 'loading'> {
   dataLoading: boolean;
   authLoading: boolean;
-  onBack: () => void;
-  onAddCitation: (citation: AddCitationInput) => Promise<AddCitationResult>;
-  onAddNote: (citationId: string, content: string) => void;
-  onUpdateNote: (citationId: string, noteId: string, content: string) => void;
-  onDeleteNote: (citationId: string, noteId: string) => void;
-  onDeleteCitation: (id: string) => void;
-  onUpdateCitation: (id: string, data: Partial<Citation>) => void;
-  onBulkUpdateCitationSource: (
-    citationIds: string[],
-    source: CitationSourceInput
-  ) => Promise<BulkSourceUpdateResult>;
 }
 
 export interface MobileLayoutFactoryInput {
@@ -99,6 +84,7 @@ export interface MobileLayoutFactoryInput {
   selectedProjectId: string | null;
   onProjectSelect: (projectId: string | null) => void;
   onCreateProject: (name: string) => void;
+  onCreateBook: (input: CreateBookInput) => Promise<unknown> | unknown;
   treeData: SidebarItem[];
   onTreeItemClick: (item: SidebarItem) => void;
   username: string;
@@ -120,6 +106,7 @@ export interface MainLayoutFactoryInput {
   onDeleteProject: (id: string) => void;
   onRenameAuthor: (authorId: string, name: string) => void;
   onRenameBook: (bookId: string, name: string) => void;
+  onCreateBook: (input: CreateBookInput) => Promise<unknown> | unknown;
   onReorderProjects: (dragIndex: number, hoverIndex: number) => void;
   treeData: SidebarItem[];
   onTreeItemClick: (item: SidebarItem) => void;
@@ -130,7 +117,6 @@ export interface MainLayoutFactoryInput {
   searchTerm: string;
   selectedFilter: ArchiveSelectedFilter;
   onSearch: (term: string) => void;
-  onReorderAuthorAt: (dragAuthor: string, dropIndex: number) => void;
   onReorderBookAt: (author: string, dragBook: string, dropIndex: number) => void;
   onOpenReader: () => void;
   onOpenSettings: () => void;

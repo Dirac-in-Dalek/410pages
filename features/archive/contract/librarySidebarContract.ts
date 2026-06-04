@@ -1,4 +1,4 @@
-import type { SidebarItem } from '../../../types';
+import type { CreateBookInput, SidebarItem } from '../../../types';
 import type { LibrarySelectedFilter } from '../../../shared/lib/libraryTree';
 
 export type { LibrarySelectedFilter } from '../../../shared/lib/libraryTree';
@@ -40,7 +40,7 @@ export interface LibrarySidebarProps {
   onSearch?: (term: string) => void;
   searchTerm?: string;
   selectedFilter?: LibrarySelectedFilter;
-  onReorderAuthorAt?: (dragAuthor: string, dropIndex: number) => void;
+  onCreateBook?: (input: CreateBookInput) => Promise<unknown> | unknown;
   onReorderBookAt?: (author: string, dragBook: string, dropIndex: number) => void;
   onRenameAuthor?: (authorId: string, name: string) => void;
   onRenameBook?: (bookId: string, name: string) => void;

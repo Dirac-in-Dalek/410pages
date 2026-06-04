@@ -125,6 +125,42 @@ describe('Citation typography', () => {
     });
   });
 
+  it('hides source fields in book view while submitting with the selected source', async () => {
+    const user = userEvent.setup();
+    const onAddCitation = vi.fn().mockResolvedValue({ ok: true, citationId: 'citation-compact' });
+
+    render(
+      <CitationEditor
+        onAddCitation={onAddCitation}
+        username="Dalek"
+        prefillData={{ author: 'Ursula K. Le Guin', book: 'The Dispossessed' }}
+        sequentialPageEntry
+        hideSourceFields
+      />
+    );
+
+    const editor = screen.getByPlaceholderText('Write a quote, sentence, or field note...');
+    const pageInput = screen.getByPlaceholderText('Page');
+
+    expect(screen.queryByPlaceholderText('Author')).toBeNull();
+    expect(screen.queryByPlaceholderText('Book')).toBeNull();
+
+    await user.type(editor, 'Freedom is a heavy load.');
+    await user.keyboard('{Enter}');
+    await user.type(pageInput, '341');
+    await user.keyboard('{Enter}');
+
+    await waitFor(() => {
+      expect(onAddCitation).toHaveBeenCalledWith({
+        text: 'Freedom is a heavy load.',
+        author: 'Ursula K. Le Guin',
+        book: 'The Dispossessed',
+        page: '341',
+        tags: [],
+      });
+    });
+  });
+
   it('keeps shift-enter as a newline in the quote field during sequential mode', async () => {
     const user = userEvent.setup();
     const onAddCitation = vi.fn();

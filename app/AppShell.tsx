@@ -28,10 +28,10 @@ const AppShell: React.FC = () => {
     useUserPreferences(session?.user?.id ?? null);
 
   const {
-    projects, setProjects, citations, setCitations, chapterBlocksByBook, loading: dataLoading,
+    projects, setProjects, citations, setCitations, books, chapterBlocksByBook, loading: dataLoading,
     fetchData, handleAddCitation, handleAddCitationOptimistic, handleRetryCitationSave, handleAddNote, handleUpdateNote,
     handleDeleteNote, handleDeleteCitation, handleUpdateCitation,
-    handleBulkUpdateCitationSource,
+    handleBulkUpdateCitationSource, handleCreateBook,
     handleCreateProject, handleRenameProject, handleDeleteProject, handleRenameAuthor, handleRenameBook,
     handleLoadChapterBlocks, handleCreateChapterBlock, handleDeleteChapterBlock,
     handleDropCitationToProject, handleReorderProjects
@@ -41,9 +41,9 @@ const AppShell: React.FC = () => {
     searchTerm, setSearchTerm, selectedProjectId, selectedBookId, isBookView, handleProjectSelect,
     handleTreeItemClick, treeData, filteredCitations, viewTitle,
     editorPrefill, filter, sortField, dateDirection, pageDirection,
-    handleDateSortClick, handlePageSortClick,
-    handleReorderAuthorAt, handleReorderBookAt
-  } = useArchiveFilter(citations, projects, username, session?.user?.id);
+    handleDateSortClick, handlePageSortClick, handleBookSourceSelect,
+    handleReorderBookAt
+  } = useArchiveFilter(citations, books, projects, username, session?.user?.id);
 
   const {
     selectedIds, isCopying, handleToggleSelect, handleSelectAll,
@@ -122,12 +122,20 @@ const AppShell: React.FC = () => {
   })} />;
 
   const settingsPanel = <SettingsPanel {...settingsPanelProps} />;
+  const handleCreateBookAndOpen = async (input: Parameters<typeof handleCreateBook>[0]) => {
+    const book = await handleCreateBook(input);
+    if (book) {
+      handleBookSourceSelect(book);
+    }
+    return book;
+  };
   const mobileLayoutProps = createMobileLayoutProps({
     title: '410pages',
     projects,
     selectedProjectId,
     onProjectSelect: handleProjectSelect,
     onCreateProject: handleCreateProject,
+    onCreateBook: handleCreateBookAndOpen,
     treeData,
     onTreeItemClick: handleTreeItemClick,
     username,
@@ -163,6 +171,7 @@ const AppShell: React.FC = () => {
     onDeleteProject: handleDeleteProject,
     onRenameAuthor: handleRenameAuthor,
     onRenameBook: handleRenameBook,
+    onCreateBook: handleCreateBookAndOpen,
     onReorderProjects: handleReorderProjects,
     treeData,
     onTreeItemClick: handleTreeItemClick,
@@ -173,7 +182,6 @@ const AppShell: React.FC = () => {
     onSearch: setSearchTerm,
     searchTerm,
     selectedFilter: filter,
-    onReorderAuthorAt: handleReorderAuthorAt,
     onReorderBookAt: handleReorderBookAt,
     onOpenReader: openReader,
     onOpenSettings: openSettings,

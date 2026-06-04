@@ -1,5 +1,6 @@
 import type {
   ChapterBlock,
+  BookSource,
   Citation,
   Note,
   Project,
@@ -75,6 +76,9 @@ export const patchCitations = (
 };
 
 export const appendProject = (projects: Project[], project: Project) => [...projects, project];
+
+export const appendBookSource = (books: BookSource[], book: BookSource) =>
+  books.some((entry) => entry.id === book.id) ? books : [...books, book];
 
 export const renameProject = (projects: Project[], projectId: string, name: string) =>
   projects.map((project) => (project.id === projectId ? { ...project, name } : project));

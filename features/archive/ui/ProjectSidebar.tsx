@@ -118,7 +118,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
     setProjectDropIndicator({ projectId, position, dropIndex });
   };
 
-  const handleProjectRowDrop = (event: React.DragEvent, projectId: string, index: number) => {
+  const handleProjectRowDrop = (event: React.DragEvent, _projectId: string, index: number) => {
     if (!isProjectSortDrag(event)) return;
     const dragIndex = getProjectDragIndex(event);
     if (dragIndex === null) {

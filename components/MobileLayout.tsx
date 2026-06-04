@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import {
   Book,
+  BookPlus,
   Folder,
   Library,
   LogOut,
   Settings,
   User,
 } from 'lucide-react';
-import { Project, SidebarItem } from '../types';
+import { CreateBookInput, Project, SidebarItem } from '../types';
+import { NewBookDialog } from '../features/archive/ui/NewBookDialog';
 import {
   createDefaultExpandedLibraryNodes,
   ensureExpandedLibraryNode,
@@ -33,6 +35,7 @@ interface MobileLayoutProps {
   selectedProjectId: string | null;
   onProjectSelect: (projectId: string | null) => void;
   onCreateProject: (name: string) => void;
+  onCreateBook?: (input: CreateBookInput) => Promise<unknown> | unknown;
   treeData: SidebarItem[];
   onTreeItemClick: (item: SidebarItem) => void;
   onSearch?: (term: string) => void;
@@ -51,6 +54,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   selectedProjectId,
   onProjectSelect,
   onCreateProject,
+  onCreateBook,
   treeData,
   onTreeItemClick,
   onSearch,
@@ -66,6 +70,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   const [expandedNodes, setExpandedNodes] = useState(createDefaultExpandedLibraryNodes);
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
+  const [isNewBookOpen, setIsNewBookOpen] = useState(false);
 
   const closeSheets = () => {
     setIsProjectsOpen(false);
@@ -259,7 +264,16 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
         <div className="h-full flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
           <EditorialSheetHeader title="Library" onClose={() => setIsLibraryOpen(false)} />
 
-          <div className="p-3 border-b border-[var(--border-main)]">
+          <div className="space-y-3 p-3 border-b border-[var(--border-main)]">
+            {onCreateBook && (
+              <EditorialListButton
+                className="flex items-center gap-2"
+                onClick={() => setIsNewBookOpen(true)}
+              >
+                <BookPlus size={16} className="shrink-0 text-[var(--accent)]" />
+                <span>새 책 읽기</span>
+              </EditorialListButton>
+            )}
             <EditorialSearchField
               value={searchTerm}
               onChange={onSearch}
@@ -270,6 +284,16 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
           <div className="p-3 overflow-y-auto flex-1">{renderTree(treeData)}</div>
         </div>
       </EditorialSheet>
+
+      {onCreateBook && (
+        <NewBookDialog
+          isOpen={isNewBookOpen}
+          onClose={() => setIsNewBookOpen(false)}
+          onCreateBook={onCreateBook}
+          onCreated={closeSheets}
+          overlayClassName="z-[60]"
+        />
+      )}
     </div>
   );
 };

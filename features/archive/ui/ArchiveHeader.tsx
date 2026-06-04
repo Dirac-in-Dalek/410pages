@@ -66,6 +66,7 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
                             username={username}
                             sequentialPageEntry={isBookView}
                             autoFocusText={isBookView}
+                            hideSourceFields={isBookView}
                         />
                     </div>
                 ) : null}

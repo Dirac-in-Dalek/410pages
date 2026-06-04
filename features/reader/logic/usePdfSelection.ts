@@ -3,7 +3,7 @@ import type { PdfHighlightRect, PdfRectHighlight } from '../../../types';
 import type { PageContainerMap, SelectionPayload, SelectionPreview, SelectionSegment } from '../contract/pdfReaderContract';
 
 export const MIN_CAPTURE_LENGTH = 3;
-export const UNDERLINE_DRAG_HIT_TOLERANCE_PX = 8;
+const UNDERLINE_DRAG_HIT_TOLERANCE_PX = 8;
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(value, max));
 
@@ -16,7 +16,7 @@ const median = (values: number[]): number => {
 const toElement = (node: Node): Element | null =>
   node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
 
-export const normalizeSelectionText = (rawText: string) => rawText.replace(/\s+/g, ' ').replace(/\u00A0/g, ' ').trim();
+const normalizeSelectionText = (rawText: string) => rawText.replace(/\s+/g, ' ').replace(/\u00A0/g, ' ').trim();
 
 const resolveReferenceLineHeight = (pageNode: HTMLElement, fallback: number): number => {
   const textLayer = pageNode.querySelector('.react-pdf__Page__textContent');
@@ -125,7 +125,7 @@ export const createHighlightRects = (range: Range, pageNode: HTMLElement | null)
     .filter((rect) => rect.widthPct > 0 && rect.heightPct > 0);
 };
 
-export const intersectHighlightRects = (source: PdfHighlightRect[], clips: PdfHighlightRect[]): PdfHighlightRect[] => {
+const intersectHighlightRects = (source: PdfHighlightRect[], clips: PdfHighlightRect[]): PdfHighlightRect[] => {
   const intersections: PdfHighlightRect[] = [];
 
   source.forEach((left) => {
@@ -151,93 +151,7 @@ export const intersectHighlightRects = (source: PdfHighlightRect[], clips: PdfHi
   return intersections;
 };
 
-const normalizeWithMap = (value: string): { text: string; indexMap: number[] } => {
-  const chars: string[] = [];
-  const map: number[] = [];
-  let sawNonSpace = false;
-  let pendingSpace = false;
-  let pendingSpaceIndex = -1;
-
-  for (let index = 0; index < value.length; index += 1) {
-    const raw = value[index] === '\u00A0' ? ' ' : value[index];
-    if (/\s/.test(raw)) {
-      if (!sawNonSpace) continue;
-      pendingSpace = true;
-      if (pendingSpaceIndex < 0) pendingSpaceIndex = index;
-      continue;
-    }
-
-    if (pendingSpace && chars.length > 0) {
-      chars.push(' ');
-      map.push(pendingSpaceIndex);
-    }
-
-    chars.push(raw);
-    map.push(index);
-    sawNonSpace = true;
-    pendingSpace = false;
-    pendingSpaceIndex = -1;
-  }
-
-  return { text: chars.join(''), indexMap: map };
-};
-
-export const resolveSelectionRangeInCitation = (
-  citationText: string,
-  selectedText: string
-): { start: number; end: number } | null => {
-  const normalizedCitation = normalizeWithMap(citationText);
-  const normalizedSelected = normalizeSelectionText(selectedText);
-  if (!normalizedSelected) return null;
-
-  const startInNormalized = normalizedCitation.text.indexOf(normalizedSelected);
-  if (startInNormalized < 0) {
-    let bestStartToEnd = -1;
-    let bestLengthToEnd = 0;
-    let bestStartAny = -1;
-    let bestLengthAny = 0;
-
-    for (let start = 0; start < normalizedCitation.text.length; start += 1) {
-      let length = 0;
-      while (
-        start + length < normalizedCitation.text.length &&
-        length < normalizedSelected.length &&
-        normalizedCitation.text[start + length] === normalizedSelected[length]
-      ) {
-        length += 1;
-      }
-
-      if (length <= 0) continue;
-      const touchesEnd = start + length >= normalizedCitation.text.length;
-      if (touchesEnd && length > bestLengthToEnd) {
-        bestStartToEnd = start;
-        bestLengthToEnd = length;
-      }
-      if (length > bestLengthAny) {
-        bestStartAny = start;
-        bestLengthAny = length;
-      }
-    }
-
-    const bestStart = bestStartToEnd >= 0 ? bestStartToEnd : bestStartAny;
-    const bestLength = bestStartToEnd >= 0 ? bestLengthToEnd : bestLengthAny;
-    if (bestStart < 0 || bestLength <= 0) return null;
-
-    const fallbackStart = normalizedCitation.indexMap[bestStart];
-    const fallbackEnd = normalizedCitation.indexMap[bestStart + bestLength - 1] + 1;
-    if (!Number.isFinite(fallbackStart) || !Number.isFinite(fallbackEnd) || fallbackEnd <= fallbackStart) return null;
-    return { start: fallbackStart, end: fallbackEnd };
-  }
-
-  const endInNormalized = startInNormalized + normalizedSelected.length - 1;
-  const start = normalizedCitation.indexMap[startInNormalized];
-  const end = normalizedCitation.indexMap[endInNormalized] + 1;
-
-  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return null;
-  return { start, end };
-};
-
-export const constrainRangeToStableEnd = (range: Range): Range => range;
+const constrainRangeToStableEnd = (range: Range): Range => range;
 
 type BuildSelectionSegmentsInput = {
   range: Range;

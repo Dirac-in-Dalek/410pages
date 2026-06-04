@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react';
-import { Citation, Project, SidebarItem } from '../../../types';
+import { BookSource, Citation, Project, SidebarItem } from '../../../types';
 
 export interface FilterState {
   type: 'author' | 'book';
@@ -23,6 +23,7 @@ export interface OrderedLabelItem {
 
 export interface ArchiveViewStateInput {
   citations: Citation[];
+  books: BookSource[];
   projects: Project[];
   username: string;
 }
@@ -44,11 +45,11 @@ export interface ArchiveViewStateResult {
   handlePageSortClick: () => void;
   handleProjectSelect: (id: string | null) => void;
   handleTreeItemClick: (item: SidebarItem) => void;
+  handleBookSourceSelect: (book: BookSource) => void;
   treeData: SidebarItem[];
   filteredCitations: Citation[];
   viewTitle: string;
   getCurrentOrderedAuthors: () => string[];
   getCurrentOrderedBooks: (authorId: string) => string[];
-  setAuthorOrder: Dispatch<SetStateAction<string[]>>;
   setBookOrderByAuthor: Dispatch<SetStateAction<Record<string, string[]>>>;
 }

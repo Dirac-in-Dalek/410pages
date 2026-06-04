@@ -31,6 +31,8 @@ const archiveDataState = {
   setProjects: vi.fn(),
   citations: [],
   setCitations: vi.fn(),
+  books: [],
+  setBooks: vi.fn(),
   loading: false,
   fetchData: vi.fn(),
   chapterBlocksByBook: {},
@@ -41,6 +43,7 @@ const archiveDataState = {
   handleDeleteCitation: vi.fn(),
   handleUpdateCitation: vi.fn(),
   handleBulkUpdateCitationSource: vi.fn(),
+  handleCreateBook: vi.fn(),
   handleCreateProject: vi.fn(),
   handleRenameProject: vi.fn(),
   handleDeleteProject: vi.fn(),
@@ -71,7 +74,7 @@ const archiveFilterState = {
   pageDirection: 'desc' as const,
   handleDateSortClick: vi.fn(),
   handlePageSortClick: vi.fn(),
-  handleReorderAuthorAt: vi.fn(),
+  handleBookSourceSelect: vi.fn(),
   handleReorderBookAt: vi.fn(),
 };
 
@@ -119,10 +122,21 @@ vi.mock('./hooks/useBulkSelection', () => ({
 }));
 
 vi.mock('./components/MainLayout', () => ({
-  MainLayout: ({ children, onOpenSettings }: { children: React.ReactNode; onOpenSettings: () => void }) => (
+  MainLayout: ({
+    children,
+    onOpenSettings,
+    onCreateBook,
+  }: {
+    children: React.ReactNode;
+    onOpenSettings: () => void;
+    onCreateBook: (input: { author: string; title: string }) => void;
+  }) => (
     <div>
       <button type="button" onClick={onOpenSettings}>
         open-settings
+      </button>
+      <button type="button" onClick={() => onCreateBook({ author: 'Author A', title: 'Book A' })}>
+        create-book
       </button>
       {children}
     </div>
@@ -346,6 +360,63 @@ describe('App settings display-name flow', () => {
     });
 
     expect(screen.getByTestId('settings-display-name').textContent).toBe('Newer Local Draft');
+  });
+});
+
+describe('App new book flow', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockHandleUpdateUsername.mockResolvedValue(true);
+    archiveDataState.handleCreateBook.mockResolvedValue({
+      id: 'book-a',
+      title: 'Book A',
+      sortIndex: 1,
+      createdAt: 1,
+      authorId: 'author-a',
+      author: 'Author A',
+      authorSortIndex: 1,
+      isSelf: false,
+    });
+
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      writable: true,
+      value: vi.fn().mockImplementation(() => ({
+        matches: false,
+        media: '(max-width: 1024px)',
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+  });
+
+  it('opens the created book after the layout requests a new book', async () => {
+    const user = userEvent.setup();
+
+    render(<App />);
+
+    await user.click(screen.getByRole('button', { name: 'create-book' }));
+
+    await waitFor(() => {
+      expect(archiveDataState.handleCreateBook).toHaveBeenCalledWith({
+        author: 'Author A',
+        title: 'Book A',
+      });
+      expect(archiveFilterState.handleBookSourceSelect).toHaveBeenCalledWith({
+        id: 'book-a',
+        title: 'Book A',
+        sortIndex: 1,
+        createdAt: 1,
+        authorId: 'author-a',
+        author: 'Author A',
+        authorSortIndex: 1,
+        isSelf: false,
+      });
+    });
   });
 });
 

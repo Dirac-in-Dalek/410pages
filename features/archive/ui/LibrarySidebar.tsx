@@ -1,7 +1,8 @@
-import React from 'react';
-import { FolderOpen } from 'lucide-react';
+import React, { useState } from 'react';
+import { BookPlus, FolderOpen } from 'lucide-react';
 import type { LibrarySidebarProps } from '../contract/librarySidebarContract';
 import { LibrarySidebarTree } from './LibrarySidebarTree';
+import { NewBookDialog } from './NewBookDialog';
 
 export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
   treeData,
@@ -9,7 +10,7 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
   onProjectSelect,
   selectedProjectId,
   selectedFilter = null,
-  onReorderAuthorAt,
+  onCreateBook,
   onReorderBookAt,
   onRenameAuthor,
   onRenameBook,
@@ -17,6 +18,8 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
   isResizing,
   onStartResize,
 }) => {
+  const [isNewBookOpen, setIsNewBookOpen] = useState(false);
+
   return (
     <aside
       style={{ width: `${width}px` }}
@@ -45,12 +48,21 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
         treeData={treeData}
         onTreeItemClick={onTreeItemClick}
         selectedFilter={selectedFilter}
-        onReorderAuthorAt={onReorderAuthorAt}
         onReorderBookAt={onReorderBookAt}
         onRenameAuthor={onRenameAuthor}
         onRenameBook={onRenameBook}
         headerContent={
           <div className="mb-5">
+            {onCreateBook && (
+              <button
+                type="button"
+                onClick={() => setIsNewBookOpen(true)}
+                className="mb-2 flex w-full items-center gap-2.5 rounded-[0.85rem] bg-[var(--bg-card)] px-3 py-[0.55rem] text-left text-[14px] font-medium text-[var(--text-main)] shadow-[var(--shadow-card)] transition-[background-color,color,box-shadow,transform] duration-150 hover:bg-[var(--sidebar-hover)] active:scale-[0.98]"
+              >
+                <BookPlus size={15} className="shrink-0 text-[var(--accent)]" />
+                <span>새 책 읽기</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={() => onProjectSelect(null)}
@@ -67,6 +79,13 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
           </div>
         }
       />
+      {onCreateBook && (
+        <NewBookDialog
+          isOpen={isNewBookOpen}
+          onClose={() => setIsNewBookOpen(false)}
+          onCreateBook={onCreateBook}
+        />
+      )}
     </aside>
   );
 };

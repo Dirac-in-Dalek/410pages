@@ -1,10 +1,10 @@
 import { useCallback } from 'react';
-import { Citation, Project } from '../types';
+import { BookSource, Citation, Project } from '../types';
 import { useArchiveViewState } from '../features/archive/logic/useArchiveViewState';
 import { reorderByIndex } from '../features/archive/logic/archiveSort';
-import { reorderAuthors, reorderBooks } from '../shared/api';
+import { reorderBooks } from '../shared/api/bookApi';
 
-export const useArchiveFilter = (citations: Citation[], projects: Project[], username: string, userId?: string) => {
+export const useArchiveFilter = (citations: Citation[], books: BookSource[], projects: Project[], username: string, userId?: string) => {
     const {
         searchTerm,
         setSearchTerm,
@@ -20,28 +20,15 @@ export const useArchiveFilter = (citations: Citation[], projects: Project[], use
         isBookView,
         handleDateSortClick,
         handlePageSortClick,
+        handleBookSourceSelect,
         handleProjectSelect,
         handleTreeItemClick,
         treeData,
         filteredCitations,
         viewTitle,
-        getCurrentOrderedAuthors,
         getCurrentOrderedBooks,
-        setAuthorOrder,
         setBookOrderByAuthor
-    } = useArchiveViewState({ citations, projects, username });
-
-    const handleReorderAuthorAt = useCallback(async (dragAuthorId: string, dropIndex: number) => {
-        if (!dragAuthorId || !userId) return;
-        const orderedAuthors = getCurrentOrderedAuthors();
-        const next = reorderByIndex(orderedAuthors, dragAuthorId, dropIndex);
-        setAuthorOrder(next);
-        try {
-            await reorderAuthors(userId, next);
-        } catch (error) {
-            console.error('Error reordering authors:', error);
-        }
-    }, [getCurrentOrderedAuthors, userId]);
+    } = useArchiveViewState({ citations, books, projects, username });
 
     const handleReorderBookAt = useCallback(async (authorId: string, dragBookId: string, dropIndex: number) => {
         if (!authorId || !dragBookId || !userId) return;
@@ -77,7 +64,7 @@ export const useArchiveFilter = (citations: Citation[], projects: Project[], use
         isBookView,
         handleDateSortClick,
         handlePageSortClick,
-        handleReorderAuthorAt,
+        handleBookSourceSelect,
         handleReorderBookAt,
         handleProjectSelect,
         handleTreeItemClick,
