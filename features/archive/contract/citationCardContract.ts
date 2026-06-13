@@ -6,6 +6,9 @@ export interface CitationCardProps {
   username: string;
   selectedFilter?: { type: 'author' | 'book'; value: string; author?: string } | null;
   projectNames?: string[];
+  isTextExpanded?: boolean;
+  onTextExpandedChange?: (id: string, isExpanded: boolean) => void;
+  onTextOverflowChange?: (id: string, isOverflowing: boolean) => void;
   isSelected: boolean;
   onToggleSelect: (id: string, selected: boolean) => void;
   onAddNote: (citationId: string, content: string) => void | Promise<unknown>;

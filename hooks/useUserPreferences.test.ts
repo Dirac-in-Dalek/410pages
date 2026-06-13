@@ -259,4 +259,22 @@ describe('useUserPreferences', () => {
     expect(document.documentElement.style.getPropertyValue('--font-base-pt')).toBe('40pt');
     expect(document.documentElement.style.getPropertyValue('--citation-column-width')).toBe('36rem');
   });
+
+  it('can apply a document-only light theme override without changing stored preferences', () => {
+    window.localStorage.setItem(
+      PREFERENCES_STORAGE_KEY,
+      JSON.stringify({ ...DEFAULT_PREFERENCES, theme: 'night' })
+    );
+
+    const { result } = renderHook(() =>
+      useUserPreferences(null, { documentThemeOverride: 'day' })
+    );
+
+    expect(result.current.preferences.theme).toBe('night');
+    expect(document.documentElement.classList.contains('dark')).toBe(false);
+    expect(document.documentElement.dataset.theme).toBe('day');
+    expect(JSON.parse(window.localStorage.getItem(PREFERENCES_STORAGE_KEY) || '{}')).toMatchObject({
+      theme: 'night',
+    });
+  });
 });

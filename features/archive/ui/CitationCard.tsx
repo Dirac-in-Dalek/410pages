@@ -10,6 +10,9 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   username,
   selectedFilter = null,
   projectNames = [],
+  isTextExpanded,
+  onTextExpandedChange,
+  onTextOverflowChange,
   isSelected,
   onToggleSelect,
   onAddNote,
@@ -54,6 +57,8 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   const isSaveFailed = citation.saveStatus === 'failed';
   const isSavingCitation = citation.saveStatus === 'saving';
   const isUnsaved = isSaveFailed || isSavingCitation;
+  const effectiveIsExpanded = isTextExpanded ?? isExpanded;
+  const quoteId = `citation-text-${citation.id}`;
 
   const adjustHeight = (ref: React.RefObject<HTMLTextAreaElement>) => {
     if (ref.current) {
@@ -80,8 +85,9 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   }, [citation.highlights]);
 
   useEffect(() => {
+    if (isTextExpanded !== undefined) return;
     setIsExpanded(false);
-  }, [citation.id, citation.text]);
+  }, [citation.id, citation.text, isTextExpanded]);
 
   useEffect(() => {
     if (isEditing) {
@@ -92,19 +98,33 @@ export const CitationCard: React.FC<CitationCardProps> = ({
     const quote = quoteRef.current;
     if (!quote) return;
 
-    const checkOverflow = () => {
-      if (isExpanded) {
-        setIsOverflowing(true);
-        return;
+    const getCollapsedQuoteHeight = () => {
+      if (!effectiveIsExpanded) {
+        return quote.clientHeight;
       }
 
-      setIsOverflowing(quote.scrollHeight - quote.clientHeight > 1);
+      const styles = window.getComputedStyle(quote);
+      const fontSize = Number.parseFloat(styles.fontSize) || 16;
+      const lineHeight = Number.parseFloat(styles.lineHeight) || fontSize * 1.55;
+      const clampedLines = window.matchMedia?.('(min-width: 1024px)').matches ? 3 : 2;
+      return lineHeight * clampedLines;
+    };
+
+    const checkOverflow = () => {
+      const nextIsOverflowing = quote.scrollHeight - getCollapsedQuoteHeight() > 1;
+      setIsOverflowing(nextIsOverflowing);
+      onTextOverflowChange?.(citation.id, nextIsOverflowing);
     };
 
     checkOverflow();
     window.addEventListener('resize', checkOverflow);
-    return () => window.removeEventListener('resize', checkOverflow);
-  }, [citation.text, isEditing, isExpanded, localHighlights]);
+    const resizeObserver = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(checkOverflow) : null;
+    resizeObserver?.observe(quote);
+    return () => {
+      window.removeEventListener('resize', checkOverflow);
+      resizeObserver?.disconnect();
+    };
+  }, [citation.id, citation.text, effectiveIsExpanded, isEditing, localHighlights, onTextOverflowChange]);
 
   const activeNote = editingNoteId ? citation.notes.find((note) => note.id === editingNoteId) : null;
   const isEditSessionPristine =
@@ -425,11 +445,12 @@ export const CitationCard: React.FC<CitationCardProps> = ({
           ) : (
             <>
               <blockquote
+                id={quoteId}
                 ref={quoteRef}
                 data-testid="citation-text"
                 className={[
                   'citation-copy type-body relative z-10 select-text whitespace-pre-wrap text-[var(--text-main)] leading-[1.55]',
-                  isExpanded ? 'mb-1.5' : 'mb-1.5 line-clamp-2 lg:line-clamp-3'
+                  effectiveIsExpanded ? 'mb-1.5' : 'mb-1.5 line-clamp-2 lg:line-clamp-3'
                 ].join(' ')}
                 onMouseUp={handleTextSelection}
               >
@@ -439,11 +460,19 @@ export const CitationCard: React.FC<CitationCardProps> = ({
               {isOverflowing && (
                 <button
                   type="button"
-                  onClick={() => setIsExpanded((prev) => !prev)}
+                  onClick={() => {
+                    const nextExpanded = !effectiveIsExpanded;
+                    onTextExpandedChange?.(citation.id, nextExpanded);
+                    if (isTextExpanded === undefined) {
+                      setIsExpanded(nextExpanded);
+                    }
+                  }}
                   className="type-label-bounded mb-2 text-[0.82rem] text-[var(--text-muted)] underline-offset-2 hover:text-[var(--text-main)] hover:underline"
-                  aria-label={isExpanded ? 'Less' : 'More'}
+                  aria-label={effectiveIsExpanded ? 'Less' : 'More'}
+                  aria-controls={quoteId}
+                  aria-expanded={effectiveIsExpanded}
                 >
-                  {isExpanded ? 'Less' : 'More'}
+                  {effectiveIsExpanded ? 'Less' : 'More'}
                 </button>
               )}
 

@@ -14,10 +14,21 @@ import { normalizeBaseFontPt, normalizeCitationWidthRem } from './preferencesNor
 import { persistServerPreferences, readServerPreferences } from './preferencesServer';
 import { persistPreferences, readStoredPreferences } from './preferencesStorage';
 
-export const useUserPreferences = (userId?: string | null) => {
+type UseUserPreferencesOptions = {
+  documentThemeOverride?: ThemePreference | null;
+};
+
+export const useUserPreferences = (
+  userId?: string | null,
+  { documentThemeOverride = null }: UseUserPreferencesOptions = {}
+) => {
   const [preferences, setPreferences] = useState<UserPreferences>(() => readStoredPreferences());
   const [serverReadyUserId, setServerReadyUserId] = useState<string | null>(null);
   const localChangeVersionRef = useRef(0);
+  const documentPreferences = useMemo(
+    () => (documentThemeOverride ? { ...preferences, theme: documentThemeOverride } : preferences),
+    [documentThemeOverride, preferences]
+  );
 
   const setLocalPreferences = useCallback((value: SetStateAction<UserPreferences>) => {
     localChangeVersionRef.current += 1;
@@ -25,9 +36,9 @@ export const useUserPreferences = (userId?: string | null) => {
   }, []);
 
   useEffect(() => {
-    applyPreferencesToDocument(preferences);
+    applyPreferencesToDocument(documentPreferences);
     persistPreferences(preferences);
-  }, [preferences]);
+  }, [documentPreferences, preferences]);
 
   useEffect(() => {
     if (!userId) {
@@ -73,12 +84,12 @@ export const useUserPreferences = (userId?: string | null) => {
   }, [preferences, serverReadyUserId, userId]);
 
   useEffect(() => {
-    if (preferences.theme !== 'auto') {
+    if (documentPreferences.theme !== 'auto') {
       return undefined;
     }
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = () => applyPreferencesToDocument(preferences);
+    const handleChange = () => applyPreferencesToDocument(documentPreferences);
 
     if (mediaQuery.addEventListener) {
       mediaQuery.addEventListener('change', handleChange);
@@ -93,7 +104,7 @@ export const useUserPreferences = (userId?: string | null) => {
         mediaQuery.removeListener(handleChange);
       }
     };
-  }, [preferences]);
+  }, [documentPreferences]);
 
   return useMemo(
     () => ({
@@ -120,8 +131,8 @@ export const useUserPreferences = (userId?: string | null) => {
           ...current,
           fontFamily: normalizeFontPreference(fontFamily),
         })),
-      isDarkMode: resolveThemePreference(preferences.theme, getSystemThemeIsDark()).isDark,
+      isDarkMode: resolveThemePreference(documentPreferences.theme, getSystemThemeIsDark()).isDark,
     }),
-    [preferences, setLocalPreferences]
+    [documentPreferences.theme, preferences, setLocalPreferences]
   );
 };

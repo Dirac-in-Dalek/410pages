@@ -92,6 +92,42 @@ describe('CitationList chapter blocks', () => {
     expect(screen.getByText('3장').compareDocumentPosition(screen.getByTestId('citation-citation-2'))).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
 
+  it('allows long chapter labels to wrap instead of truncating', () => {
+    const longLabel = '6장. 돈으로 행복해지는 비결은 쾌락을 사는 것이 아니라 시간을 되찾는 것이다';
+
+    render(
+      <CitationList
+        {...baseProps}
+        citations={[
+          citation({
+            id: 'citation-1',
+            text: 'First quote',
+            author: 'Author A',
+            book: 'Book A',
+            bookId: 'book-1',
+            pageSort: 100,
+            createdAt: 1000,
+          }),
+        ]}
+        chapterBlocks={[
+          chapterBlock({
+            id: 'block-1',
+            bookId: 'book-1',
+            label: longLabel,
+            pageSort: 150,
+            createdAtSort: 1500,
+            createdAt: 1500,
+          }),
+        ]}
+        isBookView
+        sortField="page"
+      />
+    );
+
+    expect(screen.getByText(longLabel).className).toContain('whitespace-normal');
+    expect(screen.getByText(longLabel).className).not.toContain('truncate');
+  });
+
   it('does not render a chapter block when book view is off', () => {
     render(
       <CitationList
