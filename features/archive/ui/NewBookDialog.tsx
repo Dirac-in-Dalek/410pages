@@ -70,16 +70,6 @@ export const NewBookDialog: React.FC<NewBookDialogProps> = ({
         </div>
         <div className="space-y-3">
           <label className="block">
-            <span className="mb-1 block text-xs font-semibold text-[var(--text-muted)]">저자</span>
-            <input
-              aria-label="저자"
-              value={author}
-              onChange={(event) => setAuthor(event.target.value)}
-              className="w-full rounded-[0.7rem] border border-[var(--border-main)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-main)] focus:border-[var(--accent-border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)]"
-              placeholder="비워두면 내 책"
-            />
-          </label>
-          <label className="block">
             <span className="mb-1 block text-xs font-semibold text-[var(--text-muted)]">책 제목</span>
             <input
               aria-label="책 제목"
@@ -87,6 +77,16 @@ export const NewBookDialog: React.FC<NewBookDialogProps> = ({
               onChange={(event) => setTitle(event.target.value)}
               className="w-full rounded-[0.7rem] border border-[var(--border-main)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-main)] focus:border-[var(--accent-border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)]"
               autoFocus
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-xs font-semibold text-[var(--text-muted)]">저자</span>
+            <input
+              aria-label="저자"
+              value={author}
+              onChange={(event) => setAuthor(event.target.value)}
+              className="w-full rounded-[0.7rem] border border-[var(--border-main)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-main)] focus:border-[var(--accent-border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)]"
+              placeholder="비워두면 내 책"
             />
           </label>
         </div>

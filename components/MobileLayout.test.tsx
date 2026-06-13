@@ -56,8 +56,8 @@ describe('MobileLayout header actions', () => {
 
     await user.click(screen.getByRole('button', { name: 'Open library' }));
     await user.click(screen.getByRole('button', { name: '새 책 읽기' }));
-    await user.type(screen.getByLabelText('저자'), 'Ursula K. Le Guin');
     await user.type(screen.getByLabelText('책 제목'), 'The Dispossessed');
+    await user.type(screen.getByLabelText('저자'), 'Ursula K. Le Guin');
     await user.click(screen.getByRole('button', { name: '시작' }));
 
     await waitFor(() => {

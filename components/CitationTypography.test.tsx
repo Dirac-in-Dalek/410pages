@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Citation } from '../types';
@@ -624,8 +624,8 @@ describe('Citation typography', () => {
 
     const moreButton = await screen.findByRole('button', { name: /more/i });
     expect(moreButton).not.toBeNull();
-    expect(screen.getByTestId('citation-text').className).toContain('line-clamp-2');
-    expect(screen.getByTestId('citation-text').className).toContain('lg:line-clamp-3');
+    expect(moreButton.textContent).toBe('...More');
+    expect(screen.getByTestId('citation-text').textContent).toContain('...More');
   });
 
   it('expands long citations when the More action is pressed', async () => {
@@ -653,6 +653,68 @@ describe('Citation typography', () => {
 
     expect(screen.getByRole('button', { name: /less/i })).not.toBeNull();
     expect(screen.getByTestId('citation-text').className).not.toContain('line-clamp-2');
+  });
+
+  it('does not recalculate overflow when ResizeObserver reports height-only changes', async () => {
+    let resizeCallback: ResizeObserverCallback | null = null;
+    const originalResizeObserver = globalThis.ResizeObserver;
+    const onTextOverflowChange = vi.fn();
+    const rectSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      return {
+        bottom: 80,
+        height: 80,
+        left: 0,
+        right: this.dataset.testid === 'citation-text' ? 320 : 640,
+        top: 0,
+        width: this.dataset.testid === 'citation-text' ? 320 : 640,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      };
+    });
+
+    globalThis.ResizeObserver = class ResizeObserverMock {
+      constructor(callback: ResizeObserverCallback) {
+        resizeCallback = callback;
+      }
+
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
+
+    try {
+      render(
+        <CitationCard
+          citation={{
+            ...citation,
+            text: 'Long quote '.repeat(80),
+          }}
+          index={0}
+          username="Dalek"
+          isSelected={false}
+          onToggleSelect={vi.fn()}
+          onAddNote={vi.fn()}
+          onUpdateNote={vi.fn()}
+          onDeleteNote={vi.fn()}
+          onDelete={vi.fn()}
+          onUpdate={vi.fn()}
+          onTextOverflowChange={onTextOverflowChange}
+        />
+      );
+
+      await screen.findByRole('button', { name: /more/i });
+      await waitFor(() => expect(onTextOverflowChange).toHaveBeenCalledTimes(1));
+
+      act(() => {
+        resizeCallback?.([], {} as ResizeObserver);
+      });
+
+      expect(onTextOverflowChange).toHaveBeenCalledTimes(1);
+    } finally {
+      globalThis.ResizeObserver = originalResizeObserver;
+      rectSpy.mockRestore();
+    }
   });
 
   it('hides the current author chip when the archive is already scoped to that author', () => {
