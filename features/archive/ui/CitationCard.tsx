@@ -40,6 +40,9 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   const [localHighlights, setLocalHighlights] = useState<Highlight[]>(citation.highlights || []);
   const cardRef = useRef<HTMLDivElement>(null);
   const quoteRef = useRef<HTMLElement>(null);
+  const lastMeasuredQuoteWidthRef = useRef<number | null>(null);
+  const overflowStateRef = useRef(false);
+  const collapsedTextEndRef = useRef<number | null>(null);
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
   const editNoteTextareaRef = useRef<HTMLTextAreaElement>(null);
   const newNoteTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -96,12 +99,23 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   useEffect(() => {
     if (isTextExpanded !== undefined) return;
     setIsExpanded(false);
+    overflowStateRef.current = false;
+    lastMeasuredQuoteWidthRef.current = null;
+    collapsedTextEndRef.current = null;
+    setIsOverflowing(false);
     setCollapsedTextEnd(null);
   }, [citation.id, citation.text, isTextExpanded]);
 
   useEffect(() => {
     if (isEditing) {
-      setIsOverflowing(false);
+      if (overflowStateRef.current) {
+        overflowStateRef.current = false;
+        setIsOverflowing(false);
+      }
+      if (collapsedTextEndRef.current !== null) {
+        collapsedTextEndRef.current = null;
+        setCollapsedTextEnd(null);
+      }
       return;
     }
 
@@ -109,10 +123,6 @@ export const CitationCard: React.FC<CitationCardProps> = ({
     if (!quote) return;
 
     const getCollapsedQuoteHeight = () => {
-      if (!effectiveIsExpanded) {
-        return quote.clientHeight;
-      }
-
       const styles = window.getComputedStyle(quote);
       const fontSize = Number.parseFloat(styles.fontSize) || 16;
       const lineHeight = Number.parseFloat(styles.lineHeight) || fontSize * 1.55;
@@ -120,8 +130,28 @@ export const CitationCard: React.FC<CitationCardProps> = ({
       return lineHeight * clampedLines;
     };
 
-    const checkOverflow = () => {
-      const collapsedHeight = getCollapsedQuoteHeight();
+    const updateOverflowState = (nextIsOverflowing: boolean) => {
+      if (overflowStateRef.current === nextIsOverflowing) return;
+      overflowStateRef.current = nextIsOverflowing;
+      setIsOverflowing(nextIsOverflowing);
+      onTextOverflowChange?.(citation.id, nextIsOverflowing);
+    };
+
+    const updateCollapsedTextEnd = (nextEnd: number | null) => {
+      if (collapsedTextEndRef.current === nextEnd) return;
+      collapsedTextEndRef.current = nextEnd;
+      setCollapsedTextEnd(nextEnd);
+    };
+
+    const trimTextEnd = (endIndex: number) => {
+      let nextEnd = Math.max(0, Math.min(endIndex, citation.text.length));
+      while (nextEnd > 0 && /\s/.test(citation.text[nextEnd - 1])) {
+        nextEnd -= 1;
+      }
+      return nextEnd;
+    };
+
+    const createMeasure = () => {
       const measure = document.createElement('div');
       measure.dataset.testid = 'citation-text';
       const styles = window.getComputedStyle(quote);
@@ -144,15 +174,29 @@ export const CitationCard: React.FC<CitationCardProps> = ({
         lineHeight: styles.lineHeight,
       });
       document.body.appendChild(measure);
+      return measure;
+    };
+
+    const setMeasuredCandidate = (measure: HTMLDivElement, endIndex: number) => {
+      const moreButton = document.createElement('button');
+      moreButton.type = 'button';
+      moreButton.className =
+        'type-label-bounded ml-0.5 inline text-[0.82rem] text-[var(--accent)] underline-offset-2 transition-colors hover:text-[var(--accent-strong)] hover:underline active:scale-95';
+      moreButton.textContent = '...More';
+      measure.replaceChildren(document.createTextNode(citation.text.slice(0, trimTextEnd(endIndex))), moreButton);
+    };
+
+    const checkOverflow = () => {
+      const collapsedHeight = getCollapsedQuoteHeight();
+      const measure = createMeasure();
 
       measure.textContent = citation.text;
       const fullHeight = measure.scrollHeight;
       const nextIsOverflowing = fullHeight - collapsedHeight > 1;
-      setIsOverflowing(nextIsOverflowing);
-      onTextOverflowChange?.(citation.id, nextIsOverflowing);
+      updateOverflowState(nextIsOverflowing);
 
       if (!nextIsOverflowing || effectiveIsExpanded) {
-        setCollapsedTextEnd(null);
+        updateCollapsedTextEnd(null);
         measure.remove();
         return;
       }
@@ -161,7 +205,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
       let high = citation.text.length;
       while (low <= high) {
         const mid = Math.floor((low + high) / 2);
-        measure.textContent = `${citation.text.slice(0, mid).trimEnd()}...More`;
+        setMeasuredCandidate(measure, mid);
         if (measure.scrollHeight <= collapsedHeight + 1) {
           low = mid + 1;
         } else {
@@ -169,16 +213,25 @@ export const CitationCard: React.FC<CitationCardProps> = ({
         }
       }
 
-      setCollapsedTextEnd(Math.max(0, high));
+      updateCollapsedTextEnd(trimTextEnd(high));
       measure.remove();
     };
 
-    checkOverflow();
-    window.addEventListener('resize', checkOverflow);
-    const resizeObserver = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(checkOverflow) : null;
+    const checkOverflowWhenWidthChanges = (force = false) => {
+      const nextWidth = quote.getBoundingClientRect().width;
+      if (!force && lastMeasuredQuoteWidthRef.current === nextWidth) return;
+      lastMeasuredQuoteWidthRef.current = nextWidth;
+      checkOverflow();
+    };
+
+    const handleResize = () => checkOverflowWhenWidthChanges(true);
+
+    checkOverflowWhenWidthChanges(true);
+    window.addEventListener('resize', handleResize);
+    const resizeObserver = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => checkOverflowWhenWidthChanges()) : null;
     resizeObserver?.observe(quote);
     return () => {
-      window.removeEventListener('resize', checkOverflow);
+      window.removeEventListener('resize', handleResize);
       resizeObserver?.disconnect();
     };
   }, [citation.id, citation.text, effectiveIsExpanded, isEditing, localHighlights, onTextOverflowChange]);
