@@ -167,13 +167,13 @@ export const CitationList: React.FC<CitationListProps> = ({
     return (
         <div className="w-full">
             {hasVisibleCitations ? (
-            <div className="mb-2 flex justify-end">
+            <div className="mb-1.5 flex justify-start px-2">
                 <button
                     type="button"
                     aria-label="Toggle all citations"
                     aria-pressed={allVisibleCitationsExpanded}
                     onClick={handleToggleAllCitationText}
-                    className="type-label-bounded inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-[var(--border-main)] bg-[var(--bg-card)] px-3 py-1.5 text-[0.82rem] font-medium text-[var(--text-muted)] shadow-sm transition-all hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)] active:scale-95"
+                    className="type-label-bounded inline-flex min-h-8 items-center gap-1 rounded-md px-1.5 py-1 text-[0.82rem] font-medium text-[var(--text-muted)] transition-all hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)] active:scale-95"
                 >
                     {allVisibleCitationsExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                     {allVisibleCitationsExpanded ? 'Collapse all' : 'Expand all'}
