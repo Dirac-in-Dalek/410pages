@@ -11,8 +11,16 @@ import type {
   CreateChapterBlockInput,
   Project,
 } from '../../../types';
-import { renameAuthor as renameAuthorRecord } from '../../../shared/api/authorApi';
-import { createBook as createBookRecord, renameBook as renameBookRecord, type RenameBookResult } from '../../../shared/api/bookApi';
+import {
+  deleteAuthor as deleteAuthorRecord,
+  renameAuthor as renameAuthorRecord,
+} from '../../../shared/api/authorApi';
+import {
+  createBook as createBookRecord,
+  deleteBook as deleteBookRecord,
+  renameBook as renameBookRecord,
+  type RenameBookResult,
+} from '../../../shared/api/bookApi';
 import {
   createChapterBlock as createChapterBlockRecord,
   deleteChapterBlock as deleteChapterBlockRecord,
@@ -41,20 +49,19 @@ import type {
 } from '../contract/archiveMutationContract';
 import {
   appendChapterBlock,
-  appendBookSource,
   appendCitationNote,
-  appendProject,
   attachCitationToProject,
   deleteChapterBlock,
+  deleteChapterBlocksForBooks,
   deleteCitationById,
   deleteCitationNote,
-  deleteProject,
+  deleteCitationsByAuthorIdOrBookIds,
+  isCitationOwnedByAuthorOrBookIds,
   patchCitation,
   patchCitations,
   prependCitation,
   replaceCitationById,
-  removeCitationFromProjects,
-  renameProject,
+  removeCitationsFromProjects,
   reorderProjectsLocally,
   applyRenameAuthorToCitations,
   applyRenameBookToCitations,
@@ -71,6 +78,7 @@ type UseArchiveMutationsOptions = {
   session: ArchiveSession;
   projects: Project[];
   citations: Citation[];
+  books: BookSource[];
   setProjects: Dispatch<SetStateAction<Project[]>>;
   setCitations: Dispatch<SetStateAction<Citation[]>>;
   setBooks: Dispatch<SetStateAction<BookSource[]>>;
@@ -92,6 +100,7 @@ export const useArchiveMutations = ({
   session,
   projects,
   citations,
+  books,
   setProjects,
   setCitations,
   setBooks,
@@ -240,14 +249,14 @@ export const useArchiveMutations = ({
       }
       if (isOptimisticCitationId(citationId)) {
         setCitations((current) => deleteCitationById(current, citationId));
-        setProjects((current) => removeCitationFromProjects(current, citationId));
+        setProjects((current) => removeCitationsFromProjects(current, citationId));
         return;
       }
 
       try {
         await deleteCitationRecord(session.user.id, citationId);
         setCitations((current) => deleteCitationById(current, citationId));
-        setProjects((current) => removeCitationFromProjects(current, citationId));
+        setProjects((current) => removeCitationsFromProjects(current, citationId));
       } catch (error) {
         console.error('Error deleting citation:', error);
       }
@@ -322,7 +331,9 @@ export const useArchiveMutations = ({
           author: input.author,
           title,
         });
-        setBooks((current) => appendBookSource(current, newBook));
+        setBooks((current) =>
+          current.some((entry) => entry.id === newBook.id) ? current : [...current, newBook]
+        );
         return newBook;
       } catch (error) {
         console.error('Error creating book:', error);
@@ -340,7 +351,7 @@ export const useArchiveMutations = ({
 
       try {
         const newProject = await createProjectRecord(session.user.id, name);
-        setProjects((current) => appendProject(current, newProject));
+        setProjects((current) => [...current, newProject]);
       } catch (error) {
         console.error('Error creating project:', error);
       }
@@ -356,7 +367,11 @@ export const useArchiveMutations = ({
 
       try {
         await renameProjectRecord(session.user.id, projectId, name);
-        setProjects((current) => renameProject(current, projectId, name));
+        setProjects((current) =>
+          current.map((project) =>
+            project.id === projectId ? { ...project, name } : project
+          )
+        );
       } catch (error) {
         console.error('Error renaming project:', error);
       }
@@ -372,7 +387,7 @@ export const useArchiveMutations = ({
 
       try {
         await deleteProjectRecord(session.user.id, projectId);
-        setProjects((current) => deleteProject(current, projectId));
+        setProjects((current) => current.filter((project) => project.id !== projectId));
       } catch (error) {
         console.error('Error deleting project:', error);
       }
@@ -424,6 +439,62 @@ export const useArchiveMutations = ({
       }
     },
     [session, setCitations]
+  );
+
+  const handleDeleteBook = useCallback(
+    async (bookId: string) => {
+      if (!session) {
+        return;
+      }
+
+      const deletedCitationIds = citations
+        .filter((citation) => citation.bookId === bookId)
+        .map((citation) => citation.id);
+
+      try {
+        await deleteBookRecord(session.user.id, bookId);
+        setBooks((current) => current.filter((book) => book.id !== bookId));
+        setCitations((current) => current.filter((citation) => citation.bookId !== bookId));
+        setProjects((current) => removeCitationsFromProjects(current, deletedCitationIds));
+        setChapterBlocksByBook((current) => deleteChapterBlocksForBooks(current, bookId));
+        await fetchData();
+      } catch (error) {
+        console.error('Error deleting book:', error);
+      }
+    },
+    [citations, fetchData, session, setBooks, setChapterBlocksByBook, setCitations, setProjects]
+  );
+
+  const handleDeleteAuthor = useCallback(
+    async (authorId: string) => {
+      if (!session) {
+        return;
+      }
+
+      const deletedBookIds = books
+        .filter((book) => book.authorId === authorId)
+        .map((book) => book.id);
+      const deletedBookIdSet = new Set(deletedBookIds);
+      const deletedCitationIds = citations
+        .filter((citation) =>
+          isCitationOwnedByAuthorOrBookIds(citation, authorId, deletedBookIdSet)
+        )
+        .map((citation) => citation.id);
+
+      try {
+        await deleteAuthorRecord(session.user.id, authorId);
+        setBooks((current) => current.filter((book) => book.authorId !== authorId));
+        setCitations((current) =>
+          deleteCitationsByAuthorIdOrBookIds(current, authorId, deletedBookIdSet)
+        );
+        setProjects((current) => removeCitationsFromProjects(current, deletedCitationIds));
+        setChapterBlocksByBook((current) => deleteChapterBlocksForBooks(current, deletedBookIds));
+        await fetchData();
+      } catch (error) {
+        console.error('Error deleting author:', error);
+      }
+    },
+    [books, citations, fetchData, session, setBooks, setChapterBlocksByBook, setCitations, setProjects]
   );
 
   const handleCreateChapterBlock = useCallback(
@@ -522,6 +593,8 @@ export const useArchiveMutations = ({
     handleDeleteProject,
     handleRenameAuthor,
     handleRenameBook,
+    handleDeleteAuthor,
+    handleDeleteBook,
     handleCreateChapterBlock,
     handleDeleteChapterBlock,
     handleReorderProjects,

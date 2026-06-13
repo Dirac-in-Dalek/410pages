@@ -86,6 +86,7 @@ create table if not exists citations (
   id uuid default uuid_generate_v4() primary key,
   text text not null,
   book_id uuid references books(id) on delete cascade, 
+  author_id uuid references authors(id) on delete cascade,
   page text,
   user_id uuid references auth.users not null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null

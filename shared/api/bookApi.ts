@@ -13,3 +13,6 @@ export const reorderBooks = (userId: string, authorId: string, orderedBookIds: s
 
 export const renameBook = (userId: string, bookId: string, name: string) =>
   api.renameBook(userId, bookId, name);
+
+export const deleteBook = (userId: string, bookId: string) =>
+  api.deleteBook(userId, bookId);

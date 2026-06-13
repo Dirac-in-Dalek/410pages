@@ -44,6 +44,8 @@ export interface LibrarySidebarProps {
   onReorderBookAt?: (author: string, dragBook: string, dropIndex: number) => void;
   onRenameAuthor?: (authorId: string, name: string) => void;
   onRenameBook?: (bookId: string, name: string) => void;
+  onDeleteAuthor?: (authorId: string) => void;
+  onDeleteBook?: (bookId: string) => void;
   width: number;
   isResizing: boolean;
   onStartResize: () => void;

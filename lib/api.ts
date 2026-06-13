@@ -342,6 +342,28 @@ export const api = {
         } as BookSource;
     },
 
+    async deleteBook(userId: string, id: string) {
+        const { error } = await getSupabaseClient()
+            .from('books')
+            .delete()
+            .eq('id', id)
+            .eq('user_id', userId)
+            .select('id')
+            .single();
+        if (error) throw error;
+    },
+
+    async deleteAuthor(userId: string, id: string) {
+        const { error } = await getSupabaseClient()
+            .from('authors')
+            .delete()
+            .eq('id', id)
+            .eq('user_id', userId)
+            .select('id')
+            .single();
+        if (error) throw error;
+    },
+
     async fetchChapterBlocks(userId: string, bookId: string) {
         const { data, error } = await getSupabaseClient()
             .from('chapter_blocks')
