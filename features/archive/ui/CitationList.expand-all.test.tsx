@@ -97,7 +97,8 @@ describe('CitationList expand all', () => {
       />
     );
 
-    expect(screen.getAllByTestId('citation-text').every((node) => node.className.includes('line-clamp-2'))).toBe(true);
+    expect(await screen.findAllByRole('button', { name: 'More' })).toHaveLength(2);
+    expect(screen.getAllByTestId('citation-text').every((node) => node.textContent?.includes('...More'))).toBe(true);
 
     await user.click(screen.getByRole('button', { name: 'Toggle all citations' }));
 
@@ -106,7 +107,8 @@ describe('CitationList expand all', () => {
 
     await user.click(screen.getByRole('button', { name: 'Toggle all citations' }));
 
-    expect(screen.getAllByTestId('citation-text').every((node) => node.className.includes('line-clamp-2'))).toBe(true);
+    expect(screen.getAllByRole('button', { name: 'More' })).toHaveLength(2);
+    expect(screen.getAllByTestId('citation-text').every((node) => node.textContent?.includes('...More'))).toBe(true);
   });
 
   it('shows the bulk control when citations are visible even if none has a More action', () => {

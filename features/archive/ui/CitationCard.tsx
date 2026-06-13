@@ -35,6 +35,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   const [editPage, setEditPage] = useState(citation.page?.toString() || '');
   const [isExpanded, setIsExpanded] = useState(false);
   const [isOverflowing, setIsOverflowing] = useState(false);
+  const [collapsedTextEnd, setCollapsedTextEnd] = useState<number | null>(null);
 
   const [localHighlights, setLocalHighlights] = useState<Highlight[]>(citation.highlights || []);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -59,6 +60,14 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   const isUnsaved = isSaveFailed || isSavingCitation;
   const effectiveIsExpanded = isTextExpanded ?? isExpanded;
   const quoteId = `citation-text-${citation.id}`;
+
+  const toggleTextExpansion = () => {
+    const nextExpanded = !effectiveIsExpanded;
+    onTextExpandedChange?.(citation.id, nextExpanded);
+    if (isTextExpanded === undefined) {
+      setIsExpanded(nextExpanded);
+    }
+  };
 
   const adjustHeight = (ref: React.RefObject<HTMLTextAreaElement>) => {
     if (ref.current) {
@@ -87,6 +96,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   useEffect(() => {
     if (isTextExpanded !== undefined) return;
     setIsExpanded(false);
+    setCollapsedTextEnd(null);
   }, [citation.id, citation.text, isTextExpanded]);
 
   useEffect(() => {
@@ -111,9 +121,56 @@ export const CitationCard: React.FC<CitationCardProps> = ({
     };
 
     const checkOverflow = () => {
-      const nextIsOverflowing = quote.scrollHeight - getCollapsedQuoteHeight() > 1;
+      const collapsedHeight = getCollapsedQuoteHeight();
+      const measure = document.createElement('div');
+      measure.dataset.testid = 'citation-text';
+      const styles = window.getComputedStyle(quote);
+      Object.assign(measure.style, {
+        position: 'absolute',
+        visibility: 'hidden',
+        pointerEvents: 'none',
+        zIndex: '-1',
+        top: '-9999px',
+        left: '-9999px',
+        width: `${quote.clientWidth}px`,
+        boxSizing: 'border-box',
+        whiteSpace: 'pre-wrap',
+        overflowWrap: styles.overflowWrap,
+        wordBreak: styles.wordBreak,
+        fontFamily: styles.fontFamily,
+        fontSize: styles.fontSize,
+        fontWeight: styles.fontWeight,
+        letterSpacing: styles.letterSpacing,
+        lineHeight: styles.lineHeight,
+      });
+      document.body.appendChild(measure);
+
+      measure.textContent = citation.text;
+      const fullHeight = measure.scrollHeight;
+      const nextIsOverflowing = fullHeight - collapsedHeight > 1;
       setIsOverflowing(nextIsOverflowing);
       onTextOverflowChange?.(citation.id, nextIsOverflowing);
+
+      if (!nextIsOverflowing || effectiveIsExpanded) {
+        setCollapsedTextEnd(null);
+        measure.remove();
+        return;
+      }
+
+      let low = 0;
+      let high = citation.text.length;
+      while (low <= high) {
+        const mid = Math.floor((low + high) / 2);
+        measure.textContent = `${citation.text.slice(0, mid).trimEnd()}...More`;
+        if (measure.scrollHeight <= collapsedHeight + 1) {
+          low = mid + 1;
+        } else {
+          high = mid - 1;
+        }
+      }
+
+      setCollapsedTextEnd(Math.max(0, high));
+      measure.remove();
     };
 
     checkOverflow();
@@ -289,9 +346,11 @@ export const CitationCard: React.FC<CitationCardProps> = ({
     onUpdate(citation.id, { highlights: updatedHighlights });
   };
 
-  const renderHighlightedText = () => {
+  const renderHighlightedText = (endIndex = citation.text.length) => {
+    const boundedEndIndex = Math.max(0, Math.min(endIndex, citation.text.length));
+
     if (!localHighlights || localHighlights.length === 0) {
-      return citation.text;
+      return citation.text.slice(0, boundedEndIndex);
     }
 
     const sorted = [...localHighlights].sort((a, b) => a.start - b.start);
@@ -299,9 +358,12 @@ export const CitationCard: React.FC<CitationCardProps> = ({
     let lastIndex = 0;
 
     sorted.forEach((hl) => {
+      if (hl.start >= boundedEndIndex) return;
+
       if (hl.start > lastIndex) {
-        segments.push(citation.text.slice(lastIndex, hl.start));
+        segments.push(citation.text.slice(lastIndex, Math.min(hl.start, boundedEndIndex)));
       }
+      const highlightEnd = Math.min(hl.end, boundedEndIndex);
       segments.push(
         <mark
           key={hl.id}
@@ -313,14 +375,14 @@ export const CitationCard: React.FC<CitationCardProps> = ({
           }}
           title="Click to remove highlight"
         >
-          {citation.text.slice(hl.start, hl.end)}
+          {citation.text.slice(hl.start, highlightEnd)}
         </mark>
       );
-      lastIndex = hl.end;
+      lastIndex = highlightEnd;
     });
 
-    if (lastIndex < citation.text.length) {
-      segments.push(citation.text.slice(lastIndex));
+    if (lastIndex < boundedEndIndex) {
+      segments.push(citation.text.slice(lastIndex, boundedEndIndex));
     }
 
     return segments;
@@ -373,6 +435,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   const hasProjectChips = projectChips.length > 0;
 
   const notesButtonLabel = `Notes ${citation.notes.length}`;
+  const shouldShowInlineMore = isOverflowing && !effectiveIsExpanded && collapsedTextEnd !== null;
 
   return (
     <div
@@ -450,31 +513,37 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                 data-testid="citation-text"
                 className={[
                   'citation-copy type-body relative z-10 select-text whitespace-pre-wrap text-[var(--text-main)] leading-[1.55]',
-                  effectiveIsExpanded ? 'mb-1.5' : 'mb-1.5 line-clamp-2 lg:line-clamp-3'
+                  effectiveIsExpanded || shouldShowInlineMore ? 'mb-1.5' : 'mb-1.5 line-clamp-2 lg:line-clamp-3'
                 ].join(' ')}
                 onMouseUp={handleTextSelection}
               >
-                {renderHighlightedText()}
+                {renderHighlightedText(shouldShowInlineMore ? collapsedTextEnd : undefined)}
+                {shouldShowInlineMore ? (
+                  <button
+                    type="button"
+                    onClick={toggleTextExpansion}
+                    className="type-label-bounded ml-0.5 inline text-[0.82rem] text-[var(--accent)] underline-offset-2 transition-colors hover:text-[var(--accent-strong)] hover:underline active:scale-95"
+                    aria-label="More"
+                    aria-controls={quoteId}
+                    aria-expanded={false}
+                  >
+                    ...More
+                  </button>
+                ) : null}
               </blockquote>
 
-              {isOverflowing && (
+              {isOverflowing && effectiveIsExpanded ? (
                 <button
                   type="button"
-                  onClick={() => {
-                    const nextExpanded = !effectiveIsExpanded;
-                    onTextExpandedChange?.(citation.id, nextExpanded);
-                    if (isTextExpanded === undefined) {
-                      setIsExpanded(nextExpanded);
-                    }
-                  }}
+                  onClick={toggleTextExpansion}
                   className="type-label-bounded mb-2 text-[0.82rem] text-[var(--text-muted)] underline-offset-2 hover:text-[var(--text-main)] hover:underline"
-                  aria-label={effectiveIsExpanded ? 'Less' : 'More'}
+                  aria-label="Less"
                   aria-controls={quoteId}
-                  aria-expanded={effectiveIsExpanded}
+                  aria-expanded={true}
                 >
-                  {effectiveIsExpanded ? 'Less' : 'More'}
+                  Less
                 </button>
-              )}
+              ) : null}
 
               <div className="mt-2 border-t border-[var(--border-main)]/70 pt-1.5">
                 <div className="flex flex-wrap items-center gap-1.5">

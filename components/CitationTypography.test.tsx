@@ -624,8 +624,8 @@ describe('Citation typography', () => {
 
     const moreButton = await screen.findByRole('button', { name: /more/i });
     expect(moreButton).not.toBeNull();
-    expect(screen.getByTestId('citation-text').className).toContain('line-clamp-2');
-    expect(screen.getByTestId('citation-text').className).toContain('lg:line-clamp-3');
+    expect(moreButton.textContent).toBe('...More');
+    expect(screen.getByTestId('citation-text').textContent).toContain('...More');
   });
 
   it('expands long citations when the More action is pressed', async () => {
