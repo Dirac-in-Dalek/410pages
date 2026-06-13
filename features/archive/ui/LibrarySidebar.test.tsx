@@ -24,8 +24,11 @@ describe('LibrarySidebar', () => {
     );
 
     await user.click(screen.getByRole('button', { name: '새 책 읽기' }));
-    await user.type(screen.getByLabelText('저자'), 'Ursula K. Le Guin');
+    expect(screen.getByLabelText('책 제목').compareDocumentPosition(screen.getByLabelText('저자'))).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING
+    );
     await user.type(screen.getByLabelText('책 제목'), 'The Dispossessed');
+    await user.type(screen.getByLabelText('저자'), 'Ursula K. Le Guin');
     await user.click(screen.getByRole('button', { name: '시작' }));
 
     await waitFor(() => {
@@ -55,8 +58,8 @@ describe('LibrarySidebar', () => {
     );
 
     await user.click(screen.getByRole('button', { name: '새 책 읽기' }));
-    await user.type(screen.getByLabelText('저자'), 'Ursula K. Le Guin');
     await user.type(screen.getByLabelText('책 제목'), 'The Dispossessed');
+    await user.type(screen.getByLabelText('저자'), 'Ursula K. Le Guin');
     await user.click(screen.getByRole('button', { name: '시작' }));
 
     await waitFor(() => {
