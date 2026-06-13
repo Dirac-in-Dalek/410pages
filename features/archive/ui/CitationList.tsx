@@ -50,13 +50,13 @@ export const CitationList: React.FC<CitationListProps> = ({
               id: citation.id,
               citation,
           }));
-    const visibleCitationIdsKey = bookViewItems
+    const visibleCitationIds = bookViewItems
         .filter((item) => item.type === 'citation')
-        .map((item) => item.id)
-        .join('\u0000');
-    const hasExpandableCitations = overflowingCitationIds.size > 0;
-    const allExpandableCitationsExpanded =
-        hasExpandableCitations && [...overflowingCitationIds].every((id) => expandedCitationIds.has(id));
+        .map((item) => item.id);
+    const visibleCitationIdsKey = visibleCitationIds.join('\u0000');
+    const hasVisibleCitations = visibleCitationIds.length > 0;
+    const allVisibleCitationsExpanded =
+        hasVisibleCitations && visibleCitationIds.every((id) => expandedCitationIds.has(id));
 
     const handleTextOverflowChange = useCallback((id: string, isOverflowing: boolean) => {
         setOverflowingCitationIds((prev) => {
@@ -72,15 +72,6 @@ export const CitationList: React.FC<CitationListProps> = ({
             return next;
         });
 
-        if (!isOverflowing) {
-            setExpandedCitationIds((prev) => {
-                if (!prev.has(id)) return prev;
-
-                const next = new Set(prev);
-                next.delete(id);
-                return next;
-            });
-        }
     }, []);
 
     const handleTextExpandedChange = useCallback((id: string, isExpanded: boolean) => {
@@ -101,10 +92,10 @@ export const CitationList: React.FC<CitationListProps> = ({
     const handleToggleAllCitationText = () => {
         setExpandedCitationIds((prev) => {
             const next = new Set(prev);
-            if (allExpandableCitationsExpanded) {
-                overflowingCitationIds.forEach((id) => next.delete(id));
+            if (allVisibleCitationsExpanded) {
+                visibleCitationIds.forEach((id) => next.delete(id));
             } else {
-                overflowingCitationIds.forEach((id) => next.add(id));
+                visibleCitationIds.forEach((id) => next.add(id));
             }
             return next;
         });
@@ -175,17 +166,17 @@ export const CitationList: React.FC<CitationListProps> = ({
 
     return (
         <div className="w-full">
-            {hasExpandableCitations ? (
+            {hasVisibleCitations ? (
             <div className="mb-2 flex justify-end">
                 <button
                     type="button"
                     aria-label="Toggle all citations"
-                    aria-pressed={allExpandableCitationsExpanded}
+                    aria-pressed={allVisibleCitationsExpanded}
                     onClick={handleToggleAllCitationText}
                     className="type-label-bounded inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-[var(--border-main)] bg-[var(--bg-card)] px-3 py-1.5 text-[0.82rem] font-medium text-[var(--text-muted)] shadow-sm transition-all hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)] active:scale-95"
                 >
-                    {allExpandableCitationsExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                    {allExpandableCitationsExpanded ? 'Collapse all' : 'Expand all'}
+                    {allVisibleCitationsExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                    {allVisibleCitationsExpanded ? 'Collapse all' : 'Expand all'}
                 </button>
             </div>
             ) : null}

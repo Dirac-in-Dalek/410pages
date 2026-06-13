@@ -109,7 +109,7 @@ describe('CitationList expand all', () => {
     expect(screen.getAllByTestId('citation-text').every((node) => node.className.includes('line-clamp-2'))).toBe(true);
   });
 
-  it('hides the bulk control when no citation has a More action', () => {
+  it('shows the bulk control when citations are visible even if none has a More action', () => {
     render(
       <CitationList
         {...baseProps}
@@ -120,7 +120,7 @@ describe('CitationList expand all', () => {
       />
     );
 
-    expect(screen.queryByRole('button', { name: 'Toggle all citations' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Toggle all citations' })).toBeTruthy();
   });
 
   it('does not create a per-card Less action for short citations during bulk expansion', async () => {
@@ -219,7 +219,7 @@ describe('CitationList expand all', () => {
 
     await waitFor(() => {
       expect(screen.queryByRole('button', { name: 'Less' })).toBeNull();
-      expect(screen.queryByRole('button', { name: 'Toggle all citations' })).toBeNull();
+      expect(screen.getByRole('button', { name: 'Toggle all citations' }).getAttribute('aria-pressed')).toBe('true');
     });
   });
 });
