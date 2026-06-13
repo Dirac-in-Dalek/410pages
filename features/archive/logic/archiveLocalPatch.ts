@@ -1,6 +1,5 @@
 import type {
   ChapterBlock,
-  BookSource,
   Citation,
   Note,
   Project,
@@ -10,6 +9,8 @@ import type {
   RenameAuthorMutationResult,
   RenameBookMutationResult,
 } from '../contract/archiveMutationContract';
+
+const toIdSet = (ids: string | string[]) => new Set(Array.isArray(ids) ? ids : [ids]);
 
 export const prependCitation = (citations: Citation[], citation: Citation) => [citation, ...citations];
 
@@ -56,7 +57,7 @@ export const removeCitationsFromProjects = (
   projects: Project[],
   citationIds: string | string[]
 ) => {
-  const deletedIdSet = new Set(Array.isArray(citationIds) ? citationIds : [citationIds]);
+  const deletedIdSet = toIdSet(citationIds);
 
   return projects.map((project) => ({
     ...project,
@@ -64,46 +65,30 @@ export const removeCitationsFromProjects = (
   }));
 };
 
-export const removeCitationFromProjects = (projects: Project[], citationId: string) =>
-  removeCitationsFromProjects(projects, citationId);
-
-export const deleteBookSource = (books: BookSource[], bookId: string) =>
-  books.filter((book) => book.id !== bookId);
-
-export const deleteBookSourcesByAuthorId = (books: BookSource[], authorId: string) =>
-  books.filter((book) => book.authorId !== authorId);
-
-export const deleteCitationsByBookId = (citations: Citation[], bookId: string) =>
-  citations.filter((citation) => citation.bookId !== bookId);
-
-export const deleteCitationsByAuthorId = (citations: Citation[], authorId: string) =>
-  citations.filter((citation) => citation.authorId !== authorId);
+export const isCitationOwnedByAuthorOrBookIds = (
+  citation: Citation,
+  authorId: string,
+  bookIds: ReadonlySet<string>
+) => citation.authorId === authorId || bookIds.has(citation.bookId || '');
 
 export const deleteCitationsByAuthorIdOrBookIds = (
   citations: Citation[],
   authorId: string,
-  bookIds: string[]
-) => {
-  const deletedBookIdSet = new Set(bookIds);
-  return citations.filter(
-    (citation) => citation.authorId !== authorId && !deletedBookIdSet.has(citation.bookId || '')
+  bookIds: ReadonlySet<string>
+) =>
+  citations.filter(
+    (citation) => !isCitationOwnedByAuthorOrBookIds(citation, authorId, bookIds)
   );
-};
 
 export const deleteChapterBlocksForBooks = (
   current: ChapterBlocksByBook,
   bookIds: string | string[]
 ) => {
-  const deletedBookIdSet = new Set(Array.isArray(bookIds) ? bookIds : [bookIds]);
+  const deletedBookIdSet = toIdSet(bookIds);
   return Object.fromEntries(
     Object.entries(current).filter(([bookId]) => !deletedBookIdSet.has(bookId))
   );
 };
-
-export const deleteChapterBlocksForBook = (
-  current: ChapterBlocksByBook,
-  bookId: string
-) => deleteChapterBlocksForBooks(current, bookId);
 
 export const patchCitation = (
   citations: Citation[],
@@ -121,17 +106,6 @@ export const patchCitations = (
     updatedIdSet.has(citation.id) ? { ...citation, ...patch } : citation
   );
 };
-
-export const appendProject = (projects: Project[], project: Project) => [...projects, project];
-
-export const appendBookSource = (books: BookSource[], book: BookSource) =>
-  books.some((entry) => entry.id === book.id) ? books : [...books, book];
-
-export const renameProject = (projects: Project[], projectId: string, name: string) =>
-  projects.map((project) => (project.id === projectId ? { ...project, name } : project));
-
-export const deleteProject = (projects: Project[], projectId: string) =>
-  projects.filter((project) => project.id !== projectId);
 
 export const applyRenameAuthorToCitations = (
   citations: Citation[],

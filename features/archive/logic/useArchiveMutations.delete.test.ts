@@ -68,6 +68,8 @@ const block = (overrides: Partial<ChapterBlock> & Pick<ChapterBlock, 'id' | 'boo
   ...overrides,
 });
 
+const ids = <T extends { id: string }>(entries: T[]) => entries.map((entry) => entry.id);
+
 const renderMutationHook = () => {
   const fetchData = vi.fn().mockResolvedValue(undefined);
   const rendered = renderHook(() => {
@@ -106,6 +108,19 @@ const renderMutationHook = () => {
   return { ...rendered, fetchData };
 };
 
+type MutationHookState = ReturnType<typeof renderMutationHook>['result']['current'];
+
+const expectOnlyBook2State = (
+  state: MutationHookState,
+  fetchData: ReturnType<typeof vi.fn>
+) => {
+  expect(ids(state.books)).toEqual(['book-2']);
+  expect(ids(state.citations)).toEqual(['citation-2']);
+  expect(state.projects[0].citationIds).toEqual(['citation-2']);
+  expect(Object.keys(state.chapterBlocksByBook)).toEqual(['book-2']);
+  expect(fetchData).toHaveBeenCalled();
+};
+
 describe('useArchiveMutations delete handlers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -121,11 +136,7 @@ describe('useArchiveMutations delete handlers', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.books.map((entry) => entry.id)).toEqual(['book-2']);
-      expect(result.current.citations.map((entry) => entry.id)).toEqual(['citation-2']);
-      expect(result.current.projects[0].citationIds).toEqual(['citation-2']);
-      expect(Object.keys(result.current.chapterBlocksByBook)).toEqual(['book-2']);
-      expect(fetchData).toHaveBeenCalled();
+      expectOnlyBook2State(result.current, fetchData);
     });
   });
 
@@ -137,11 +148,7 @@ describe('useArchiveMutations delete handlers', () => {
     });
 
     await waitFor(() => {
-      expect(result.current.books.map((entry) => entry.id)).toEqual(['book-2']);
-      expect(result.current.citations.map((entry) => entry.id)).toEqual(['citation-2']);
-      expect(result.current.projects[0].citationIds).toEqual(['citation-2']);
-      expect(Object.keys(result.current.chapterBlocksByBook)).toEqual(['book-2']);
-      expect(fetchData).toHaveBeenCalled();
+      expectOnlyBook2State(result.current, fetchData);
     });
   });
 });
