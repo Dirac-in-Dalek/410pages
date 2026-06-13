@@ -25,7 +25,7 @@ const AppShell: React.FC = () => {
     handleUpdateUsername, handleUpdateAvatar, handleSignOut
   } = useAuthStatus();
   const { preferences, setTheme, setFontFamily, setBaseFontPt, setCitationWidthRem } =
-    useUserPreferences(session?.user?.id ?? null);
+    useUserPreferences(session?.user?.id ?? null, { documentThemeOverride: session ? null : 'day' });
 
   const {
     projects, setProjects, citations, setCitations, books, chapterBlocksByBook, loading: dataLoading,

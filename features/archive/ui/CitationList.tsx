@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { ChapterBlockCard } from '../../../components/ChapterBlockCard';
 import { ChapterBlockInsertButton } from '../../../components/ChapterBlockInsertButton';
 import {
@@ -35,6 +36,8 @@ export const CitationList: React.FC<CitationListProps> = ({
     onDeleteChapterBlock,
 }) => {
     const [activeInsertId, setActiveInsertId] = useState<string | null>(null);
+    const [overflowingCitationIds, setOverflowingCitationIds] = useState<Set<string>>(() => new Set());
+    const [expandedCitationIds, setExpandedCitationIds] = useState<Set<string>>(() => new Set());
     const bookId = chapterBlocks[0]?.bookId ?? citations.find((citation) => citation.bookId)?.bookId;
     const currentSortField: 'date' | 'page' = sortField ?? 'page';
     const currentDateDirection: 'asc' | 'desc' = dateDirection ?? 'desc';
@@ -47,6 +50,77 @@ export const CitationList: React.FC<CitationListProps> = ({
               id: citation.id,
               citation,
           }));
+    const visibleCitationIdsKey = bookViewItems
+        .filter((item) => item.type === 'citation')
+        .map((item) => item.id)
+        .join('\u0000');
+    const hasExpandableCitations = overflowingCitationIds.size > 0;
+    const allExpandableCitationsExpanded =
+        hasExpandableCitations && [...overflowingCitationIds].every((id) => expandedCitationIds.has(id));
+
+    const handleTextOverflowChange = useCallback((id: string, isOverflowing: boolean) => {
+        setOverflowingCitationIds((prev) => {
+            const alreadyTracked = prev.has(id);
+            if (alreadyTracked === isOverflowing) return prev;
+
+            const next = new Set(prev);
+            if (isOverflowing) {
+                next.add(id);
+            } else {
+                next.delete(id);
+            }
+            return next;
+        });
+
+        if (!isOverflowing) {
+            setExpandedCitationIds((prev) => {
+                if (!prev.has(id)) return prev;
+
+                const next = new Set(prev);
+                next.delete(id);
+                return next;
+            });
+        }
+    }, []);
+
+    const handleTextExpandedChange = useCallback((id: string, isExpanded: boolean) => {
+        setExpandedCitationIds((prev) => {
+            const alreadyExpanded = prev.has(id);
+            if (alreadyExpanded === isExpanded) return prev;
+
+            const next = new Set(prev);
+            if (isExpanded) {
+                next.add(id);
+            } else {
+                next.delete(id);
+            }
+            return next;
+        });
+    }, []);
+
+    const handleToggleAllCitationText = () => {
+        setExpandedCitationIds((prev) => {
+            const next = new Set(prev);
+            if (allExpandableCitationsExpanded) {
+                overflowingCitationIds.forEach((id) => next.delete(id));
+            } else {
+                overflowingCitationIds.forEach((id) => next.add(id));
+            }
+            return next;
+        });
+    };
+
+    useEffect(() => {
+        const visibleIds = new Set(visibleCitationIdsKey ? visibleCitationIdsKey.split('\u0000') : []);
+        setOverflowingCitationIds((prev) => {
+            const next = new Set([...prev].filter((id) => visibleIds.has(id)));
+            return next.size === prev.size ? prev : next;
+        });
+        setExpandedCitationIds((prev) => {
+            const next = new Set([...prev].filter((id) => visibleIds.has(id)));
+            return next.size === prev.size ? prev : next;
+        });
+    }, [visibleCitationIdsKey]);
 
     const buildChapterBlockInput = (
         leftItem?: { pageSort?: number; createdAtSort: number },
@@ -101,6 +175,20 @@ export const CitationList: React.FC<CitationListProps> = ({
 
     return (
         <div className="w-full">
+            {hasExpandableCitations ? (
+            <div className="mb-2 flex justify-end">
+                <button
+                    type="button"
+                    aria-label="Toggle all citations"
+                    aria-pressed={allExpandableCitationsExpanded}
+                    onClick={handleToggleAllCitationText}
+                    className="type-label-bounded inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-[var(--border-main)] bg-[var(--bg-card)] px-3 py-1.5 text-[0.82rem] font-medium text-[var(--text-muted)] shadow-sm transition-all hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)] active:scale-95"
+                >
+                    {allExpandableCitationsExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                    {allExpandableCitationsExpanded ? 'Collapse all' : 'Expand all'}
+                </button>
+            </div>
+            ) : null}
             <div className="flex flex-col">
                 {bookViewItems.map((item, index) => {
                     const citation = item.type === 'citation' ? item.citation : undefined;
@@ -120,6 +208,9 @@ export const CitationList: React.FC<CitationListProps> = ({
                                     username={username}
                                     selectedFilter={selectedFilter}
                                     projectNames={citationProjects}
+                                    isTextExpanded={expandedCitationIds.has(item.citation.id)}
+                                    onTextExpandedChange={handleTextExpandedChange}
+                                    onTextOverflowChange={handleTextOverflowChange}
                                     isSelected={selectedIds.has(item.citation.id)}
                                     onToggleSelect={onToggleSelect}
                                     onAddNote={onAddNote}

@@ -11,8 +11,8 @@ export const ChapterBlockCard: React.FC<ChapterBlockCardProps> = ({ id, label, o
   return (
     <div className="group mx-1 my-0.5 flex items-center gap-2">
       <div className="h-px flex-1 bg-[var(--border-main)]" />
-      <div className="inline-flex min-w-0 items-center gap-1.5 px-1">
-        <span className="type-label-bounded max-w-[14rem] truncate text-[0.76rem] font-medium text-[var(--text-muted)]">
+      <div className="inline-flex min-w-0 max-w-[calc(100%-5rem)] items-center gap-1.5 px-1">
+        <span className="type-label-bounded min-w-0 whitespace-normal break-words text-center text-[0.76rem] font-medium text-[var(--text-muted)]">
           {label}
         </span>
         <button
