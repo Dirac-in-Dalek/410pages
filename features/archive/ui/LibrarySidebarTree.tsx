@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Book, Edit2, User } from 'lucide-react';
+import { Book, Edit2, Trash2, User } from 'lucide-react';
 import type { SidebarItem } from '../../../types';
 import {
   createDefaultExpandedLibraryNodes,
@@ -25,6 +25,7 @@ import {
   setLibraryTreeDragMeta,
 } from './librarySidebarDnd';
 import {
+  EditorialDangerConfirm,
   EditorialIconActionButton,
   EditorialInlineRenameField,
 } from '../../../shared/ui/sidebar/SidebarControls';
@@ -37,6 +38,8 @@ type LibrarySidebarTreeProps = Pick<
   | 'onReorderBookAt'
   | 'onRenameAuthor'
   | 'onRenameBook'
+  | 'onDeleteAuthor'
+  | 'onDeleteBook'
 > & {
   headerContent?: React.ReactNode;
 };
@@ -48,6 +51,8 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
   onReorderBookAt,
   onRenameAuthor,
   onRenameBook,
+  onDeleteAuthor,
+  onDeleteBook,
   headerContent,
 }) => {
   const [expandedNodes, setExpandedNodes] = useState(createDefaultExpandedLibraryNodes);
@@ -57,10 +62,17 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
   const [dragCenterOffsetY, setDragCenterOffsetY] = useState(0);
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<{
+    itemId: string;
+    type: 'author' | 'book';
+    id: string;
+    label: string;
+  } | null>(null);
 
   const startNodeEdit = (item: SidebarItem, event: React.MouseEvent) => {
     event.stopPropagation();
     if (item.type !== 'author' && item.type !== 'book') return;
+    setDeleteTarget(null);
     setEditingNodeId(item.id);
     setEditingValue(item.label);
   };
@@ -85,6 +97,49 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
     }
 
     cancelNodeEdit();
+  };
+
+  const startNodeDelete = (item: SidebarItem, event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (item.type === 'author' && item.data?.authorId) {
+      cancelNodeEdit();
+      setDeleteTarget({
+        itemId: item.id,
+        type: 'author',
+        id: item.data.authorId,
+        label: item.label,
+      });
+    }
+    if (item.type === 'book' && item.data?.bookId) {
+      cancelNodeEdit();
+      setDeleteTarget({
+        itemId: item.id,
+        type: 'book',
+        id: item.data.bookId,
+        label: item.label,
+      });
+    }
+  };
+
+  const confirmNodeDelete = () => {
+    if (!deleteTarget) return;
+
+    if (deleteTarget.type === 'author') {
+      onDeleteAuthor?.(deleteTarget.id);
+    } else {
+      onDeleteBook?.(deleteTarget.id);
+    }
+
+    setDeleteTarget(null);
+  };
+
+  const getDeleteMessage = () => {
+    if (!deleteTarget) return '';
+    const scope =
+      deleteTarget.type === 'author'
+        ? '이 저자의 책과 인용문도 함께 삭제됩니다.'
+        : '이 책의 인용문과 챕터 구분도 함께 삭제됩니다.';
+    return `${deleteTarget.label} 삭제. ${scope}`;
   };
 
   const toggleNode = (id: string, event: React.MouseEvent) => {
@@ -353,6 +408,10 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
       : item.label;
     const isBookRow = item.type === 'book';
     const isRootRow = item.type === 'root';
+    const canDeleteAuthor = item.type === 'author' && Boolean(item.data?.authorId && onDeleteAuthor);
+    const canDeleteBook = item.type === 'book' && Boolean(item.data?.bookId && onDeleteBook);
+    const canDelete = canDeleteAuthor || canDeleteBook;
+    const isDeleteTarget = deleteTarget?.itemId === item.id;
 
     return (
       <div
@@ -453,9 +512,35 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
                   <Edit2 size={12} />
                 </EditorialIconActionButton>
               )}
+              {canDelete && (
+                <EditorialIconActionButton
+                  danger
+                  onClick={(event) => startNodeDelete(item, event)}
+                  className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                  ariaLabel={`Delete ${item.type}`}
+                >
+                  <Trash2 size={12} />
+                </EditorialIconActionButton>
+              )}
             </>
           )}
         </LibraryTreeRow>
+
+        {isDeleteTarget && (
+          <div
+            className="pl-3 pr-1"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <EditorialDangerConfirm
+              message={getDeleteMessage()}
+              confirmLabel="삭제"
+              confirmAriaLabel={`Confirm delete ${deleteTarget.type}`}
+              cancelLabel="취소"
+              onConfirm={confirmNodeDelete}
+              onCancel={() => setDeleteTarget(null)}
+            />
+          </div>
+        )}
 
         {item.type !== 'root' && item.children?.length && isExpanded && (
           <div>{renderTree(item.children, depth + 1, item.data?.authorId)}</div>

@@ -38,6 +38,8 @@ export const createMainLayoutProps = (
   onDeleteProject: input.onDeleteProject,
   onRenameAuthor: input.onRenameAuthor,
   onRenameBook: input.onRenameBook,
+  onDeleteAuthor: input.onDeleteAuthor,
+  onDeleteBook: input.onDeleteBook,
   onCreateBook: input.onCreateBook,
   onReorderProjects: input.onReorderProjects,
   treeData: input.treeData,

@@ -14,6 +14,8 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
   onReorderBookAt,
   onRenameAuthor,
   onRenameBook,
+  onDeleteAuthor,
+  onDeleteBook,
   width,
   isResizing,
   onStartResize,
@@ -51,6 +53,8 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
         onReorderBookAt={onReorderBookAt}
         onRenameAuthor={onRenameAuthor}
         onRenameBook={onRenameBook}
+        onDeleteAuthor={onDeleteAuthor}
+        onDeleteBook={onDeleteBook}
         headerContent={
           <div className="mb-5">
             {onCreateBook && (

@@ -106,6 +106,8 @@ export interface MainLayoutFactoryInput {
   onDeleteProject: (id: string) => void;
   onRenameAuthor: (authorId: string, name: string) => void;
   onRenameBook: (bookId: string, name: string) => void;
+  onDeleteAuthor: (authorId: string) => void;
+  onDeleteBook: (bookId: string) => void;
   onCreateBook: (input: CreateBookInput) => Promise<unknown> | unknown;
   onReorderProjects: (dragIndex: number, hoverIndex: number) => void;
   treeData: SidebarItem[];

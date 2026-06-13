@@ -11,8 +11,16 @@ import type {
   CreateChapterBlockInput,
   Project,
 } from '../../../types';
-import { renameAuthor as renameAuthorRecord } from '../../../shared/api/authorApi';
-import { createBook as createBookRecord, renameBook as renameBookRecord, type RenameBookResult } from '../../../shared/api/bookApi';
+import {
+  deleteAuthor as deleteAuthorRecord,
+  renameAuthor as renameAuthorRecord,
+} from '../../../shared/api/authorApi';
+import {
+  createBook as createBookRecord,
+  deleteBook as deleteBookRecord,
+  renameBook as renameBookRecord,
+  type RenameBookResult,
+} from '../../../shared/api/bookApi';
 import {
   createChapterBlock as createChapterBlockRecord,
   deleteChapterBlock as deleteChapterBlockRecord,
@@ -46,14 +54,20 @@ import {
   appendProject,
   attachCitationToProject,
   deleteChapterBlock,
+  deleteChapterBlocksForBooks,
   deleteCitationById,
   deleteCitationNote,
+  deleteBookSource,
+  deleteBookSourcesByAuthorId,
+  deleteCitationsByAuthorIdOrBookIds,
+  deleteCitationsByBookId,
   deleteProject,
   patchCitation,
   patchCitations,
   prependCitation,
   replaceCitationById,
   removeCitationFromProjects,
+  removeCitationsFromProjects,
   renameProject,
   reorderProjectsLocally,
   applyRenameAuthorToCitations,
@@ -71,6 +85,7 @@ type UseArchiveMutationsOptions = {
   session: ArchiveSession;
   projects: Project[];
   citations: Citation[];
+  books: BookSource[];
   setProjects: Dispatch<SetStateAction<Project[]>>;
   setCitations: Dispatch<SetStateAction<Citation[]>>;
   setBooks: Dispatch<SetStateAction<BookSource[]>>;
@@ -92,6 +107,7 @@ export const useArchiveMutations = ({
   session,
   projects,
   citations,
+  books,
   setProjects,
   setCitations,
   setBooks,
@@ -426,6 +442,62 @@ export const useArchiveMutations = ({
     [session, setCitations]
   );
 
+  const handleDeleteBook = useCallback(
+    async (bookId: string) => {
+      if (!session) {
+        return;
+      }
+
+      const deletedCitationIds = citations
+        .filter((citation) => citation.bookId === bookId)
+        .map((citation) => citation.id);
+
+      try {
+        await deleteBookRecord(session.user.id, bookId);
+        setBooks((current) => deleteBookSource(current, bookId));
+        setCitations((current) => deleteCitationsByBookId(current, bookId));
+        setProjects((current) => removeCitationsFromProjects(current, deletedCitationIds));
+        setChapterBlocksByBook((current) => deleteChapterBlocksForBooks(current, bookId));
+        await fetchData();
+      } catch (error) {
+        console.error('Error deleting book:', error);
+      }
+    },
+    [citations, fetchData, session, setBooks, setChapterBlocksByBook, setCitations, setProjects]
+  );
+
+  const handleDeleteAuthor = useCallback(
+    async (authorId: string) => {
+      if (!session) {
+        return;
+      }
+
+      const deletedBookIds = books
+        .filter((book) => book.authorId === authorId)
+        .map((book) => book.id);
+      const deletedCitationIds = citations
+        .filter(
+          (citation) =>
+            citation.authorId === authorId || deletedBookIds.includes(citation.bookId || '')
+        )
+        .map((citation) => citation.id);
+
+      try {
+        await deleteAuthorRecord(session.user.id, authorId);
+        setBooks((current) => deleteBookSourcesByAuthorId(current, authorId));
+        setCitations((current) =>
+          deleteCitationsByAuthorIdOrBookIds(current, authorId, deletedBookIds)
+        );
+        setProjects((current) => removeCitationsFromProjects(current, deletedCitationIds));
+        setChapterBlocksByBook((current) => deleteChapterBlocksForBooks(current, deletedBookIds));
+        await fetchData();
+      } catch (error) {
+        console.error('Error deleting author:', error);
+      }
+    },
+    [books, citations, fetchData, session, setBooks, setChapterBlocksByBook, setCitations, setProjects]
+  );
+
   const handleCreateChapterBlock = useCallback(
     async (input: CreateChapterBlockInput) => {
       if (!session) {
@@ -522,6 +594,8 @@ export const useArchiveMutations = ({
     handleDeleteProject,
     handleRenameAuthor,
     handleRenameBook,
+    handleDeleteAuthor,
+    handleDeleteBook,
     handleCreateChapterBlock,
     handleDeleteChapterBlock,
     handleReorderProjects,

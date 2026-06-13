@@ -31,10 +31,17 @@ const profileQuery = {
 const mockAuthorsMaybeSingle = vi.fn();
 const mockAuthorsEq = vi.fn(() => authorsQuery);
 const mockAuthorsSelect = vi.fn(() => authorsQuery);
+const mockAuthorsDeleteEq = vi.fn();
+const mockAuthorsDeleteSelect = vi.fn();
+const mockAuthorsDeleteSingle = vi.fn();
+const mockAuthorsDelete = vi.fn(() => ({
+  eq: mockAuthorsDeleteEq,
+}));
 const authorsQuery = {
   select: mockAuthorsSelect,
   eq: mockAuthorsEq,
   maybeSingle: mockAuthorsMaybeSingle,
+  delete: mockAuthorsDelete,
 };
 const mockBooksSingle = vi.fn();
 const mockBooksInsertSelect = vi.fn(() => ({
@@ -48,6 +55,12 @@ const mockBooksLimit = vi.fn(() => booksQuery);
 const mockBooksOrder = vi.fn(() => booksQuery);
 const mockBooksEq = vi.fn(() => booksQuery);
 const mockBooksSelect = vi.fn(() => booksQuery);
+const mockBooksDeleteEq = vi.fn();
+const mockBooksDeleteSelect = vi.fn();
+const mockBooksDeleteSingle = vi.fn();
+const mockBooksDelete = vi.fn(() => ({
+  eq: mockBooksDeleteEq,
+}));
 const booksQuery = {
   select: mockBooksSelect,
   eq: mockBooksEq,
@@ -55,6 +68,7 @@ const booksQuery = {
   limit: mockBooksLimit,
   maybeSingle: mockBooksMaybeSingle,
   insert: mockBooksInsert,
+  delete: mockBooksDelete,
 };
 const chapterBlocksQuery = {
   select: mockChapterBlocksSelect,
@@ -297,6 +311,68 @@ describe('api.createBook', () => {
       author: 'Author A',
       sortIndex: 3,
     });
+  });
+});
+
+describe('api.deleteBook', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockBooksDeleteEq
+      .mockReturnValueOnce({ eq: mockBooksDeleteEq })
+      .mockReturnValueOnce({ select: mockBooksDeleteSelect });
+    mockBooksDeleteSelect.mockReturnValue({ single: mockBooksDeleteSingle });
+    mockBooksDeleteSingle.mockResolvedValue({ data: { id: 'book-1' }, error: null });
+  });
+
+  it('deletes a book scoped to the current user', async () => {
+    await api.deleteBook('user-1', 'book-1');
+
+    expect(mockChapterBlocksFrom).toHaveBeenCalledWith('books');
+    expect(mockBooksDelete).toHaveBeenCalled();
+    expect(mockBooksDeleteEq).toHaveBeenNthCalledWith(1, 'id', 'book-1');
+    expect(mockBooksDeleteEq).toHaveBeenNthCalledWith(2, 'user_id', 'user-1');
+    expect(mockBooksDeleteSelect).toHaveBeenCalledWith('id');
+    expect(mockBooksDeleteSingle).toHaveBeenCalled();
+  });
+
+  it('throws when no book row was deleted', async () => {
+    mockBooksDeleteSingle.mockResolvedValueOnce({
+      data: null,
+      error: new Error('0 rows'),
+    });
+
+    await expect(api.deleteBook('user-1', 'missing-book')).rejects.toThrow('0 rows');
+  });
+});
+
+describe('api.deleteAuthor', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockAuthorsDeleteEq
+      .mockReturnValueOnce({ eq: mockAuthorsDeleteEq })
+      .mockReturnValueOnce({ select: mockAuthorsDeleteSelect });
+    mockAuthorsDeleteSelect.mockReturnValue({ single: mockAuthorsDeleteSingle });
+    mockAuthorsDeleteSingle.mockResolvedValue({ data: { id: 'author-1' }, error: null });
+  });
+
+  it('deletes an author scoped to the current user', async () => {
+    await api.deleteAuthor('user-1', 'author-1');
+
+    expect(mockChapterBlocksFrom).toHaveBeenCalledWith('authors');
+    expect(mockAuthorsDelete).toHaveBeenCalled();
+    expect(mockAuthorsDeleteEq).toHaveBeenNthCalledWith(1, 'id', 'author-1');
+    expect(mockAuthorsDeleteEq).toHaveBeenNthCalledWith(2, 'user_id', 'user-1');
+    expect(mockAuthorsDeleteSelect).toHaveBeenCalledWith('id');
+    expect(mockAuthorsDeleteSingle).toHaveBeenCalled();
+  });
+
+  it('throws when no author row was deleted', async () => {
+    mockAuthorsDeleteSingle.mockResolvedValueOnce({
+      data: null,
+      error: new Error('0 rows'),
+    });
+
+    await expect(api.deleteAuthor('user-1', 'missing-author')).rejects.toThrow('0 rows');
   });
 });
 

@@ -33,6 +33,7 @@ const AppShell: React.FC = () => {
     handleDeleteNote, handleDeleteCitation, handleUpdateCitation,
     handleBulkUpdateCitationSource, handleCreateBook,
     handleCreateProject, handleRenameProject, handleDeleteProject, handleRenameAuthor, handleRenameBook,
+    handleDeleteAuthor, handleDeleteBook,
     handleLoadChapterBlocks, handleCreateChapterBlock, handleDeleteChapterBlock,
     handleDropCitationToProject, handleReorderProjects
   } = useArchiveData(session);
@@ -171,6 +172,8 @@ const AppShell: React.FC = () => {
     onDeleteProject: handleDeleteProject,
     onRenameAuthor: handleRenameAuthor,
     onRenameBook: handleRenameBook,
+    onDeleteAuthor: handleDeleteAuthor,
+    onDeleteBook: handleDeleteBook,
     onCreateBook: handleCreateBookAndOpen,
     onReorderProjects: handleReorderProjects,
     treeData,

@@ -95,6 +95,7 @@ export const EditorialInlineRenameField: React.FC<EditorialInlineRenameFieldProp
 type EditorialDangerConfirmProps = {
   message: React.ReactNode;
   confirmLabel: string;
+  confirmAriaLabel?: string;
   cancelLabel?: string;
   onConfirm: () => void;
   onCancel: () => void;
@@ -103,6 +104,7 @@ type EditorialDangerConfirmProps = {
 export const EditorialDangerConfirm: React.FC<EditorialDangerConfirmProps> = ({
   message,
   confirmLabel,
+  confirmAriaLabel,
   cancelLabel = 'Cancel',
   onConfirm,
   onCancel,
@@ -121,6 +123,7 @@ export const EditorialDangerConfirm: React.FC<EditorialDangerConfirmProps> = ({
       </button>
       <button
         type="button"
+        aria-label={confirmAriaLabel}
         onClick={onConfirm}
         className="type-label-bounded rounded-lg border border-red-700 bg-red-600 px-3 py-1.5 text-white transition-colors active:scale-95 hover:bg-red-700"
       >

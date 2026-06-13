@@ -52,11 +52,58 @@ export const deleteCitationNote = (citations: Citation[], citationId: string, no
 export const deleteCitationById = (citations: Citation[], citationId: string) =>
   citations.filter((citation) => citation.id !== citationId);
 
-export const removeCitationFromProjects = (projects: Project[], citationId: string) =>
-  projects.map((project) => ({
+export const removeCitationsFromProjects = (
+  projects: Project[],
+  citationIds: string | string[]
+) => {
+  const deletedIdSet = new Set(Array.isArray(citationIds) ? citationIds : [citationIds]);
+
+  return projects.map((project) => ({
     ...project,
-    citationIds: project.citationIds.filter((existingId) => existingId !== citationId),
+    citationIds: project.citationIds.filter((existingId) => !deletedIdSet.has(existingId)),
   }));
+};
+
+export const removeCitationFromProjects = (projects: Project[], citationId: string) =>
+  removeCitationsFromProjects(projects, citationId);
+
+export const deleteBookSource = (books: BookSource[], bookId: string) =>
+  books.filter((book) => book.id !== bookId);
+
+export const deleteBookSourcesByAuthorId = (books: BookSource[], authorId: string) =>
+  books.filter((book) => book.authorId !== authorId);
+
+export const deleteCitationsByBookId = (citations: Citation[], bookId: string) =>
+  citations.filter((citation) => citation.bookId !== bookId);
+
+export const deleteCitationsByAuthorId = (citations: Citation[], authorId: string) =>
+  citations.filter((citation) => citation.authorId !== authorId);
+
+export const deleteCitationsByAuthorIdOrBookIds = (
+  citations: Citation[],
+  authorId: string,
+  bookIds: string[]
+) => {
+  const deletedBookIdSet = new Set(bookIds);
+  return citations.filter(
+    (citation) => citation.authorId !== authorId && !deletedBookIdSet.has(citation.bookId || '')
+  );
+};
+
+export const deleteChapterBlocksForBooks = (
+  current: ChapterBlocksByBook,
+  bookIds: string | string[]
+) => {
+  const deletedBookIdSet = new Set(Array.isArray(bookIds) ? bookIds : [bookIds]);
+  return Object.fromEntries(
+    Object.entries(current).filter(([bookId]) => !deletedBookIdSet.has(bookId))
+  );
+};
+
+export const deleteChapterBlocksForBook = (
+  current: ChapterBlocksByBook,
+  bookId: string
+) => deleteChapterBlocksForBooks(current, bookId);
 
 export const patchCitation = (
   citations: Citation[],

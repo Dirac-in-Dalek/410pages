@@ -25,6 +25,7 @@ export const useArchiveDataController = (session: ArchiveSession): ArchiveDataCo
     session,
     projects,
     citations,
+    books,
     setProjects,
     setCitations,
     setBooks,
