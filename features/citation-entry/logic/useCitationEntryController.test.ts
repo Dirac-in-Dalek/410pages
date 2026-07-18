@@ -1,0 +1,30 @@
+import { describe, expect, it } from 'vitest';
+import { createCitationInput } from './useCitationEntryController';
+
+describe('createCitationInput', () => {
+  it('stores a short entry as a word without page data', () => {
+    expect(
+      createCitationInput({ text: '필연적 선택', author: 'Author', book: 'Book', page: '147' })
+    ).toEqual({
+      kind: 'word',
+      text: '필연적 선택',
+      author: 'Author',
+      book: 'Book',
+      page: undefined,
+      tags: [],
+    });
+  });
+
+  it('keeps page data for a sentence', () => {
+    expect(
+      createCitationInput({ text: 'This is a sentence', author: 'Author', book: 'Book', page: '147' })
+    ).toEqual({
+      kind: 'sentence',
+      text: 'This is a sentence',
+      author: 'Author',
+      book: 'Book',
+      page: '147',
+      tags: [],
+    });
+  });
+});

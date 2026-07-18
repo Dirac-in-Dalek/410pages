@@ -11,6 +11,7 @@ export const createReaderScreenProps = (
   projects: input.projects,
   loading: input.dataLoading || input.authLoading,
   onAddCitation: input.onAddCitation,
+  onRetryCitationSave: input.onRetryCitationSave,
   onAddNote: input.onAddNote,
   onUpdateNote: input.onUpdateNote,
   onDeleteNote: input.onDeleteNote,

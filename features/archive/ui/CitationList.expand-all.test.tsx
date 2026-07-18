@@ -7,6 +7,7 @@ import { CitationList } from './CitationList';
 
 const citation = (id: string, text: string): Citation => ({
   id,
+  kind: 'sentence',
   text,
   author: 'Author A',
   book: 'Book A',
@@ -123,6 +124,33 @@ describe('CitationList expand all', () => {
     );
 
     expect(screen.getByRole('button', { name: 'Toggle all citations' })).toBeTruthy();
+  });
+
+  it('excludes word cards from expand and collapse state', () => {
+    render(
+      <CitationList
+        {...baseProps}
+        citations={[
+          citation('citation-1', 'A sentence remains expandable in the archive.'),
+          { ...citation('word-1', '부조리'), kind: 'word', createdAt: 1 },
+        ]}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Toggle all citations' })).toBeTruthy();
+    expect(screen.getByRole('checkbox', { name: 'Select word: 부조리' })).toBeTruthy();
+  });
+
+  it('does not show expand controls for a word-only list', () => {
+    render(
+      <CitationList
+        {...baseProps}
+        citations={[{ ...citation('word-1', '부조리'), kind: 'word' }]}
+      />
+    );
+
+    expect(screen.queryByRole('button', { name: 'Toggle all citations' })).toBeNull();
+    expect(screen.getByRole('checkbox', { name: 'Select word: 부조리' })).toBeTruthy();
   });
 
   it('does not create a per-card Less action for short citations during bulk expansion', async () => {

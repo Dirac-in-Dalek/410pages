@@ -6,6 +6,9 @@ const mockChapterBlocksOrder = vi.fn();
 const mockChapterBlocksSelect = vi.fn(() => chapterBlocksQuery);
 const mockChapterBlocksEq = vi.fn(() => chapterBlocksQuery);
 const mockChapterBlocksDeleteEq = vi.fn();
+const mockCitationsSingle = vi.fn();
+const mockCitationsSelect = vi.fn(() => ({ single: mockCitationsSingle }));
+const mockCitationsInsert = vi.fn(() => ({ select: mockCitationsSelect }));
 const mockStorageFrom = vi.fn(() => ({
   upload: mockUpload,
   getPublicUrl: mockGetPublicUrl,
@@ -80,6 +83,10 @@ const mockChapterBlocksFrom = vi.fn((table: string) => {
       insert: mockChapterBlocksInsert,
       delete: mockChapterBlocksDelete,
     };
+  }
+
+  if (table === 'citations') {
+    return { insert: mockCitationsInsert };
   }
 
   return {};
@@ -181,6 +188,58 @@ describe('api.createChapterBlock', () => {
       pageSort: 336,
       createdAtSort: 1700.5,
     });
+  });
+});
+
+describe('api.addCitation', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockProfileSingle.mockResolvedValue({ data: { username: 'Me' }, error: null });
+    mockAuthorsMaybeSingle.mockResolvedValue({
+      data: { id: 'author-1', name: 'Author A', sort_index: 1, is_self: false },
+      error: null,
+    });
+    mockBooksMaybeSingle.mockResolvedValue({
+      data: { id: 'book-1', sort_index: 2 },
+      error: null,
+    });
+    mockCitationsSingle.mockResolvedValue({
+      data: {
+        id: 'citation-1',
+        kind: 'word',
+        text: '고독',
+        page: null,
+        page_sort: null,
+        created_at: '2026-07-18T06:00:00.000Z',
+        author: { id: 'author-1', name: 'Author A', sort_index: 1, is_self: false },
+        book: { id: 'book-1', title: 'Book A', sort_index: 2 },
+      },
+      error: null,
+    });
+  });
+
+  it('persists a word kind with null page fields', async () => {
+    const result = await api.addCitation('user-1', {
+      id: 'ignored-by-input-type',
+      kind: 'word',
+      text: '고독',
+      author: 'Author A',
+      book: 'Book A',
+      page: '77',
+      tags: [],
+      highlights: [],
+    } as any);
+
+    expect(mockCitationsInsert).toHaveBeenCalledWith({
+      kind: 'word',
+      text: '고독',
+      book_id: 'book-1',
+      author_id: 'author-1',
+      page: null,
+      page_sort: null,
+      user_id: 'user-1',
+    });
+    expect(result).toMatchObject({ kind: 'word', page: undefined, pageSort: undefined });
   });
 });
 

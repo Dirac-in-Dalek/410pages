@@ -10,6 +10,7 @@ describe('optimistic citation helpers', () => {
   it('creates a saving citation that can be rendered before persistence finishes', () => {
     const citation = createOptimisticCitation(
       {
+        kind: 'sentence',
         text: 'Fast quote',
         author: '',
         book: 'The Book',
@@ -30,6 +31,7 @@ describe('optimistic citation helpers', () => {
   it('keeps failed citation data available for retry', () => {
     const citation = createOptimisticCitation(
       {
+        kind: 'sentence',
         text: 'Recoverable quote',
         author: 'Simone Weil',
         book: 'Gravity and Grace',
@@ -52,6 +54,7 @@ describe('optimistic citation helpers', () => {
   it('does not erase a visible author when preparing a retry', () => {
     const citation = createOptimisticCitation(
       {
+        kind: 'sentence',
         text: 'Edited quote',
         author: '',
         book: 'The Book',
@@ -63,6 +66,28 @@ describe('optimistic citation helpers', () => {
 
     expect(createRetryCitationInput({ ...citation, author: 'Ursula K. Le Guin', isSelf: true })).toMatchObject({
       author: 'Ursula K. Le Guin',
+    });
+  });
+
+  it('preserves a word kind through optimistic save and retry without page data', () => {
+    const citation = createOptimisticCitation(
+      {
+        kind: 'word',
+        text: '근원적 고독',
+        author: 'Author',
+        book: 'Book',
+        page: '147',
+        tags: [],
+      },
+      2000
+    );
+
+    expect(citation).toMatchObject({ kind: 'word', page: undefined, pageSort: undefined });
+    expect(createRetryCitationInput({ ...citation, saveStatus: 'failed' })).toMatchObject({
+      kind: 'word',
+      text: '근원적 고독',
+      page: undefined,
+      pageSort: undefined,
     });
   });
 });

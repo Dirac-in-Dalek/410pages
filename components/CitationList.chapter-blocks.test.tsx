@@ -12,6 +12,7 @@ vi.mock('../features/archive/ui/CitationCard', () => ({
 }));
 
 const citation = (overrides: Partial<Citation> & Pick<Citation, 'id' | 'text' | 'author' | 'book'>): Citation => ({
+  kind: 'sentence',
   notes: [],
   tags: [],
   createdAt: 0,

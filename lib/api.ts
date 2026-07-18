@@ -397,6 +397,7 @@ export const api = {
             const authorObj = c.author || c.book?.author;
             return {
                 id: c.id,
+                kind: c.kind === 'word' ? 'word' : 'sentence',
                 text: c.text,
                 authorId: authorObj?.id,
                 author: authorObj?.name || '',
@@ -431,11 +432,12 @@ export const api = {
         const { data: citation, error } = await getSupabaseClient()
             .from('citations')
             .insert({
+                kind: data.kind,
                 text: data.text,
                 book_id: resolvedSource.bookId,
                 author_id: resolvedSource.authorId,
-                page: data.page,
-                page_sort: extractPageSort(data.page),
+                page: data.kind === 'word' ? null : data.page,
+                page_sort: data.kind === 'word' ? null : extractPageSort(data.page),
                 user_id: userId
             })
             .select(`
@@ -452,6 +454,7 @@ export const api = {
 
         const mapped: Citation = {
             id: citation.id,
+            kind: citation.kind === 'word' ? 'word' : 'sentence',
             text: citation.text,
             authorId: citation.author?.id || resolvedSource.authorId,
             author: citation.author?.name || resolvedSource.authorName,
@@ -460,8 +463,8 @@ export const api = {
             bookId: citation.book?.id || resolvedSource.bookId || undefined,
             book: citation.book?.title || resolvedSource.bookTitle,
             bookSortIndex: citation.book?.sort_index ?? resolvedSource.bookSortIndex,
-            page: citation.page,
-            pageSort: citation.page_sort,
+            page: citation.kind === 'word' ? undefined : citation.page || undefined,
+            pageSort: citation.kind === 'word' ? undefined : citation.page_sort ?? undefined,
             createdAt: new Date(citation.created_at).getTime(),
             notes: [],
             tags: []

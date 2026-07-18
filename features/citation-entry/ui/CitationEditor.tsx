@@ -22,6 +22,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
     isSelf,
     canSubmit,
     isSequentialPageEntryActive,
+    isWordCandidate,
     textareaRef,
     pageInputRef,
     updateValue,
@@ -73,7 +74,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
 
             event.preventDefault();
 
-            if (isSequentialPageEntryActive) {
+            if (isSequentialPageEntryActive && !isWordCandidate) {
               focusPageInput();
               return;
             }

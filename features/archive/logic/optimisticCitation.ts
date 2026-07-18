@@ -18,10 +18,11 @@ export const createOptimisticCitation = (
 ): Citation => {
   const author = data.author?.trim() || '';
   const book = data.book?.trim() || '';
-  const page = data.page || undefined;
+  const page = data.kind === 'word' ? undefined : data.page || undefined;
 
   return {
     id: `${OPTIMISTIC_CITATION_ID_PREFIX}${now}-${Math.random().toString(36).slice(2, 8)}`,
+    kind: data.kind,
     text: data.text,
     author,
     authorId: data.authorId,
@@ -41,6 +42,7 @@ export const createOptimisticCitation = (
 };
 
 export const createRetryCitationInput = (citation: Citation): AddCitationInput => ({
+  kind: citation.kind,
   text: citation.text,
   author: citation.isSelf && !citation.author ? '' : citation.author,
   authorId: citation.authorId,
@@ -49,8 +51,8 @@ export const createRetryCitationInput = (citation: Citation): AddCitationInput =
   book: citation.book,
   bookId: citation.bookId,
   bookSortIndex: citation.bookSortIndex,
-  page: citation.page,
-  pageSort: citation.pageSort,
+  page: citation.kind === 'word' ? undefined : citation.page,
+  pageSort: citation.kind === 'word' ? undefined : citation.pageSort,
   tags: citation.tags,
   highlights: citation.highlights,
 });

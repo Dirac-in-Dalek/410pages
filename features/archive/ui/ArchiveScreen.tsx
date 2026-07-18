@@ -27,6 +27,7 @@ type ArchiveScreenProps = {
   onPageSortClick: () => void;
   projects: Project[];
   citations: Citation[];
+  allCitations: Citation[];
   chapterBlocks: ChapterBlock[];
   loading: boolean;
   searchTerm: string;
@@ -68,6 +69,7 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
   onPageSortClick,
   projects,
   citations,
+  allCitations,
   chapterBlocks,
   loading,
   searchTerm,
@@ -127,10 +129,10 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
 
           <ConfirmModal
             isOpen={isBatchDeleteOpen}
-            title="Delete citations?"
+            title="Delete items?"
             message={
               <>
-                <span className="font-bold text-[var(--text-main)]">{selectedIds.size}</span> citation(s) will be permanently deleted. This action cannot be undone.
+                <span className="font-bold text-[var(--text-main)]">{selectedIds.size}</span> item(s) will be permanently deleted. This action cannot be undone.
               </>
             }
             onConfirm={onDeleteConfirm}
@@ -139,6 +141,7 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
 
           <CitationList
             citations={citations}
+            allCitations={allCitations}
             projects={projects}
             username={username}
             loading={loading}

@@ -16,6 +16,7 @@ export interface ArchiveHeaderProps {
 
 export interface CitationListProps {
     citations: Citation[];
+    allCitations?: Citation[];
     projects: Project[];
     username: string;
     loading: boolean;

@@ -45,6 +45,7 @@ export interface ArchiveScreenFactoryInput {
   onPageSortClick: () => void;
   projects: Project[];
   citations: Citation[];
+  allCitations: Citation[];
   selectedBookId: string | null;
   chapterBlocksByBook: Record<string, ChapterBlock[]>;
   dataLoading: boolean;

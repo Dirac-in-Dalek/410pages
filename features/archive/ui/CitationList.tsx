@@ -9,11 +9,14 @@ import {
     sortBookViewItems,
     toBookViewItems,
 } from '../../../lib/bookViewItems';
+import { buildCitationRenderRows } from '../logic/citationRenderRows';
 import type { CitationListProps } from '../contract/archiveUiContract';
 import { CitationCard } from './CitationCard';
+import { WordCardGroup } from './WordCardGroup';
 
 export const CitationList: React.FC<CitationListProps> = ({
     citations,
+    allCitations = citations,
     projects,
     username,
     loading,
@@ -43,20 +46,24 @@ export const CitationList: React.FC<CitationListProps> = ({
     const currentDateDirection: 'asc' | 'desc' = dateDirection ?? 'desc';
     const currentPageDirection: 'asc' | 'desc' = pageDirection ?? 'asc';
     const direction: 'asc' | 'desc' = currentSortField === 'date' ? currentDateDirection : currentPageDirection;
-    const bookViewItems = isBookView
-        ? sortBookViewItems(toBookViewItems(citations, chapterBlocks), currentSortField, direction)
-        : citations.map((citation) => ({
+    const sentenceCitations = citations.filter((citation) => (citation.kind || 'sentence') === 'sentence');
+    const baseItems = isBookView
+        ? sortBookViewItems(toBookViewItems(sentenceCitations, chapterBlocks), currentSortField, direction)
+        : sentenceCitations.map((citation) => ({
               type: 'citation' as const,
               id: citation.id,
               citation,
+              pageSort: citation.pageSort,
+              createdAtSort: citation.createdAt,
           }));
-    const visibleCitationIds = bookViewItems
-        .filter((item) => item.type === 'citation')
+    const renderRows = buildCitationRenderRows(citations, baseItems, allCitations);
+    const visibleSentenceIds = renderRows
+        .filter((item) => item.type === 'sentence')
         .map((item) => item.id);
-    const visibleCitationIdsKey = visibleCitationIds.join('\u0000');
-    const hasVisibleCitations = visibleCitationIds.length > 0;
+    const visibleSentenceIdsKey = visibleSentenceIds.join('\u0000');
+    const hasVisibleSentences = visibleSentenceIds.length > 0;
     const allVisibleCitationsExpanded =
-        hasVisibleCitations && visibleCitationIds.every((id) => expandedCitationIds.has(id));
+        hasVisibleSentences && visibleSentenceIds.every((id) => expandedCitationIds.has(id));
 
     const handleTextOverflowChange = useCallback((id: string, isOverflowing: boolean) => {
         setOverflowingCitationIds((prev) => {
@@ -93,16 +100,16 @@ export const CitationList: React.FC<CitationListProps> = ({
         setExpandedCitationIds((prev) => {
             const next = new Set(prev);
             if (allVisibleCitationsExpanded) {
-                visibleCitationIds.forEach((id) => next.delete(id));
+                visibleSentenceIds.forEach((id) => next.delete(id));
             } else {
-                visibleCitationIds.forEach((id) => next.add(id));
+                visibleSentenceIds.forEach((id) => next.add(id));
             }
             return next;
         });
     };
 
     useEffect(() => {
-        const visibleIds = new Set(visibleCitationIdsKey ? visibleCitationIdsKey.split('\u0000') : []);
+        const visibleIds = new Set(visibleSentenceIdsKey ? visibleSentenceIdsKey.split('\u0000') : []);
         setOverflowingCitationIds((prev) => {
             const next = new Set([...prev].filter((id) => visibleIds.has(id)));
             return next.size === prev.size ? prev : next;
@@ -111,7 +118,7 @@ export const CitationList: React.FC<CitationListProps> = ({
             const next = new Set([...prev].filter((id) => visibleIds.has(id)));
             return next.size === prev.size ? prev : next;
         });
-    }, [visibleCitationIdsKey]);
+    }, [visibleSentenceIdsKey]);
 
     const buildChapterBlockInput = (
         leftItem?: { pageSort?: number; createdAtSort: number },
@@ -152,13 +159,13 @@ export const CitationList: React.FC<CitationListProps> = ({
     };
 
     if (loading) {
-        return <div className="type-body text-center py-20 text-[var(--text-muted)]">Loading your citations...</div>;
+        return <div className="type-body text-center py-20 text-[var(--text-muted)]">Loading your items...</div>;
     }
 
-    if (bookViewItems.length === 0) {
+    if (renderRows.length === 0) {
         return (
             <div className="type-body text-center py-20 text-[var(--text-muted)] border-2 border-dashed border-[var(--border-main)] rounded-xl">
-                <p>{searchTerm ? 'No matches found.' : 'No citations found in this view.'}</p>
+                <p>{searchTerm ? 'No matches found.' : 'No items found in this view.'}</p>
                 <p className="type-body-muted mt-2">{searchTerm ? 'Try another keyword.' : 'Drag items from the right or type above.'}</p>
             </div>
         );
@@ -166,7 +173,7 @@ export const CitationList: React.FC<CitationListProps> = ({
 
     return (
         <div className="w-full">
-            {hasVisibleCitations ? (
+            {hasVisibleSentences ? (
             <div className="mb-1.5 flex justify-start px-2">
                 <button
                     type="button"
@@ -181,18 +188,20 @@ export const CitationList: React.FC<CitationListProps> = ({
             </div>
             ) : null}
             <div className="flex flex-col">
-                {bookViewItems.map((item, index) => {
-                    const citation = item.type === 'citation' ? item.citation : undefined;
-                    const nextItem = bookViewItems[index + 1];
+                {renderRows.map((item, index) => {
+                    const citation = item.type === 'sentence' ? item.citation : undefined;
+                    const nextItem = renderRows[index + 1];
                     const canShowInsertAfter =
-                        item.type !== 'chapter_block' && nextItem?.type !== 'chapter_block';
+                        item.type !== 'chapter_block' &&
+                        nextItem?.type !== 'chapter_block' &&
+                        nextItem?.type !== 'word_group';
                     const citationProjects = citation
                         ? projects.filter((project) => project.citationIds.includes(citation.id)).map((project) => project.name)
                         : [];
 
                     return (
                         <React.Fragment key={item.id}>
-                            {item.type === 'citation' ? (
+                            {item.type === 'sentence' ? (
                                 <CitationCard
                                     index={index}
                                     citation={item.citation}
@@ -211,6 +220,13 @@ export const CitationList: React.FC<CitationListProps> = ({
                                     onUpdate={onUpdateCitation}
                                     onRetrySave={onRetryCitationSave}
                                 />
+                            ) : item.type === 'word_group' ? (
+                                <WordCardGroup
+                                    citations={item.citations}
+                                    selectedIds={selectedIds}
+                                    onToggleSelect={onToggleSelect}
+                                    onRetrySave={onRetryCitationSave}
+                                />
                             ) : (
                                 <ChapterBlockCard
                                     id={item.block.id}
@@ -220,7 +236,7 @@ export const CitationList: React.FC<CitationListProps> = ({
                                     }}
                                 />
                             )}
-                            {isBookView && index < bookViewItems.length - 1 && canShowInsertAfter && (activeInsertId === null || activeInsertId === `after-${item.id}`) ? (
+                            {isBookView && index < renderRows.length - 1 && canShowInsertAfter && (activeInsertId === null || activeInsertId === `after-${item.id}`) ? (
                                 <div className={`group flex items-center justify-center ${activeInsertId === `after-${item.id}` ? 'my-1.5 min-h-12' : '-mt-2.5 h-5'}`}>
                                     <ChapterBlockInsertButton
                                         isEditing={activeInsertId === `after-${item.id}`}
@@ -229,7 +245,7 @@ export const CitationList: React.FC<CitationListProps> = ({
                                         onSubmit={async (label) => {
                                             await handleCreateChapterBlock(
                                                 { pageSort: item.pageSort, createdAtSort: item.createdAtSort },
-                                                bookViewItems[index + 1],
+                                                renderRows[index + 1],
                                                 label
                                             );
                                         }}
@@ -239,14 +255,14 @@ export const CitationList: React.FC<CitationListProps> = ({
                         </React.Fragment>
                     );
                 })}
-                {isBookView && bookViewItems.length > 0 && bookViewItems[bookViewItems.length - 1].type !== 'chapter_block' && (activeInsertId === null || activeInsertId === 'end') ? (
+                {isBookView && renderRows.length > 0 && renderRows[renderRows.length - 1].type !== 'chapter_block' && (activeInsertId === null || activeInsertId === 'end') ? (
                     <div className={`group flex items-center justify-center ${activeInsertId === 'end' ? 'my-1.5 min-h-12' : '-mt-2.5 h-5'}`}>
                         <ChapterBlockInsertButton
                             isEditing={activeInsertId === 'end'}
                             onOpen={() => setActiveInsertId('end')}
                             onCancel={() => setActiveInsertId(null)}
                             onSubmit={async (label) => {
-                                const lastItem = bookViewItems[bookViewItems.length - 1];
+                                const lastItem = renderRows[renderRows.length - 1];
                                 await handleCreateChapterBlock(
                                     lastItem ? { pageSort: lastItem.pageSort, createdAtSort: lastItem.createdAtSort } : undefined,
                                     undefined,

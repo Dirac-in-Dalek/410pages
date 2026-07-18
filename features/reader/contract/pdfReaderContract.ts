@@ -91,6 +91,7 @@ export interface PdfReaderPageProps {
   projects: Project[];
   loading: boolean;
   onAddCitation: (citation: AddCitationInput) => Promise<AddCitationResult>;
+  onRetryCitationSave: (citationId: string) => void | Promise<unknown>;
   onAddNote: (citationId: string, content: string) => void;
   onUpdateNote: (citationId: string, noteId: string, content: string) => void;
   onDeleteNote: (citationId: string, noteId: string) => void;

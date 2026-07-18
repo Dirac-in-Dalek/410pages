@@ -4,6 +4,7 @@ import type { BookSource, Citation } from '../../../types';
 import { useArchiveViewState } from './useArchiveViewState';
 
 const citation = (overrides: Partial<Citation> & Pick<Citation, 'id' | 'authorId' | 'author' | 'bookId' | 'book' | 'createdAt'>): Citation => ({
+  kind: 'sentence',
   text: 'Quote',
   notes: [],
   tags: [],

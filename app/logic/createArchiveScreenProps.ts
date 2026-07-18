@@ -20,6 +20,7 @@ export const createArchiveScreenProps = (
   onPageSortClick: input.onPageSortClick,
   projects: input.projects,
   citations: input.citations,
+  allCitations: input.allCitations,
   chapterBlocks: input.selectedBookId ? input.chapterBlocksByBook[input.selectedBookId] || [] : [],
   loading: input.dataLoading || input.authLoading,
   searchTerm: input.searchTerm,

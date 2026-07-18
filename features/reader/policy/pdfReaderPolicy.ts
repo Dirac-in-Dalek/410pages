@@ -1,12 +1,36 @@
 import type {
+  AddCitationInput,
   PdfReaderMeta,
   PdfRectHighlight
 } from '../../../types';
+import { classifyCitationKind } from '../../../shared/lib/citationKind';
 import type {
   MetaFormState,
   PersistedReaderSession,
   ReaderCitationSelectionRange
 } from '../contract/pdfReaderContract';
+
+export const createPdfCitationInput = ({
+  text,
+  author,
+  book,
+  page,
+}: {
+  text: string;
+  author: string;
+  book: string;
+  page: string;
+}): AddCitationInput => {
+  const kind = classifyCitationKind(text);
+  return {
+    kind,
+    text,
+    author: author.trim(),
+    book: book.trim(),
+    page: kind === 'word' ? undefined : page,
+    tags: [],
+  };
+};
 
 export const sanitizePersistedReaderSession = (
   raw: unknown

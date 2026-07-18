@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AddCitationInput } from '../../../types';
+import { classifyCitationKind } from '../../../shared/lib/citationKind';
 import {
   CitationEditorPrefill,
   CitationEditorProps,
@@ -23,13 +24,17 @@ const createResetValues = (
   page: '',
 });
 
-const createCitationInput = (values: CitationEditorValues): AddCitationInput => ({
-  text: values.text,
-  author: values.author,
-  book: values.book,
-  page: values.page || undefined,
-  tags: [],
-});
+export const createCitationInput = (values: CitationEditorValues): AddCitationInput => {
+  const kind = classifyCitationKind(values.text);
+  return {
+    kind,
+    text: values.text,
+    author: values.author,
+    book: values.book,
+    page: kind === 'word' ? undefined : values.page || undefined,
+    tags: [],
+  };
+};
 
 export const useCitationEntryController = ({
   onAddCitation,
@@ -104,6 +109,7 @@ export const useCitationEntryController = ({
   };
 
   const isSequentialPageEntryActive = isCitationEntrySequentialMode(sequentialPageEntry, readOnly, values);
+  const isWordCandidate = classifyCitationKind(values.text) === 'word';
   const isSelf = isCitationEntrySelfAuthor(values.author, username);
   const canSubmit = canSubmitCitationEntry({
     readOnly,
@@ -179,6 +185,7 @@ export const useCitationEntryController = ({
     isSelf,
     canSubmit,
     isSequentialPageEntryActive,
+    isWordCandidate,
     textareaRef,
     pageInputRef,
     updateValue,

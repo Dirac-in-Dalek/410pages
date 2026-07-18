@@ -6,7 +6,6 @@ import { configurePdfWorker } from '../../lib/pdfWorker';
 import { CitationEditor } from '../../features/citation-entry/ui/CitationEditor';
 import { CitationList } from '../../features/archive/ui/CitationList';
 import {
-  AddCitationInput,
   Citation,
   PdfDraftSelection,
   PdfReaderMeta,
@@ -23,6 +22,7 @@ import type {
 } from '../../features/reader/contract/pdfReaderContract';
 import {
   buildMetaFormFromState,
+  createPdfCitationInput,
   extractTitleFromFileName,
   normalizeDocumentField,
   parsePositiveInt,
@@ -54,6 +54,7 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
   projects,
   loading,
   onAddCitation,
+  onRetryCitationSave,
   onAddNote,
   onUpdateNote,
   onDeleteNote,
@@ -434,9 +435,16 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
       return;
     }
 
+    const citation = createPdfCitationInput({
+      text: payload.text,
+      author: meta.author,
+      book: meta.title,
+      page: payload.pageLabel,
+    });
     const dedupeKey = [payload.text, payload.pageLabel, meta.author.trim(), meta.title.trim()].join('|');
     const now = Date.now();
-      if (
+    if (
+        citation.kind !== 'word' &&
         lastSavedRef.current &&
         lastSavedRef.current.key === dedupeKey &&
         now - lastSavedRef.current.at < DUPLICATE_WINDOW_MS
@@ -447,15 +455,7 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
         clearDraggingState();
         livePayload?.selection?.removeAllRanges();
         return;
-      }
-
-    const citation: AddCitationInput = {
-      text: payload.text,
-      author: meta.author.trim(),
-      book: meta.title.trim(),
-      page: payload.pageLabel,
-      tags: []
-    };
+    }
 
     isSavingRef.current = true;
     const result = await onAddCitation(citation).catch((error) => ({ ok: false as const, error }));
@@ -975,6 +975,7 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
                   onDeleteNote={onDeleteNote}
                   onDeleteCitation={handleDeleteCitationFromReader}
                   onUpdateCitation={onUpdateCitation}
+                  onRetryCitationSave={onRetryCitationSave}
                 />
               )}
             </div>

@@ -3,6 +3,7 @@ import type { BookSource, Citation } from '../../../types';
 import { buildArchiveTree, deriveAuthorOrder, findLatestCitationBook, getCurrentOrderedAuthors } from './archiveTree';
 
 const citation = (overrides: Partial<Citation> & Pick<Citation, 'id' | 'authorId' | 'author' | 'createdAt'>): Citation => ({
+  kind: 'sentence',
   text: 'Quote',
   book: '',
   notes: [],

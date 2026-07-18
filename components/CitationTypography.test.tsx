@@ -8,6 +8,7 @@ import { CitationEditor } from '../features/citation-entry/ui/CitationEditor';
 
 const citation: Citation = {
   id: 'citation-1',
+  kind: 'sentence',
   text: 'Font preference should affect this quote.',
   author: 'Charlie Munger',
   book: "Poor Charlie's Almanack",
@@ -89,6 +90,37 @@ describe('Citation typography', () => {
     expect(document.activeElement).toBe(pageInput);
   });
 
+  it('submits a one-to-two-word entry immediately without a page in sequential mode', async () => {
+    const user = userEvent.setup();
+    const onAddCitation = vi.fn().mockResolvedValue({ ok: true, citationId: 'word-1' });
+
+    render(
+      <CitationEditor
+        onAddCitation={onAddCitation}
+        username="Dalek"
+        prefillData={{ author: 'Albert Camus', book: 'The Myth of Sisyphus' }}
+        sequentialPageEntry
+        autoFocusText
+      />
+    );
+
+    const editor = screen.getByPlaceholderText('Write a quote, sentence, or field note...');
+    await user.type(editor, '부조리 인간');
+    await user.keyboard('{Enter}');
+
+    await waitFor(() => {
+      expect(onAddCitation).toHaveBeenCalledWith({
+        kind: 'word',
+        text: '부조리 인간',
+        author: 'Albert Camus',
+        book: 'The Myth of Sisyphus',
+        page: undefined,
+        tags: [],
+      });
+      expect(document.activeElement).toBe(editor);
+    });
+  });
+
   it('submits from the page field and returns focus to the quote field in sequential mode', async () => {
     const user = userEvent.setup();
     const onAddCitation = vi.fn().mockResolvedValue({ ok: true, citationId: 'citation-3' });
@@ -106,14 +138,15 @@ describe('Citation typography', () => {
     const editor = screen.getByPlaceholderText('Write a quote, sentence, or field note...');
     const pageInput = screen.getByPlaceholderText('Page');
 
-    await user.type(editor, 'Another quote');
+    await user.type(editor, 'Another useful quote');
     await user.keyboard('{Enter}');
     await user.type(pageInput, '147');
     await user.keyboard('{Enter}');
 
     await waitFor(() => {
       expect(onAddCitation).toHaveBeenCalledWith({
-        text: 'Another quote',
+        kind: 'sentence',
+        text: 'Another useful quote',
         author: 'Charlie Munger',
         book: "Poor Charlie's Almanack",
         page: '147',
@@ -152,6 +185,7 @@ describe('Citation typography', () => {
 
     await waitFor(() => {
       expect(onAddCitation).toHaveBeenCalledWith({
+        kind: 'sentence',
         text: 'Freedom is a heavy load.',
         author: 'Ursula K. Le Guin',
         book: 'The Dispossessed',
@@ -176,10 +210,10 @@ describe('Citation typography', () => {
 
     const editor = screen.getByPlaceholderText('Write a quote, sentence, or field note...');
 
-    await user.type(editor, 'Line 1');
+    await user.type(editor, 'Long line 1');
     await user.keyboard('{Shift>}{Enter}{/Shift}');
 
-    expect((editor as HTMLTextAreaElement).value).toBe('Line 1\n');
+    expect((editor as HTMLTextAreaElement).value).toBe('Long line 1\n');
     expect(onAddCitation).not.toHaveBeenCalled();
     expect(document.activeElement).toBe(editor);
   });
@@ -200,7 +234,7 @@ describe('Citation typography', () => {
     const editor = screen.getByPlaceholderText('Write a quote, sentence, or field note...');
     const pageInput = screen.getByPlaceholderText('Page');
 
-    await user.type(editor, 'Line 1');
+    await user.type(editor, 'Long line 1');
     await user.keyboard('{Enter}');
     await user.type(pageInput, '147');
     await user.keyboard('{Shift>}{Enter}{/Shift}');

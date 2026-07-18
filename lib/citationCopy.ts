@@ -5,6 +5,10 @@ export const formatCitationCopyText = (
   username: string,
   includeNotes: boolean = false
 ): string => {
+  if (citation.kind === 'word') {
+    return citation.text;
+  }
+
   const isSelf = citation.isSelf ?? (citation.author === username || !citation.author || citation.author === 'Self');
 
   let text = `"${citation.text}"`;
@@ -26,6 +30,10 @@ export const formatCitationCopyText = (
 };
 
 export const formatCitationRecoveryText = (citation: Citation, username: string): string => {
+  if (citation.kind === 'word') {
+    return citation.text;
+  }
+
   const isSelf = citation.isSelf ?? (citation.author === username || !citation.author || citation.author === 'Self');
   const lines = [`인용구: ${citation.text}`];
 

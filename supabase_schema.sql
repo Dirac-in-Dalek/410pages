@@ -84,6 +84,7 @@ end $$;
 -- 7. CITATIONS 테이블
 create table if not exists citations (
   id uuid default uuid_generate_v4() primary key,
+  kind text not null default 'sentence',
   text text not null,
   book_id uuid references books(id) on delete cascade, 
   page text,
@@ -93,6 +94,10 @@ create table if not exists citations (
 );
 
 alter table citations enable row level security;
+
+alter table citations add column if not exists kind text not null default 'sentence';
+alter table citations drop constraint if exists citations_kind_check;
+alter table citations add constraint citations_kind_check check (kind in ('sentence', 'word'));
 
 do $$ begin
   if not exists (select 1 from pg_policies where policyname = 'Users can crud their own citations') then
