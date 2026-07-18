@@ -44,19 +44,25 @@ describe('WordCard', () => {
     expect(screen.getByText('필연적 선택').className).toContain('whitespace-nowrap');
   });
 
-  it('keeps the same card footprint and disables selection while saving', () => {
+  it('renders and behaves like a completed card while saving', async () => {
+    const user = userEvent.setup();
+    const onToggleSelect = vi.fn();
     render(
       <WordCard
         citation={word({ saveStatus: 'saving' })}
         isSelected={false}
-        onToggleSelect={vi.fn()}
+        onToggleSelect={onToggleSelect}
         onRetrySave={vi.fn()}
       />
     );
 
-    expect((screen.getByRole('checkbox') as HTMLInputElement).disabled).toBe(true);
-    expect(screen.getByText('저장 중')).toBeTruthy();
-    expect(screen.getByRole('listitem').firstElementChild?.getAttribute('aria-busy')).toBe('true');
+    const checkbox = screen.getByRole('checkbox', { name: 'Select word: 필연적 선택' });
+    expect((checkbox as HTMLInputElement).disabled).toBe(false);
+    expect(screen.queryByText('저장 중')).toBeNull();
+    expect(screen.getByRole('listitem').firstElementChild?.hasAttribute('aria-busy')).toBe(false);
+
+    await user.click(checkbox);
+    expect(onToggleSelect).toHaveBeenCalledWith('word-1', true);
   });
 
   it('shows separate copy and retry recovery actions after a save failure', async () => {

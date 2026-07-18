@@ -61,6 +61,7 @@ import {
   updateCitationNote,
 } from './archiveLocalPatch';
 import {
+  attachOptimisticOrigin,
   createOptimisticCitation,
   createRetryCitationInput,
   extractCitationPageSort,
@@ -98,32 +99,60 @@ export const useArchiveMutations = ({
   setChapterBlocksByBook,
   fetchData,
 }: UseArchiveMutationsOptions): ArchiveMutationController => {
-  const optimisticSaveInFlightRef = useRef(new Set<string>());
+  const optimisticSaveInFlightRef = useRef(new Map<string, Promise<string | null>>());
+  const persistedCitationIdByOptimisticIdRef = useRef(new Map<string, string>());
 
   const persistOptimisticCitation = useCallback(
-    async (optimisticCitationId: string, data: AddCitationInput) => {
-      if (optimisticSaveInFlightRef.current.has(optimisticCitationId)) {
-        return;
+    (optimisticCitationId: string, data: AddCitationInput): Promise<string | null> => {
+      const inFlight = optimisticSaveInFlightRef.current.get(optimisticCitationId);
+      if (inFlight) {
+        return inFlight;
       }
 
-      optimisticSaveInFlightRef.current.add(optimisticCitationId);
-      try {
-        if (!session) {
+      const persistence = (async () => {
+        try {
+          if (!session) {
+            setCitations((current) => patchCitation(current, optimisticCitationId, { saveStatus: 'failed' }));
+            return null;
+          }
+
+          const newCitation = await addCitationRecord(session.user.id, data);
+          persistedCitationIdByOptimisticIdRef.current.set(optimisticCitationId, newCitation.id);
+          setCitations((current) =>
+            replaceCitationById(
+              current,
+              optimisticCitationId,
+              attachOptimisticOrigin(newCitation, optimisticCitationId)
+            )
+          );
+          return newCitation.id;
+        } catch (error) {
+          console.error('Error adding citation:', error);
           setCitations((current) => patchCitation(current, optimisticCitationId, { saveStatus: 'failed' }));
-          return;
+          return null;
+        } finally {
+          optimisticSaveInFlightRef.current.delete(optimisticCitationId);
         }
+      })();
 
-        const newCitation = await addCitationRecord(session.user.id, data);
-        setCitations((current) => replaceCitationById(current, optimisticCitationId, newCitation));
-      } catch (error) {
-        console.error('Error adding citation:', error);
-        setCitations((current) => patchCitation(current, optimisticCitationId, { saveStatus: 'failed' }));
-      } finally {
-        optimisticSaveInFlightRef.current.delete(optimisticCitationId);
-      }
+      optimisticSaveInFlightRef.current.set(optimisticCitationId, persistence);
+      return persistence;
     },
     [session, setCitations]
   );
+
+  const resolveCitationId = useCallback(async (citationId: string) => {
+    if (!isOptimisticCitationId(citationId)) {
+      return citationId;
+    }
+
+    const persistedId = persistedCitationIdByOptimisticIdRef.current.get(citationId);
+    if (persistedId) {
+      return persistedId;
+    }
+
+    return optimisticSaveInFlightRef.current.get(citationId) ?? null;
+  }, []);
 
   const handleAddCitation = useCallback(
     async (data: AddCitationInput): Promise<AddCitationResult> => {
@@ -510,6 +539,7 @@ export const useArchiveMutations = ({
     handleAddCitation,
     handleAddCitationOptimistic,
     handleRetryCitationSave,
+    resolveCitationId,
     handleAddNote,
     handleUpdateNote,
     handleDeleteNote,

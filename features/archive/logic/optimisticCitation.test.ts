@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  attachOptimisticOrigin,
   CITATION_SAVE_FAILED_MESSAGE,
   createOptimisticCitation,
   createRetryCitationInput,
@@ -7,6 +8,21 @@ import {
 } from './optimisticCitation';
 
 describe('optimistic citation helpers', () => {
+  it('records the optimistic id on the persisted citation without changing its real id', () => {
+    const persisted = createOptimisticCitation({
+      kind: 'word',
+      text: '고독',
+      author: 'Author',
+      book: 'Book',
+      tags: [],
+    }, 100);
+    const realCitation = { ...persisted, id: 'persisted-1', saveStatus: undefined };
+
+    expect(attachOptimisticOrigin(realCitation, 'optimistic-citation-1')).toMatchObject({
+      id: 'persisted-1',
+      optimisticOriginId: 'optimistic-citation-1',
+    });
+  });
   it('creates a saving citation that can be rendered before persistence finishes', () => {
     const citation = createOptimisticCitation(
       {

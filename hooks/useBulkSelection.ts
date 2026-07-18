@@ -6,6 +6,7 @@ import { formatCitationCopyText, writeTextToClipboard } from '../lib/citationCop
 export const useBulkSelection = (
     filteredCitations: Citation[],
     session: any,
+    resolveCitationId: (citationId: string) => Promise<string | null>,
     username: string,
     setCitations: Dispatch<SetStateAction<Citation[]>>,
     setProjects: Dispatch<SetStateAction<Project[]>>
@@ -15,14 +16,26 @@ export const useBulkSelection = (
 
     useEffect(() => {
         const visibleIds = new Set<string>(filteredCitations.map((citation) => citation.id));
+        const persistedIdByOptimisticId = new Map<string, string>();
+        filteredCitations.forEach((citation) => {
+            if (citation.optimisticOriginId) {
+                persistedIdByOptimisticId.set(citation.optimisticOriginId, citation.id);
+            }
+        });
+
         setSelectedIds((current: Set<string>) => {
             const next = new Set<string>();
             current.forEach((id) => {
-                if (visibleIds.has(id)) {
+                const persistedId = persistedIdByOptimisticId.get(id);
+                if (persistedId && visibleIds.has(persistedId)) {
+                    next.add(persistedId);
+                } else if (visibleIds.has(id)) {
                     next.add(id);
                 }
             });
-            return next.size === current.size ? current : next;
+            const isUnchanged =
+                next.size === current.size && [...next].every((id) => current.has(id));
+            return isUnchanged ? current : next;
         });
     }, [filteredCitations]);
 
@@ -65,12 +78,18 @@ export const useBulkSelection = (
         if (!session || selectedIds.size === 0) return;
         try {
             const idsToDelete = Array.from(selectedIds);
-            await Promise.all(idsToDelete.map((id: string) => api.deleteCitation(session.user.id, id)));
+            const resolvedIds = await Promise.all(idsToDelete.map(resolveCitationId));
+            const persistedIds = resolvedIds.filter((id): id is string => Boolean(id));
+            await Promise.all(persistedIds.map((id) => api.deleteCitation(session.user.id, id)));
+            const localIdsToDelete = new Set([...idsToDelete, ...persistedIds]);
 
-            setCitations(prev => prev.filter(c => !selectedIds.has(c.id)));
+            setCitations(prev => prev.filter(c =>
+                !localIdsToDelete.has(c.id) &&
+                (!c.optimisticOriginId || !localIdsToDelete.has(c.optimisticOriginId))
+            ));
             setProjects(prev => prev.map(p => ({
                 ...p,
-                citationIds: p.citationIds.filter(cid => !selectedIds.has(cid))
+                citationIds: p.citationIds.filter(cid => !localIdsToDelete.has(cid))
             })));
 
             setSelectedIds(new Set());
@@ -83,11 +102,16 @@ export const useBulkSelection = (
     const handleBatchAddToProject = async (projectId: string) => {
         if (!session || selectedIds.size === 0) return;
         try {
-            await api.addCitationsToProject(session.user.id, projectId, Array.from(selectedIds));
+            const resolvedIds = await Promise.all(Array.from(selectedIds).map(resolveCitationId));
+            if (resolvedIds.some((id) => !id)) {
+                throw new Error('One or more selected items failed to save.');
+            }
+            const persistedIds = resolvedIds as string[];
+            await api.addCitationsToProject(session.user.id, projectId, persistedIds);
 
             setProjects(prev => prev.map(p => {
                 if (p.id === projectId) {
-                    const newIds = Array.from(selectedIds).filter(cid => !p.citationIds.includes(cid));
+                    const newIds = persistedIds.filter(cid => !p.citationIds.includes(cid));
                     return { ...p, citationIds: [...p.citationIds, ...newIds] };
                 }
                 return p;
@@ -102,10 +126,15 @@ export const useBulkSelection = (
     const handleBatchCreateAndAddToProject = async (folderName: string) => {
         if (!session || !folderName.trim() || selectedIds.size === 0) return;
         try {
+            const resolvedIds = await Promise.all(Array.from(selectedIds).map(resolveCitationId));
+            if (resolvedIds.some((id) => !id)) {
+                throw new Error('One or more selected items failed to save.');
+            }
+            const persistedIds = resolvedIds as string[];
             const newProject = await api.createProject(session.user.id, folderName);
-            await api.addCitationsToProject(session.user.id, newProject.id, Array.from(selectedIds));
+            await api.addCitationsToProject(session.user.id, newProject.id, persistedIds);
 
-            setProjects(prev => [...prev, { ...newProject, citationIds: Array.from(selectedIds) }]);
+            setProjects(prev => [...prev, { ...newProject, citationIds: persistedIds }]);
             setSelectedIds(new Set());
         } catch (error) {
             console.error('Error creating batch folder:', error);

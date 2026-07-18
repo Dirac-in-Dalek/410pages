@@ -31,9 +31,14 @@ export interface Citation {
   highlights?: Highlight[];
   createdAt: number;
   saveStatus?: 'saving' | 'failed';
+  /** Runtime-only link used to move UI state from a temporary citation id after persistence. */
+  optimisticOriginId?: string;
 }
 
-export type AddCitationInput = Omit<Citation, 'id' | 'createdAt' | 'notes' | 'saveStatus'>;
+export type AddCitationInput = Omit<
+  Citation,
+  'id' | 'createdAt' | 'notes' | 'saveStatus' | 'optimisticOriginId'
+>;
 export type AddCitationResult = { ok: true; citationId: string } | { ok: false; error: unknown };
 export type BulkSourceUpdateResult = { ok: true; updatedCount: number } | { ok: false; error: unknown };
 

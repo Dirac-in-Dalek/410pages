@@ -6,6 +6,14 @@ export const CITATION_SAVE_FAILED_MESSAGE = '저장에 실패했습니다. 다�
 export const isOptimisticCitationId = (citationId: string) =>
   citationId.startsWith(OPTIMISTIC_CITATION_ID_PREFIX);
 
+export const attachOptimisticOrigin = (
+  citation: Citation,
+  optimisticCitationId: string
+): Citation => ({
+  ...citation,
+  optimisticOriginId: optimisticCitationId,
+});
+
 export const extractCitationPageSort = (page: string | undefined): number | undefined => {
   if (!page) return undefined;
   const match = page.match(/\d+/);

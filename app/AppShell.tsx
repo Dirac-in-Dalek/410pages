@@ -29,7 +29,7 @@ const AppShell: React.FC = () => {
 
   const {
     projects, setProjects, citations, setCitations, books, chapterBlocksByBook, loading: dataLoading,
-    fetchData, handleAddCitation, handleAddCitationOptimistic, handleRetryCitationSave, handleAddNote, handleUpdateNote,
+    fetchData, handleAddCitation, handleAddCitationOptimistic, handleRetryCitationSave, resolveCitationId, handleAddNote, handleUpdateNote,
     handleDeleteNote, handleDeleteCitation, handleUpdateCitation,
     handleBulkUpdateCitationSource, handleCreateBook,
     handleCreateProject, handleRenameProject, handleDeleteProject, handleRenameAuthor, handleRenameBook,
@@ -49,7 +49,7 @@ const AppShell: React.FC = () => {
     selectedIds, isCopying, handleToggleSelect, handleSelectAll,
     handleBatchCopy, handleBatchDelete, handleBatchAddToProject,
     handleBatchCreateAndAddToProject, setSelectedIds
-  } = useBulkSelection(filteredCitations, session, username, setCitations, setProjects);
+  } = useBulkSelection(filteredCitations, session, resolveCitationId, username, setCitations, setProjects);
 
   const { showBatchDeleteModal, setShowBatchDeleteModal } = useAppShellState({
     sessionUserId: session?.user?.id,
