@@ -426,7 +426,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
             event.stopPropagation();
             handleRemoveHighlight(hl.id);
           }}
-          title="Click to remove highlight"
+          title="눌러서 강조 제거"
         >
           {citation.text.slice(hl.start, highlightEnd)}
         </mark>
@@ -445,7 +445,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
     !shouldHideAuthor && (isSelf ? (
       <span
         key="author"
-        className="inline-flex items-center rounded-full border border-[var(--accent-border)] bg-[var(--accent-soft)] px-2 py-0.5 text-[0.84rem] text-[var(--accent-strong)]"
+        className="inline-flex items-center rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-[0.84rem] text-[var(--accent-strong)]"
       >
         <User size={10} className="mr-1" />
         {username}
@@ -453,7 +453,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
     ) : (
       <span
         key="author"
-        className="inline-flex items-center rounded-full border border-[var(--border-main)] bg-[var(--sidebar-active)] px-2 py-0.5 text-[0.84rem] text-[var(--accent-strong)] dark:text-[var(--accent)]"
+        className="inline-flex items-center rounded-full bg-[var(--sidebar-active)] px-2 py-0.5 text-[0.84rem] text-[var(--accent-strong)] dark:text-[var(--accent)]"
       >
         {citation.author}
       </span>
@@ -461,7 +461,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
     !shouldHideBook && citation.book ? (
       <span
         key="book"
-        className="inline-flex items-center rounded-full border border-[var(--border-main)] bg-[var(--bg-sidebar)] px-2 py-0.5 text-[0.84rem] text-[var(--text-muted)]"
+        className="inline-flex items-center rounded-full bg-[var(--bg-input)] px-2 py-0.5 text-[0.84rem] text-[var(--text-muted)]"
       >
         {citation.book}
       </span>
@@ -469,9 +469,9 @@ export const CitationCard: React.FC<CitationCardProps> = ({
     citation.page ? (
       <span
         key="page"
-        className="inline-flex items-center rounded-full border border-[var(--border-main)] bg-[var(--bg-input)] px-2 py-0.5 font-mono text-[0.82rem] text-[var(--text-muted)]"
+        className="inline-flex items-center rounded-full bg-[var(--bg-input)] px-2 py-0.5 font-mono text-[0.82rem] text-[var(--text-muted)]"
       >
-        p.{citation.page}
+        {citation.page}쪽
       </span>
     ) : null,
   ].filter(Boolean);
@@ -479,7 +479,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   const projectChips = projectNames.map((name) => (
     <span
       key={name}
-      className="inline-flex items-center rounded-full border border-[var(--border-main)] bg-[var(--sidebar-active)] px-2 py-0.5 text-[0.84rem] text-[var(--text-secondary)]"
+      className="inline-flex items-center rounded-full bg-[var(--sidebar-active)] px-2 py-0.5 text-[0.84rem] text-[var(--text-secondary)]"
     >
       <Folder size={10} className="mr-1 opacity-80" />
       {name}
@@ -487,7 +487,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   ));
   const hasProjectChips = projectChips.length > 0;
 
-  const notesButtonLabel = `Notes ${citation.notes.length}`;
+  const notesButtonLabel = `메모 ${citation.notes.length}개`;
   const shouldShowInlineMore = isOverflowing && !effectiveIsExpanded && collapsedTextEnd !== null;
 
   return (
@@ -495,24 +495,21 @@ export const CitationCard: React.FC<CitationCardProps> = ({
       ref={cardRef}
       onDoubleClick={handleCardDoubleClick}
       className={`
-        group relative mb-2.5 flex items-start gap-1.5 rounded-[0.75rem] border transition-all duration-200
-        ${isSelected ? 'bg-[var(--accent-soft)] border-[var(--accent-border)] shadow-[var(--shadow-card)]' : 'bg-[var(--bg-card)] border-[var(--border-main)] shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-card-hover)]'}
-        ${isEditing ? 'cursor-default ring-2 ring-[var(--accent-ring)] border-transparent shadow-[var(--shadow-card-hover)] bg-[var(--bg-card)]' : ''}
-        ${isSelf && !isSelected ? 'border-[var(--accent-border)]/60' : ''}
+        group relative mb-2.5 flex items-start gap-0.5 rounded-[0.75rem] bg-[var(--bg-card)] shadow-[var(--shadow-card)] transition-[background-color,box-shadow,transform] duration-200 motion-reduce:transition-none
+        ${isSelected ? 'bg-[var(--accent-soft)] ring-1 ring-inset ring-[var(--accent-border)]' : 'hover:shadow-[var(--shadow-card-hover)]'}
+        ${isEditing ? 'cursor-default ring-2 ring-[var(--accent-ring)] shadow-[var(--shadow-card-hover)]' : ''}
       `}
     >
       {!isEditing && (
-        <div className="pl-2.5 pt-3.5">
+        <label className="flex min-h-11 min-w-11 shrink-0 cursor-pointer touch-manipulation items-start justify-center rounded-lg pt-3.5 transition-transform active:scale-95 motion-reduce:transition-none">
           <input
             type="checkbox"
             checked={isSelected}
-            disabled={isSavingCitation}
+            aria-label={`문장 선택: ${citation.text.slice(0, 40)}`}
             onChange={(event) => onToggleSelect(citation.id, event.target.checked)}
-            className={`w-4 h-4 rounded border-[var(--border-main)] text-[var(--accent)] focus:ring-[var(--accent-ring)] ${
-              isSavingCitation ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
-            }`}
+            className="h-4 w-4 cursor-pointer rounded border-[var(--border-main)] text-[var(--accent)] focus-visible:ring-2 focus-visible:ring-[var(--accent-ring)]"
           />
-        </div>
+        </label>
       )}
 
       <div className="flex-1 min-w-0">
@@ -529,17 +526,17 @@ export const CitationCard: React.FC<CitationCardProps> = ({
               />
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <div className="col-span-1">
-                  <label className="type-muted ml-1 mb-1 block text-[0.72rem] font-bold uppercase text-[var(--text-muted)]">Author</label>
+                  <label className="type-muted ml-1 mb-1 block text-[0.72rem] font-bold text-[var(--text-muted)]">저자</label>
                   <input
                     type="text"
                     value={editAuthor}
                     onChange={(event) => setEditAuthor(event.target.value)}
-                    placeholder="Self"
+                    placeholder="직접 작성"
                     className="type-label-bounded w-full rounded-md border border-[var(--border-main)] bg-[var(--bg-input)] p-2 text-[var(--text-main)] focus:border-[var(--accent-border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)]"
                   />
                 </div>
                 <div className="col-span-1">
-                  <label className="type-muted ml-1 mb-1 block text-[0.72rem] font-bold uppercase text-[var(--text-muted)]">Source</label>
+                  <label className="type-muted ml-1 mb-1 block text-[0.72rem] font-bold text-[var(--text-muted)]">책</label>
                   <input
                     type="text"
                     value={editBook}
@@ -548,7 +545,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                   />
                 </div>
                 <div className="col-span-1">
-                  <label className="type-muted ml-1 mb-1 block text-[0.72rem] font-bold uppercase text-[var(--text-muted)]">Page</label>
+                  <label className="type-muted ml-1 mb-1 block text-[0.72rem] font-bold text-[var(--text-muted)]">페이지</label>
                   <input
                     type="text"
                     value={editPage}
@@ -565,8 +562,8 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                 ref={quoteRef}
                 data-testid="citation-text"
                 className={[
-                  'citation-copy type-body relative z-10 select-text whitespace-pre-wrap text-[var(--text-main)] leading-[1.55]',
-                  effectiveIsExpanded || shouldShowInlineMore ? 'mb-1.5' : 'mb-1.5 line-clamp-2 lg:line-clamp-3'
+                  'citation-copy type-body relative z-10 select-text whitespace-pre-wrap text-pretty text-[var(--text-main)] leading-[1.6]',
+                  effectiveIsExpanded || shouldShowInlineMore ? 'mb-0' : 'mb-0 line-clamp-2 lg:line-clamp-3'
                 ].join(' ')}
                 onMouseUp={handleTextSelection}
               >
@@ -575,12 +572,12 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                   <button
                     type="button"
                     onClick={toggleTextExpansion}
-                    className="type-label-bounded ml-0.5 inline text-[0.82rem] text-[var(--accent)] underline-offset-2 transition-colors hover:text-[var(--accent-strong)] hover:underline active:scale-95"
-                    aria-label="More"
+                    className="type-label-bounded relative ml-0.5 inline-flex min-h-8 touch-manipulation items-center align-middle text-[0.82rem] text-[var(--accent)] underline-offset-2 transition-[color,transform] before:absolute before:-inset-y-1.5 before:inset-x-0 before:content-[''] hover:text-[var(--accent-strong)] hover:underline active:scale-95 motion-reduce:transition-none"
+                    aria-label="더 보기"
                     aria-controls={quoteId}
                     aria-expanded={false}
                   >
-                    ...More
+                    …더 보기
                   </button>
                 ) : null}
               </blockquote>
@@ -589,17 +586,17 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                 <button
                   type="button"
                   onClick={toggleTextExpansion}
-                  className="type-label-bounded mb-2 text-[0.82rem] text-[var(--text-muted)] underline-offset-2 hover:text-[var(--text-main)] hover:underline"
-                  aria-label="Less"
+                  className="type-label-bounded mb-2 inline-flex min-h-11 touch-manipulation items-center text-[0.82rem] text-[var(--text-muted)] underline-offset-2 transition-[color,transform] hover:text-[var(--text-main)] hover:underline active:scale-95 motion-reduce:transition-none"
+                  aria-label="접기"
                   aria-controls={quoteId}
                   aria-expanded={true}
                 >
-                  Less
+                  접기
                 </button>
               ) : null}
 
-              <div className="mt-2 border-t border-[var(--border-main)]/70 pt-1.5">
-                <div className="flex flex-wrap items-center gap-1.5">
+              <div className="mt-1 border-t border-[var(--border-main)]/70 pt-0.5">
+                <div className="flex min-h-8 flex-wrap items-center gap-1.5">
                   {metadataChips}
 
                   <button
@@ -609,12 +606,12 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                     }}
                     disabled={isUnsaved}
                     className={`
-                      ml-auto inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[0.84rem] transition-colors active:scale-95
-                      ${isUnsaved
-                        ? 'cursor-not-allowed border-[var(--border-main)] bg-[var(--bg-input)] text-[var(--text-muted)] opacity-60'
+                      relative ml-auto inline-flex min-h-8 touch-manipulation items-center gap-1 rounded-full px-2 text-[0.84rem] transition-[background-color,color,transform] before:absolute before:-inset-y-1.5 before:inset-x-0 before:content-[''] active:scale-95 motion-reduce:transition-none
+                      ${isSaveFailed
+                        ? 'cursor-not-allowed bg-[var(--bg-input)] text-[var(--text-muted)] opacity-60'
                         : citation.notes.length > 0
-                        ? 'border-[var(--border-main)] bg-[var(--sidebar-active)] text-[var(--accent)] shadow-sm'
-                        : 'border-[var(--border-main)] bg-[var(--bg-card)] text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]'}
+                        ? 'bg-[var(--sidebar-active)] text-[var(--accent)]'
+                        : 'text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]'}
                     `}
                     aria-label={notesButtonLabel}
                   >
@@ -643,7 +640,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                     <div
                       key={note.id}
                       className={`
-                      group/note relative type-note text-[var(--text-main)] bg-[var(--bg-card)] rounded border transition-all overflow-hidden
+                      group/note relative type-note overflow-hidden rounded border bg-[var(--bg-card)] text-[var(--text-main)] transition-[border-color,box-shadow]
                       ${editingNoteId === note.id ? 'border-[var(--accent-border)] shadow-md ring-1 ring-[var(--accent-ring)]' : 'p-1.5 border-[var(--border-main)] hover:border-[var(--accent-border)] cursor-pointer'}
                     `}
                       onClick={() => {
@@ -667,13 +664,13 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                               onClick={(event) => { event.stopPropagation(); setEditingNoteId(null); }}
                               className="type-label-bounded text-[0.82rem] text-[var(--text-muted)] hover:text-[var(--text-main)]"
                             >
-                              Cancel
+                              취소
                             </button>
                             <button
                               onClick={(event) => { event.stopPropagation(); handleSaveNoteEdit(note.id); }}
                               className="type-label-bounded text-[0.82rem] font-bold text-[var(--accent)] hover:text-[var(--accent-strong)]"
                             >
-                              Save
+                              저장
                             </button>
                           </div>
                         </div>
@@ -684,12 +681,12 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                   ))}
                 </div>
 
-                <div className="rounded-[0.9rem] border border-[var(--border-main)] bg-[var(--bg-card)] shadow-sm transition-all focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)]">
+                <div className="rounded-[0.9rem] border border-[var(--border-main)] bg-[var(--bg-card)] shadow-sm transition-[border-color,box-shadow] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)]">
                   <textarea
                     ref={newNoteTextareaRef}
                     value={newNote}
                     onChange={(event) => setNewNote(event.target.value)}
-                    placeholder="Add a new note..."
+                    placeholder="메모 추가…"
                     className="type-note min-h-[52px] w-full resize-none overflow-y-auto border-none bg-transparent p-2.5 text-[var(--text-main)] focus:outline-none focus:ring-0"
                     onKeyDown={(event) => {
                       if (event.key === 'Enter' && !event.shiftKey) {
@@ -703,21 +700,21 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                       <button
                         type="button"
                         onClick={handleCancelNewNote}
-                        className="type-label-bounded inline-flex items-center gap-1 rounded-md px-2.5 py-[0.3125rem] text-[0.82rem] font-medium text-[var(--text-muted)] transition-all hover:bg-[var(--bg-sidebar)] hover:text-[var(--text-main)] active:scale-95"
+                        className="type-label-bounded inline-flex min-h-10 items-center gap-1 rounded-md px-2.5 py-[0.3125rem] text-[0.82rem] font-medium text-[var(--text-muted)] transition-[background-color,color,transform] hover:bg-[var(--bg-sidebar)] hover:text-[var(--text-main)] active:scale-95 motion-reduce:transition-none"
                       >
-                        <X size={14} /> Cancel
+                        <X size={14} /> 취소
                       </button>
                       <button
                         type="button"
                         onClick={submitNote}
                         disabled={!newNote.trim()}
-                        className={`type-label-bounded inline-flex items-center gap-1 rounded-md px-2.5 py-[0.3125rem] text-[0.82rem] font-medium shadow-sm transition-all active:scale-95 ${
+                        className={`type-label-bounded inline-flex min-h-10 items-center gap-1 rounded-md px-2.5 py-[0.3125rem] text-[0.82rem] font-medium shadow-sm transition-[background-color,color,transform] active:scale-95 motion-reduce:transition-none ${
                           newNote.trim()
                             ? 'bg-[var(--accent)] text-white hover:bg-[var(--accent-strong)]'
                             : 'cursor-not-allowed bg-[var(--bg-input)] text-[var(--text-muted)] shadow-none'
                         }`}
                       >
-                        <Check size={14} /> Confirm
+                        <Check size={14} /> 추가
                       </button>
                     </div>
                   ) : null}
@@ -731,13 +728,13 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                   onClick={() => void handleCancel()}
                   className="type-label-bounded flex items-center gap-1 rounded-md px-2.5 py-[0.3125rem] text-[0.82rem] font-medium text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-sidebar)]"
                 >
-                  <X size={14} /> Cancel
+                  <X size={14} /> 취소
                 </button>
                 <button
                   onClick={() => void handleSave()}
                   className="type-label-bounded flex items-center gap-1 rounded-md bg-[var(--accent)] px-2.5 py-[0.3125rem] text-[0.82rem] font-medium text-white shadow-sm transition-colors hover:bg-[var(--accent-strong)]"
                 >
-                  <Check size={14} /> Save
+                  <Check size={14} /> 저장
                 </button>
               </div>
             )}

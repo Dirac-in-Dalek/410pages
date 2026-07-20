@@ -25,13 +25,13 @@ describe('MobileLayout header actions', () => {
 
     expect(screen.queryByRole('navigation')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Folders' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Library' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '서재' })).toBeNull();
 
-    await user.click(screen.getByRole('button', { name: 'Open folders' }));
-    expect(screen.getByRole('heading', { name: 'Folders' })).not.toBeNull();
+    await user.click(screen.getByRole('button', { name: '폴더 열기' }));
+    expect(screen.getByRole('heading', { name: '폴더' })).not.toBeNull();
 
-    await user.click(screen.getByRole('button', { name: 'Open library' }));
-    expect(screen.getByRole('heading', { name: 'Library' })).not.toBeNull();
+    await user.click(screen.getByRole('button', { name: '서재 열기' }));
+    expect(screen.getByRole('heading', { name: '서재' })).not.toBeNull();
   });
 
   it('starts a new book from the mobile library sheet', async () => {
@@ -54,7 +54,7 @@ describe('MobileLayout header actions', () => {
       </MobileLayout>
     );
 
-    await user.click(screen.getByRole('button', { name: 'Open library' }));
+    await user.click(screen.getByRole('button', { name: '서재 열기' }));
     await user.click(screen.getByRole('button', { name: '새 책 읽기' }));
     await user.type(screen.getByLabelText('책 제목'), 'The Dispossessed');
     await user.type(screen.getByLabelText('저자'), 'Ursula K. Le Guin');

@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_FONT_ID, FONT_IDS } from './fontRegistry';
 
 const INDEX_HTML_PATH = resolve(import.meta.dirname, '..', 'index.html');
+const INDEX_CSS_PATH = resolve(import.meta.dirname, '..', 'index.css');
 
 const createMatchMediaStub = (matches = false) =>
   vi.fn().mockImplementation(() => ({
@@ -114,6 +115,14 @@ describe('index bootstrap', () => {
 
     expect(getDeclaredSupportedFonts(script)).toEqual(FONT_IDS);
     expect(getDeclaredDefaultFontId(script)).toBe(DEFAULT_FONT_ID);
+  });
+
+  it('applies Pretendard to citation copy when Pretendard is selected', () => {
+    const css = readFileSync(INDEX_CSS_PATH, 'utf8');
+    const pretendardRule = css.match(/:root\[data-font='pretendard'\]\s*\{([\s\S]*?)\}/)?.[1];
+
+    expect(pretendardRule).toContain('--font-ui-active: var(--font-ui)');
+    expect(pretendardRule).toContain('--font-display-active: var(--font-ui)');
   });
 
   it('accepts mono font ids during classic first paint', () => {

@@ -49,15 +49,15 @@ describe('Constrained typography', () => {
 
     expect(screen.queryByText('1')).toBeNull();
 
-    await user.click(screen.getByRole('button', { name: 'New Project' }));
+    await user.click(screen.getByRole('button', { name: '새 폴더' }));
 
-    expect(screen.getByPlaceholderText('Project Name').className).toContain('type-body-bounded');
+    expect(screen.getByPlaceholderText('폴더 이름').className).toContain('type-body-bounded');
 
-    await user.click(screen.getByRole('button', { name: 'Manage folders' }));
-    await user.click(screen.getByRole('button', { name: 'Delete project' }));
+    await user.click(screen.getByRole('button', { name: '폴더 관리' }));
+    await user.click(screen.getByRole('button', { name: '폴더 삭제' }));
 
-    expect(screen.getByRole('button', { name: 'Cancel' }).className).toContain('ui-btn');
-    expect(screen.getByRole('button', { name: 'Remove' }).className).toContain('type-label-bounded');
+    expect(screen.getByRole('button', { name: '취소' }).className).toContain('ui-btn');
+    expect(screen.getByRole('button', { name: '삭제' }).className).toContain('type-label-bounded');
   });
 
   it('bounds body text in mobile layout inputs', async () => {
@@ -82,14 +82,14 @@ describe('Constrained typography', () => {
       </MobileLayout>
     );
 
-    await user.click(screen.getByRole('button', { name: 'Open folders' }));
+    await user.click(screen.getByRole('button', { name: '폴더 열기' }));
     expect(screen.queryByText('1')).toBeNull();
 
-    await user.click(screen.getByRole('button', { name: 'New Project' }));
-    expect(screen.getByPlaceholderText('Project name').className).toContain('type-body-bounded');
+    await user.click(screen.getByRole('button', { name: '새 폴더' }));
+    expect(screen.getByPlaceholderText('폴더 이름').className).toContain('type-body-bounded');
 
-    await user.click(screen.getByLabelText('Close panels'));
-    await user.click(screen.getByRole('button', { name: 'Open library' }));
-    expect(screen.getByPlaceholderText('Search citations, author, book').className).toContain('type-body-bounded');
+    await user.click(screen.getByLabelText('패널 닫기'));
+    await user.click(screen.getByRole('button', { name: '서재 열기' }));
+    expect(screen.getByPlaceholderText('문장, 저자 또는 책 검색').className).toContain('type-body-bounded');
   });
 });

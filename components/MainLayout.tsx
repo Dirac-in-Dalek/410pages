@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bell, Search, Settings, UserCircle2 } from 'lucide-react';
+import { Search, UserCircle2 } from 'lucide-react';
 import { CreateBookInput, Project, SidebarItem } from '../types';
 import { useSidebarResize } from './main-layout/useSidebarResize';
 import { LibrarySidebar } from '../features/archive/ui/LibrarySidebar';
@@ -89,7 +89,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               <input
                 value={searchTerm}
                 onChange={(event) => onSearch?.(event.target.value)}
-                placeholder="Search citations, authors, or books..."
+                aria-label="문장, 저자 또는 책 검색"
+                placeholder="문장, 저자 또는 책 검색…"
                 className="type-body-bounded h-full w-full border-none bg-transparent p-0 text-[var(--text-main)] placeholder:text-[var(--text-secondary)] focus:ring-0"
               />
             </label>
@@ -101,24 +102,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           >
             <button
               type="button"
-              className="ui-btn ui-btn-icon h-8 w-8 min-h-0 rounded-full border-transparent bg-transparent text-[var(--text-secondary)]"
-              aria-label="Notifications"
-            >
-              <Bell size={18} />
-            </button>
-            <button
-              type="button"
               onClick={onOpenSettings}
-              className="ui-btn ui-btn-icon h-8 w-8 min-h-0 rounded-full border-transparent bg-transparent text-[var(--text-secondary)]"
-              aria-label="Open settings"
-            >
-              <Settings size={18} />
-            </button>
-            <button
-              type="button"
-              onClick={onOpenSettings}
-              className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-[var(--border-main)] bg-[var(--bg-card)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--sidebar-hover)]"
-              aria-label="Open account settings"
+              className="flex h-10 w-10 touch-manipulation items-center justify-center overflow-hidden rounded-full bg-[var(--bg-input)] text-[var(--text-secondary)] transition-[background-color,color,transform] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)] active:scale-95 motion-reduce:transition-none"
+              aria-label="계정 및 설정 열기"
             >
               {avatarUrl ? (
                 <img src={avatarUrl} alt="" className="h-full w-full object-cover" />

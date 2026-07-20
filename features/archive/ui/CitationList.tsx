@@ -159,14 +159,14 @@ export const CitationList: React.FC<CitationListProps> = ({
     };
 
     if (loading) {
-        return <div className="type-body text-center py-20 text-[var(--text-muted)]">Loading your items...</div>;
+        return <div className="type-body py-20 text-center text-[var(--text-muted)]" role="status">항목을 불러오는 중…</div>;
     }
 
     if (renderRows.length === 0) {
         return (
             <div className="type-body text-center py-20 text-[var(--text-muted)] border-2 border-dashed border-[var(--border-main)] rounded-xl">
-                <p>{searchTerm ? 'No matches found.' : 'No items found in this view.'}</p>
-                <p className="type-body-muted mt-2">{searchTerm ? 'Try another keyword.' : 'Drag items from the right or type above.'}</p>
+                <p>{searchTerm ? '검색 결과가 없습니다.' : '아직 수집한 항목이 없습니다.'}</p>
+                <p className="type-body-muted mt-2">{searchTerm ? '다른 검색어를 입력해보세요.' : '위 입력창에서 문장이나 단어를 추가해보세요.'}</p>
             </div>
         );
     }
@@ -177,13 +177,13 @@ export const CitationList: React.FC<CitationListProps> = ({
             <div className="mb-1.5 flex justify-start px-2">
                 <button
                     type="button"
-                    aria-label="Toggle all citations"
+                    aria-label={allVisibleCitationsExpanded ? '문장 모두 접기' : '문장 모두 펼치기'}
                     aria-pressed={allVisibleCitationsExpanded}
                     onClick={handleToggleAllCitationText}
-                    className="type-label-bounded inline-flex min-h-8 items-center gap-1 rounded-md px-1.5 py-1 text-[0.82rem] font-medium text-[var(--text-muted)] transition-all hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)] active:scale-95"
+                    className="type-label-bounded inline-flex min-h-11 items-center gap-1 rounded-md px-1.5 py-1 text-[0.82rem] font-medium text-[var(--text-muted)] transition-[background-color,color,transform] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)] active:scale-95 motion-reduce:transition-none sm:min-h-8"
                 >
                     {allVisibleCitationsExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                    {allVisibleCitationsExpanded ? 'Collapse all' : 'Expand all'}
+                    {allVisibleCitationsExpanded ? '문장 모두 접기' : '문장 모두 펼치기'}
                 </button>
             </div>
             ) : null}

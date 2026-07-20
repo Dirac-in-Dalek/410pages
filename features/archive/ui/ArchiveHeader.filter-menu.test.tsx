@@ -18,7 +18,7 @@ const baseProps = {
 };
 
 describe('ArchiveHeader filter menu', () => {
-  it('uses one Filter button to open date/page sort choices', async () => {
+  it('uses one Korean sort button to open date/page choices', async () => {
     const user = userEvent.setup();
     const onDateSortClick = vi.fn();
     const onPageSortClick = vi.fn();
@@ -31,24 +31,21 @@ describe('ArchiveHeader filter menu', () => {
       />
     );
 
-    expect(screen.queryByRole('button', { name: 'Sort by date' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Sort by page' })).toBeNull();
-
-    const filterButton = screen.getByRole('button', { name: 'Filter: Date ↓' });
+    const filterButton = screen.getByRole('button', { name: '정렬: 작성일 · 최신순' });
     expect(filterButton.getAttribute('aria-expanded')).toBe('false');
 
     await user.click(filterButton);
 
     expect(screen.getByRole('menu')).toBeTruthy();
-    expect(screen.getByRole('menuitemradio', { name: 'Date ↓' }).getAttribute('aria-checked')).toBe('true');
-    expect(screen.getByRole('menuitemradio', { name: 'Page' }).getAttribute('aria-checked')).toBe('false');
+    expect(screen.getByRole('menuitemradio', { name: '작성일 · 최신순' }).getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByRole('menuitemradio', { name: '페이지 · 오름차순' }).getAttribute('aria-checked')).toBe('false');
 
-    await user.click(screen.getByRole('menuitemradio', { name: 'Page' }));
+    await user.click(screen.getByRole('menuitemradio', { name: '페이지 · 오름차순' }));
 
     expect(onPageSortClick).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('menu')).toBeTruthy();
 
-    await user.click(screen.getByRole('menuitemradio', { name: 'Date ↓' }));
+    await user.click(screen.getByRole('menuitemradio', { name: '작성일 · 최신순' }));
 
     expect(onDateSortClick).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('menu')).toBeTruthy();

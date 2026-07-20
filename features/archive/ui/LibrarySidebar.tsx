@@ -39,7 +39,7 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
       <div className="border-b border-[var(--border-main)] px-3.5 pb-3 pt-3.5">
         <div>
           <span className="type-title-bounded block text-[1.45rem] font-semibold tracking-[-0.03em] text-[var(--text-main)]">
-            Library
+            서재
           </span>
         </div>
       </div>
@@ -74,7 +74,7 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
               ].join(' ')}
             >
               <FolderOpen size={15} className="shrink-0" />
-              <span>All Citations</span>
+              <span>모든 문장</span>
             </button>
           </div>
         }

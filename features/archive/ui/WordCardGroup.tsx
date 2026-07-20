@@ -1,4 +1,5 @@
 import React from 'react';
+import { RefreshCw } from 'lucide-react';
 import type { Citation } from '../../../types';
 import { WordCard } from './WordCard';
 
@@ -14,20 +15,43 @@ export const WordCardGroup: React.FC<WordCardGroupProps> = ({
   selectedIds,
   onToggleSelect,
   onRetrySave,
-}) => (
-  <div
-    role="list"
-    aria-label="Collected words"
-    className="mb-2.5 flex flex-wrap items-start gap-1.5 px-1 sm:gap-2"
-  >
-    {citations.map((citation) => (
-      <WordCard
-        key={citation.id}
-        citation={citation}
-        isSelected={selectedIds.has(citation.id)}
-        onToggleSelect={onToggleSelect}
-        onRetrySave={onRetrySave}
-      />
-    ))}
-  </div>
-);
+}) => {
+  const failedCitations = citations.filter((citation) => citation.saveStatus === 'failed');
+
+  const handleRetryFailed = () => {
+    void Promise.allSettled(failedCitations.map((citation) => Promise.resolve(onRetrySave(citation.id))));
+  };
+
+  return (
+    <div className="mb-2.5 min-w-0 px-1">
+      <div role="list" aria-label="수집한 단어" className="flex min-w-0 flex-wrap items-start gap-1.5 sm:gap-2">
+        {citations.map((citation) => (
+          <WordCard
+            key={citation.id}
+            citation={citation}
+            isSelected={selectedIds.has(citation.id)}
+            onToggleSelect={onToggleSelect}
+          />
+        ))}
+      </div>
+
+      {failedCitations.length > 0 ? (
+        <div
+          role="alert"
+          className="mt-1.5 flex min-h-11 max-w-full items-center justify-between gap-3 rounded-lg bg-red-50 px-3 text-sm text-red-800 dark:bg-red-400/10 dark:text-red-100"
+        >
+          <span className="min-w-0">{failedCitations.length}개 저장 실패</span>
+          <button
+            type="button"
+            onClick={handleRetryFailed}
+            className="inline-flex min-h-10 shrink-0 touch-manipulation items-center gap-1.5 rounded-lg px-2 font-semibold transition-[background-color,transform] hover:bg-red-100 active:scale-95 dark:hover:bg-red-300/10 motion-reduce:transition-none"
+            aria-label={`저장에 실패한 단어 ${failedCitations.length}개 다시 시도`}
+          >
+            <RefreshCw size={14} />
+            다시 시도
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+};

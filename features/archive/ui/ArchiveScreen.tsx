@@ -129,10 +129,10 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
 
           <ConfirmModal
             isOpen={isBatchDeleteOpen}
-            title="Delete items?"
+            title="선택한 항목을 삭제할까요?"
             message={
               <>
-                <span className="font-bold text-[var(--text-main)]">{selectedIds.size}</span> item(s) will be permanently deleted. This action cannot be undone.
+                <span className="font-bold text-[var(--text-main)]">{selectedIds.size}개</span> 항목이 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
               </>
             }
             onConfirm={onDeleteConfirm}

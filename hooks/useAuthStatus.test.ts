@@ -12,6 +12,7 @@ const mockSignOut = vi.fn();
 const mockProfileSingle = vi.fn();
 const mockEq = vi.fn();
 const mockSelect = vi.fn();
+let authStateChangeCallback: ((event: string, session: unknown) => void) | undefined;
 
 vi.mock('../lib/api', () => ({
   api: {
@@ -39,6 +40,7 @@ vi.mock('../lib/supabase', () => ({
 describe('useAuthStatus', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    authStateChangeCallback = undefined;
     const localStorageState = new Map<string, string>();
     const sessionStorageState = new Map<string, string>();
 
@@ -92,12 +94,15 @@ describe('useAuthStatus', () => {
       },
     });
 
-    mockOnAuthStateChange.mockReturnValue({
-      data: {
-        subscription: {
-          unsubscribe: vi.fn(),
+    mockOnAuthStateChange.mockImplementation((callback) => {
+      authStateChangeCallback = callback;
+      return {
+        data: {
+          subscription: {
+            unsubscribe: vi.fn(),
+          },
         },
-      },
+      };
     });
 
     mockSignOut.mockResolvedValue({ error: null });
@@ -225,5 +230,25 @@ describe('useAuthStatus', () => {
     expect(result.current.session).toBeNull();
     expect(result.current.username).toBe('Researcher');
     expect(result.current.avatarUrl).toBeNull();
+  });
+
+  it('enters and completes password recovery from the auth event', async () => {
+    mockProfileSingle.mockResolvedValue({
+      data: { username: 'Reader', avatar_path: null },
+      error: null,
+    });
+
+    const { result } = renderHook(() => useAuthStatus());
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    act(() => {
+      authStateChangeCallback?.('PASSWORD_RECOVERY', { user: { id: 'user-1' } });
+    });
+
+    expect(result.current.isPasswordRecovery).toBe(true);
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.username).toBe('Reader');
+    act(() => result.current.completePasswordRecovery());
+    expect(result.current.isPasswordRecovery).toBe(false);
   });
 });

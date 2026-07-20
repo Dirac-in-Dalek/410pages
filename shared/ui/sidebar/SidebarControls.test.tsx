@@ -16,7 +16,7 @@ describe('EditorialInlineRenameField', () => {
     );
 
     const input = screen.getByDisplayValue('Morgan Housel');
-    const confirmButton = screen.getByRole('button', { name: 'Confirm rename' });
+    const confirmButton = screen.getByRole('button', { name: '이름 변경 확인' });
 
     expect(input.parentElement?.className).toContain('flex-col');
     expect(confirmButton.parentElement?.className).toContain('justify-end');

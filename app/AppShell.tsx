@@ -22,6 +22,7 @@ const AppShell: React.FC = () => {
   const { isMobileApp } = useResponsiveMode();
   const {
     session, username, avatarUrl, loading: authLoading,
+    isPasswordRecovery, completePasswordRecovery,
     handleUpdateUsername, handleUpdateAvatar, handleSignOut
   } = useAuthStatus();
   const { preferences, setTheme, setFontFamily, setBaseFontPt, setCitationWidthRem } =
@@ -72,6 +73,10 @@ const AppShell: React.FC = () => {
     onUpdateAvatar: handleUpdateAvatar,
     onSignOut: handleSignOut,
   });
+
+  if (isPasswordRecovery) {
+    return <Auth isPasswordRecovery onPasswordRecoveryComplete={completePasswordRecovery} />;
+  }
 
   if (!session) return <Auth />;
 

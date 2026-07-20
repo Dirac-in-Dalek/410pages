@@ -159,13 +159,13 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
         <div className="h-[3.25rem] px-4 flex items-center justify-between gap-3">
           <h1 className="type-title-bounded truncate font-semibold tracking-[-0.012em]">{title}</h1>
           <div className="flex items-center gap-2">
-            <EditorialToolbarButton active={isProjectsOpen} onClick={toggleProjectsPanel} ariaLabel="Open folders">
+            <EditorialToolbarButton active={isProjectsOpen} onClick={toggleProjectsPanel} ariaLabel="폴더 열기">
               <Folder size={16} />
             </EditorialToolbarButton>
-            <EditorialToolbarButton active={isLibraryOpen} onClick={toggleLibraryPanel} ariaLabel="Open library">
+            <EditorialToolbarButton active={isLibraryOpen} onClick={toggleLibraryPanel} ariaLabel="서재 열기">
               <Library size={16} />
             </EditorialToolbarButton>
-            <EditorialToolbarButton active={false} onClick={onOpenSettings} ariaLabel="Open settings">
+            <EditorialToolbarButton active={false} onClick={onOpenSettings} ariaLabel="설정 열기">
               <Settings size={17} />
             </EditorialToolbarButton>
           </div>
@@ -177,15 +177,15 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
       {(isProjectsOpen || isLibraryOpen) && (
         <button
           type="button"
-          className="fixed inset-0 z-40 bg-black/35 backdrop-blur-sm"
+          className="fixed inset-0 z-40 bg-black/35"
           onClick={closeSheets}
-          aria-label="Close panels"
+          aria-label="패널 닫기"
         />
       )}
 
       <EditorialSheet side="left" isOpen={isProjectsOpen} widthClassName="w-[84vw] max-w-[20rem]">
         <div className="h-full flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
-          <EditorialSheetHeader title="Folders" onClose={() => setIsProjectsOpen(false)} />
+          <EditorialSheetHeader title="폴더" onClose={() => setIsProjectsOpen(false)} />
 
           <div className="p-3 overflow-y-auto flex-1 flex flex-col">
             <EditorialListButton
@@ -197,10 +197,10 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
               }}
             >
               <Folder size={16} className="shrink-0" />
-              <span>All Citations</span>
+              <span>모든 문장</span>
             </EditorialListButton>
 
-            <EditorialSectionLabel>Projects</EditorialSectionLabel>
+            <EditorialSectionLabel>폴더</EditorialSectionLabel>
             <div className="space-y-1">
               {projects.map((project) => (
                 <EditorialListButton
@@ -222,7 +222,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
               compact
               isCreating={isCreatingProject}
               value={newProjectName}
-              placeholder="Project name"
+              placeholder="폴더 이름"
               onStart={() => setIsCreatingProject(true)}
               onChange={setNewProjectName}
               onSubmit={submitCreateProject}
@@ -233,7 +233,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
             />
 
             <div className="pt-4">
-              <EditorialProfileCard username={username} avatarUrl={avatarUrl} subtitle="Research workspace">
+              <EditorialProfileCard username={username} avatarUrl={avatarUrl} subtitle="나의 독서 아카이브">
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
@@ -241,17 +241,17 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
                     onOpenSettings();
                     closeSheets();
                   }}
-                  className="type-label-bounded p-2.5 rounded-md border border-[var(--border-main)] text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)] flex items-center justify-center gap-1"
+                  className="type-label-bounded flex min-h-11 touch-manipulation items-center justify-center gap-1 rounded-lg bg-[var(--bg-input)] p-2.5 text-[var(--text-muted)] transition-[background-color,color,transform] hover:bg-[var(--sidebar-hover)] active:scale-95 motion-reduce:transition-none"
                 >
                   <Settings size={14} />
-                  Settings
+                  설정
                 </button>
                 <button
                   onClick={onSignOut}
-                  className="type-label-bounded p-2.5 rounded-md border border-[var(--border-main)] text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)] flex items-center justify-center gap-1"
+                  className="type-label-bounded flex min-h-11 touch-manipulation items-center justify-center gap-1 rounded-lg bg-[var(--bg-input)] p-2.5 text-[var(--text-muted)] transition-[background-color,color,transform] hover:bg-[var(--sidebar-hover)] active:scale-95 motion-reduce:transition-none"
                 >
                   <LogOut size={14} />
-                  Logout
+                  로그아웃
                 </button>
               </div>
               </EditorialProfileCard>
@@ -262,7 +262,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
 
       <EditorialSheet side="right" isOpen={isLibraryOpen} widthClassName="w-[92vw] max-w-md">
         <div className="h-full flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
-          <EditorialSheetHeader title="Library" onClose={() => setIsLibraryOpen(false)} />
+          <EditorialSheetHeader title="서재" onClose={() => setIsLibraryOpen(false)} />
 
           <div className="space-y-3 p-3 border-b border-[var(--border-main)]">
             {onCreateBook && (
@@ -277,7 +277,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
             <EditorialSearchField
               value={searchTerm}
               onChange={onSearch}
-              placeholder="Search citations, author, book"
+              placeholder="문장, 저자 또는 책 검색"
             />
           </div>
 

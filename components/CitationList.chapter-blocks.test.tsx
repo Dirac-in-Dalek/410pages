@@ -88,7 +88,7 @@ describe('CitationList chapter blocks', () => {
     expect(screen.queryByText('Chapter')).toBeNull();
     expect(screen.getByText('3장')).toBeTruthy();
     expect(screen.getByText('Second quote')).toBeTruthy();
-    expect(screen.getAllByRole('button', { name: 'Add chapter block' })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: '장 구분 추가' })).toHaveLength(1);
     expect(screen.getByTestId('citation-citation-1').compareDocumentPosition(screen.getByText('3장'))).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(screen.getByText('3장').compareDocumentPosition(screen.getByTestId('citation-citation-2'))).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
@@ -192,7 +192,7 @@ describe('CitationList chapter blocks', () => {
       />
     );
 
-    const trigger = screen.getAllByRole('button', { name: 'Add chapter block' })[0];
+    const trigger = screen.getAllByRole('button', { name: '장 구분 추가' })[0];
     expect(trigger.className).toContain('opacity-0');
   });
 
@@ -230,9 +230,9 @@ describe('CitationList chapter blocks', () => {
       />
     );
 
-    await user.click(screen.getAllByRole('button', { name: 'Add chapter block' })[0]);
-    await user.type(screen.getByRole('textbox', { name: 'Chapter block label' }), '3장');
-    await user.click(screen.getByRole('button', { name: 'Save chapter block' }));
+    await user.click(screen.getAllByRole('button', { name: '장 구분 추가' })[0]);
+    await user.type(screen.getByRole('textbox', { name: '장 구분 제목' }), '3장');
+    await user.click(screen.getByRole('button', { name: '장 구분 저장' }));
 
     expect(onCreateChapterBlock).toHaveBeenCalledWith({
       bookId: 'book-1',
@@ -274,16 +274,16 @@ describe('CitationList chapter blocks', () => {
       />
     );
 
-    await user.click(screen.getAllByRole('button', { name: 'Add chapter block' })[0]);
+    await user.click(screen.getAllByRole('button', { name: '장 구분 추가' })[0]);
 
-    const input = screen.getByRole('textbox', { name: 'Chapter block label' });
+    const input = screen.getByRole('textbox', { name: '장 구분 제목' });
     expect(input.getAttribute('value')).toBeNull();
 
     await user.type(input, '대한민국');
 
     expect((input as HTMLInputElement).value).toBe('대한민국');
     expect(input.getAttribute('value')).toBeNull();
-    expect((screen.getByRole('button', { name: 'Save chapter block' }) as HTMLButtonElement).disabled).toBe(false);
+    expect((screen.getByRole('button', { name: '장 구분 저장' }) as HTMLButtonElement).disabled).toBe(false);
   });
 
   it('still shows an insert control when the book view has only one citation', async () => {
@@ -311,9 +311,9 @@ describe('CitationList chapter blocks', () => {
       />
     );
 
-    await user.click(screen.getByRole('button', { name: 'Add chapter block' }));
-    await user.type(screen.getByRole('textbox', { name: 'Chapter block label' }), '프롤로그');
-    await user.click(screen.getByRole('button', { name: 'Save chapter block' }));
+    await user.click(screen.getByRole('button', { name: '장 구분 추가' }));
+    await user.type(screen.getByRole('textbox', { name: '장 구분 제목' }), '프롤로그');
+    await user.click(screen.getByRole('button', { name: '장 구분 저장' }));
 
     expect(onCreateChapterBlock).toHaveBeenCalledWith({
       bookId: 'book-1',
@@ -355,12 +355,12 @@ describe('CitationList chapter blocks', () => {
       />
     );
 
-    expect(screen.getAllByRole('button', { name: 'Add chapter block' })).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: '장 구분 추가' })).toHaveLength(2);
 
-    await user.click(screen.getAllByRole('button', { name: 'Add chapter block' })[0]);
+    await user.click(screen.getAllByRole('button', { name: '장 구분 추가' })[0]);
 
-    expect(screen.getByRole('textbox', { name: 'Chapter block label' })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Add chapter block' })).toBeNull();
+    expect(screen.getByRole('textbox', { name: '장 구분 제목' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: '장 구분 추가' })).toBeNull();
   });
 
   it('opens extra vertical space around the chapter input while editing', async () => {
@@ -395,12 +395,12 @@ describe('CitationList chapter blocks', () => {
       />
     );
 
-    const trigger = screen.getAllByRole('button', { name: 'Add chapter block' })[0];
+    const trigger = screen.getAllByRole('button', { name: '장 구분 추가' })[0];
     expect(trigger.parentElement?.className).toContain('h-5');
 
     await user.click(trigger);
 
-    const input = screen.getByRole('textbox', { name: 'Chapter block label' });
+    const input = screen.getByRole('textbox', { name: '장 구분 제목' });
     expect(input.className).toContain('h-10');
     expect(input.parentElement?.parentElement?.className).toContain('min-h-12');
   });
@@ -440,12 +440,12 @@ describe('CitationList chapter blocks', () => {
       </div>
     );
 
-    await user.click(screen.getAllByRole('button', { name: 'Add chapter block' })[0]);
-    expect(screen.getByRole('textbox', { name: 'Chapter block label' })).toBeTruthy();
+    await user.click(screen.getAllByRole('button', { name: '장 구분 추가' })[0]);
+    expect(screen.getByRole('textbox', { name: '장 구분 제목' })).toBeTruthy();
 
     await user.click(screen.getByRole('button', { name: 'Outside target' }));
 
-    expect(screen.queryByRole('textbox', { name: 'Chapter block label' })).toBeNull();
+    expect(screen.queryByRole('textbox', { name: '장 구분 제목' })).toBeNull();
   });
 
   it('deletes a saved chapter block from its inline close button', async () => {

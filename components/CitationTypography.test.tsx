@@ -44,7 +44,7 @@ describe('Citation typography', () => {
   it('does not hardcode the archive editor text area to serif utility classes', () => {
     render(<CitationEditor onAddCitation={vi.fn()} username="Dalek" />);
 
-    const editor = screen.getByPlaceholderText('Write a quote, sentence, or field note...');
+    const editor = screen.getByPlaceholderText('문장, 인용문 또는 단어를 입력하세요');
     expect(editor.className).not.toContain('font-serif');
     expect(editor.className).not.toContain('placeholder:font-sans');
   });
@@ -52,14 +52,14 @@ describe('Citation typography', () => {
   it('starts the archive editor at a fixed empty height before typing', () => {
     render(<CitationEditor onAddCitation={vi.fn()} username="Dalek" />);
 
-    const editor = screen.getByPlaceholderText('Write a quote, sentence, or field note...');
+    const editor = screen.getByPlaceholderText('문장, 인용문 또는 단어를 입력하세요');
     expect((editor as HTMLTextAreaElement).style.height).toBe('72px');
   });
 
   it('keeps quote text away from the focus edge', () => {
     render(<CitationEditor onAddCitation={vi.fn()} username="Dalek" />);
 
-    const editor = screen.getByPlaceholderText('Write a quote, sentence, or field note...');
+    const editor = screen.getByPlaceholderText('문장, 인용문 또는 단어를 입력하세요');
     expect(editor.className).toContain('px-2');
     expect(editor.className).toContain('py-1.5');
     expect(editor.className).toContain('focus:outline-none');
@@ -79,8 +79,8 @@ describe('Citation typography', () => {
       />
     );
 
-    const editor = screen.getByPlaceholderText('Write a quote, sentence, or field note...');
-    const pageInput = screen.getByPlaceholderText('Page');
+    const editor = screen.getByPlaceholderText('문장, 인용문 또는 단어를 입력하세요');
+    const pageInput = screen.getByPlaceholderText('페이지');
 
     await waitFor(() => expect(document.activeElement).toBe(editor));
     await user.type(editor, 'A practical idea');
@@ -104,7 +104,7 @@ describe('Citation typography', () => {
       />
     );
 
-    const editor = screen.getByPlaceholderText('Write a quote, sentence, or field note...');
+    const editor = screen.getByPlaceholderText('문장, 인용문 또는 단어를 입력하세요');
     await user.type(editor, '부조리 인간');
     await user.keyboard('{Enter}');
 
@@ -135,8 +135,8 @@ describe('Citation typography', () => {
       />
     );
 
-    const editor = screen.getByPlaceholderText('Write a quote, sentence, or field note...');
-    const pageInput = screen.getByPlaceholderText('Page');
+    const editor = screen.getByPlaceholderText('문장, 인용문 또는 단어를 입력하세요');
+    const pageInput = screen.getByPlaceholderText('페이지');
 
     await user.type(editor, 'Another useful quote');
     await user.keyboard('{Enter}');
@@ -172,8 +172,8 @@ describe('Citation typography', () => {
       />
     );
 
-    const editor = screen.getByPlaceholderText('Write a quote, sentence, or field note...');
-    const pageInput = screen.getByPlaceholderText('Page');
+    const editor = screen.getByPlaceholderText('문장, 인용문 또는 단어를 입력하세요');
+    const pageInput = screen.getByPlaceholderText('페이지');
 
     expect(screen.queryByPlaceholderText('Author')).toBeNull();
     expect(screen.queryByPlaceholderText('Book')).toBeNull();
@@ -208,7 +208,7 @@ describe('Citation typography', () => {
       />
     );
 
-    const editor = screen.getByPlaceholderText('Write a quote, sentence, or field note...');
+    const editor = screen.getByPlaceholderText('문장, 인용문 또는 단어를 입력하세요');
 
     await user.type(editor, 'Long line 1');
     await user.keyboard('{Shift>}{Enter}{/Shift}');
@@ -231,8 +231,8 @@ describe('Citation typography', () => {
       />
     );
 
-    const editor = screen.getByPlaceholderText('Write a quote, sentence, or field note...');
-    const pageInput = screen.getByPlaceholderText('Page');
+    const editor = screen.getByPlaceholderText('문장, 인용문 또는 단어를 입력하세요');
+    const pageInput = screen.getByPlaceholderText('페이지');
 
     await user.type(editor, 'Long line 1');
     await user.keyboard('{Enter}');
@@ -263,8 +263,8 @@ describe('Citation typography', () => {
       />
     );
 
-    const editor = screen.getByPlaceholderText('Write a quote, sentence, or field note...');
-    const pageInput = screen.getByPlaceholderText('Page');
+    const editor = screen.getByPlaceholderText('문장, 인용문 또는 단어를 입력하세요');
+    const pageInput = screen.getByPlaceholderText('페이지');
     const submitButton = screen.getByRole('button');
 
     await user.type(editor, 'One slow quote');
@@ -334,7 +334,7 @@ describe('Citation typography', () => {
 
     await user.dblClick(screen.getByText('Font preference should affect this quote.'));
 
-    expect(screen.getByPlaceholderText('Add a new note...')).not.toBeNull();
+    expect(screen.getByPlaceholderText('메모 추가…')).not.toBeNull();
   });
 
   it('keeps failed optimistic cards visible with retry and no memo input', async () => {
@@ -365,7 +365,7 @@ describe('Citation typography', () => {
 
     await user.dblClick(screen.getByText('Font preference should affect this quote.'));
 
-    expect(screen.queryByPlaceholderText('Add a new note...')).toBeNull();
+    expect(screen.queryByPlaceholderText('메모 추가…')).toBeNull();
 
     await user.click(screen.getByRole('button', { name: /다시 저장하기/i }));
     expect(onRetrySave).toHaveBeenCalledWith('optimistic-citation-1');
@@ -412,11 +412,11 @@ describe('Citation typography', () => {
 
     await user.dblClick(screen.getByText('Font preference should affect this quote.'));
 
-    const noteInput = screen.getByPlaceholderText('Add a new note...');
-    const cancelButton = screen.getByRole('button', { name: /cancel/i });
-    const saveButton = screen.getByRole('button', { name: /^save$/i });
+    const noteInput = screen.getByPlaceholderText('메모 추가…');
+    const cancelButton = screen.getByRole('button', { name: /취소/i });
+    const saveButton = screen.getByRole('button', { name: /^저장$/ });
 
-    expect(screen.queryByRole('button', { name: /save note/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /메모 저장/i })).toBeNull();
     expect(
       noteInput.compareDocumentPosition(cancelButton) & Node.DOCUMENT_POSITION_FOLLOWING
     ).not.toBe(0);
@@ -444,15 +444,15 @@ describe('Citation typography', () => {
       />
     );
 
-    await user.click(screen.getByRole('button', { name: /notes 0/i }));
+    await user.click(screen.getByRole('button', { name: /메모 0개/i }));
 
-    const noteInput = screen.getByPlaceholderText('Add a new note...');
+    const noteInput = screen.getByPlaceholderText('메모 추가…');
     expect(noteInput.className).toContain('type-note');
-    expect(screen.getByRole('button', { name: /cancel/i })).not.toBeNull();
-    expect((screen.getByRole('button', { name: /confirm/i }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByRole('button', { name: /취소/i })).not.toBeNull();
+    expect((screen.getByRole('button', { name: /추가/i }) as HTMLButtonElement).disabled).toBe(true);
 
     await user.type(noteInput, 'Fresh memo');
-    await user.click(screen.getByRole('button', { name: /confirm/i }));
+    await user.click(screen.getByRole('button', { name: /추가/i }));
 
     expect(onAddNote).toHaveBeenCalledWith('citation-1', 'Fresh memo');
   });
@@ -478,11 +478,11 @@ describe('Citation typography', () => {
       />
     );
 
-    await user.click(screen.getByRole('button', { name: /notes 1/i }));
-    await user.type(screen.getByPlaceholderText('Add a new note...'), 'Draft memo');
-    await user.click(screen.getByRole('button', { name: /cancel/i }));
+    await user.click(screen.getByRole('button', { name: /메모 1개/i }));
+    await user.type(screen.getByPlaceholderText('메모 추가…'), 'Draft memo');
+    await user.click(screen.getByRole('button', { name: /취소/i }));
 
-    expect(screen.queryByPlaceholderText('Add a new note...')).toBeNull();
+    expect(screen.queryByPlaceholderText('메모 추가…')).toBeNull();
     expect(screen.queryByDisplayValue('Draft memo')).toBeNull();
   });
 
@@ -507,7 +507,7 @@ describe('Citation typography', () => {
       />
     );
 
-    await user.click(screen.getByRole('button', { name: /notes 1/i }));
+    await user.click(screen.getByRole('button', { name: /메모 1개/i }));
 
     expect(screen.getByText('A compact memo').parentElement?.className).toContain('type-note');
   });
@@ -533,11 +533,11 @@ describe('Citation typography', () => {
     await user.dblClick(screen.getByText('Font preference should affect this quote.'));
     const quoteEditor = screen.getByDisplayValue('Font preference should affect this quote.');
     await user.type(quoteEditor, ' revised');
-    await user.type(screen.getByPlaceholderText('Add a new note...'), 'Draft note');
-    await user.click(screen.getByRole('button', { name: /cancel/i }));
+    await user.type(screen.getByPlaceholderText('메모 추가…'), 'Draft note');
+    await user.click(screen.getByRole('button', { name: /취소/i }));
 
     expect(screen.queryByDisplayValue(/revised/)).toBeNull();
-    expect(screen.queryByPlaceholderText('Add a new note...')).toBeNull();
+    expect(screen.queryByPlaceholderText('메모 추가…')).toBeNull();
     expect(screen.getByText('Font preference should affect this quote.')).not.toBeNull();
   });
 
@@ -565,8 +565,8 @@ describe('Citation typography', () => {
     const quoteEditor = screen.getByDisplayValue('Font preference should affect this quote.');
     await user.clear(quoteEditor);
     await user.type(quoteEditor, 'Updated quote');
-    await user.type(screen.getByPlaceholderText('Add a new note...'), 'Fresh memo');
-    await user.click(screen.getByRole('button', { name: /^save$/i }));
+    await user.type(screen.getByPlaceholderText('메모 추가…'), 'Fresh memo');
+    await user.click(screen.getByRole('button', { name: /^저장$/ }));
 
     expect(onUpdate).toHaveBeenCalledWith('citation-1', {
       text: 'Updated quote',
@@ -575,7 +575,7 @@ describe('Citation typography', () => {
       page: '147'
     });
     expect(onAddNote).toHaveBeenCalledWith('citation-1', 'Fresh memo');
-    expect(screen.queryByPlaceholderText('Add a new note...')).toBeNull();
+    expect(screen.queryByPlaceholderText('메모 추가…')).toBeNull();
   });
 
   it('auto-cancels an untouched edit session when clicking outside the card', async () => {
@@ -600,11 +600,11 @@ describe('Citation typography', () => {
     );
 
     await user.dblClick(screen.getByText('Font preference should affect this quote.'));
-    expect(screen.getByPlaceholderText('Add a new note...')).not.toBeNull();
+    expect(screen.getByPlaceholderText('메모 추가…')).not.toBeNull();
 
     await user.click(screen.getByRole('button', { name: 'Outside target' }));
 
-    expect(screen.queryByPlaceholderText('Add a new note...')).toBeNull();
+    expect(screen.queryByPlaceholderText('메모 추가…')).toBeNull();
     expect(screen.getByText('Font preference should affect this quote.')).not.toBeNull();
   });
 
@@ -630,10 +630,10 @@ describe('Citation typography', () => {
     );
 
     await user.dblClick(screen.getByText('Font preference should affect this quote.'));
-    await user.type(screen.getByPlaceholderText('Add a new note...'), 'Draft note');
+    await user.type(screen.getByPlaceholderText('메모 추가…'), 'Draft note');
     await user.click(screen.getByRole('button', { name: 'Outside target' }));
 
-    expect(screen.getByPlaceholderText('Add a new note...')).not.toBeNull();
+    expect(screen.getByPlaceholderText('메모 추가…')).not.toBeNull();
     expect(screen.getByDisplayValue('Draft note')).not.toBeNull();
   });
 
@@ -656,10 +656,10 @@ describe('Citation typography', () => {
       />
     );
 
-    const moreButton = await screen.findByRole('button', { name: /more/i });
+    const moreButton = await screen.findByRole('button', { name: /더 보기/i });
     expect(moreButton).not.toBeNull();
-    expect(moreButton.textContent).toBe('...More');
-    expect(screen.getByTestId('citation-text').textContent).toContain('...More');
+    expect(moreButton.textContent).toBe('…더 보기');
+    expect(screen.getByTestId('citation-text').textContent).toContain('…더 보기');
   });
 
   it('expands long citations when the More action is pressed', async () => {
@@ -683,9 +683,9 @@ describe('Citation typography', () => {
       />
     );
 
-    await user.click(await screen.findByRole('button', { name: /more/i }));
+    await user.click(await screen.findByRole('button', { name: /더 보기/i }));
 
-    expect(screen.getByRole('button', { name: /less/i })).not.toBeNull();
+    expect(screen.getByRole('button', { name: /접기/i })).not.toBeNull();
     expect(screen.getByTestId('citation-text').className).not.toContain('line-clamp-2');
   });
 
@@ -737,7 +737,7 @@ describe('Citation typography', () => {
         />
       );
 
-      await screen.findByRole('button', { name: /more/i });
+      await screen.findByRole('button', { name: /더 보기/i });
       await waitFor(() => expect(onTextOverflowChange).toHaveBeenCalledTimes(1));
 
       act(() => {
@@ -770,7 +770,7 @@ describe('Citation typography', () => {
 
     expect(screen.queryByText('Charlie Munger')).toBeNull();
     expect(screen.getByText("Poor Charlie's Almanack")).not.toBeNull();
-    expect(screen.getByText('p.147')).not.toBeNull();
+    expect(screen.getByText('147쪽')).not.toBeNull();
   });
 
   it('hides both author and book chips when the archive is already scoped to that book', () => {
@@ -792,6 +792,6 @@ describe('Citation typography', () => {
 
     expect(screen.queryByText('Charlie Munger')).toBeNull();
     expect(screen.queryByText("Poor Charlie's Almanack")).toBeNull();
-    expect(screen.getByText('p.147')).not.toBeNull();
+    expect(screen.getByText('147쪽')).not.toBeNull();
   });
 });

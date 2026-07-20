@@ -63,26 +63,26 @@ export const ProjectSidebarProjectsSection: React.FC<ProjectSidebarProjectsSecti
   <>
     <div className="mb-4 px-1">
       <h2 className="type-title-bounded text-[1.45rem] font-semibold tracking-[-0.03em] text-[var(--text-main)]">
-        Projects
+        폴더
       </h2>
-      <p className="mt-0.5 text-[0.88rem] text-[var(--text-secondary)]">Workspace</p>
+      <p className="mt-0.5 text-[0.88rem] text-[var(--text-secondary)]">문장 보관함</p>
     </div>
 
     <EditorialListButton
       onClick={onOpenPdfReader}
       className="mb-3 flex h-10 items-center justify-center gap-2 rounded-full border-[var(--border-main)] bg-[var(--bg-card)] px-3.5 text-[0.92rem] font-medium text-[var(--text-main)] shadow-[0_1px_2px_rgba(28,22,16,0.04)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]"
-      aria-label="Open PDF Reader"
+      aria-label="PDF 읽기"
     >
       <BookOpen size={16} className="mr-1.5" />
-      Read PDF
+      PDF 읽기
     </EditorialListButton>
 
     <div className="mb-2 flex items-center justify-between">
-      <EditorialSectionLabel>Folders</EditorialSectionLabel>
+      <EditorialSectionLabel>폴더 목록</EditorialSectionLabel>
       <EditorialToolbarButton
         onClick={onToggleManageMode}
         active={isManageMode}
-        ariaLabel="Manage folders"
+        ariaLabel="폴더 관리"
       >
         <Settings size={14} />
       </EditorialToolbarButton>
@@ -129,7 +129,7 @@ export const ProjectSidebarProjectsSection: React.FC<ProjectSidebarProjectsSecti
     <ProjectCreateComposer
       isCreating={isCreating}
       value={newProjectName}
-      createLabel="New Project"
+      createLabel="새 폴더"
       onStart={onStartCreate}
       onChange={onNewProjectNameChange}
       onSubmit={onSubmitCreate}

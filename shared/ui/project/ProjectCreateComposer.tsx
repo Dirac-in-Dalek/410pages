@@ -16,8 +16,8 @@ type ProjectCreateComposerProps = {
 export const ProjectCreateComposer: React.FC<ProjectCreateComposerProps> = ({
   isCreating,
   value,
-  placeholder = 'Project Name',
-  createLabel = 'New Project',
+  placeholder = '폴더 이름',
+  createLabel = '새 폴더',
   onStart,
   onChange,
   onSubmit,
@@ -55,7 +55,7 @@ export const ProjectCreateComposer: React.FC<ProjectCreateComposerProps> = ({
               ? 'p-2.5 rounded-md bg-[var(--accent-active)] hover:bg-[var(--accent)] text-[var(--accent-active-text)] transition-colors'
               : 'ml-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-white transition-colors hover:bg-[var(--accent-strong)]'
           }
-          title="Create"
+          title="만들기"
         >
           {compact ? <Plus size={14} /> : <Check size={14} />}
         </button>
@@ -63,7 +63,7 @@ export const ProjectCreateComposer: React.FC<ProjectCreateComposerProps> = ({
           <button
             onClick={onCancel}
             className="ml-1 flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-muted)] transition-colors hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]"
-            aria-label="Cancel new project"
+            aria-label="새 폴더 취소"
           >
             <X size={14} />
           </button>

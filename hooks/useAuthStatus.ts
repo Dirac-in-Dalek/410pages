@@ -17,6 +17,7 @@ export const useAuthStatus = () => {
   const [username, setUsername] = useState(DEFAULT_USERNAME);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
 
   const fetchProfile = async (userId: string, activeSession: any) => {
     const fallbackProfile = buildFallbackProfileSnapshot(userId, activeSession);
@@ -99,6 +100,7 @@ export const useAuthStatus = () => {
       }
       setUsername(DEFAULT_USERNAME);
       setAvatarUrl(null);
+      setIsPasswordRecovery(false);
       setLoading(false);
     }
   };
@@ -122,7 +124,16 @@ export const useAuthStatus = () => {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsPasswordRecovery(true);
+        applySession(session);
+        return;
+      }
+
+      if (!session) {
+        setIsPasswordRecovery(false);
+      }
       applySession(session);
     });
 
@@ -134,7 +145,9 @@ export const useAuthStatus = () => {
     username,
     avatarUrl,
     loading,
+    isPasswordRecovery,
     setLoading,
+    completePasswordRecovery: () => setIsPasswordRecovery(false),
     handleUpdateUsername,
     handleUpdateAvatar,
     handleSignOut,

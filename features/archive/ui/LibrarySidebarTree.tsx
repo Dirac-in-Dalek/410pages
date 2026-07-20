@@ -438,7 +438,7 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
               onSubmit={() => saveNodeEdit(item)}
               onCancel={cancelNodeEdit}
               onBlur={() => saveNodeEdit(item)}
-              placeholder={item.type === 'author' ? 'Author name' : 'Book name'}
+              placeholder={item.type === 'author' ? '저자 이름' : '책 이름'}
               actionsPlacement="below"
             />
           ) : (

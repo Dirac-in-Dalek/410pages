@@ -98,18 +98,18 @@ describe('CitationList expand all', () => {
       />
     );
 
-    expect(await screen.findAllByRole('button', { name: 'More' })).toHaveLength(2);
-    expect(screen.getAllByTestId('citation-text').every((node) => node.textContent?.includes('...More'))).toBe(true);
+    expect(await screen.findAllByRole('button', { name: '더 보기' })).toHaveLength(2);
+    expect(screen.getAllByTestId('citation-text').every((node) => node.textContent?.includes('…더 보기'))).toBe(true);
 
-    await user.click(screen.getByRole('button', { name: 'Toggle all citations' }));
+    await user.click(screen.getByRole('button', { name: '문장 모두 펼치기' }));
 
     expect(screen.getAllByTestId('citation-text').every((node) => !node.className.includes('line-clamp-2'))).toBe(true);
-    expect(screen.getByText('Collapse all')).toBeTruthy();
+    expect(screen.getByText('문장 모두 접기')).toBeTruthy();
 
-    await user.click(screen.getByRole('button', { name: 'Toggle all citations' }));
+    await user.click(screen.getByRole('button', { name: '문장 모두 접기' }));
 
-    expect(screen.getAllByRole('button', { name: 'More' })).toHaveLength(2);
-    expect(screen.getAllByTestId('citation-text').every((node) => node.textContent?.includes('...More'))).toBe(true);
+    expect(screen.getAllByRole('button', { name: '더 보기' })).toHaveLength(2);
+    expect(screen.getAllByTestId('citation-text').every((node) => node.textContent?.includes('…더 보기'))).toBe(true);
   });
 
   it('shows the bulk control when citations are visible even if none has a More action', () => {
@@ -123,7 +123,7 @@ describe('CitationList expand all', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: 'Toggle all citations' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '문장 모두 펼치기' })).toBeTruthy();
   });
 
   it('excludes word cards from expand and collapse state', () => {
@@ -137,8 +137,8 @@ describe('CitationList expand all', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: 'Toggle all citations' })).toBeTruthy();
-    expect(screen.getByRole('checkbox', { name: 'Select word: 부조리' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '문장 모두 펼치기' })).toBeTruthy();
+    expect(screen.getByRole('checkbox', { name: '단어 선택: 부조리' })).toBeTruthy();
   });
 
   it('does not show expand controls for a word-only list', () => {
@@ -149,8 +149,8 @@ describe('CitationList expand all', () => {
       />
     );
 
-    expect(screen.queryByRole('button', { name: 'Toggle all citations' })).toBeNull();
-    expect(screen.getByRole('checkbox', { name: 'Select word: 부조리' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: '문장 모두 펼치기' })).toBeNull();
+    expect(screen.getByRole('checkbox', { name: '단어 선택: 부조리' })).toBeTruthy();
   });
 
   it('does not create a per-card Less action for short citations during bulk expansion', async () => {
@@ -166,9 +166,9 @@ describe('CitationList expand all', () => {
       />
     );
 
-    await user.click(await screen.findByRole('button', { name: 'Toggle all citations' }));
+    await user.click(await screen.findByRole('button', { name: '문장 모두 펼치기' }));
 
-    expect(screen.getAllByRole('button', { name: 'Less' })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: '접기' })).toHaveLength(1);
   });
 
   it('keeps the bulk control synchronized with individual More and Less actions', async () => {
@@ -184,25 +184,25 @@ describe('CitationList expand all', () => {
       />
     );
 
-    await user.click((await screen.findAllByRole('button', { name: 'More' }))[0]);
+    await user.click((await screen.findAllByRole('button', { name: '더 보기' }))[0]);
 
-    expect(screen.getByRole('button', { name: 'Toggle all citations' }).getAttribute('aria-pressed')).toBe('false');
-    expect(screen.getAllByRole('button', { name: 'Less' })[0].getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByRole('button', { name: '문장 모두 펼치기' }).getAttribute('aria-pressed')).toBe('false');
+    expect(screen.getAllByRole('button', { name: '접기' })[0].getAttribute('aria-expanded')).toBe('true');
 
-    await user.click(screen.getByRole('button', { name: 'Toggle all citations' }));
+    await user.click(screen.getByRole('button', { name: '문장 모두 펼치기' }));
 
-    expect(screen.getByRole('button', { name: 'Toggle all citations' }).getAttribute('aria-pressed')).toBe('true');
-    expect(screen.getAllByRole('button', { name: 'Less' })).toHaveLength(2);
-    expect(screen.getAllByRole('button', { name: 'Less' })[0].getAttribute('aria-controls')).toBe('citation-text-citation-1');
+    expect(screen.getByRole('button', { name: '문장 모두 접기' }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getAllByRole('button', { name: '접기' })).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: '접기' })[0].getAttribute('aria-controls')).toBe('citation-text-citation-1');
 
-    await user.click(screen.getAllByRole('button', { name: 'Less' })[0]);
+    await user.click(screen.getAllByRole('button', { name: '접기' })[0]);
 
-    expect(screen.getByRole('button', { name: 'Toggle all citations' }).getAttribute('aria-pressed')).toBe('false');
+    expect(screen.getByRole('button', { name: '문장 모두 펼치기' }).getAttribute('aria-pressed')).toBe('false');
 
-    await user.click(screen.getByRole('button', { name: 'Toggle all citations' }));
-    await user.click(screen.getByRole('button', { name: 'Toggle all citations' }));
+    await user.click(screen.getByRole('button', { name: '문장 모두 펼치기' }));
+    await user.click(screen.getByRole('button', { name: '문장 모두 접기' }));
 
-    expect(screen.getAllByRole('button', { name: 'More' })).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: '더 보기' })).toHaveLength(2);
   });
 
   it('keeps expanded text expanded after an edit session is canceled', async () => {
@@ -217,14 +217,14 @@ describe('CitationList expand all', () => {
       />
     );
 
-    await user.click(await screen.findByRole('button', { name: 'Toggle all citations' }));
+    await user.click(await screen.findByRole('button', { name: '문장 모두 펼치기' }));
     expect(screen.getByTestId('citation-text').className).not.toContain('line-clamp-2');
 
     await user.dblClick(screen.getByTestId('citation-text'));
-    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    await user.click(screen.getByRole('button', { name: '취소' }));
 
     expect(screen.getByTestId('citation-text').className).not.toContain('line-clamp-2');
-    expect(screen.getByRole('button', { name: 'Toggle all citations' }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByRole('button', { name: '문장 모두 접기' }).getAttribute('aria-pressed')).toBe('true');
   });
 
   it('recalculates overflow after a breakpoint resize while text is expanded', async () => {
@@ -239,8 +239,8 @@ describe('CitationList expand all', () => {
       />
     );
 
-    await user.click(await screen.findByRole('button', { name: 'Toggle all citations' }));
-    expect(screen.getByRole('button', { name: 'Less' })).toBeTruthy();
+    await user.click(await screen.findByRole('button', { name: '문장 모두 펼치기' }));
+    expect(screen.getByRole('button', { name: '접기' })).toBeTruthy();
 
     (window as typeof window & { __setDesktopWidthForCitationTest: (nextValue: boolean) => void }).__setDesktopWidthForCitationTest(true);
     act(() => {
@@ -248,8 +248,8 @@ describe('CitationList expand all', () => {
     });
 
     await waitFor(() => {
-      expect(screen.queryByRole('button', { name: 'Less' })).toBeNull();
-      expect(screen.getByRole('button', { name: 'Toggle all citations' }).getAttribute('aria-pressed')).toBe('true');
+      expect(screen.queryByRole('button', { name: '접기' })).toBeNull();
+      expect(screen.getByRole('button', { name: '문장 모두 접기' }).getAttribute('aria-pressed')).toBe('true');
     });
   });
 });

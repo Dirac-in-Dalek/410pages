@@ -82,10 +82,10 @@ export const EditorialInlineRenameField: React.FC<EditorialInlineRenameFieldProp
         actionsPlacement === 'below' ? 'justify-end' : 'items-center',
       ].join(' ')}
     >
-      <EditorialIconActionButton ariaLabel="Confirm rename" onClick={() => onSubmit()}>
+      <EditorialIconActionButton ariaLabel="이름 변경 확인" onClick={() => onSubmit()}>
         <Check size={14} />
       </EditorialIconActionButton>
-      <EditorialIconActionButton ariaLabel="Cancel rename" onClick={() => onCancel()}>
+      <EditorialIconActionButton ariaLabel="이름 변경 취소" onClick={() => onCancel()}>
         <X size={14} />
       </EditorialIconActionButton>
     </div>
@@ -103,7 +103,7 @@ type EditorialDangerConfirmProps = {
 export const EditorialDangerConfirm: React.FC<EditorialDangerConfirmProps> = ({
   message,
   confirmLabel,
-  cancelLabel = 'Cancel',
+  cancelLabel = '취소',
   onConfirm,
   onCancel,
 }) => (

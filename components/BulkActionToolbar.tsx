@@ -49,14 +49,14 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
     if (selectedCount === 0) return null;
 
     return (
-        <div ref={toolbarRef} className="sticky top-0 z-20 bg-[var(--bg-main)]/95 backdrop-blur-sm mb-2 h-12 flex items-center">
-            <div className="w-full flex items-center justify-between bg-[var(--bg-card)] p-1.5 rounded-lg border border-[var(--border-main)] shadow-[var(--shadow-toolbar)] animate-in fade-in slide-in-from-top-1 duration-200 transition-all">
+        <div ref={toolbarRef} className="sticky top-0 z-20 mb-2 flex min-h-14 items-center bg-[var(--bg-main)]">
+            <div className="w-full rounded-xl bg-[var(--bg-card)] p-1.5 shadow-[var(--shadow-toolbar)] transition-[opacity,transform] duration-200 motion-reduce:transition-none">
                 <div className="w-full flex items-center justify-between">
                     <div className="flex items-center gap-2 sm:gap-3 pl-1">
                         <button
                             onClick={() => onSelectAll(selectedCount < totalCount)}
-                            className="flex items-center text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors"
-                            title="Select All"
+                            className="flex min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-lg text-[var(--text-muted)] transition-[background-color,color,transform] hover:bg-[var(--sidebar-hover)] hover:text-[var(--accent)] active:scale-95 motion-reduce:transition-none"
+                            aria-label={selectedCount === totalCount ? '전체 선택 해제' : '전체 선택'}
                         >
                             {selectedCount > 0 && selectedCount === totalCount ? (
                                 <CheckSquare size={18} className="text-[var(--accent)]" />
@@ -66,7 +66,7 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
                         </button>
                         <div className="h-4 w-[1px] bg-[var(--border-main)] mx-1"></div>
                         <span className="type-label-bounded font-bold text-[var(--accent)]">
-                            {selectedCount} Selected
+                            {selectedCount}개 선택
                         </span>
                     </div>
 
@@ -78,21 +78,23 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
                                     setShowCopyMenu(false);
                                     setShowFolderMenu(!showFolderMenu);
                                 }}
-                                className="p-1.5 text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--sidebar-hover)] rounded-full transition-all"
-                                title="Move to Folder"
+                                className="flex min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-lg text-[var(--text-muted)] transition-[background-color,color,transform] hover:bg-[var(--sidebar-hover)] hover:text-[var(--accent)] active:scale-95 motion-reduce:transition-none"
+                                aria-label="폴더에 추가"
+                                aria-expanded={showFolderMenu}
+                                aria-haspopup="menu"
                             >
                                 <Folder size={18} />
                             </button>
 
                             {showFolderMenu && (
-                                <div className="absolute top-full right-0 mt-1 w-56 bg-[var(--bg-card)] text-[var(--text-main)] border border-[var(--border-main)] rounded-xl shadow-[var(--shadow-popover)] z-[110] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                                <div role="menu" aria-label="폴더 선택" className="absolute top-full right-0 mt-1 w-56 bg-[var(--bg-card)] text-[var(--text-main)] border border-[var(--border-main)] rounded-xl shadow-[var(--shadow-popover)] z-[110] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right motion-reduce:animate-none">
                                     <div className="p-2 border-b border-[var(--border-main)] bg-[var(--bg-sidebar)]">
                                         {isCreatingFolder ? (
                                             <div className="flex items-center gap-1">
                                                 <input
                                                     autoFocus
                                                     type="text"
-                                                    placeholder="Folder Name..."
+                                                    placeholder="폴더 이름"
                                                     value={newFolderName}
                                                     onChange={(e) => setNewFolderName(e.target.value)}
                                                     onKeyDown={(e) => {
@@ -104,28 +106,30 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
                                                         }
                                                         if (e.key === 'Escape') setIsCreatingFolder(false);
                                                     }}
-                                                    className="type-label-bounded flex-1 px-2 py-1.5 border border-[var(--accent-border)] rounded-md focus:ring-2 focus:ring-[var(--accent-ring)] focus:border-[var(--accent-border)] outline-none"
+                                                    className="type-label-bounded min-h-11 flex-1 rounded-lg border border-[var(--accent-border)] bg-[var(--bg-input)] px-2 outline-none focus:border-[var(--accent-border)] focus:ring-2 focus:ring-[var(--accent-ring)]"
                                                 />
                                             </div>
                                         ) : (
                                             <button
+                                                role="menuitem"
                                                 onClick={() => setIsCreatingFolder(true)}
-                                                className="type-label-bounded w-full flex items-center gap-2 px-2 py-1.5 text-[var(--accent)] hover:bg-[var(--accent-soft)] rounded-md transition-colors font-bold"
+                                                className="type-label-bounded flex min-h-11 w-full items-center gap-2 rounded-lg px-2 font-bold text-[var(--accent)] transition-[background-color,transform] hover:bg-[var(--accent-soft)] active:scale-95"
                                             >
-                                                <Plus size={14} /> New Folder
+                                                <Plus size={14} /> 새 폴더
                                             </button>
                                         )}
                                     </div>
                                     <div className="max-h-56 overflow-y-auto py-1">
-                                        {projects.length === 0 && <div className="type-body-muted px-4 py-3 text-[var(--text-muted)] text-center">No existing folders</div>}
+                                        {projects.length === 0 && <div className="type-body-muted px-4 py-3 text-center text-[var(--text-muted)]">아직 폴더가 없습니다</div>}
                                         {projects.map(p => (
                                             <button
                                                 key={p.id}
+                                                role="menuitem"
                                                 onClick={() => {
                                                     onAddToProject(p.id);
                                                     setShowFolderMenu(false);
                                                 }}
-                                                className="type-label-bounded w-full text-left px-4 py-2.5 text-[var(--text-main)] hover:bg-[var(--sidebar-hover)] flex items-center gap-2 transition-colors"
+                                                className="type-label-bounded flex min-h-11 w-full items-center gap-2 px-4 text-left text-[var(--text-main)] transition-colors hover:bg-[var(--sidebar-hover)]"
                                             >
                                                 <Folder size={14} className="text-[var(--text-muted)]" />
                                                 <span className="truncate">{p.name}</span>
@@ -142,31 +146,35 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
                                     setShowFolderMenu(false);
                                     setShowCopyMenu(!showCopyMenu);
                                 }}
-                                className={`p-1.5 rounded-full transition-all ${isCopying ? 'text-emerald-600 bg-emerald-50' : 'text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--sidebar-hover)]'}`}
-                                title="Copy to Clipboard"
+                                className={`flex min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-lg transition-[background-color,color,transform] active:scale-95 motion-reduce:transition-none ${isCopying ? 'text-emerald-700 bg-emerald-50' : 'text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--sidebar-hover)]'}`}
+                                aria-label="클립보드에 복사"
+                                aria-expanded={showCopyMenu}
+                                aria-haspopup="menu"
                             >
                                 {isCopying ? <Check size={18} /> : <Copy size={18} />}
                             </button>
 
                             {showCopyMenu && (
-                                <div className="absolute top-full right-0 mt-1 w-56 bg-[var(--bg-card)] text-[var(--text-main)] border border-[var(--border-main)] rounded-xl shadow-[var(--shadow-popover)] z-[120] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                                <div role="menu" aria-label="복사 형식" className="absolute top-full right-0 mt-1 w-56 bg-[var(--bg-card)] text-[var(--text-main)] border border-[var(--border-main)] rounded-xl shadow-[var(--shadow-popover)] z-[120] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right motion-reduce:animate-none">
                                     <button
+                                        role="menuitem"
                                         onClick={() => {
                                             void onCopy(false);
                                             setShowCopyMenu(false);
                                         }}
-                                        className="type-label-bounded w-full text-left px-4 py-2.5 text-[var(--text-main)] hover:bg-[var(--sidebar-hover)] transition-colors"
+                                        className="type-label-bounded min-h-11 w-full px-4 text-left text-[var(--text-main)] transition-colors hover:bg-[var(--sidebar-hover)]"
                                     >
-                                        copy
+                                        본문 복사
                                     </button>
                                     <button
+                                        role="menuitem"
                                         onClick={() => {
                                             void onCopy(true);
                                             setShowCopyMenu(false);
                                         }}
-                                        className="type-label-bounded w-full text-left px-4 py-2.5 text-[var(--text-main)] hover:bg-[var(--sidebar-hover)] transition-colors border-t border-[var(--border-main)]"
+                                        className="type-label-bounded min-h-11 w-full border-t border-[var(--border-main)] px-4 text-left text-[var(--text-main)] transition-colors hover:bg-[var(--sidebar-hover)]"
                                     >
-                                        copy + memo
+                                        본문과 메모 복사
                                     </button>
                                 </div>
                             )}
@@ -174,8 +182,8 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
 
                         <button
                             onClick={onDeleteRequest}
-                            className="p-1.5 text-[var(--text-muted)] hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
-                            title="Delete Selected"
+                            className="flex min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-lg text-[var(--text-muted)] transition-[background-color,color,transform] hover:bg-red-50 hover:text-red-600 active:scale-95 motion-reduce:transition-none"
+                            aria-label="선택 항목 삭제"
                         >
                             <Trash2 size={18} />
                         </button>
@@ -184,8 +192,8 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
 
                         <button
                             onClick={onCancel}
-                            className="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--sidebar-hover)] rounded-full transition-colors"
-                            title="Cancel Selection"
+                            className="flex min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-lg text-[var(--text-muted)] transition-[background-color,color,transform] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)] active:scale-95 motion-reduce:transition-none"
+                            aria-label="선택 취소"
                         >
                             <X size={18} />
                         </button>

@@ -1,34 +1,68 @@
-# Design Direction
+# 410pages Design System
 
-This app should reference Pinterest's color system and UI component styling.
+## 1. Product Direction
 
-## Core Reference
+410pages is a calm editorial archive for collecting sentences and words from books. Pinterest is a reference for color balance and component finish, not for feed layout or information architecture. Reading content is always the visual foreground; controls remain quiet until needed.
 
-- Use Pinterest-like neutral color balance and restrained contrast.
-- Use Pinterest-like input, button, chip, and card styling as the component baseline.
-- Keep the product itself as a note archive, not a Pinterest-style feed layout.
-- Reusable UI primitives should inherit this component tone by default.
+## 2. Design Principles
 
-## What To Borrow From Pinterest
+- Prioritize collected text over navigation, metadata, and decoration.
+- Use one clear primary action per context.
+- Show optimistic items as complete; surface a recovery state only after failure.
+- Prefer direct Korean labels over unexplained icons or mixed-language copy.
+- Avoid decorative gradients, glass effects, and repeated card borders.
 
-- Soft neutral backgrounds and surfaces.
-- Rounded search fields and pill-like controls.
-- Light, calm borders instead of loud outlines.
-- Compact cards and controls that feel easy to scan.
-- Clean component styling that stays visually quiet around content.
+## 3. Color and Themes
 
-## What Not To Do
+- All surfaces and text colors come from CSS custom properties in `index.css`.
+- The Pinterest-like day theme uses warm neutral surfaces and a restrained red accent.
+- Dark and named themes preserve the same semantic token roles.
+- `--text-muted` must maintain at least WCAG AA 4.5:1 contrast against main, card, and input surfaces.
+- Red is reserved for primary emphasis and failure recovery; green is reserved for successful completion.
 
-- Do not turn the app into a literal Pinterest clone.
-- Do not copy Pinterest's feed layout or board structure.
-- Do not use heavy neon accents, terminal styling, or decorative borders as the default look.
-- Do not let reference styling override the product's note-taking purpose.
+## 4. Typography
 
-## App Shell Rule
+- UI text uses `--font-ui-active`; collected sentences use the configured reading font.
+- Sentence copy uses a comfortable 1.6 line height and stable bounded type classes.
+- Titles are compact and semibold; metadata and control labels remain smaller than content.
+- Korean interface copy is the default. Product names and user-provided book data are not translated.
+- Mobile sentence text is left-aligned to prevent uneven spacing.
 
-For the sidebar + main workspace layout:
+## 5. Layout and Spacing
 
-- Pinterest is a component/style reference, not a layout reference.
-- The main content column remains the visual anchor.
-- Sidebars should support navigation, not compete with the center.
-- Inputs, chips, buttons, and cards should feel Pinterest-inspired in tone and finish.
+- The reading column is the main anchor and retains a consistent maximum width.
+- Use the existing 4px-based spacing scale; major component gaps are 8, 12, 16, or 24px.
+- Sentence cards form the primary vertical rhythm. Word cards occupy a compact wrapped row directly above the related sentence position.
+- Desktop keeps navigation secondary; mobile moves navigation into focused side sheets.
+- Editor source fields wrap into two balanced rows at 375px without horizontal overflow.
+
+## 6. Shape and Elevation
+
+- Standard radii are 8px for compact controls, 12px for cards, 16px for panels, and full pills for metadata.
+- Cards use subtle shadows instead of repeated borders.
+- Borders identify inputs, popovers, and explicit state boundaries only.
+- Selected items use an inset accent ring. Failed items use a red inset ring plus one group-level recovery message.
+
+## 7. Components
+
+- Sentence card: dominant reading surface, 44px selection target, quiet metadata, expandable copy, and optional notes.
+- Word card: checkbox plus one wrapping word or short phrase; no author, book, page, note, edit, or per-card retry UI.
+- Header: centered search on desktop and one account action; mobile exposes folders, library, and settings as 44px targets.
+- Editor: Korean placeholder and labels, compact source fields, and a clear send action.
+- Auth: Korean login, signup, reset request, and recovery screens with password visibility controls and actionable error copy.
+
+## 8. Interaction and Accessibility
+
+- Touch targets are at least 44px on mobile; dense desktop inputs may reduce to 32px only at the desktop breakpoint.
+- Every icon-only action has a Korean accessible name and visible focus behavior.
+- Popovers use menu semantics, Escape dismissal, and state attributes.
+- Animate only color, shadow, opacity, or transform for 150–200ms; respect `prefers-reduced-motion`.
+- Saving has no pending badge, disabled card, or alternate card treatment. Failure feedback must explain the next action.
+
+## 9. Responsive Rules
+
+- Verify integrated layouts at desktop width and at 375px.
+- Never allow horizontal page scrolling, clipped controls, or fixed-width word chips.
+- Word text uses `break-words`; editor controls use wrapping flex layouts.
+- Desktop search remains visually centered even when account actions change width.
+- Mobile overlays use a plain dim layer and solid panels, not glassmorphism.

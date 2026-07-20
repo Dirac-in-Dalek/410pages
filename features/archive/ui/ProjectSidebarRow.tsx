@@ -84,8 +84,8 @@ export const ProjectSidebarRow: React.FC<ProjectSidebarRowProps> = ({
 
       {deletingProjectId === project.id ? (
         <EditorialDangerConfirm
-          message="Are you sure you want to remove this folder?"
-          confirmLabel="Remove"
+          message="이 폴더를 삭제할까요?"
+          confirmLabel="삭제"
           onCancel={onCancelDelete}
           onConfirm={() => onConfirmDelete(project.id)}
         />
@@ -123,7 +123,7 @@ export const ProjectSidebarRow: React.FC<ProjectSidebarRowProps> = ({
               onChange={onEditingNameChange}
               onSubmit={onSubmitRename}
               onCancel={onCancelRename}
-              placeholder="Project name"
+              placeholder="폴더 이름"
             />
           ) : (
             <>
@@ -147,7 +147,7 @@ export const ProjectSidebarRow: React.FC<ProjectSidebarRowProps> = ({
                       event.stopPropagation();
                       onStartRename(project.id, project.name);
                     }}
-                    ariaLabel="Rename project"
+                    ariaLabel="폴더 이름 변경"
                   >
                     <Edit2 size={12} />
                   </EditorialIconActionButton>
@@ -156,7 +156,7 @@ export const ProjectSidebarRow: React.FC<ProjectSidebarRowProps> = ({
                       event.stopPropagation();
                       onRequestDelete(project.id);
                     }}
-                    ariaLabel="Delete project"
+                    ariaLabel="폴더 삭제"
                     danger
                   >
                     <Trash2 size={12} />

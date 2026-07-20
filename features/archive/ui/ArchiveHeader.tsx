@@ -19,8 +19,8 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
 }) => {
     const isDateActive = sortField === 'date';
     const isPageActive = sortField === 'page';
-    const dateLabel = isDateActive ? `Date ${dateDirection === 'asc' ? '↑' : '↓'}` : 'Date';
-    const pageLabel = isPageActive ? `Page ${pageDirection === 'asc' ? '↑' : '↓'}` : 'Page';
+    const dateLabel = `작성일 · ${dateDirection === 'asc' ? '오래된순' : '최신순'}`;
+    const pageLabel = `페이지 · ${pageDirection === 'asc' ? '오름차순' : '내림차순'}`;
     const activeSortLabel = isDateActive ? dateLabel : pageLabel;
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const filterRef = useRef<HTMLDivElement>(null);
@@ -38,7 +38,7 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
     }, []);
 
     const getMenuButtonClass = (isActive: boolean) =>
-        `type-label-bounded flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition-colors active:scale-95 ${
+        `type-label-bounded flex min-h-11 w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition-[background-color,color,transform] active:scale-95 motion-reduce:transition-none ${
             isActive
                 ? 'bg-[var(--accent-soft)] text-[var(--accent-strong)]'
                 : 'text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]'
@@ -58,7 +58,7 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
                 <div className="mb-3 flex items-start justify-between gap-4">
                     <div className="min-w-0">
                         <h2 className="truncate text-[1.8rem] font-semibold tracking-[-0.03em] text-[var(--text-main)]">{title}</h2>
-                        <p className="mt-1 text-[0.9rem] text-[var(--text-secondary)]">Capture, sort, and revisit your saved notes.</p>
+                        <p className="mt-1 text-[0.9rem] text-[var(--text-secondary)]">수집한 문장과 단어를 정리하고 다시 읽어보세요.</p>
                     </div>
                     <div
                         ref={filterRef}
@@ -70,16 +70,21 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
                         <button
                             type="button"
                             onClick={() => setIsFilterOpen((prev) => !prev)}
-                            className="type-label-bounded inline-flex min-h-[44px] items-center gap-2 rounded-full border border-[var(--border-main)] bg-[var(--bg-card)] px-3.5 py-1.5 text-[var(--text-main)] shadow-[var(--shadow-card)] transition-colors hover:bg-[var(--sidebar-hover)] active:scale-95"
-                            aria-label={`Filter: ${activeSortLabel}`}
+                            className="type-label-bounded inline-flex min-h-[44px] items-center gap-2 rounded-full border border-[var(--border-main)] bg-[var(--bg-card)] px-3.5 py-1.5 text-[var(--text-main)] shadow-[var(--shadow-card)] transition-[background-color,transform] hover:bg-[var(--sidebar-hover)] active:scale-95 motion-reduce:transition-none"
+                            aria-label={`정렬: ${activeSortLabel}`}
                             aria-expanded={isFilterOpen}
                             aria-haspopup="menu"
-                            title={`Filter: ${activeSortLabel}`}
+                            title={`정렬: ${activeSortLabel}`}
                         >
                             <SlidersHorizontal size={14} />
-                            <span>Filter</span>
-                            <span className="text-[var(--text-muted)]">{activeSortLabel}</span>
-                            <ChevronDown size={14} className={`transition-transform ${isFilterOpen ? 'rotate-180' : ''}`} />
+                            <span className="hidden sm:inline">정렬</span>
+                            <span className="sm:hidden">
+                                {isDateActive
+                                    ? dateDirection === 'asc' ? '오래된순' : '최신순'
+                                    : pageDirection === 'asc' ? '페이지 ↑' : '페이지 ↓'}
+                            </span>
+                            <span className="hidden text-[var(--text-muted)] sm:inline">{activeSortLabel}</span>
+                            <ChevronDown size={14} className={`transition-transform motion-reduce:transition-none ${isFilterOpen ? 'rotate-180' : ''}`} />
                         </button>
                         {isFilterOpen ? (
                             <div

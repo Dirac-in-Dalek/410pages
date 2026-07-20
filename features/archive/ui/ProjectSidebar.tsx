@@ -294,7 +294,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
               )
             }
           >
-            <Edit2 size={12} className="mr-2" /> Rename
+            <Edit2 size={12} className="mr-2" /> 이름 변경
           </button>
           <button
             className="type-label-bounded w-full text-left px-4 py-2 hover:bg-[var(--sidebar-hover)] text-red-600 flex items-center"
@@ -303,7 +303,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
               setContextMenu(null);
             }}
           >
-            <Trash2 size={12} className="mr-2" /> Delete
+            <Trash2 size={12} className="mr-2" /> 삭제
           </button>
         </div>
       )}
