@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { AlertCircle, Copy, MessageSquare, ChevronDown, ChevronUp, User, X, Check, Folder, RefreshCw } from 'lucide-react';
+import { AlertCircle, Copy, MessageSquare, ChevronDown, ChevronUp, User, X, Check, Folder, RefreshCw, Pencil, Trash2 } from 'lucide-react';
 import { Highlight } from '../../../types';
 import { formatCitationRecoveryText, writeTextToClipboard } from '../../../lib/citationCopy';
 import { CITATION_SAVE_FAILED_MESSAGE } from '../logic/optimisticCitation';
@@ -10,6 +10,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   username,
   selectedFilter = null,
   projectNames = [],
+  showDetailActions = false,
   isTextExpanded,
   onTextExpandedChange,
   onTextOverflowChange,
@@ -18,6 +19,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   onAddNote,
   onUpdateNote,
   onDeleteNote,
+  onDelete,
   onUpdate,
   onRetrySave
 }) => {
@@ -36,6 +38,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [isOverflowing, setIsOverflowing] = useState(false);
   const [collapsedTextEnd, setCollapsedTextEnd] = useState<number | null>(null);
+  const [isSubmittingAction, setIsSubmittingAction] = useState(false);
 
   const [localHighlights, setLocalHighlights] = useState<Highlight[]>(citation.highlights || []);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -46,6 +49,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
   const editNoteTextareaRef = useRef<HTMLTextAreaElement>(null);
   const newNoteTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const actionInFlightRef = useRef(false);
   const effectiveAuthor = citation.isSelf ? username : citation.author;
   const normalizedAuthorFilter = selectedFilter?.type === 'author' ? selectedFilter.value.trim().toLocaleLowerCase() : null;
   const normalizedBookFilter = selectedFilter?.type === 'book' ? selectedFilter.value.trim().toLocaleLowerCase() : null;
@@ -247,12 +251,20 @@ export const CitationCard: React.FC<CitationCardProps> = ({
 
   const isSelf = citation.isSelf ?? (citation.author === username || !citation.author || citation.author === 'Self');
 
-  const submitNote = () => {
+  const submitNote = async () => {
     if (isUnsaved) return;
-    if (!newNote.trim()) return;
-    onAddNote(citation.id, newNote);
-    setNewNote('');
-    setIsNotesExpanded(true);
+    if (!newNote.trim() || actionInFlightRef.current) return;
+    actionInFlightRef.current = true;
+    setIsSubmittingAction(true);
+    try {
+      const didSave = await Promise.resolve(onAddNote(citation.id, newNote));
+      if (didSave === false) return;
+      setNewNote('');
+      setIsNotesExpanded(true);
+    } finally {
+      actionInFlightRef.current = false;
+      setIsSubmittingAction(false);
+    }
   };
 
   const handleCancelNewNote = () => {
@@ -262,13 +274,23 @@ export const CitationCard: React.FC<CitationCardProps> = ({
     }
   };
 
-  const handleSaveNoteEdit = (noteId: string) => {
-    if (!editNoteContent.trim()) {
-      onDeleteNote(citation.id, noteId);
-    } else {
-      onUpdateNote(citation.id, noteId, editNoteContent);
+  const handleSaveNoteEdit = async (noteId: string) => {
+    if (actionInFlightRef.current) return;
+    actionInFlightRef.current = true;
+    setIsSubmittingAction(true);
+    try {
+      let didSave: boolean | void;
+      if (!editNoteContent.trim()) {
+        didSave = await Promise.resolve(onDeleteNote(citation.id, noteId));
+      } else {
+        didSave = await Promise.resolve(onUpdateNote(citation.id, noteId, editNoteContent));
+      }
+      if (didSave === false) return;
+      setEditingNoteId(null);
+    } finally {
+      actionInFlightRef.current = false;
+      setIsSubmittingAction(false);
     }
-    setEditingNoteId(null);
   };
 
   const closeEditingSession = () => {
@@ -280,21 +302,29 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   };
 
   const handleSave = async () => {
-    if (!editText.trim()) return;
+    if (!editText.trim() || actionInFlightRef.current) return;
+    actionInFlightRef.current = true;
+    setIsSubmittingAction(true);
+    try {
+      const didUpdate = await Promise.resolve(onUpdate(citation.id, {
+        text: editText,
+        author: editAuthor,
+        book: editBook,
+        page: editPage || undefined
+      }));
+      if (didUpdate === false) return;
 
-    await Promise.resolve(onUpdate(citation.id, {
-      text: editText,
-      author: editAuthor,
-      book: editBook,
-      page: editPage || undefined
-    }));
+      const trimmedNote = newNote.trim();
+      if (trimmedNote && !isUnsaved) {
+        const didAddNote = await Promise.resolve(onAddNote(citation.id, trimmedNote));
+        if (didAddNote === false) return;
+      }
 
-    const trimmedNote = newNote.trim();
-    if (trimmedNote && !isUnsaved) {
-      await Promise.resolve(onAddNote(citation.id, trimmedNote));
+      closeEditingSession();
+    } finally {
+      actionInFlightRef.current = false;
+      setIsSubmittingAction(false);
     }
-
-    closeEditingSession();
   };
 
   const openEditor = () => {
@@ -520,6 +550,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                 ref={editTextareaRef}
                 autoFocus
                 value={editText}
+                disabled={isSubmittingAction}
                 onChange={(event) => setEditText(event.target.value)}
                 className="type-body min-h-[84px] w-full resize-none overflow-y-auto rounded-md border border-[var(--border-main)] bg-[var(--bg-input)] p-2 text-[var(--text-main)] focus:border-[var(--accent-border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)]"
                 style={{ height: 'auto' }}
@@ -530,6 +561,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                   <input
                     type="text"
                     value={editAuthor}
+                    disabled={isSubmittingAction}
                     onChange={(event) => setEditAuthor(event.target.value)}
                     placeholder="직접 작성"
                     className="type-label-bounded w-full rounded-md border border-[var(--border-main)] bg-[var(--bg-input)] p-2 text-[var(--text-main)] focus:border-[var(--accent-border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)]"
@@ -540,6 +572,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                   <input
                     type="text"
                     value={editBook}
+                    disabled={isSubmittingAction}
                     onChange={(event) => setEditBook(event.target.value)}
                     className="type-label-bounded w-full rounded-md border border-[var(--border-main)] bg-[var(--bg-input)] p-2 text-[var(--text-main)] focus:border-[var(--accent-border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)]"
                   />
@@ -549,6 +582,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                   <input
                     type="text"
                     value={editPage}
+                    disabled={isSubmittingAction}
                     onChange={(event) => setEditPage(event.target.value)}
                     className="type-label-bounded w-full rounded-md border border-[var(--border-main)] bg-[var(--bg-input)] p-2 text-[var(--text-main)] focus:border-[var(--accent-border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)]"
                   />
@@ -557,6 +591,26 @@ export const CitationCard: React.FC<CitationCardProps> = ({
             </div>
           ) : (
             <>
+              {showDetailActions ? (
+                <div className="mb-2 flex items-center justify-end gap-1 border-b border-[var(--border-main)] pb-2">
+                  <button
+                    type="button"
+                    onClick={openEditor}
+                    disabled={isSavingCitation}
+                    className="type-label-bounded inline-flex min-h-10 items-center gap-1.5 rounded-lg px-3 text-[0.82rem] font-medium text-[var(--text-secondary)] transition-[background-color,color,transform] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none"
+                  >
+                    <Pencil size={14} /> 편집
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDelete(citation.id)}
+                    disabled={isSavingCitation}
+                    className="type-label-bounded inline-flex min-h-10 items-center gap-1.5 rounded-lg px-3 text-[0.82rem] font-medium text-red-600 transition-[background-color,transform] hover:bg-red-50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-300 dark:hover:bg-red-500/10 motion-reduce:transition-none"
+                  >
+                    <Trash2 size={14} /> 삭제
+                  </button>
+                </div>
+              ) : null}
               <blockquote
                 id={quoteId}
                 ref={quoteRef}
@@ -656,18 +710,21 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                             ref={editNoteTextareaRef}
                             autoFocus
                             value={editNoteContent}
+                            disabled={isSubmittingAction}
                             onChange={(event) => setEditNoteContent(event.target.value)}
                             className="type-note min-h-[70px] w-full resize-none overflow-y-auto border-none bg-transparent p-2.5 text-[var(--text-main)] focus:outline-none focus:ring-0"
                           />
                           <div className="flex justify-end gap-2.5 border-t border-[var(--border-main)] bg-[var(--bg-sidebar)]/50 p-1.5">
                             <button
                               onClick={(event) => { event.stopPropagation(); setEditingNoteId(null); }}
+                              disabled={isSubmittingAction}
                               className="type-label-bounded text-[0.82rem] text-[var(--text-muted)] hover:text-[var(--text-main)]"
                             >
                               취소
                             </button>
                             <button
                               onClick={(event) => { event.stopPropagation(); handleSaveNoteEdit(note.id); }}
+                              disabled={isSubmittingAction}
                               className="type-label-bounded text-[0.82rem] font-bold text-[var(--accent)] hover:text-[var(--accent-strong)]"
                             >
                               저장
@@ -685,11 +742,12 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                   <textarea
                     ref={newNoteTextareaRef}
                     value={newNote}
+                    disabled={isSubmittingAction}
                     onChange={(event) => setNewNote(event.target.value)}
                     placeholder="메모 추가…"
                     className="type-note min-h-[52px] w-full resize-none overflow-y-auto border-none bg-transparent p-2.5 text-[var(--text-main)] focus:outline-none focus:ring-0"
                     onKeyDown={(event) => {
-                      if (event.key === 'Enter' && !event.shiftKey) {
+                      if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
                         event.preventDefault();
                         submitNote();
                       }
@@ -700,6 +758,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                       <button
                         type="button"
                         onClick={handleCancelNewNote}
+                        disabled={isSubmittingAction}
                         className="type-label-bounded inline-flex min-h-10 items-center gap-1 rounded-md px-2.5 py-[0.3125rem] text-[0.82rem] font-medium text-[var(--text-muted)] transition-[background-color,color,transform] hover:bg-[var(--bg-sidebar)] hover:text-[var(--text-main)] active:scale-95 motion-reduce:transition-none"
                       >
                         <X size={14} /> 취소
@@ -707,7 +766,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                       <button
                         type="button"
                         onClick={submitNote}
-                        disabled={!newNote.trim()}
+                        disabled={!newNote.trim() || isSubmittingAction}
                         className={`type-label-bounded inline-flex min-h-10 items-center gap-1 rounded-md px-2.5 py-[0.3125rem] text-[0.82rem] font-medium shadow-sm transition-[background-color,color,transform] active:scale-95 motion-reduce:transition-none ${
                           newNote.trim()
                             ? 'bg-[var(--accent)] text-white hover:bg-[var(--accent-strong)]'
@@ -726,12 +785,14 @@ export const CitationCard: React.FC<CitationCardProps> = ({
               <div className="flex justify-end gap-2 pt-3">
                 <button
                   onClick={() => void handleCancel()}
+                  disabled={isSubmittingAction}
                   className="type-label-bounded flex items-center gap-1 rounded-md px-2.5 py-[0.3125rem] text-[0.82rem] font-medium text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-sidebar)]"
                 >
                   <X size={14} /> 취소
                 </button>
                 <button
                   onClick={() => void handleSave()}
+                  disabled={isSubmittingAction || !editText.trim()}
                   className="type-label-bounded flex items-center gap-1 rounded-md bg-[var(--accent)] px-2.5 py-[0.3125rem] text-[0.82rem] font-medium text-white shadow-sm transition-colors hover:bg-[var(--accent-strong)]"
                 >
                   <Check size={14} /> 저장

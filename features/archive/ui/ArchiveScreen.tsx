@@ -1,6 +1,5 @@
 import React from 'react';
 import { BulkActionToolbar } from '../../../components/BulkActionToolbar';
-import { ConfirmModal } from '../../../components/ConfirmModal';
 import type {
   ChapterBlock,
   Citation,
@@ -10,14 +9,17 @@ import type {
 import { ArchiveHeader } from './ArchiveHeader';
 import { getArchiveReadingColumnClass } from './archiveReadingColumn';
 import { CitationList } from './CitationList';
+import { CitationEditor } from '../../citation-entry/ui/CitationEditor';
 
 type ArchiveScreenProps = {
   isMobileApp: boolean;
   title: string;
   showEditor: boolean;
   username: string;
-  editorPrefill?: { author: string; book: string };
+  editorPrefill?: { author: string; book: string; bookId?: string };
   isBookView: boolean;
+  onBackToAuthor?: () => void;
+  authorName?: string;
   sortField: 'date' | 'page';
   dateDirection: 'asc' | 'desc';
   pageDirection: 'asc' | 'desc';
@@ -30,21 +32,21 @@ type ArchiveScreenProps = {
   allCitations: Citation[];
   chapterBlocks: ChapterBlock[];
   loading: boolean;
+  loadError: string | null;
+  onRetryLoad: () => void | Promise<void>;
   searchTerm: string;
   selectedIds: Set<string>;
-  selectedFilter?: { type: 'author' | 'book'; value: string; author?: string } | null;
+  selectedFilter?: { type: 'author' | 'book'; authorId?: string; bookId?: string; value: string; author?: string } | null;
   isCopying: boolean;
-  isBatchDeleteOpen: boolean;
   onSelectAll: () => void;
   onCopy: () => void | Promise<unknown>;
   onDeleteRequest: () => void;
-  onDeleteConfirm: () => void;
-  onDeleteCancel: () => void;
   onCancelSelection: () => void;
   onAddToProject: (projectId: string) => void | Promise<unknown>;
-  onCreateAndAddToProject: (name: string) => void | Promise<unknown>;
+  onCreateAndAddToProject: (name: string) => boolean | void | Promise<boolean | void>;
   onCreateChapterBlock?: (input: CreateChapterBlockInput) => Promise<unknown> | unknown;
   onDeleteChapterBlock?: (bookId: string, blockId: string) => Promise<unknown> | unknown;
+  chapterActionsDisabled?: boolean;
   onToggleSelect: (id: string, selected: boolean) => void;
   onAddNote: (citationId: string, content: string) => void | Promise<unknown>;
   onUpdateNote: (citationId: string, noteId: string, content: string) => void;
@@ -60,6 +62,8 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
   username,
   editorPrefill,
   isBookView,
+  onBackToAuthor,
+  authorName,
   sortField,
   dateDirection,
   pageDirection,
@@ -72,21 +76,21 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
   allCitations,
   chapterBlocks,
   loading,
+  loadError,
+  onRetryLoad,
   searchTerm,
   selectedIds,
   selectedFilter,
   isCopying,
-  isBatchDeleteOpen,
   onSelectAll,
   onCopy,
   onDeleteRequest,
-  onDeleteConfirm,
-  onDeleteCancel,
   onCancelSelection,
   onAddToProject,
   onCreateAndAddToProject,
   onCreateChapterBlock,
   onDeleteChapterBlock,
+  chapterActionsDisabled,
   onToggleSelect,
   onAddNote,
   onUpdateNote,
@@ -97,23 +101,42 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
   const columnClassName = getArchiveReadingColumnClass({ isBookView, isMobileApp });
 
   return (
-    <div className="h-full overflow-y-auto">
-      <ArchiveHeader
-        title={title}
-        showEditor={showEditor}
-        username={username}
-        editorPrefill={editorPrefill}
-        isBookView={isBookView}
-        onAddCitation={onAddCitation}
-        sortField={sortField}
-        dateDirection={dateDirection}
-        pageDirection={pageDirection}
-        onDateSortClick={onDateSortClick}
-        onPageSortClick={onPageSortClick}
-      />
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <ArchiveHeader
+          title={title}
+          showEditor={showEditor && !isBookView}
+          username={username}
+          editorPrefill={editorPrefill}
+          isBookView={isBookView}
+          onBackToAuthor={onBackToAuthor}
+          authorName={authorName}
+          onAddCitation={onAddCitation}
+          sortField={sortField}
+          dateDirection={dateDirection}
+          pageDirection={pageDirection}
+          onDateSortClick={onDateSortClick}
+          onPageSortClick={onPageSortClick}
+        />
 
-      <div className={isMobileApp ? 'pb-28 mt-3' : 'pb-20 mt-1 md:mt-2'}>
+      <div className={isMobileApp ? 'pb-8 mt-3' : 'pb-10 mt-1 md:mt-2'}>
         <div className={columnClassName}>
+          {loadError ? (
+            <div
+              role="alert"
+              className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-100"
+            >
+              <span>{loadError}</span>
+              <button
+                type="button"
+                onClick={() => void onRetryLoad()}
+                className="min-h-10 rounded-lg px-3 font-semibold transition-[background-color,transform] hover:bg-red-100 active:scale-95 dark:hover:bg-red-300/10 motion-reduce:transition-none"
+              >
+                다시 시도
+              </button>
+            </div>
+          ) : null}
+
           <BulkActionToolbar
             selectedCount={selectedIds.size}
             totalCount={citations.length}
@@ -127,19 +150,7 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
             onCreateAndAddToProject={onCreateAndAddToProject}
           />
 
-          <ConfirmModal
-            isOpen={isBatchDeleteOpen}
-            title="선택한 항목을 삭제할까요?"
-            message={
-              <>
-                <span className="font-bold text-[var(--text-main)]">{selectedIds.size}개</span> 항목이 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
-              </>
-            }
-            onConfirm={onDeleteConfirm}
-            onCancel={onDeleteCancel}
-          />
-
-          <CitationList
+          {loadError && citations.length === 0 && chapterBlocks.length === 0 ? null : <CitationList
             citations={citations}
             allCitations={allCitations}
             projects={projects}
@@ -155,6 +166,7 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
             pageDirection={pageDirection}
             onCreateChapterBlock={onCreateChapterBlock}
             onDeleteChapterBlock={onDeleteChapterBlock}
+            chapterActionsDisabled={chapterActionsDisabled}
             onToggleSelect={onToggleSelect}
             onAddNote={onAddNote}
             onUpdateNote={onUpdateNote}
@@ -162,9 +174,24 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
             onDeleteCitation={onDeleteCitation}
             onUpdateCitation={onUpdateCitation}
             onRetryCitationSave={onRetryCitationSave}
-          />
+          />}
         </div>
       </div>
+      </div>
+      {showEditor && isBookView ? (
+        <div className="shrink-0 border-t border-[var(--border-main)] bg-[var(--bg-main)] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_24px_rgba(31,29,27,0.08)] sm:px-5">
+          <div className={columnClassName}>
+            <CitationEditor
+              onAddCitation={onAddCitation}
+              prefillData={editorPrefill}
+              username={username}
+              sequentialPageEntry
+              autoFocusText
+              hideSourceFields
+            />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };

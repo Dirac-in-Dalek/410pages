@@ -1,4 +1,4 @@
-import type { CreateBookInput, SidebarItem } from '../../../types';
+import type { AuthorDeletePreview, BookSource, Citation, DeleteAuthorCascadeResult, SidebarItem } from '../../../types';
 import type { LibrarySelectedFilter } from '../../../shared/lib/libraryTree';
 
 export type { LibrarySelectedFilter } from '../../../shared/lib/libraryTree';
@@ -32,19 +32,19 @@ export interface LibraryTreeRowMeta {
   parentAuthor?: string;
 }
 
-export interface LibrarySidebarProps {
+export interface LibrarySidebarTreeContract {
   treeData: SidebarItem[];
   onTreeItemClick: (item: SidebarItem) => void;
-  onProjectSelect: (projectId: string | null) => void;
-  selectedProjectId: string | null;
-  onSearch?: (term: string) => void;
-  searchTerm?: string;
   selectedFilter?: LibrarySelectedFilter;
-  onCreateBook?: (input: CreateBookInput) => Promise<unknown> | unknown;
   onReorderBookAt?: (author: string, dragBook: string, dropIndex: number) => void;
-  onRenameAuthor?: (authorId: string, name: string) => void;
-  onRenameBook?: (bookId: string, name: string) => void;
-  width: number;
-  isResizing: boolean;
-  onStartResize: () => void;
+  onRenameAuthor?: (authorId: string, name: string) => boolean | void | Promise<boolean | void>;
+  books?: BookSource[];
+  citations?: Citation[];
+  onRenameAuthorFolder?: (folderId: string, name: string) => boolean | void | Promise<boolean | void>;
+  onDeleteAuthorFolder?: (folderId: string) => boolean | void | Promise<boolean | void>;
+  onMoveAuthorToFolder?: (authorId: string, folderId: string) => boolean | void | Promise<boolean | void>;
+  onRemoveAuthorFromFolder?: (authorId: string) => boolean | void | Promise<boolean | void>;
+  onDeleteAuthor?: (authorId: string) => Promise<DeleteAuthorCascadeResult | undefined>;
+  onPreviewAuthorDelete?: (authorId: string) => Promise<AuthorDeletePreview | undefined>;
+  onRenameBook?: (bookId: string, name: string) => boolean | void | Promise<boolean | void>;
 }

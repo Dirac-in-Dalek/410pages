@@ -1,12 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 
-const LEFT_MIN = 156;
-const LEFT_MAX = 220;
-const RIGHT_INIT_MIN = 176;
-const RIGHT_RESIZE_MIN = 192;
-const RIGHT_MAX = 256;
-const DEFAULT_LEFT = 184;
-const DEFAULT_RIGHT = 216;
+const LEFT_MIN = 232;
+const LEFT_MAX = 320;
+const DEFAULT_LEFT = 272;
 
 const readStoredWidth = (key: string, fallback: number) => {
   if (typeof window === 'undefined') return fallback;
@@ -22,41 +18,26 @@ export const useSidebarResize = () => {
     return Math.min(Math.max(width, LEFT_MIN), LEFT_MAX);
   });
 
-  const [rightWidth, setRightWidth] = useState(() => {
-    const width = readStoredWidth('rightSidebarWidth', DEFAULT_RIGHT);
-    return Math.min(Math.max(width, RIGHT_INIT_MIN), RIGHT_MAX);
-  });
-
   const [isResizingLeft, setIsResizingLeft] = useState(false);
-  const [isResizingRight, setIsResizingRight] = useState(false);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (isResizingLeft) {
-      const newWidth = e.clientX;
-      if (newWidth >= LEFT_MIN && newWidth <= LEFT_MAX) {
-        setLeftWidth(newWidth);
-      }
-    } else if (isResizingRight) {
-      const newWidth = window.innerWidth - e.clientX;
-      if (newWidth >= RIGHT_RESIZE_MIN && newWidth <= RIGHT_MAX) {
-        setRightWidth(newWidth);
-      }
+    const newWidth = e.clientX;
+    if (isResizingLeft && newWidth >= LEFT_MIN && newWidth <= LEFT_MAX) {
+      setLeftWidth(newWidth);
     }
-  }, [isResizingLeft, isResizingRight]);
+  }, [isResizingLeft]);
 
   const handleMouseUp = useCallback(() => {
     setIsResizingLeft(false);
-    setIsResizingRight(false);
   }, []);
 
   useEffect(() => {
-    if (isResizingLeft || isResizingRight) return;
+    if (isResizingLeft) return;
     localStorage.setItem('leftSidebarWidth', leftWidth.toString());
-    localStorage.setItem('rightSidebarWidth', rightWidth.toString());
-  }, [isResizingLeft, isResizingRight, leftWidth, rightWidth]);
+  }, [isResizingLeft, leftWidth]);
 
   useEffect(() => {
-    if (isResizingLeft || isResizingRight) {
+    if (isResizingLeft) {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
       document.body.style.cursor = 'col-resize';
@@ -72,14 +53,11 @@ export const useSidebarResize = () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isResizingLeft, isResizingRight, handleMouseMove, handleMouseUp]);
+  }, [isResizingLeft, handleMouseMove, handleMouseUp]);
 
   return {
     leftWidth,
-    rightWidth,
     isResizingLeft,
-    isResizingRight,
     startLeftResize: () => setIsResizingLeft(true),
-    startRightResize: () => setIsResizingRight(true)
   };
 };

@@ -22,6 +22,9 @@ const authState = {
   session: { user: { id: 'user-1' } },
   username: 'Committed Name',
   loading: false,
+  authorFolderLoading: false,
+  authorFolderLoadError: null,
+  retryAuthorFolders: vi.fn(),
   handleUpdateUsername: mockHandleUpdateUsername,
   handleSignOut: vi.fn(),
 };
@@ -31,6 +34,12 @@ const archiveDataState = {
   setProjects: vi.fn(),
   citations: [],
   setCitations: vi.fn(),
+  authors: [],
+  setAuthors: vi.fn(),
+  authorFolders: [],
+  setAuthorFolders: vi.fn(),
+  authorFolderMemberships: [],
+  setAuthorFolderMemberships: vi.fn(),
   books: [],
   setBooks: vi.fn(),
   loading: false,
@@ -40,9 +49,19 @@ const archiveDataState = {
   handleAddNote: vi.fn(),
   handleUpdateNote: vi.fn(),
   handleDeleteNote: vi.fn(),
-  handleDeleteCitation: vi.fn(),
+  handleDeleteCitations: vi.fn(),
   handleUpdateCitation: vi.fn(),
   handleBulkUpdateCitationSource: vi.fn(),
+  handleCreateAuthor: vi.fn(),
+  handleCreateAuthorFolder: vi.fn(),
+  handleRenameAuthorFolder: vi.fn(),
+  handleDeleteAuthorFolder: vi.fn(),
+  handleMoveAuthorToFolder: vi.fn(),
+  handleRemoveAuthorFromFolder: vi.fn(),
+  handleDeleteAuthorCascade: vi.fn(),
+  handlePreviewAuthorDeletion: vi.fn(),
+  handleDeleteBookCascade: vi.fn(),
+  handlePreviewBookDeletion: vi.fn(),
   handleCreateBook: vi.fn(),
   handleCreateProject: vi.fn(),
   handleRenameProject: vi.fn(),
@@ -50,9 +69,12 @@ const archiveDataState = {
   handleRenameAuthor: vi.fn(),
   handleRenameBook: vi.fn(),
   handleLoadChapterBlocks: vi.fn(),
+  cancelChapterBlockLoad: vi.fn(),
   handleCreateChapterBlock: vi.fn(),
   handleDeleteChapterBlock: vi.fn(),
   handleDropCitationToProject: vi.fn(),
+  handleAddCitationsToProject: vi.fn(),
+  handleCreateProjectWithCitations: vi.fn(),
   handleReorderProjects: vi.fn(),
 };
 
@@ -61,8 +83,12 @@ const archiveFilterState = {
   setSearchTerm: vi.fn(),
   selectedProjectId: null,
   selectedBookId: null,
+  selectedAuthorId: null,
+  isHomeView: true,
+  isAuthorView: false,
   isBookView: false,
   handleProjectSelect: vi.fn(),
+  handleHomeSelect: vi.fn(),
   handleTreeItemClick: vi.fn(),
   treeData: [],
   filteredCitations: [],
@@ -75,6 +101,7 @@ const archiveFilterState = {
   handleDateSortClick: vi.fn(),
   handlePageSortClick: vi.fn(),
   handleBookSourceSelect: vi.fn(),
+  handleAuthorSourceSelect: vi.fn(),
   handleReorderBookAt: vi.fn(),
 };
 
@@ -125,18 +152,13 @@ vi.mock('./components/MainLayout', () => ({
   MainLayout: ({
     children,
     onOpenSettings,
-    onCreateBook,
   }: {
     children: React.ReactNode;
     onOpenSettings: () => void;
-    onCreateBook: (input: { author: string; title: string }) => void;
   }) => (
     <div>
       <button type="button" onClick={onOpenSettings}>
         open-settings
-      </button>
-      <button type="button" onClick={() => onCreateBook({ author: 'Author A', title: 'Book A' })}>
-        create-book
       </button>
       {children}
     </div>
@@ -363,18 +385,15 @@ describe('App settings display-name flow', () => {
   });
 });
 
-describe('App new book flow', () => {
+describe('App author flow', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockHandleUpdateUsername.mockResolvedValue(true);
-    archiveDataState.handleCreateBook.mockResolvedValue({
-      id: 'book-a',
-      title: 'Book A',
+    archiveDataState.handleCreateAuthor.mockResolvedValue({
+      id: 'author-a',
+      name: 'Author A',
       sortIndex: 1,
       createdAt: 1,
-      authorId: 'author-a',
-      author: 'Author A',
-      authorSortIndex: 1,
       isSelf: false,
     });
 
@@ -394,26 +413,22 @@ describe('App new book flow', () => {
     });
   });
 
-  it('opens the created book after the layout requests a new book', async () => {
+  it('opens the created author from the first home tile', async () => {
     const user = userEvent.setup();
 
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: 'create-book' }));
+    await user.click(screen.getByRole('button', { name: '저자 추가' }));
+    await user.type(screen.getByRole('textbox', { name: '저자 이름' }), 'Author A');
+    await user.click(screen.getByRole('button', { name: '추가' }));
 
     await waitFor(() => {
-      expect(archiveDataState.handleCreateBook).toHaveBeenCalledWith({
-        author: 'Author A',
-        title: 'Book A',
-      });
-      expect(archiveFilterState.handleBookSourceSelect).toHaveBeenCalledWith({
-        id: 'book-a',
-        title: 'Book A',
+      expect(archiveDataState.handleCreateAuthor).toHaveBeenCalledWith('Author A');
+      expect(archiveFilterState.handleAuthorSourceSelect).toHaveBeenCalledWith({
+        id: 'author-a',
+        name: 'Author A',
         sortIndex: 1,
         createdAt: 1,
-        authorId: 'author-a',
-        author: 'Author A',
-        authorSortIndex: 1,
         isSelf: false,
       });
     });
@@ -430,6 +445,7 @@ describe('App book view chapter blocks wiring', () => {
     authState.username = 'Committed Name';
     archiveFilterState.selectedBookId = null;
     archiveFilterState.isBookView = false;
+    archiveFilterState.isHomeView = true;
     archiveDataState.chapterBlocksByBook = {};
 
     Object.defineProperty(window, 'matchMedia', {
@@ -448,16 +464,15 @@ describe('App book view chapter blocks wiring', () => {
     });
   });
 
-  it('passes book-view chapter blocks only when a book is selected', async () => {
+  it('loads and passes chapter blocks when a book is selected', async () => {
     const { rerender } = render(<App />);
-    const firstProps = mockCitationList.mock.calls.at(-1)?.[0];
 
     expect(archiveDataState.handleLoadChapterBlocks).not.toHaveBeenCalled();
-    expect(firstProps?.isBookView).toBe(false);
-    expect(firstProps?.chapterBlocks).toEqual([]);
+    expect(mockCitationList).not.toHaveBeenCalled();
 
     archiveFilterState.selectedBookId = 'book-1';
     archiveFilterState.isBookView = true;
+    archiveFilterState.isHomeView = false;
     archiveDataState.chapterBlocksByBook = {
       'book-1': [
         {

@@ -90,6 +90,9 @@ export interface PdfReaderPageProps {
   citations: Citation[];
   projects: Project[];
   loading: boolean;
+  pendingDeleteCitationIds: string[];
+  sessionUserId: string;
+  initialMeta?: PdfReaderMeta;
   onAddCitation: (citation: AddCitationInput) => Promise<AddCitationResult>;
   onRetryCitationSave: (citationId: string) => void | Promise<unknown>;
   onAddNote: (citationId: string, content: string) => void;

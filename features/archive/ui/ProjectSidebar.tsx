@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Edit2, Trash2 } from 'lucide-react';
+import { Book, ChevronDown, ChevronRight, Edit2, Home, Plus, Trash2 } from 'lucide-react';
 import type { Project } from '../../../types';
 import type {
   ProjectDropIndicator,
@@ -14,6 +14,9 @@ import {
   resolveProjectDragIndex,
 } from '../../../shared/lib/projectSidebar';
 import { ProjectSidebarProjectsSection } from './ProjectSidebarProjectsSection';
+import { LibrarySidebarTree } from './LibrarySidebarTree';
+import { findRecentlyCitedBooks } from '../logic/archiveTree';
+import { EditorialListButton, EditorialSectionLabel } from '../../../shared/ui/sidebar/SidebarPrimitives';
 
 export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
   projects,
@@ -24,7 +27,28 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
   onRenameProject,
   onDeleteProject,
   onReorderProjects,
-  onOpenPdfReader,
+  books = [],
+  citations = [],
+  treeData = [],
+  selectedBookId = null,
+  selectedFilter,
+  isHomeView = false,
+  onHomeSelect,
+  onBookSelect,
+  onTreeItemClick,
+  authorFolderLoading,
+  authorFolderLoadError,
+  onRetryAuthorFolders,
+  onCreateAuthorFolder,
+  onRenameAuthorFolder,
+  onDeleteAuthorFolder,
+  onMoveAuthorToFolder,
+  onRemoveAuthorFromFolder,
+  onDeleteAuthor,
+  onPreviewAuthorDelete,
+  onRenameAuthor,
+  onRenameBook,
+  onReorderBookAt,
   width,
   isResizing,
   onStartResize,
@@ -35,13 +59,23 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
   const [editingName, setEditingName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
+  const [isSubmittingCreate, setIsSubmittingCreate] = useState(false);
   const [isManageMode, setIsManageMode] = useState(false);
   const [dragOverProjectId, setDragOverProjectId] = useState<string | null>(null);
   const [projectDropIndicator, setProjectDropIndicator] = useState<ProjectDropIndicator | null>(null);
   const [activeProjectDragIndex, setActiveProjectDragIndex] = useState<number | null>(null);
   const [projectDragCenterOffsetY, setProjectDragCenterOffsetY] = useState(0);
+  const [isAllBooksOpen, setIsAllBooksOpen] = useState(false);
+  const [isFoldersOpen, setIsFoldersOpen] = useState(true);
+  const [isCreatingAuthorFolder, setIsCreatingAuthorFolder] = useState(false);
+  const [newAuthorFolderName, setNewAuthorFolderName] = useState('');
+  const [isSubmittingAuthorFolder, setIsSubmittingAuthorFolder] = useState(false);
+  const recentBooks = findRecentlyCitedBooks(citations, books);
 
   const contextMenuRef = useRef<HTMLDivElement>(null);
+  const createInFlightRef = useRef(false);
+  const renameInFlightRef = useRef(false);
+  const authorFolderCreateInFlightRef = useRef(false);
 
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
@@ -254,9 +288,16 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
     setIsManageMode(false);
   };
 
-  const submitRename = () => {
+  const submitRename = async () => {
+    if (renameInFlightRef.current) return;
     if (editingProjectId && editingName.trim()) {
-      onRenameProject(editingProjectId, editingName.trim());
+      renameInFlightRef.current = true;
+      try {
+        const didRename = await Promise.resolve(onRenameProject(editingProjectId, editingName.trim()));
+        if (didRename === false) return;
+      } finally {
+        renameInFlightRef.current = false;
+      }
     }
     setEditingProjectId(null);
   };
@@ -266,12 +307,38 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
     setEditingName('');
   };
 
-  const submitCreate = () => {
+  const submitCreate = async () => {
+    if (createInFlightRef.current) return;
     if (newProjectName.trim()) {
-      onCreateProject(newProjectName.trim());
+      createInFlightRef.current = true;
+      setIsSubmittingCreate(true);
+      try {
+        const didCreate = await Promise.resolve(onCreateProject(newProjectName.trim()));
+        if (didCreate === false) return;
+      } finally {
+        createInFlightRef.current = false;
+        setIsSubmittingCreate(false);
+      }
     }
     setIsCreating(false);
     setNewProjectName('');
+  };
+
+  const submitAuthorFolder = async () => {
+    const trimmed = newAuthorFolderName.trim();
+    if (!trimmed || authorFolderCreateInFlightRef.current) return;
+    authorFolderCreateInFlightRef.current = true;
+    setIsSubmittingAuthorFolder(true);
+    try {
+      const didCreate = await Promise.resolve(onCreateAuthorFolder(trimmed));
+      if (didCreate === false) return;
+      setNewAuthorFolderName('');
+      setIsCreatingAuthorFolder(false);
+      setIsAllBooksOpen(true);
+    } finally {
+      authorFolderCreateInFlightRef.current = false;
+      setIsSubmittingAuthorFolder(false);
+    }
   };
 
   return (
@@ -332,12 +399,99 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
           }
         }}
       >
+        <div className="mb-4 px-1">
+          <div className="brand-wordmark text-[1.25rem] text-[var(--accent)]">
+            <span className="brand-number">410</span><span className="brand-text">pages</span>
+          </div>
+          <p className="mt-1 text-[0.78rem] text-[var(--text-muted)]">문장이 머무는 서재</p>
+        </div>
+
+        <EditorialListButton
+          active={isHomeView}
+          onClick={onHomeSelect}
+          className={[
+            'mb-5 flex min-h-10 items-center gap-2',
+            isHomeView ? '!border-transparent !bg-[var(--accent-soft)] !text-[var(--accent-strong)]' : '',
+          ].join(' ')}
+        >
+          <Home size={16} />
+          홈
+        </EditorialListButton>
+
+        <EditorialSectionLabel>최근 문장을 저장한 책</EditorialSectionLabel>
+        <div className="mb-4 space-y-0.5">
+          {recentBooks.length ? recentBooks.map((book) => (
+            <button
+              key={book.id}
+              type="button"
+              onClick={() => onBookSelect(book)}
+              aria-current={selectedBookId === book.id ? 'page' : undefined}
+              className={[
+                'group flex min-h-10 w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left transition-[background-color,color,transform] active:scale-95',
+                selectedBookId === book.id
+                  ? 'bg-[var(--accent-soft)] text-[var(--accent-strong)]'
+                  : 'text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]',
+              ].join(' ')}
+            >
+              <Book size={14} className="shrink-0" />
+              <span className="min-w-0">
+                <span className="block truncate text-[0.86rem] font-medium">{book.title}</span>
+                <span className="block truncate text-[0.72rem] text-[var(--text-muted)]">{book.author}</span>
+              </span>
+            </button>
+          )) : (
+            <p className="px-2 py-2 text-[0.78rem] text-[var(--text-muted)]">저장된 문장이 없습니다.</p>
+          )}
+        </div>
+
+        <div className="flex items-center gap-1" aria-busy={authorFolderLoading}>
+          <button type="button" onClick={() => setIsAllBooksOpen((value) => !value)} aria-expanded={isAllBooksOpen} className="flex min-h-10 min-w-0 flex-1 items-center gap-2 rounded-lg px-1 text-left text-[0.78rem] font-semibold uppercase tracking-[0.09em] text-[var(--text-muted)] transition-[color,transform] active:scale-95">
+            {isAllBooksOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            저자와 책
+          </button>
+          <button type="button" onClick={() => { setIsCreatingAuthorFolder(true); setIsAllBooksOpen(true); }} className="flex min-h-10 shrink-0 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-[var(--text-muted)] transition-[background-color,transform] hover:bg-[var(--sidebar-hover)] active:scale-95" aria-label="저자 폴더 만들기"><Plus size={15} />폴더 추가</button>
+        </div>
+        {authorFolderLoadError ? (
+          <div role="alert" className="mb-2 flex items-center justify-between gap-2 rounded-lg bg-red-50 px-2.5 py-2 text-xs text-red-800 dark:bg-red-500/10 dark:text-red-100">
+            <span>{authorFolderLoadError}</span>
+            <button type="button" onClick={() => void onRetryAuthorFolders()} className="min-h-9 shrink-0 rounded-lg px-2 font-semibold hover:bg-red-100 active:scale-95 dark:hover:bg-red-300/10">다시 시도</button>
+          </div>
+        ) : null}
+        {isCreatingAuthorFolder ? (
+          <form className="mb-2 flex items-center gap-1.5" onKeyDown={(event) => { if (event.key === 'Enter' && event.nativeEvent.isComposing) event.preventDefault(); }} onSubmit={(event) => { event.preventDefault(); void submitAuthorFolder(); }}>
+            <input autoFocus value={newAuthorFolderName} onChange={(event) => setNewAuthorFolderName(event.target.value)} placeholder="저자 폴더 이름" aria-label="저자 폴더 이름" className="min-h-10 min-w-0 flex-1 rounded-lg border border-[var(--border-main)] bg-[var(--bg-input)] px-2.5 text-sm focus:border-[var(--accent-border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)]" />
+            <button type="submit" disabled={!newAuthorFolderName.trim() || isSubmittingAuthorFolder} className="min-h-10 rounded-lg bg-[var(--accent)] px-2.5 text-xs font-semibold text-white disabled:opacity-50">{isSubmittingAuthorFolder ? '저장 중' : '저장'}</button>
+            <button type="button" disabled={isSubmittingAuthorFolder} onClick={() => { setIsCreatingAuthorFolder(false); setNewAuthorFolderName(''); }} className="min-h-10 rounded-lg px-2 text-xs text-[var(--text-muted)]">취소</button>
+          </form>
+        ) : null}
+        {isAllBooksOpen ? (
+          <LibrarySidebarTree
+            embedded
+            treeData={treeData}
+            onTreeItemClick={onTreeItemClick}
+            selectedFilter={selectedFilter}
+            onReorderBookAt={onReorderBookAt}
+            onRenameAuthor={onRenameAuthor}
+            onRenameBook={onRenameBook}
+            books={books}
+            citations={citations}
+            onRenameAuthorFolder={onRenameAuthorFolder}
+            onDeleteAuthorFolder={onDeleteAuthorFolder}
+            onMoveAuthorToFolder={onMoveAuthorToFolder}
+            onRemoveAuthorFromFolder={onRemoveAuthorFromFolder}
+            onDeleteAuthor={onDeleteAuthor}
+            onPreviewAuthorDelete={onPreviewAuthorDelete}
+          />
+        ) : null}
+
+        <div className="my-3 h-px bg-[var(--border-main)]" />
         <ProjectSidebarProjectsSection
           projects={projects}
           selectedProjectId={selectedProjectId}
           isManageMode={isManageMode}
           isCreating={isCreating}
           newProjectName={newProjectName}
+          isSubmittingCreate={isSubmittingCreate}
           editingProjectId={editingProjectId}
           deletingProjectId={deletingProjectId}
           editingName={editingName}
@@ -350,7 +504,8 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
             setIsManageMode((value) => !value);
             setDeletingProjectId(null);
           }}
-          onOpenPdfReader={onOpenPdfReader}
+          isExpanded={isFoldersOpen}
+          onToggleExpanded={() => setIsFoldersOpen((value) => !value)}
           onProjectSelect={onProjectSelect}
           onStartCreate={() => setIsCreating(true)}
           onSubmitCreate={submitCreate}

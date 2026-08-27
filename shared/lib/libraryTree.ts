@@ -2,6 +2,8 @@ import type { SidebarItem } from '../../types';
 
 export type LibrarySelectedFilter = {
   type: 'author' | 'book';
+  authorId?: string;
+  bookId?: string;
   value: string;
   author?: string;
 } | null;
@@ -38,6 +40,15 @@ export const isLibraryTreeItemActive = (
 ) => {
   if (!selectedFilter) return false;
   if (item.type !== 'author' && item.type !== 'book') return false;
+
+  if (item.type === 'author' && selectedFilter.type === 'author' && selectedFilter.authorId) {
+    return selectedFilter.authorId === item.data?.authorId;
+  }
+
+  if (item.type === 'book' && selectedFilter.type === 'book' && selectedFilter.bookId) {
+    return selectedFilter.bookId === item.data?.bookId &&
+      (!selectedFilter.authorId || selectedFilter.authorId === item.data?.authorId);
+  }
 
   const itemValue = item.type === 'book' ? item.data?.book : item.data?.author;
   if (selectedFilter.type !== item.type || selectedFilter.value !== itemValue) {

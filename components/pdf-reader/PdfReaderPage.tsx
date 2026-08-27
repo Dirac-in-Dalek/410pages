@@ -26,7 +26,6 @@ import {
   extractTitleFromFileName,
   normalizeDocumentField,
   parsePositiveInt,
-  readPersistedReaderSession,
   resolveReaderPageLabel,
   resolveSelectionRangeInCitation,
 } from '../../features/reader/policy/pdfReaderPolicy';
@@ -34,18 +33,19 @@ import { createHighlightRects, MIN_CAPTURE_LENGTH, usePdfSelection } from '../..
 import { usePdfViewport } from '../../features/reader/logic/usePdfViewport';
 import { PdfThumbnailSidebar } from './PdfThumbnailSidebar';
 import { useReaderPaneLayout } from './useReaderPaneLayout';
+import {
+  getPdfReaderRuntimeUrl,
+  persistPdfReaderSession,
+  readPdfReaderSession,
+  removePersistedPdfReaderSession,
+  setPdfReaderRuntimeUrl,
+} from '../../features/reader/logic/pdfReaderSession';
 
 configurePdfWorker();
 
 const DUPLICATE_WINDOW_MS = 1200;
-const READER_SESSION_STORAGE_KEY = 'pdfReaderSession.v1';
-
 const defaultMeta: PdfReaderMeta = { author: '', title: '' };
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(value, max));
-
-let readerRuntimeCache: { pdfUrl: string | null } = {
-  pdfUrl: null
-};
 
 export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
   username,
@@ -53,6 +53,9 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
   citations,
   projects,
   loading,
+  pendingDeleteCitationIds,
+  sessionUserId,
+  initialMeta,
   onAddCitation,
   onRetryCitationSave,
   onAddNote,
@@ -64,22 +67,20 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
 }) => {
   const restoredSession = useMemo(
     () =>
-      readerRuntimeCache.pdfUrl
-        ? readPersistedReaderSession(READER_SESSION_STORAGE_KEY)
-        : null,
-    []
+      readPdfReaderSession(sessionUserId),
+    [sessionUserId]
   );
 
-  const [pdfUrl, setPdfUrl] = useState<string | null>(() => readerRuntimeCache.pdfUrl);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(() => getPdfReaderRuntimeUrl(sessionUserId));
   const [pdfName, setPdfName] = useState(() => restoredSession?.pdfName || '');
   const [numPages, setNumPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(() => restoredSession?.currentPage || 1);
   const [pageLabels, setPageLabels] = useState<string[] | null>(() => restoredSession?.pageLabels || null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  const [meta, setMeta] = useState<PdfReaderMeta>(() => restoredSession?.meta || defaultMeta);
+  const [meta, setMeta] = useState<PdfReaderMeta>(() => initialMeta || restoredSession?.meta || defaultMeta);
   const [metaForm, setMetaForm] = useState<MetaFormState>(() =>
-    buildMetaFormFromState(restoredSession?.meta || defaultMeta)
+    buildMetaFormFromState(initialMeta || restoredSession?.meta || defaultMeta)
   );
   const [metaError, setMetaError] = useState<string | null>(null);
   const [metaNotice, setMetaNotice] = useState<string | null>(null);
@@ -108,6 +109,7 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
   const resumeScrollTopRef = useRef<number | null>(restoredSession?.scrollTop ?? null);
   const resumePageRef = useRef<number>(restoredSession?.currentPage || 1);
   const draggingUnderlineCitationRef = useRef<string | null>(null);
+  const previousPendingDeleteIdsRef = useRef(new Set(pendingDeleteCitationIds));
 
   const {
     leftPaneWidth,
@@ -147,8 +149,8 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
   const isMetaConfirmed = Boolean(pdfUrl) && !isMetaEditorOpen && Boolean(meta.author.trim()) && Boolean(meta.title.trim());
 
   useEffect(() => {
-    readerRuntimeCache.pdfUrl = pdfUrl;
-  }, [pdfUrl]);
+    setPdfReaderRuntimeUrl(sessionUserId, pdfUrl);
+  }, [pdfUrl, sessionUserId]);
 
   useEffect(() => {
     resumePageRef.current = currentPage;
@@ -157,8 +159,8 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
   const persistReaderSession = useCallback(() => {
     if (typeof window === 'undefined') return;
 
-    if (!pdfUrl && !readerRuntimeCache.pdfUrl) {
-      window.localStorage.removeItem(READER_SESSION_STORAGE_KEY);
+    if (!pdfUrl && !getPdfReaderRuntimeUrl(sessionUserId)) {
+      removePersistedPdfReaderSession(sessionUserId);
       return;
     }
 
@@ -173,8 +175,8 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
       scrollTop
     };
 
-    window.localStorage.setItem(READER_SESSION_STORAGE_KEY, JSON.stringify(payload));
-  }, [currentPage, draftSelection, highlights, meta, pageLabels, pdfName, pdfUrl]);
+    persistPdfReaderSession(sessionUserId, payload);
+  }, [currentPage, draftSelection, highlights, meta, pageLabels, pdfName, pdfUrl, sessionUserId]);
 
   useEffect(() => {
     persistReaderSession();
@@ -217,10 +219,12 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
     return citations
       .filter(
         (citation) =>
-          normalizeDocumentField(citation.author) === targetAuthor && normalizeDocumentField(citation.book) === targetTitle
+          meta.bookId
+            ? citation.bookId === meta.bookId
+            : normalizeDocumentField(citation.author) === targetAuthor && normalizeDocumentField(citation.book) === targetTitle
       )
       .sort((a, b) => b.createdAt - a.createdAt);
-  }, [citations, isMetaConfirmed, meta.author, meta.title]);
+  }, [citations, isMetaConfirmed, meta.author, meta.bookId, meta.title]);
 
   const citationMap = useMemo(() => {
     const map = new Map<string, Citation>();
@@ -229,6 +233,21 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
     });
     return map;
   }, [citations]);
+
+  useEffect(() => {
+    const pendingIds = new Set(pendingDeleteCitationIds);
+    const committedIds = new Set(
+      [...previousPendingDeleteIdsRef.current].filter(
+        (citationId) => !pendingIds.has(citationId) && !citationMap.has(citationId)
+      )
+    );
+    previousPendingDeleteIdsRef.current = pendingIds;
+    if (committedIds.size === 0) return;
+
+    setHighlights((current) => current.filter(
+      (highlight) => !highlight.citationId || !committedIds.has(highlight.citationId)
+    ));
+  }, [citationMap, pendingDeleteCitationIds]);
 
   useEffect(() => {
     const existingIds = new Set(currentDocumentCitations.map((citation) => citation.id));
@@ -437,11 +456,12 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
 
     const citation = createPdfCitationInput({
       text: payload.text,
+      bookId: meta.bookId,
       author: meta.author,
       book: meta.title,
       page: payload.pageLabel,
     });
-    const dedupeKey = [payload.text, payload.pageLabel, meta.author.trim(), meta.title.trim()].join('|');
+    const dedupeKey = [payload.text, payload.pageLabel, meta.bookId ?? '', meta.author.trim(), meta.title.trim()].join('|');
     const now = Date.now();
     if (
         citation.kind !== 'word' &&
@@ -621,10 +641,11 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
     resumeScrollTopRef.current = 0;
     resumePageRef.current = 1;
 
-    setMeta({ author: '', title: defaultTitle });
+    const nextMeta = { bookId: meta.bookId, author: meta.author, title: meta.title || defaultTitle };
+    setMeta(nextMeta);
     setMetaForm({
-      author: '',
-      title: defaultTitle,
+      author: nextMeta.author,
+      title: nextMeta.title,
       pdfStartPage: '',
       bookStartPage: ''
     });
@@ -660,16 +681,17 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
       return;
     }
 
+    const hasSourceChanged =
+      normalizeDocumentField(author) !== normalizeDocumentField(meta.author) ||
+      normalizeDocumentField(title) !== normalizeDocumentField(meta.title);
+
     const nextMeta: PdfReaderMeta = {
+      bookId: hasSourceChanged ? undefined : meta.bookId,
       author,
       title,
       pdfStartPage: hasPdfMapping ? pdfStartPage : undefined,
       bookStartPage: hasBookMapping ? bookStartPage : undefined
     };
-
-    const hasSourceChanged =
-      normalizeDocumentField(author) !== normalizeDocumentField(meta.author) ||
-      normalizeDocumentField(title) !== normalizeDocumentField(meta.title);
 
     const targetCitationIds = hasSourceChanged ? currentDocumentCitations.map((citation) => citation.id) : [];
 
@@ -744,7 +766,6 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
       next.delete(citationId);
       return next;
     });
-    setHighlights((prev) => prev.filter((highlight) => highlight.citationId !== citationId));
   };
 
   return (

@@ -24,6 +24,7 @@ interface LibraryTreeRowProps {
   onDrop?: (event: React.DragEvent<HTMLDivElement>) => void;
   onDragLeave?: (event: React.DragEvent<HTMLDivElement>) => void;
   onDragEnd?: (event: React.DragEvent<HTMLDivElement>) => void;
+  onTouchStart?: (event: React.TouchEvent<HTMLDivElement>) => void;
   children: React.ReactNode;
 }
 
@@ -48,10 +49,11 @@ export const LibraryTreeRow: React.FC<LibraryTreeRowProps> = ({
   onDrop,
   onDragLeave,
   onDragEnd,
+  onTouchStart,
   children,
 }) => {
   const paddingLeft = getLibraryTreePaddingLeft(depth);
-  const hasChildren = Boolean(item.children?.length);
+  const hasChildren = item.type === 'author_folder' || Boolean(item.children?.length);
   const guideOffset = Math.max(paddingLeft - 12, 10);
 
   return (
@@ -72,6 +74,8 @@ export const LibraryTreeRow: React.FC<LibraryTreeRowProps> = ({
       ) : null}
 
       <div
+        role="button"
+        tabIndex={0}
         className={[
           'group my-0.5 flex cursor-pointer select-none items-center rounded-[0.8rem] px-2.5 py-1.5 text-[14px] transition-[background-color,color,box-shadow,transform] duration-150 active:scale-[0.985]',
           isActive ? activeClassName : inactiveClassName,
@@ -81,6 +85,13 @@ export const LibraryTreeRow: React.FC<LibraryTreeRowProps> = ({
         title={title}
         aria-label={title}
         onClick={onClick}
+        onKeyDown={(event) => {
+          if (event.target !== event.currentTarget) return;
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            onClick();
+          }
+        }}
         onDoubleClick={onDoubleClick}
         draggable={draggable}
         onDragStart={onDragStart}
@@ -88,21 +99,21 @@ export const LibraryTreeRow: React.FC<LibraryTreeRowProps> = ({
         onDrop={onDrop}
         onDragLeave={onDragLeave}
         onDragEnd={onDragEnd}
+        onTouchStart={onTouchStart}
       >
-        <span
-          className="mr-1.5 flex h-[1.125rem] w-[1.125rem] shrink-0 items-center justify-center rounded-full text-[var(--text-muted)] transition-colors hover:text-[var(--text-main)]"
-          onClick={(event) => {
-            if (hasChildren && onToggle) {
-              onToggle(event);
-            }
-          }}
-        >
-          {hasChildren ? (
-            isExpanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />
-          ) : (
-            <span className="inline-block w-[13px]" />
-          )}
-        </span>
+        {hasChildren ? (
+          <button
+            type="button"
+            className="mr-1.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[var(--text-muted)] transition-colors hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]"
+            onClick={(event) => onToggle?.(event)}
+            aria-label={`${title} ${isExpanded ? '접기' : '펼치기'}`}
+            aria-expanded={isExpanded}
+          >
+            {isExpanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+          </button>
+        ) : (
+          <span className="mr-1.5 inline-block w-7 shrink-0" />
+        )}
 
         {children}
       </div>

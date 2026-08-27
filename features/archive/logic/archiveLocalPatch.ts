@@ -17,7 +17,24 @@ export const replaceCitationById = (
   citations: Citation[],
   citationId: string,
   nextCitation: Citation
-) => citations.map((citation) => (citation.id === citationId ? nextCitation : citation));
+) => {
+  let didReplace = false;
+  const next = citations.flatMap((citation) => {
+    if (citation.id === citationId) {
+      didReplace = true;
+      return [nextCitation];
+    }
+    if (citation.id === nextCitation.id) return [];
+    return [citation];
+  });
+  return didReplace ? next : [nextCitation, ...next];
+};
+
+export const mergeFetchedCitations = (current: Citation[], fetched: Citation[]) => {
+  const pending = current.filter((citation) => citation.saveStatus === 'saving' || citation.saveStatus === 'failed');
+  const pendingIds = new Set(pending.map((citation) => citation.id));
+  return [...pending, ...fetched.filter((citation) => !pendingIds.has(citation.id))];
+};
 
 export const appendCitationNote = (citations: Citation[], citationId: string, note: Note) =>
   citations.map((citation) =>
@@ -48,15 +65,6 @@ export const deleteCitationNote = (citations: Citation[], citationId: string, no
         }
       : citation
   );
-
-export const deleteCitationById = (citations: Citation[], citationId: string) =>
-  citations.filter((citation) => citation.id !== citationId);
-
-export const removeCitationFromProjects = (projects: Project[], citationId: string) =>
-  projects.map((project) => ({
-    ...project,
-    citationIds: project.citationIds.filter((existingId) => existingId !== citationId),
-  }));
 
 export const patchCitation = (
   citations: Citation[],
@@ -128,6 +136,54 @@ export const applyRenameAuthorToCitations = (
   });
 };
 
+const uniqueBooksById = (books: BookSource[]) => {
+  const seen = new Set<string>();
+  return books.filter((book) => {
+    if (seen.has(book.id)) return false;
+    seen.add(book.id);
+    return true;
+  });
+};
+
+export const applyRenameAuthorToBooks = (
+  books: BookSource[],
+  result: RenameAuthorMutationResult
+) => {
+  const presentBookIds = new Set(books.map((book) => book.id));
+  const mergeBySourceId = new Map(result.bookMerges.map((merge) => [merge.fromBookId, merge]));
+  const mergeByTargetId = new Map(result.bookMerges.map((merge) => [merge.toBookId, merge]));
+
+  return uniqueBooksById(
+    books.flatMap((book) => {
+      const sourceMerge = mergeBySourceId.get(book.id);
+      if (sourceMerge && presentBookIds.has(sourceMerge.toBookId)) return [];
+
+      const targetMerge = sourceMerge ?? mergeByTargetId.get(book.id);
+      const belongsToRenamedAuthor =
+        book.authorId === result.fromAuthorId || book.authorId === result.authorId;
+
+      return [{
+        ...book,
+        ...(targetMerge
+          ? {
+              id: targetMerge.toBookId,
+              title: targetMerge.toBookTitle,
+              sortIndex: targetMerge.toBookSortIndex,
+            }
+          : {}),
+        ...(belongsToRenamedAuthor
+          ? {
+              authorId: result.authorId,
+              author: result.authorName,
+              authorSortIndex: result.authorSortIndex,
+              isSelf: result.isSelf,
+            }
+          : {}),
+      }];
+    })
+  );
+};
+
 export const applyRenameBookToCitations = (
   citations: Citation[],
   result: RenameBookMutationResult
@@ -142,6 +198,29 @@ export const applyRenameBookToCitations = (
         }
       : citation
   );
+
+export const applyRenameBookToBooks = (
+  books: BookSource[],
+  result: RenameBookMutationResult
+) => {
+  const hasTarget = books.some((book) => book.id === result.bookId);
+
+  return uniqueBooksById(
+    books.flatMap((book) => {
+      if (book.id === result.fromBookId && result.fromBookId !== result.bookId && hasTarget) {
+        return [];
+      }
+      if (book.id !== result.fromBookId && book.id !== result.bookId) return [book];
+
+      return [{
+        ...book,
+        id: result.bookId,
+        title: result.bookTitle,
+        sortIndex: result.bookSortIndex,
+      }];
+    })
+  );
+};
 
 export const mergeChapterBlocksByBook = (
   current: ChapterBlocksByBook,

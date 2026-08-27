@@ -15,14 +15,16 @@ export const ChapterBlockCard: React.FC<ChapterBlockCardProps> = ({ id, label, o
         <span className="type-label-bounded min-w-0 whitespace-normal break-words text-center text-[0.76rem] font-medium text-[var(--text-muted)]">
           {label}
         </span>
-        <button
-          type="button"
-          aria-label={`Delete chapter block ${label}`}
-          className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[var(--text-muted)] opacity-0 transition-colors hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-secondary)] group-hover:opacity-80 focus-visible:opacity-100"
-          onClick={() => onDelete?.(id)}
-        >
-          <X size={10} strokeWidth={2.2} />
-        </button>
+        {onDelete ? (
+          <button
+            type="button"
+            aria-label={`Delete chapter block ${label}`}
+            className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[var(--text-muted)] opacity-0 transition-colors hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-secondary)] group-hover:opacity-80 focus-visible:opacity-100"
+            onClick={() => onDelete(id)}
+          >
+            <X size={10} strokeWidth={2.2} />
+          </button>
+        ) : null}
       </div>
       <div className="h-px flex-1 bg-[var(--border-main)]" />
     </div>

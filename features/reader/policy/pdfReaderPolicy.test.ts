@@ -24,10 +24,11 @@ describe('createPdfCitationInput', () => {
     expect(
       createPdfCitationInput({
         text: 'This is a sentence',
+        bookId: 'book-1',
         author: 'Author',
         book: 'Book',
         page: '147',
       })
-    ).toMatchObject({ kind: 'sentence', page: '147' });
+    ).toMatchObject({ kind: 'sentence', bookId: 'book-1', page: '147' });
   });
 });

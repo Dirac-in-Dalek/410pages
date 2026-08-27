@@ -9,8 +9,8 @@ export const addCitation = (userId: string, data: AddCitationInput) =>
 export const updateCitation = (userId: string, citationId: string, data: Partial<Citation>) =>
   api.updateCitation(userId, citationId, data);
 
-export const deleteCitation = (userId: string, citationId: string) =>
-  api.deleteCitation(userId, citationId);
+export const deleteCitations = (userId: string, citationIds: string[]) =>
+  api.deleteCitations(userId, citationIds);
 
 export const bulkUpdateCitationSource = (
   userId: string,

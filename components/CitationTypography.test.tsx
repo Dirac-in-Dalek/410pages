@@ -392,6 +392,34 @@ describe('Citation typography', () => {
     expect(screen.queryByTitle('Delete')).toBeNull();
   });
 
+  it('exposes edit and delete actions when used in a citation detail panel', async () => {
+    const user = userEvent.setup();
+    const onDelete = vi.fn();
+
+    render(
+      <CitationCard
+        citation={citation}
+        index={0}
+        username="Dalek"
+        showDetailActions
+        isSelected={false}
+        onToggleSelect={vi.fn()}
+        onAddNote={vi.fn()}
+        onUpdateNote={vi.fn()}
+        onDeleteNote={vi.fn()}
+        onDelete={onDelete}
+        onUpdate={vi.fn()}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: '편집' }));
+    expect(screen.getByDisplayValue('Font preference should affect this quote.')).not.toBeNull();
+
+    await user.click(screen.getByRole('button', { name: '취소' }));
+    await user.click(screen.getByRole('button', { name: '삭제' }));
+    expect(onDelete).toHaveBeenCalledWith('citation-1');
+  });
+
   it('places session cancel and save controls below the note input and removes the save note button', async () => {
     const user = userEvent.setup();
 

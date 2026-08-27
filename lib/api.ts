@@ -1,5 +1,5 @@
 import { getSupabaseClient } from './supabase';
-import { BookSource, ChapterBlock, Citation, CitationSourceInput, CreateBookInput, CreateChapterBlockInput, Note, Project } from '../types';
+import { AuthorDeletePreview, AuthorFolder, AuthorFolderMembership, AuthorSource, BookDeletePreview, BookSource, ChapterBlock, Citation, CitationSourceInput, CreateBookInput, CreateChapterBlockInput, DeleteAuthorCascadeResult, DeleteBookCascadeResult, Note, Project } from '../types';
 
 export const PROFILE_AVATAR_BUCKET = 'profile-avatars';
 const PROFILE_AVATAR_PUBLIC_PATH_PREFIX = `/storage/v1/object/public/${PROFILE_AVATAR_BUCKET}/`;
@@ -42,6 +42,29 @@ type BookSourceRow = {
     }> | null;
 };
 
+type AuthorSourceRow = {
+    id: string;
+    name: string;
+    sort_index: number | null;
+    created_at: string;
+    is_self: boolean;
+};
+
+type GetOrCreateAuthorResult = {
+    authorId: string;
+    authorName: string;
+    authorSortIndex: number | null;
+    authorCreatedAt: string;
+    isSelf: boolean;
+};
+
+type GetOrCreateBookResult = GetOrCreateAuthorResult & {
+    bookId: string;
+    bookTitle: string;
+    bookSortIndex: number | null;
+    bookCreatedAt: string;
+};
+
 const mapChapterBlockRow = (row: ChapterBlockRow): ChapterBlock => ({
     id: row.id,
     bookId: row.book_id,
@@ -65,6 +88,14 @@ const mapBookSourceRow = (row: BookSourceRow): BookSource => {
     };
 };
 
+const mapAuthorSourceRow = (row: AuthorSourceRow): AuthorSource => ({
+    id: row.id,
+    name: row.name,
+    sortIndex: row.sort_index ?? null,
+    createdAt: new Date(row.created_at).getTime(),
+    isSelf: row.is_self,
+});
+
 export const resolveStoredProfileAvatarPath = (avatarPath?: string | null) => {
     if (!avatarPath) {
         return null;
@@ -87,7 +118,7 @@ export const resolveStoredProfileAvatarPath = (avatarPath?: string | null) => {
 };
 
 const getNextSortIndex = async (
-    table: 'projects' | 'authors' | 'books',
+    table: 'projects' | 'authors' | 'books' | 'author_folders',
     userId: string,
     filters: Record<string, string> = {}
 ) => {
@@ -105,6 +136,13 @@ const getNextSortIndex = async (
     const { data, error } = await query.maybeSingle();
     if (error) throw error;
     return (data?.sort_index ?? -1) + 1;
+};
+
+const requireActiveUser = async (userId: string, action: string) => {
+    const { data, error } = await getSupabaseClient().auth.getSession();
+    if (error || data.session?.user.id !== userId) {
+        throw error || new Error(`Active user changed before ${action}`);
+    }
 };
 
 type ResolvedCitationSource = {
@@ -131,6 +169,7 @@ type RenameAuthorResult = {
     authorName: string;
     authorSortIndex: number | null;
     isSelf: boolean;
+    folderId: string | null;
     bookMerges: BookMergeInfo[];
 };
 
@@ -258,6 +297,36 @@ const resolveCitationSource = async (
     };
 };
 
+const resolveCitationSourceByBookId = async (
+    userId: string,
+    bookId: string
+): Promise<ResolvedCitationSource> => {
+    const { data, error } = await getSupabaseClient()
+        .from('books')
+        .select(`
+            id,
+            title,
+            sort_index,
+            created_at,
+            author:authors(id, name, sort_index, is_self)
+        `)
+        .eq('id', bookId)
+        .eq('user_id', userId)
+        .single();
+    if (error) throw error;
+
+    const book = mapBookSourceRow(data as BookSourceRow);
+    return {
+        authorId: book.authorId,
+        authorName: book.author,
+        authorSortIndex: book.authorSortIndex,
+        isSelf: book.isSelf,
+        bookId: book.id,
+        bookTitle: book.title,
+        bookSortIndex: book.sortIndex,
+    };
+};
+
 export const api = {
     resolveStoredProfileAvatarPath,
 
@@ -317,28 +386,189 @@ export const api = {
         return (data || []).map((row: BookSourceRow) => mapBookSourceRow(row));
     },
 
+    async fetchAuthors(userId: string) {
+        const { data, error } = await getSupabaseClient()
+            .from('authors')
+            .select('id, name, sort_index, created_at, is_self')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+        if (error) throw error;
+        return (data || []).map((row: AuthorSourceRow) => mapAuthorSourceRow(row));
+    },
+
+    async fetchAuthorFolders(userId: string) {
+        const [{ data: folderRows, error: folderError }, { data: membershipRows, error: membershipError }] = await Promise.all([
+            getSupabaseClient()
+                .from('author_folders')
+                .select('id, name, sort_index, created_at')
+                .eq('user_id', userId)
+                .order('sort_index', { ascending: true })
+                .order('created_at', { ascending: true }),
+            getSupabaseClient()
+                .from('author_folder_memberships')
+                .select('author_id, folder_id, created_at')
+                .eq('user_id', userId),
+        ]);
+        if (folderError) throw folderError;
+        if (membershipError) throw membershipError;
+        return {
+            folders: (folderRows || []).map((row) => ({
+                id: row.id,
+                name: row.name,
+                sortIndex: row.sort_index,
+                createdAt: new Date(row.created_at).getTime(),
+            } as AuthorFolder)),
+            memberships: (membershipRows || []).map((row) => ({
+                authorId: row.author_id,
+                folderId: row.folder_id,
+                createdAt: new Date(row.created_at).getTime(),
+            } as AuthorFolderMembership)),
+        };
+    },
+
+    async createAuthorFolder(userId: string, name: string) {
+        const trimmed = name.trim();
+        if (!trimmed) throw new Error('Author folder name is required');
+        const sortIndex = await getNextSortIndex('author_folders', userId);
+        const { data, error } = await getSupabaseClient()
+            .from('author_folders')
+            .insert({ user_id: userId, name: trimmed, sort_index: sortIndex })
+            .select('id, name, sort_index, created_at')
+            .single();
+        if (error) throw error;
+        return {
+            id: data.id,
+            name: data.name,
+            sortIndex: data.sort_index,
+            createdAt: new Date(data.created_at).getTime(),
+        } as AuthorFolder;
+    },
+
+    async renameAuthorFolder(userId: string, folderId: string, name: string) {
+        const trimmed = name.trim();
+        if (!trimmed) throw new Error('Author folder name is required');
+        const { error } = await getSupabaseClient()
+            .from('author_folders')
+            .update({ name: trimmed })
+            .eq('id', folderId)
+            .eq('user_id', userId);
+        if (error) throw error;
+    },
+
+    async deleteAuthorFolder(userId: string, folderId: string) {
+        const { error } = await getSupabaseClient()
+            .from('author_folders')
+            .delete()
+            .eq('id', folderId)
+            .eq('user_id', userId);
+        if (error) throw error;
+    },
+
+    async moveAuthorToFolder(userId: string, authorId: string, folderId: string) {
+        const { data, error } = await getSupabaseClient()
+            .from('author_folder_memberships')
+            .upsert({ author_id: authorId, folder_id: folderId, user_id: userId }, { onConflict: 'author_id' })
+            .select('author_id, folder_id, created_at')
+            .single();
+        if (error) throw error;
+        return {
+            authorId: data.author_id,
+            folderId: data.folder_id,
+            createdAt: new Date(data.created_at).getTime(),
+        } as AuthorFolderMembership;
+    },
+
+    async removeAuthorFromFolder(userId: string, authorId: string) {
+        const { error } = await getSupabaseClient()
+            .from('author_folder_memberships')
+            .delete()
+            .eq('author_id', authorId)
+            .eq('user_id', userId);
+        if (error) throw error;
+    },
+
+    async deleteAuthorCascade(userId: string, authorId: string) {
+        await requireActiveUser(userId, 'author deletion');
+        const { data, error } = await getSupabaseClient().rpc('delete_author_cascade', {
+            expected_user_id: userId,
+            source_author_id: authorId,
+        });
+        if (error) throw error;
+        return data as DeleteAuthorCascadeResult;
+    },
+
+    async previewAuthorDeletion(userId: string, authorId: string) {
+        await requireActiveUser(userId, 'author deletion preview');
+        const { data, error } = await getSupabaseClient().rpc('preview_author_deletion', {
+            expected_user_id: userId,
+            source_author_id: authorId,
+        });
+        if (error) throw error;
+        return data as AuthorDeletePreview;
+    },
+
+    async deleteBookCascade(userId: string, bookId: string) {
+        await requireActiveUser(userId, 'book deletion');
+        const { data, error } = await getSupabaseClient().rpc('delete_book_cascade', {
+            expected_user_id: userId,
+            source_book_id: bookId,
+        });
+        if (error) throw error;
+        return data as DeleteBookCascadeResult;
+    },
+
+    async previewBookDeletion(userId: string, bookId: string) {
+        await requireActiveUser(userId, 'book deletion preview');
+        const { data, error } = await getSupabaseClient().rpc('preview_book_deletion', {
+            expected_user_id: userId,
+            source_book_id: bookId,
+        });
+        if (error) throw error;
+        return data as BookDeletePreview;
+    },
+
+    async createAuthor(userId: string, name: string) {
+        const trimmed = name.trim();
+        if (!trimmed) throw new Error('Author name is required');
+        await requireActiveUser(userId, 'author creation');
+
+        const { data, error } = await getSupabaseClient().rpc('get_or_create_author', {
+            expected_user_id: userId,
+            requested_name: trimmed,
+        });
+        if (error) throw error;
+        const result = data as GetOrCreateAuthorResult;
+        return {
+            id: result.authorId,
+            name: result.authorName,
+            sortIndex: result.authorSortIndex,
+            createdAt: new Date(result.authorCreatedAt).getTime(),
+            isSelf: result.isSelf,
+        } as AuthorSource;
+    },
+
     async createBook(userId: string, input: CreateBookInput) {
         const title = input.title.trim();
-        if (!title) throw new Error('Book title is required');
+        if (!input.authorId || !title) throw new Error('Author and book title are required');
+        await requireActiveUser(userId, 'book creation');
 
-        const resolvedSource = await resolveCitationSource(userId, {
-            author: input.author,
-            book: title,
+        const { data, error } = await getSupabaseClient().rpc('get_or_create_book', {
+            expected_user_id: userId,
+            source_author_id: input.authorId,
+            requested_title: title,
         });
-
-        if (!resolvedSource.bookId) {
-            throw new Error('Book title is required');
-        }
+        if (error) throw error;
+        const result = data as GetOrCreateBookResult;
 
         return {
-            id: resolvedSource.bookId,
-            title: resolvedSource.bookTitle,
-            sortIndex: resolvedSource.bookSortIndex,
-            createdAt: Date.now(),
-            authorId: resolvedSource.authorId,
-            author: resolvedSource.authorName,
-            authorSortIndex: resolvedSource.authorSortIndex,
-            isSelf: resolvedSource.isSelf,
+            id: result.bookId,
+            title: result.bookTitle,
+            sortIndex: result.bookSortIndex,
+            createdAt: new Date(result.bookCreatedAt).getTime(),
+            authorId: result.authorId,
+            author: result.authorName,
+            authorSortIndex: result.authorSortIndex,
+            isSelf: result.isSelf,
         } as BookSource;
     },
 
@@ -421,10 +651,12 @@ export const api = {
     },
 
     async addCitation(userId: string, data: Omit<Citation, 'id' | 'createdAt' | 'notes'>) {
-        const resolvedSource = await resolveCitationSource(userId, {
-            author: data.author || '',
-            book: data.book || ''
-        });
+        const resolvedSource = data.bookId
+            ? await resolveCitationSourceByBookId(userId, data.bookId)
+            : await resolveCitationSource(userId, {
+                author: data.author || '',
+                book: data.book || ''
+            });
 
         // 3. Insert Citation
         // We explicitly provide author_id. Trigger handle_citation_defaults will kick in if we sent nulls, 
@@ -593,11 +825,14 @@ export const api = {
         };
     },
 
-    async deleteCitation(userId: string, id: string) {
-        const { error } = await getSupabaseClient()
+    async deleteCitations(userId: string, ids: string[]) {
+        if (ids.length === 0) return;
+        const supabase = getSupabaseClient();
+        await requireActiveUser(userId, 'deletion');
+        const { error } = await supabase
             .from('citations')
             .delete()
-            .eq('id', id)
+            .in('id', ids)
             .eq('user_id', userId);
         if (error) throw error;
     },
@@ -727,208 +962,27 @@ export const api = {
     async renameAuthor(userId: string, id: string, name: string): Promise<RenameAuthorResult> {
         const trimmed = name.trim();
         if (!trimmed) throw new Error('Author name is required');
+        await requireActiveUser(userId, 'author rename');
 
-        const { data: sourceAuthor, error: sourceAuthorError } = await getSupabaseClient()
-            .from('authors')
-            .select('id, name, sort_index, is_self')
-            .eq('id', id)
-            .eq('user_id', userId)
-            .single();
-        if (sourceAuthorError) throw sourceAuthorError;
-
-        if (sourceAuthor.name === trimmed) {
-            return {
-                merged: false,
-                fromAuthorId: sourceAuthor.id,
-                authorId: sourceAuthor.id,
-                authorName: sourceAuthor.name,
-                authorSortIndex: sourceAuthor.sort_index ?? null,
-                isSelf: sourceAuthor.is_self,
-                bookMerges: []
-            };
-        }
-
-        const { data: existingAuthor, error: existingAuthorError } = await getSupabaseClient()
-            .from('authors')
-            .select('id, name, sort_index, is_self')
-            .eq('user_id', userId)
-            .eq('name', trimmed)
-            .neq('id', id)
-            .maybeSingle();
-        if (existingAuthorError) throw existingAuthorError;
-
-        if (!existingAuthor) {
-            const { data: updatedAuthor, error: renameAuthorError } = await getSupabaseClient()
-                .from('authors')
-                .update({ name: trimmed })
-                .eq('id', id)
-                .eq('user_id', userId)
-                .select('id, name, sort_index, is_self')
-                .single();
-            if (renameAuthorError) throw renameAuthorError;
-
-            return {
-                merged: false,
-                fromAuthorId: updatedAuthor.id,
-                authorId: updatedAuthor.id,
-                authorName: updatedAuthor.name,
-                authorSortIndex: updatedAuthor.sort_index ?? null,
-                isSelf: updatedAuthor.is_self,
-                bookMerges: []
-            };
-        }
-
-        const { data: sourceBooks, error: sourceBooksError } = await getSupabaseClient()
-            .from('books')
-            .select('id, title')
-            .eq('user_id', userId)
-            .eq('author_id', id);
-        if (sourceBooksError) throw sourceBooksError;
-
-        const { data: existingAuthorBooks, error: existingAuthorBooksError } = await getSupabaseClient()
-            .from('books')
-            .select('id, title, sort_index')
-            .eq('user_id', userId)
-            .eq('author_id', existingAuthor.id);
-        if (existingAuthorBooksError) throw existingAuthorBooksError;
-
-        const existingBookByTitle = new Map(
-            (existingAuthorBooks || []).map((book) => [book.title.trim(), book])
-        );
-        const bookMerges: BookMergeInfo[] = [];
-
-        for (const sourceBook of sourceBooks || []) {
-            const normalizedTitle = sourceBook.title.trim();
-            const conflict = existingBookByTitle.get(normalizedTitle);
-
-            if (conflict) {
-                const { error: moveCitationError } = await getSupabaseClient()
-                    .from('citations')
-                    .update({ book_id: conflict.id })
-                    .eq('user_id', userId)
-                    .eq('book_id', sourceBook.id);
-                if (moveCitationError) throw moveCitationError;
-
-                const { error: deleteBookError } = await getSupabaseClient()
-                    .from('books')
-                    .delete()
-                    .eq('id', sourceBook.id)
-                    .eq('user_id', userId);
-                if (deleteBookError) throw deleteBookError;
-
-                bookMerges.push({
-                    fromBookId: sourceBook.id,
-                    toBookId: conflict.id,
-                    toBookTitle: conflict.title,
-                    toBookSortIndex: conflict.sort_index ?? null
-                });
-            } else {
-                const { error: moveBookOwnerError } = await getSupabaseClient()
-                    .from('books')
-                    .update({ author_id: existingAuthor.id })
-                    .eq('id', sourceBook.id)
-                    .eq('user_id', userId);
-                if (moveBookOwnerError) throw moveBookOwnerError;
-            }
-        }
-
-        const { error: moveCitationAuthorError } = await getSupabaseClient()
-            .from('citations')
-            .update({ author_id: existingAuthor.id })
-            .eq('user_id', userId)
-            .eq('author_id', id);
-        if (moveCitationAuthorError) throw moveCitationAuthorError;
-
-        const { error: deleteSourceAuthorError } = await getSupabaseClient()
-            .from('authors')
-            .delete()
-            .eq('id', id)
-            .eq('user_id', userId);
-        if (deleteSourceAuthorError) throw deleteSourceAuthorError;
-
-        return {
-            merged: true,
-            fromAuthorId: id,
-            authorId: existingAuthor.id,
-            authorName: existingAuthor.name,
-            authorSortIndex: existingAuthor.sort_index ?? null,
-            isSelf: existingAuthor.is_self,
-            bookMerges
-        };
+        const { data, error } = await getSupabaseClient().rpc('rename_or_merge_author_with_folder', {
+            source_author_id: id,
+            requested_name: trimmed
+        });
+        if (error) throw error;
+        return data as RenameAuthorResult;
     },
 
     async renameBook(userId: string, id: string, name: string): Promise<RenameBookResult> {
         const trimmed = name.trim();
         if (!trimmed) throw new Error('Book title is required');
+        await requireActiveUser(userId, 'book rename');
 
-        const { data: sourceBook, error: sourceBookError } = await getSupabaseClient()
-            .from('books')
-            .select('id, title, author_id, sort_index')
-            .eq('id', id)
-            .eq('user_id', userId)
-            .single();
-        if (sourceBookError) throw sourceBookError;
-
-        if (sourceBook.title === trimmed) {
-            return {
-                merged: false,
-                fromBookId: sourceBook.id,
-                bookId: sourceBook.id,
-                bookTitle: sourceBook.title,
-                bookSortIndex: sourceBook.sort_index ?? null
-            };
-        }
-
-        const { data: existingBook, error: existingBookError } = await getSupabaseClient()
-            .from('books')
-            .select('id, title, sort_index')
-            .eq('user_id', userId)
-            .eq('author_id', sourceBook.author_id)
-            .eq('title', trimmed)
-            .neq('id', id)
-            .maybeSingle();
-        if (existingBookError) throw existingBookError;
-
-        if (existingBook) {
-            const { error: moveCitationError } = await getSupabaseClient()
-                .from('citations')
-                .update({ book_id: existingBook.id })
-                .eq('user_id', userId)
-                .eq('book_id', id);
-            if (moveCitationError) throw moveCitationError;
-
-            const { error: deleteSourceBookError } = await getSupabaseClient()
-                .from('books')
-                .delete()
-                .eq('id', id)
-                .eq('user_id', userId);
-            if (deleteSourceBookError) throw deleteSourceBookError;
-
-            return {
-                merged: true,
-                fromBookId: id,
-                bookId: existingBook.id,
-                bookTitle: existingBook.title,
-                bookSortIndex: existingBook.sort_index ?? null
-            };
-        }
-
-        const { data: updatedBook, error: renameBookError } = await getSupabaseClient()
-            .from('books')
-            .update({ title: trimmed })
-            .eq('id', id)
-            .eq('user_id', userId)
-            .select('id, title, sort_index')
-            .single();
-        if (renameBookError) throw renameBookError;
-
-        return {
-            merged: false,
-            fromBookId: updatedBook.id,
-            bookId: updatedBook.id,
-            bookTitle: updatedBook.title,
-            bookSortIndex: updatedBook.sort_index ?? null
-        };
+        const { data, error } = await getSupabaseClient().rpc('rename_or_merge_book', {
+            source_book_id: id,
+            requested_title: trimmed
+        });
+        if (error) throw error;
+        return data as RenameBookResult;
     },
 
     async deleteProject(userId: string, id: string) {

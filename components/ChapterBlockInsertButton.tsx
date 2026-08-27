@@ -3,18 +3,21 @@ import { Check, Plus, X } from 'lucide-react';
 
 interface ChapterBlockInsertButtonProps {
   isEditing: boolean;
+  disabled?: boolean;
   onOpen: () => void;
   onCancel?: () => void;
-  onSubmit: (label: string) => Promise<unknown> | unknown;
+  onSubmit: (label: string) => boolean | void | Promise<boolean | void>;
 }
 
 export const ChapterBlockInsertButton: React.FC<ChapterBlockInsertButtonProps> = ({
   isEditing,
+  disabled = false,
   onOpen,
   onCancel,
   onSubmit,
 }) => {
   const [canSubmit, setCanSubmit] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -29,6 +32,7 @@ export const ChapterBlockInsertButton: React.FC<ChapterBlockInsertButtonProps> =
     if (!isEditing) return;
 
     const handlePointerDown = (event: MouseEvent) => {
+      if (isSubmitting) return;
       if (formRef.current?.contains(event.target as Node)) return;
       resetInput();
       onCancel?.();
@@ -38,15 +42,24 @@ export const ChapterBlockInsertButton: React.FC<ChapterBlockInsertButtonProps> =
     return () => {
       document.removeEventListener('mousedown', handlePointerDown);
     };
-  }, [isEditing, onCancel]);
+  }, [isEditing, isSubmitting, onCancel]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const trimmed = inputRef.current?.value.trim() ?? '';
-    if (!trimmed) return;
+    if (!trimmed || isSubmitting || disabled) return;
 
-    await Promise.resolve(onSubmit(trimmed));
+    setIsSubmitting(true);
+    let didSave: boolean | void;
+    try {
+      didSave = await Promise.resolve(onSubmit(trimmed));
+    } catch {
+      didSave = false;
+    } finally {
+      setIsSubmitting(false);
+    }
+    if (didSave === false) return;
     resetInput();
     onCancel?.();
   };
@@ -58,6 +71,7 @@ export const ChapterBlockInsertButton: React.FC<ChapterBlockInsertButtonProps> =
         aria-label="장 구분 추가"
         className="flex h-full w-full items-center gap-2 text-[var(--text-muted)] opacity-0 transition-opacity duration-150 group-hover:opacity-100 focus-visible:opacity-100"
         onClick={onOpen}
+        disabled={disabled}
       >
         <span className="h-px flex-1 bg-[var(--border-main)]" />
         <span className="inline-flex h-5 items-center gap-1 rounded-full border border-[var(--border-main)] bg-[var(--bg-card)] px-2 text-[0.68rem] font-medium text-[var(--text-secondary)] shadow-[0_1px_2px_rgba(28,22,16,0.04)] transition-colors hover:border-[var(--accent-border)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]">
@@ -77,6 +91,7 @@ export const ChapterBlockInsertButton: React.FC<ChapterBlockInsertButtonProps> =
         aria-label="장 구분 제목"
         className="type-body-bounded h-10 min-w-0 flex-[1.2] rounded-full border border-[var(--accent-border)] bg-[var(--bg-card)] px-4 leading-tight text-[var(--text-main)] outline-none shadow-[0_1px_2px_rgba(28,22,16,0.04)] placeholder:text-[var(--text-muted)] focus:ring-2 focus:ring-[var(--accent-ring)]"
         autoFocus
+        disabled={isSubmitting || disabled}
         placeholder="장 제목"
         onInput={(event) => setCanSubmit(event.currentTarget.value.trim().length > 0)}
         onKeyDown={(event) => {
@@ -95,7 +110,7 @@ export const ChapterBlockInsertButton: React.FC<ChapterBlockInsertButtonProps> =
         type="submit"
         aria-label="장 구분 저장"
         className="ui-btn ui-btn-icon h-10 w-10 min-h-0 rounded-full border-transparent bg-[var(--accent)] text-white hover:bg-[var(--accent-strong)] disabled:opacity-40"
-        disabled={!canSubmit}
+        disabled={!canSubmit || isSubmitting || disabled}
       >
         <Check size={14} />
       </button>
@@ -107,6 +122,7 @@ export const ChapterBlockInsertButton: React.FC<ChapterBlockInsertButtonProps> =
           resetInput();
           onCancel?.();
         }}
+        disabled={isSubmitting}
       >
         <X size={14} />
       </button>

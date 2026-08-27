@@ -45,6 +45,30 @@ const baseProps = {
 };
 
 describe('CitationList chapter blocks', () => {
+  it('keeps book citations and chapter blocks in oldest-first time order', () => {
+    render(
+      <CitationList
+        {...baseProps}
+        citations={[
+          citation({ id: 'new', text: 'Latest quote', author: 'Author', book: 'Book', bookId: 'book-1', createdAt: 300 }),
+          citation({ id: 'old', text: 'Oldest quote', author: 'Author', book: 'Book', bookId: 'book-1', createdAt: 100 }),
+        ]}
+        chapterBlocks={[{
+          id: 'middle', bookId: 'book-1', label: 'Middle chapter', createdAtSort: 200, createdAt: 200,
+        }]}
+        isBookView
+        sortField="page"
+        dateDirection="desc"
+      />
+    );
+
+    const oldest = screen.getByText('Oldest quote');
+    const middle = screen.getByText('Middle chapter');
+    const latest = screen.getByText('Latest quote');
+    expect(oldest.compareDocumentPosition(middle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(middle.compareDocumentPosition(latest) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('renders a chapter block in book view mixed with citations', () => {
     render(
       <CitationList
@@ -319,7 +343,7 @@ describe('CitationList chapter blocks', () => {
       bookId: 'book-1',
       label: '프롤로그',
       pageSort: 100,
-      createdAtSort: 999.9,
+      createdAtSort: 1000.9,
     });
   });
 
@@ -494,5 +518,39 @@ describe('CitationList chapter blocks', () => {
     await user.click(screen.getByRole('button', { name: 'Delete chapter block 3장' }));
 
     expect(onDeleteChapterBlock).toHaveBeenCalledWith('book-1', 'block-1');
+  });
+
+  it('disables chapter edit controls while chapter data is loading', () => {
+    render(
+      <CitationList
+        {...baseProps}
+        citations={[
+          citation({
+            id: 'citation-1',
+            text: 'First quote',
+            author: 'Author A',
+            book: 'Book A',
+            bookId: 'book-1',
+            pageSort: 100,
+            createdAt: 1000,
+          }),
+        ]}
+        chapterBlocks={[
+          chapterBlock({
+            id: 'block-1',
+            bookId: 'book-1',
+            label: '1장',
+            pageSort: 50,
+            createdAtSort: 500,
+          }),
+        ]}
+        isBookView
+        sortField="page"
+        chapterActionsDisabled
+      />
+    );
+
+    expect(screen.getAllByRole('button', { name: '장 구분 추가' }).every((button) => button.hasAttribute('disabled'))).toBe(true);
+    expect(screen.queryByRole('button', { name: 'Delete chapter block 1장' })).toBeNull();
   });
 });

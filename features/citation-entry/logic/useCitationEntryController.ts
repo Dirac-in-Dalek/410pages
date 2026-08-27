@@ -21,6 +21,7 @@ const createResetValues = (
   text: '',
   author: prefillData?.author || '',
   book: prefillData?.book || '',
+  bookId: prefillData?.bookId,
   page: '',
 });
 
@@ -31,6 +32,7 @@ export const createCitationInput = (values: CitationEditorValues): AddCitationIn
     text: values.text,
     author: values.author,
     book: values.book,
+    ...(values.bookId ? { bookId: values.bookId } : {}),
     page: kind === 'word' ? undefined : values.page || undefined,
     tags: [],
   };
@@ -68,6 +70,7 @@ export const useCitationEntryController = ({
       ...current,
       author: prefillData?.author || '',
       book: prefillData?.book || '',
+      bookId: prefillData?.bookId,
     }));
   }, [controlledValues, prefillData]);
 
@@ -78,12 +81,14 @@ export const useCitationEntryController = ({
       text: controlledValues.text ?? '',
       author: controlledValues.author ?? '',
       book: controlledValues.book ?? '',
+      bookId: controlledValues.bookId,
       page: controlledValues.page ?? '',
     });
   }, [
     controlledValues,
     controlledValues?.author,
     controlledValues?.book,
+    controlledValues?.bookId,
     controlledValues?.page,
     controlledValues?.text,
   ]);
@@ -118,7 +123,11 @@ export const useCitationEntryController = ({
   });
 
   const updateValue = (field: keyof CitationEditorValues, nextValue: string) => {
-    setValues((current) => ({ ...current, [field]: nextValue }));
+    setValues((current) => ({
+      ...current,
+      [field]: nextValue,
+      ...((field === 'author' || field === 'book') ? { bookId: undefined } : {}),
+    }));
   };
 
   const handleSubmit = async () => {
@@ -172,6 +181,7 @@ export const useCitationEntryController = ({
         ...current,
         author: data.author !== undefined ? data.author : current.author,
         book: data.book !== undefined ? data.book : current.book,
+        bookId: data.bookId,
       }));
     } catch (error) {
       console.error('Error parsing drop data', error);

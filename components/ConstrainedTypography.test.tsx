@@ -82,14 +82,12 @@ describe('Constrained typography', () => {
       </MobileLayout>
     );
 
-    await user.click(screen.getByRole('button', { name: '폴더 열기' }));
+    await user.click(screen.getByRole('button', { name: '탐색 열기' }));
     expect(screen.queryByText('1')).toBeNull();
 
     await user.click(screen.getByRole('button', { name: '새 폴더' }));
     expect(screen.getByPlaceholderText('폴더 이름').className).toContain('type-body-bounded');
 
-    await user.click(screen.getByLabelText('패널 닫기'));
-    await user.click(screen.getByRole('button', { name: '서재 열기' }));
     expect(screen.getByPlaceholderText('문장, 저자 또는 책 검색').className).toContain('type-body-bounded');
   });
 });

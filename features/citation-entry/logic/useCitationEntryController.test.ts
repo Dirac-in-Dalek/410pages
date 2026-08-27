@@ -27,4 +27,20 @@ describe('createCitationInput', () => {
       tags: [],
     });
   });
+
+  it('keeps the selected book id so same-named books cannot be confused', () => {
+    expect(
+      createCitationInput({
+        text: 'This belongs to the selected book',
+        author: 'Author',
+        book: 'Same title',
+        bookId: 'book-selected',
+        page: '',
+      })
+    ).toMatchObject({
+      bookId: 'book-selected',
+      author: 'Author',
+      book: 'Same title',
+    });
+  });
 });

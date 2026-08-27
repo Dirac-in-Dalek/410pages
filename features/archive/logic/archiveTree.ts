@@ -1,6 +1,6 @@
-import { BookSource, Citation, SidebarItem } from '../../../types';
+import { AuthorFolder, AuthorFolderMembership, AuthorSource, BookSource, Citation, SidebarItem } from '../../../types';
 import { OrderedLabelItem } from '../contract/archiveViewContract';
-import { normalizeBookKey, pickPreferredBook, sortByIndexThenLabel } from './archiveSort';
+import { pickPreferredBook, sortByIndexThenLabel } from './archiveSort';
 
 type AuthorNode = {
   id: string;
@@ -9,17 +9,57 @@ type AuthorNode = {
 };
 
 type LatestAuthorItem = Pick<OrderedLabelItem, 'id' | 'label'> & {
-  latestCitationAt: number;
+  activityAt: number;
 };
 
-const sortByLatestCitationThenLabel = <T extends LatestAuthorItem>(items: T[]) =>
+const sortByActivityThenLabel = <T extends LatestAuthorItem>(items: T[]) =>
   [...items].sort((a, b) => {
-    if (a.latestCitationAt !== b.latestCitationAt) return b.latestCitationAt - a.latestCitationAt;
+    if (a.activityAt !== b.activityAt) return b.activityAt - a.activityAt;
     return a.label.localeCompare(b.label, 'ko');
   });
 
-export const deriveAuthorOrder = (citations: Citation[], username: string, books: BookSource[] = []) => {
+const isPersistedSentence = (citation: Citation) =>
+  (citation.kind || 'sentence') === 'sentence' &&
+  citation.saveStatus !== 'saving' &&
+  citation.saveStatus !== 'failed';
+
+const getAuthorActivityById = (authors: AuthorSource[], citations: Citation[]) => {
+  const activityByAuthorId = new Map(authors.map((author) => [author.id, author.createdAt]));
+  citations.forEach((citation) => {
+    if (!citation.authorId || !isPersistedSentence(citation)) return;
+    activityByAuthorId.set(
+      citation.authorId,
+      Math.max(activityByAuthorId.get(citation.authorId) ?? 0, citation.createdAt)
+    );
+  });
+  return activityByAuthorId;
+};
+
+export const sortAuthorsByActivity = (authors: AuthorSource[], citations: Citation[]) => {
+  const activityByAuthorId = getAuthorActivityById(authors, citations);
+  return [...authors].sort((a, b) => {
+    const activityDifference = (activityByAuthorId.get(b.id) ?? 0) - (activityByAuthorId.get(a.id) ?? 0);
+    return activityDifference || a.name.localeCompare(b.name, 'ko');
+  });
+};
+
+export const deriveAuthorOrder = (
+  citations: Citation[],
+  username: string,
+  books: BookSource[] = [],
+  persistedAuthors: AuthorSource[] = []
+) => {
   const authorMap = new Map<string, LatestAuthorItem>();
+  const activityByAuthorId = getAuthorActivityById(persistedAuthors, citations);
+
+  persistedAuthors.forEach((author) => {
+    if (author.isSelf || !author.id) return;
+    authorMap.set(author.id, {
+      id: author.id,
+      label: author.name,
+      activityAt: activityByAuthorId.get(author.id) ?? 0,
+    });
+  });
 
   books.forEach((book) => {
     if (!book.authorId) return;
@@ -27,68 +67,52 @@ export const deriveAuthorOrder = (citations: Citation[], username: string, books
     if (!label || label === username) return;
 
     const existing = authorMap.get(book.authorId);
-    if (existing) {
-      existing.latestCitationAt = Math.max(existing.latestCitationAt, book.createdAt);
-      return;
-    }
+    if (existing) return;
 
     authorMap.set(book.authorId, {
       id: book.authorId,
       label,
-      latestCitationAt: book.createdAt,
+      activityAt: activityByAuthorId.get(book.authorId) ?? 0,
     });
   });
 
   citations.reduce<Map<string, LatestAuthorItem>>((authors, citation) => {
-      if (!citation.authorId) return authors;
-      const label = citation.isSelf ? username : citation.author;
-      if (!label || label === username) return authors;
+    if (!citation.authorId) return authors;
+    const label = citation.isSelf ? username : citation.author;
+    if (!label || label === username) return authors;
 
-      const existing = authors.get(citation.authorId);
-      if (existing) {
-        existing.latestCitationAt = Math.max(existing.latestCitationAt, citation.createdAt);
-        return authors;
-      }
+    const existing = authors.get(citation.authorId);
+    if (existing) return authors;
 
-      authors.set(citation.authorId, {
-        id: citation.authorId,
-        label,
-        latestCitationAt: citation.createdAt,
-      });
-      return authors;
-    }, authorMap);
+    authors.set(citation.authorId, {
+      id: citation.authorId,
+      label,
+      activityAt: activityByAuthorId.get(citation.authorId) ?? 0,
+    });
+    return authors;
+  }, authorMap);
 
-  return sortByLatestCitationThenLabel(Array.from(authorMap.values())).map((row) => row.id);
+  return sortByActivityThenLabel(Array.from(authorMap.values())).map((row) => row.id);
 };
 
-export const findLatestCitationBook = (
+export const findRecentlyCitedBooks = (
   citations: Citation[],
-  books: BookSource[]
-): BookSource | null => {
-  const latestCitation = citations
-    .filter((citation) => citation.bookId && citation.book)
-    .reduce<Citation | null>((latest, citation) => {
-      if (!latest || citation.createdAt > latest.createdAt) return citation;
-      return latest;
-    }, null);
+  books: BookSource[],
+  limit = 3
+): BookSource[] => {
+  const latestByBookId = new Map<string, number>();
+  citations.forEach((citation) => {
+    if (!citation.bookId || !isPersistedSentence(citation)) return;
+    latestByBookId.set(
+      citation.bookId,
+      Math.max(latestByBookId.get(citation.bookId) ?? 0, citation.createdAt)
+    );
+  });
 
-  if (!latestCitation?.bookId) return null;
-
-  const persistedBook = books.find((book) => book.id === latestCitation.bookId);
-  if (persistedBook) return persistedBook;
-
-  if (!latestCitation.authorId) return null;
-
-  return {
-    id: latestCitation.bookId,
-    title: latestCitation.book,
-    sortIndex: latestCitation.bookSortIndex ?? null,
-    createdAt: latestCitation.createdAt,
-    authorId: latestCitation.authorId,
-    author: latestCitation.author,
-    authorSortIndex: latestCitation.authorSortIndex ?? null,
-    isSelf: Boolean(latestCitation.isSelf),
-  };
+  return books
+    .filter((book) => latestByBookId.has(book.id))
+    .sort((a, b) => (latestByBookId.get(b.id) ?? 0) - (latestByBookId.get(a.id) ?? 0))
+    .slice(0, limit);
 };
 
 export const deriveBookOrderByAuthor = (citations: Citation[], books: BookSource[] = []) => {
@@ -98,30 +122,24 @@ export const deriveBookOrderByAuthor = (citations: Citation[], books: BookSource
   books.forEach((book) => {
     if (!book.authorId || !book.id || !book.title) return;
     const existing = byAuthor.get(book.authorId) || new Map<string, OrderedLabelItem>();
-    const key = normalizeBookKey(book.title);
-    existing.set(
-      key,
-      pickPreferredBook(existing.get(key), {
-        id: book.id,
-        label: book.title,
-        sortIndex: book.sortIndex,
-      })
-    );
+    existing.set(book.id, {
+      id: book.id,
+      label: book.title,
+      sortIndex: book.sortIndex,
+    });
     byAuthor.set(book.authorId, existing);
   });
 
   citations.forEach((citation) => {
     if (!citation.authorId || !citation.bookId || !citation.book) return;
     const existing = byAuthor.get(citation.authorId) || new Map<string, OrderedLabelItem>();
-    const key = normalizeBookKey(citation.book);
-    existing.set(
-      key,
-      pickPreferredBook(existing.get(key), {
+    if (!existing.has(citation.bookId)) {
+      existing.set(citation.bookId, {
         id: citation.bookId,
         label: citation.book,
         sortIndex: citation.bookSortIndex,
-      })
-    );
+      });
+    }
     byAuthor.set(citation.authorId, existing);
   });
 
@@ -135,8 +153,9 @@ export const deriveBookOrderByAuthor = (citations: Citation[], books: BookSource
 export const getCurrentOrderedAuthors = (
   citations: Citation[],
   username: string,
-  books: BookSource[] = []
-) => deriveAuthorOrder(citations, username, books);
+  books: BookSource[] = [],
+  authors: AuthorSource[] = []
+) => deriveAuthorOrder(citations, username, books, authors);
 
 export const getCurrentOrderedBooks = (
   citations: Citation[],
@@ -147,28 +166,22 @@ export const getCurrentOrderedBooks = (
   const map = new Map<string, OrderedLabelItem>();
   books.forEach((book) => {
     if (!book.authorId || book.authorId !== authorId || !book.id || !book.title) return;
-    const key = normalizeBookKey(book.title);
-    map.set(
-      key,
-      pickPreferredBook(map.get(key), {
-        id: book.id,
-        label: book.title,
-        sortIndex: book.sortIndex,
-      })
-    );
+    map.set(book.id, {
+      id: book.id,
+      label: book.title,
+      sortIndex: book.sortIndex,
+    });
   });
 
   citations.forEach((citation) => {
     if (!citation.authorId || citation.authorId !== authorId || !citation.bookId || !citation.book) return;
-    const key = normalizeBookKey(citation.book);
-    map.set(
-      key,
-      pickPreferredBook(map.get(key), {
+    if (!map.has(citation.bookId)) {
+      map.set(citation.bookId, {
         id: citation.bookId,
         label: citation.book,
         sortIndex: citation.bookSortIndex,
-      })
-    );
+      });
+    }
   });
 
   const sorted = sortByIndexThenLabel(Array.from(map.values()));
@@ -188,8 +201,21 @@ export const getCurrentOrderedBooks = (
     .map((row) => row.id);
 };
 
-const buildAuthorMap = (citations: Citation[], books: BookSource[], username: string) => {
+const buildAuthorMap = (
+  citations: Citation[],
+  books: BookSource[],
+  username: string,
+  persistedAuthors: AuthorSource[] = []
+) => {
   const authorsMap = new Map<string, AuthorNode>();
+
+  persistedAuthors.forEach((author) => {
+    authorsMap.set(author.id, {
+      id: author.id,
+      label: author.isSelf ? username : author.name.trim() || '이름 없는 저자',
+      books: new Map(),
+    });
+  });
 
   books.forEach((book) => {
     if (!book.authorId || !book.author) return;
@@ -251,7 +277,10 @@ export const buildArchiveTree = (
   books: BookSource[],
   username: string,
   orderedAuthorIds: string[],
-  getOrderedBooks: (authorId: string) => string[]
+  getOrderedBooks: (authorId: string) => string[],
+  authors: AuthorSource[] = [],
+  authorFolders?: AuthorFolder[],
+  authorFolderMemberships?: AuthorFolderMembership[]
 ): SidebarItem[] => {
   const rootId = 'root-user';
   const rootItems: SidebarItem[] = [
@@ -263,8 +292,11 @@ export const buildArchiveTree = (
     },
   ];
 
-  const authorsMap = buildAuthorMap(citations, books, username);
-  const userAuthor = Array.from(authorsMap.values()).find((author) => author.label === username);
+  const authorsMap = buildAuthorMap(citations, books, username, authors);
+  const persistedSelfAuthorId = authors.find((author) => author.isSelf)?.id;
+  const userAuthor = Array.from(authorsMap.values()).find((author) =>
+    persistedSelfAuthorId ? author.id === persistedSelfAuthorId : author.label === username
+  );
 
   if (userAuthor) {
     rootItems[0].data = { authorId: userAuthor.id, author: username, book: '' };
@@ -279,7 +311,7 @@ export const buildArchiveTree = (
       }));
   }
 
-  const nonUserAuthors = Array.from(authorsMap.values()).filter((author) => author.label !== username);
+  const nonUserAuthors = Array.from(authorsMap.values()).filter((author) => author.id !== userAuthor?.id);
   const authorById = new Map(nonUserAuthors.map((author) => [author.id, author]));
 
   const authorItems: SidebarItem[] = orderedAuthorIds
@@ -305,5 +337,32 @@ export const buildArchiveTree = (
       };
     });
 
-  return [...rootItems, ...authorItems];
+  if (!authorFolders || !authorFolderMemberships) return [...rootItems, ...authorItems];
+
+  const membershipByAuthorId = new Map(
+    authorFolderMemberships.map((membership) => [membership.authorId, membership.folderId])
+  );
+  const authorItemsByFolder = new Map<string, SidebarItem[]>();
+  const looseAuthorItems: SidebarItem[] = [];
+  authorItems.forEach((item) => {
+    const folderId = item.data?.authorId ? membershipByAuthorId.get(item.data.authorId) : undefined;
+    if (!folderId || !authorFolders.some((folder) => folder.id === folderId)) {
+      looseAuthorItems.push(item);
+      return;
+    }
+    const items = authorItemsByFolder.get(folderId) || [];
+    items.push(item);
+    authorItemsByFolder.set(folderId, items);
+  });
+
+  const folderItems: SidebarItem[] = [...authorFolders]
+    .sort((a, b) => a.sortIndex - b.sortIndex || a.createdAt - b.createdAt)
+    .map((folder) => ({
+      id: `author-folder-${folder.id}`,
+      label: folder.name,
+      type: 'author_folder',
+      data: { folderId: folder.id, author: '', book: '' },
+      children: authorItemsByFolder.get(folder.id) || [],
+    }));
+  return [...rootItems, ...folderItems, ...looseAuthorItems];
 };

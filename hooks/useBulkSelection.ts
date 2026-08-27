@@ -1,6 +1,5 @@
-import { useState, useCallback, useEffect, type Dispatch, type SetStateAction } from 'react';
-import { Citation, Project } from '../types';
-import { api } from '../lib/api';
+import { useState, useCallback, useEffect } from 'react';
+import { Citation } from '../types';
 import { formatCitationCopyText, writeTextToClipboard } from '../lib/citationCopy';
 
 export const useBulkSelection = (
@@ -8,11 +7,12 @@ export const useBulkSelection = (
     session: any,
     resolveCitationId: (citationId: string) => Promise<string | null>,
     username: string,
-    setCitations: Dispatch<SetStateAction<Citation[]>>,
-    setProjects: Dispatch<SetStateAction<Project[]>>
+    onAddCitationsToProject: (projectId: string, citationIds: string[]) => Promise<boolean>,
+    onCreateProjectWithCitations: (name: string, citationIds: string[]) => Promise<boolean>
 ) => {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [isCopying, setIsCopying] = useState(false);
+    const [bulkError, setBulkError] = useState<string | null>(null);
 
     useEffect(() => {
         const visibleIds = new Set<string>(filteredCitations.map((citation) => citation.id));
@@ -67,35 +67,12 @@ export const useBulkSelection = (
 
         try {
             await writeTextToClipboard(copyText);
+            setBulkError(null);
             setTimeout(() => setIsCopying(false), 2000);
         } catch (err) {
             console.error('Failed to copy text: ', err);
+            setBulkError('선택한 항목을 복사하지 못했습니다. 다시 시도해 주세요.');
             setIsCopying(false);
-        }
-    };
-
-    const handleBatchDelete = async () => {
-        if (!session || selectedIds.size === 0) return;
-        try {
-            const idsToDelete = Array.from(selectedIds);
-            const resolvedIds = await Promise.all(idsToDelete.map(resolveCitationId));
-            const persistedIds = resolvedIds.filter((id): id is string => Boolean(id));
-            await Promise.all(persistedIds.map((id) => api.deleteCitation(session.user.id, id)));
-            const localIdsToDelete = new Set([...idsToDelete, ...persistedIds]);
-
-            setCitations(prev => prev.filter(c =>
-                !localIdsToDelete.has(c.id) &&
-                (!c.optimisticOriginId || !localIdsToDelete.has(c.optimisticOriginId))
-            ));
-            setProjects(prev => prev.map(p => ({
-                ...p,
-                citationIds: p.citationIds.filter(cid => !localIdsToDelete.has(cid))
-            })));
-
-            setSelectedIds(new Set());
-        } catch (error) {
-            console.error('Error batch deleting:', error);
-            throw error;
         }
     };
 
@@ -107,37 +84,34 @@ export const useBulkSelection = (
                 throw new Error('One or more selected items failed to save.');
             }
             const persistedIds = resolvedIds as string[];
-            await api.addCitationsToProject(session.user.id, projectId, persistedIds);
-
-            setProjects(prev => prev.map(p => {
-                if (p.id === projectId) {
-                    const newIds = persistedIds.filter(cid => !p.citationIds.includes(cid));
-                    return { ...p, citationIds: [...p.citationIds, ...newIds] };
-                }
-                return p;
-            }));
+            const didAdd = await onAddCitationsToProject(projectId, persistedIds);
+            if (!didAdd) return;
 
             setSelectedIds(new Set());
+            setBulkError(null);
         } catch (error) {
             console.error('Error batch adding to project:', error);
+            setBulkError('선택한 항목을 폴더에 추가하지 못했습니다. 선택은 그대로 유지했습니다.');
         }
     };
 
     const handleBatchCreateAndAddToProject = async (folderName: string) => {
-        if (!session || !folderName.trim() || selectedIds.size === 0) return;
+        if (!session || !folderName.trim() || selectedIds.size === 0) return false;
         try {
             const resolvedIds = await Promise.all(Array.from(selectedIds).map(resolveCitationId));
             if (resolvedIds.some((id) => !id)) {
                 throw new Error('One or more selected items failed to save.');
             }
             const persistedIds = resolvedIds as string[];
-            const newProject = await api.createProject(session.user.id, folderName);
-            await api.addCitationsToProject(session.user.id, newProject.id, persistedIds);
-
-            setProjects(prev => [...prev, { ...newProject, citationIds: persistedIds }]);
+            const didCreate = await onCreateProjectWithCitations(folderName.trim(), persistedIds);
+            if (!didCreate) return false;
             setSelectedIds(new Set());
+            setBulkError(null);
+            return true;
         } catch (error) {
             console.error('Error creating batch folder:', error);
+            setBulkError('새 폴더를 만들지 못했습니다. 이름과 선택은 그대로 유지했습니다.');
+            return false;
         }
     };
 
@@ -145,10 +119,12 @@ export const useBulkSelection = (
         selectedIds,
         setSelectedIds,
         isCopying,
+        bulkError,
+        clearBulkError: () => setBulkError(null),
+        reportBulkError: (message: string) => setBulkError(message),
         handleToggleSelect,
         handleSelectAll,
         handleBatchCopy,
-        handleBatchDelete,
         handleBatchAddToProject,
         handleBatchCreateAndAddToProject
     };

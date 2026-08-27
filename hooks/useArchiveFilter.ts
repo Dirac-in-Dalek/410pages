@@ -1,34 +1,46 @@
 import { useCallback } from 'react';
-import { BookSource, Citation, Project } from '../types';
+import { AuthorFolder, AuthorFolderMembership, AuthorSource, BookSource, Citation, Project } from '../types';
 import { useArchiveViewState } from '../features/archive/logic/useArchiveViewState';
 import { reorderByIndex } from '../features/archive/logic/archiveSort';
 import { reorderBooks } from '../shared/api/bookApi';
 
-export const useArchiveFilter = (citations: Citation[], books: BookSource[], projects: Project[], username: string, userId?: string) => {
+export const useArchiveFilter = (
+    citations: Citation[],
+    authors: AuthorSource[],
+    authorFolders: AuthorFolder[],
+    authorFolderMemberships: AuthorFolderMembership[],
+    books: BookSource[],
+    projects: Project[],
+    username: string,
+    userId?: string
+) => {
     const {
         searchTerm,
         setSearchTerm,
         filter,
-        setFilter,
         selectedProjectId,
-        setSelectedProjectId,
         selectedBookId,
+        selectedAuthorId,
         editorPrefill,
         sortField,
         dateDirection,
         pageDirection,
         isBookView,
+        isAuthorView,
+        isHomeView,
         handleDateSortClick,
         handlePageSortClick,
         handleBookSourceSelect,
+        handleAuthorSourceSelect,
         handleProjectSelect,
+        handleHomeSelect,
         handleTreeItemClick,
         treeData,
         filteredCitations,
         viewTitle,
         getCurrentOrderedBooks,
         setBookOrderByAuthor
-    } = useArchiveViewState({ citations, books, projects, username });
+    } = useArchiveViewState({ citations, authors, authorFolders, authorFolderMemberships, books, projects, username });
 
     const handleReorderBookAt = useCallback(async (authorId: string, dragBookId: string, dropIndex: number) => {
         if (!authorId || !dragBookId || !userId) return;
@@ -53,20 +65,23 @@ export const useArchiveFilter = (citations: Citation[], books: BookSource[], pro
         searchTerm,
         setSearchTerm,
         filter,
-        setFilter,
         selectedProjectId,
-        setSelectedProjectId,
         selectedBookId,
+        selectedAuthorId,
         editorPrefill,
         sortField,
         dateDirection,
         pageDirection,
         isBookView,
+        isAuthorView,
+        isHomeView,
         handleDateSortClick,
         handlePageSortClick,
         handleBookSourceSelect,
+        handleAuthorSourceSelect,
         handleReorderBookAt,
         handleProjectSelect,
+        handleHomeSelect,
         handleTreeItemClick,
         treeData,
         filteredCitations,

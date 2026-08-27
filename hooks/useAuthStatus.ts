@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
     clearPersistedAuthSession,
     reconcilePersistedAuthSession,
@@ -18,31 +18,43 @@ export const useAuthStatus = () => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
+  const sessionGenerationRef = useRef(0);
+  const currentUserIdRef = useRef<string | null>(null);
+  const isMountedRef = useRef(true);
 
-  const fetchProfile = async (userId: string, activeSession: any) => {
+  const fetchProfile = async (userId: string, activeSession: any, generation: number) => {
     const fallbackProfile = buildFallbackProfileSnapshot(userId, activeSession);
+    const isCurrent = () =>
+      isMountedRef.current &&
+      sessionGenerationRef.current === generation &&
+      currentUserIdRef.current === userId;
 
     try {
       const profile = await fetchProfileSnapshot(userId, activeSession);
+      if (!isCurrent()) return;
       setUsername(profile.username);
       setAvatarUrl(profile.avatarUrl);
     } catch (error) {
       console.error('Error fetching profile:', error);
+      if (!isCurrent()) return;
       setUsername(fallbackProfile.username);
       setAvatarUrl(fallbackProfile.avatarUrl);
     } finally {
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
   };
 
   const applySession = (nextSession: any) => {
+    const generation = ++sessionGenerationRef.current;
+    currentUserIdRef.current = nextSession?.user?.id ?? null;
     setSession(nextSession);
 
     if (nextSession?.user?.id) {
       const fallbackProfile = buildFallbackProfileSnapshot(nextSession.user.id, nextSession);
       setUsername(fallbackProfile.username);
+      setAvatarUrl(fallbackProfile.avatarUrl);
       setLoading(true);
-      void fetchProfile(nextSession.user.id, nextSession);
+      void fetchProfile(nextSession.user.id, nextSession, generation);
       return;
     }
 
@@ -53,11 +65,12 @@ export const useAuthStatus = () => {
 
   const handleUpdateUsername = async (newUsername: string) => {
     if (!session) return;
+    const userId = session.user.id;
 
     try {
-      const result = await saveProfileDisplayName(session.user.id, username, newUsername);
+      const result = await saveProfileDisplayName(userId, username, newUsername);
 
-      if (result.ok && result.changed && result.username) {
+      if (currentUserIdRef.current === userId && result.ok && result.changed && result.username) {
         setUsername(result.username);
       }
 
@@ -70,9 +83,12 @@ export const useAuthStatus = () => {
 
   const handleUpdateAvatar = async (file: File) => {
     if (!session || !file) return false;
+    const userId = session.user.id;
 
     try {
-      setAvatarUrl(await uploadProfileAvatar(session.user.id, file));
+      const nextAvatarUrl = await uploadProfileAvatar(userId, file);
+      if (currentUserIdRef.current !== userId) return false;
+      setAvatarUrl(nextAvatarUrl);
       return true;
     } catch (error) {
       console.error('Error updating avatar:', error);
@@ -94,6 +110,8 @@ export const useAuthStatus = () => {
     } finally {
       clearPersistedAuthSession(SUPABASE_AUTH_STORAGE_KEY);
 
+      sessionGenerationRef.current += 1;
+      currentUserIdRef.current = null;
       setSession(null);
       if (session?.user?.id) {
         clearCachedDisplayName(session.user.id);
@@ -106,16 +124,20 @@ export const useAuthStatus = () => {
   };
 
   useEffect(() => {
+    isMountedRef.current = true;
     reconcilePersistedAuthSession(SUPABASE_AUTH_STORAGE_KEY);
 
     const supabase = getSupabaseClient();
 
+    const restoreGeneration = sessionGenerationRef.current;
     supabase.auth
       .getSession()
       .then(({ data: { session } }) => {
+        if (!isMountedRef.current || sessionGenerationRef.current !== restoreGeneration) return;
         applySession(session);
       })
       .catch((error) => {
+        if (!isMountedRef.current || sessionGenerationRef.current !== restoreGeneration) return;
         console.error('Error restoring session:', error);
         setSession(null);
         setUsername(DEFAULT_USERNAME);
@@ -137,7 +159,11 @@ export const useAuthStatus = () => {
       applySession(session);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMountedRef.current = false;
+      sessionGenerationRef.current += 1;
+      subscription.unsubscribe();
+    };
   }, []);
 
   return {

@@ -8,6 +8,7 @@ type WordCardGroupProps = {
   selectedIds: Set<string>;
   onToggleSelect: (id: string, selected: boolean) => void;
   onRetrySave: (citationId: string) => void | Promise<unknown>;
+  onUpdate: (id: string, data: Partial<Citation>) => boolean | void | Promise<boolean | void>;
 };
 
 export const WordCardGroup: React.FC<WordCardGroupProps> = ({
@@ -15,6 +16,7 @@ export const WordCardGroup: React.FC<WordCardGroupProps> = ({
   selectedIds,
   onToggleSelect,
   onRetrySave,
+  onUpdate,
 }) => {
   const failedCitations = citations.filter((citation) => citation.saveStatus === 'failed');
 
@@ -23,14 +25,15 @@ export const WordCardGroup: React.FC<WordCardGroupProps> = ({
   };
 
   return (
-    <div className="mb-2.5 min-w-0 px-1">
-      <div role="list" aria-label="수집한 단어" className="flex min-w-0 flex-wrap items-start gap-1.5 sm:gap-2">
+    <div className="min-w-0">
+      <div role="list" aria-label="수집한 단어" className="flex min-w-0 flex-col">
         {citations.map((citation) => (
           <WordCard
             key={citation.id}
             citation={citation}
             isSelected={selectedIds.has(citation.id)}
             onToggleSelect={onToggleSelect}
+            onUpdate={onUpdate}
           />
         ))}
       </div>

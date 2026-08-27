@@ -62,6 +62,58 @@ describe('buildCitationRenderRows', () => {
     ).toEqual(['words:word-1,word-2', 'sentence:sentence-1', 'sentence:sentence-2']);
   });
 
+  it('places words after their preceding sentence in oldest-first book mode', () => {
+    const sentence = citation('sentence-1', 'sentence', 100);
+    const word = citation('word-1', 'word', 101);
+
+    expect(rowShape(buildCitationRenderRows(
+      [sentence, word],
+      [sentenceItem(sentence)],
+      [sentence, word],
+      true
+    ))).toEqual(['sentence:sentence-1', 'words:word-1']);
+  });
+
+  it('uses book ids to keep duplicate-title books separate', () => {
+    const selectedSentence = citation('sentence-selected', 'sentence', 100);
+    const otherSentence = { ...citation('sentence-other', 'sentence', 105), bookId: 'book-2' };
+    const selectedWord = citation('word-selected', 'word', 110);
+
+    expect(rowShape(buildCitationRenderRows(
+      [selectedSentence, selectedWord],
+      [sentenceItem(selectedSentence)],
+      [selectedSentence, otherSentence, selectedWord],
+      true
+    ))).toEqual(['sentence:sentence-selected', 'words:word-selected']);
+  });
+
+  it('sorts an orphan word after an older chapter in oldest-first book mode', () => {
+    const word = citation('word-orphan', 'word', 200);
+    const block = chapterItem(100);
+
+    expect(rowShape(buildCitationRenderRows([word], [block], [word], true))).toEqual([
+      'chapter_block:chapter-1',
+      'words:word-orphan',
+    ]);
+  });
+
+  it('splits orphan words across a chapter boundary in oldest-first book mode', () => {
+    const earlyWord = citation('word-early', 'word', 50);
+    const lateWord = citation('word-late', 'word', 150);
+    const block = chapterItem(100);
+
+    expect(rowShape(buildCitationRenderRows(
+      [earlyWord, lateWord],
+      [block],
+      [earlyWord, lateWord],
+      true
+    ))).toEqual([
+      'words:word-early',
+      'chapter_block:chapter-1',
+      'words:word-late',
+    ]);
+  });
+
   it('keeps the word group immediately above its anchor when display sorting reverses sentences', () => {
     const first = citation('sentence-1', 'sentence', 100);
     const word = citation('word-1', 'word', 101);

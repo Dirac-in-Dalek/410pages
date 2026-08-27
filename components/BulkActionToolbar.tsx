@@ -12,7 +12,7 @@ interface BulkActionToolbarProps {
     onDeleteRequest: () => void;
     onCancel: () => void;
     onAddToProject: (projectId: string) => void;
-    onCreateAndAddToProject: (name: string) => void;
+    onCreateAndAddToProject: (name: string) => boolean | void | Promise<boolean | void>;
 }
 
 export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
@@ -31,10 +31,31 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
     const [showCopyMenu, setShowCopyMenu] = useState(false);
     const [isCreatingFolder, setIsCreatingFolder] = useState(false);
     const [newFolderName, setNewFolderName] = useState('');
+    const [isSubmittingFolder, setIsSubmittingFolder] = useState(false);
     const toolbarRef = useRef<HTMLDivElement>(null);
+    const submittingFolderRef = useRef(false);
+
+    const submitNewFolder = async () => {
+        const trimmed = newFolderName.trim();
+        if (!trimmed || submittingFolderRef.current) return;
+
+        submittingFolderRef.current = true;
+        setIsSubmittingFolder(true);
+        try {
+            const didCreate = await Promise.resolve(onCreateAndAddToProject(trimmed));
+            if (didCreate === false) return;
+            setIsCreatingFolder(false);
+            setShowFolderMenu(false);
+            setNewFolderName('');
+        } finally {
+            submittingFolderRef.current = false;
+            setIsSubmittingFolder(false);
+        }
+    };
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
+            if (submittingFolderRef.current) return;
             if (toolbarRef.current && !toolbarRef.current.contains(event.target as Node)) {
                 setShowFolderMenu(false);
                 setShowCopyMenu(false);
@@ -96,13 +117,12 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
                                                     type="text"
                                                     placeholder="폴더 이름"
                                                     value={newFolderName}
+                                                    disabled={isSubmittingFolder}
                                                     onChange={(e) => setNewFolderName(e.target.value)}
                                                     onKeyDown={(e) => {
-                                                        if (e.key === 'Enter' && newFolderName.trim()) {
-                                                            onCreateAndAddToProject(newFolderName);
-                                                            setIsCreatingFolder(false);
-                                                            setShowFolderMenu(false);
-                                                            setNewFolderName('');
+                                                        if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+                                                            e.preventDefault();
+                                                            void submitNewFolder();
                                                         }
                                                         if (e.key === 'Escape') setIsCreatingFolder(false);
                                                     }}

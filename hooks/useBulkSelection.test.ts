@@ -1,18 +1,9 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Citation, Project } from '../types';
-import { api } from '../lib/api';
 import { writeTextToClipboard } from '../lib/citationCopy';
 import { useBulkSelection } from './useBulkSelection';
-
-vi.mock('../lib/api', () => ({
-  api: {
-    deleteCitation: vi.fn().mockResolvedValue(undefined),
-    addCitationsToProject: vi.fn().mockResolvedValue(undefined),
-    createProject: vi.fn(),
-  },
-}));
 
 vi.mock('../lib/citationCopy', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../lib/citationCopy')>();
@@ -54,15 +45,23 @@ describe('useBulkSelection mixed item actions', () => {
     renderHook(() => {
       const [currentCitations, setCitations] = useState(citations);
       const [projects, setProjects] = useState<Project[]>([project]);
+      const onAddCitationsToProject = useRef(vi.fn(async (projectId: string, citationIds: string[]) => {
+        setProjects((current) => current.map((entry) => entry.id === projectId ? {
+          ...entry,
+          citationIds: [...entry.citationIds, ...citationIds],
+        } : entry));
+        return true;
+      })).current;
+      const onCreateProjectWithCitations = useRef(vi.fn().mockResolvedValue(true)).current;
       const selection = useBulkSelection(
         currentCitations,
         session,
         resolveCitationId,
         'Reader',
-        setCitations,
-        setProjects
+        onAddCitationsToProject,
+        onCreateProjectWithCitations
       );
-      return { ...selection, currentCitations, projects, setCitations };
+      return { ...selection, currentCitations, projects, setCitations, onAddCitationsToProject };
     });
 
   const selectBoth = (result: ReturnType<typeof setup>['result']) => {
@@ -89,24 +88,11 @@ describe('useBulkSelection mixed item actions', () => {
 
     await act(async () => result.current.handleBatchAddToProject('project-1'));
 
-    expect(api.addCitationsToProject).toHaveBeenCalledWith('user-1', 'project-1', [
+    expect(result.current.onAddCitationsToProject).toHaveBeenCalledWith('project-1', [
       'sentence-1',
       'word-1',
     ]);
     expect(result.current.projects[0].citationIds).toEqual(['sentence-1', 'word-1']);
-  });
-
-  it('deletes mixed selected items and removes their folder references', async () => {
-    const { result } = setup();
-    selectBoth(result);
-    await act(async () => result.current.handleBatchAddToProject('project-1'));
-    selectBoth(result);
-
-    await act(async () => result.current.handleBatchDelete());
-
-    await waitFor(() => expect(result.current.currentCitations).toEqual([]));
-    expect(api.deleteCitation).toHaveBeenCalledTimes(2);
-    expect(result.current.projects[0].citationIds).toEqual([]);
   });
 
   it('moves an optimistic selection to the persisted citation id', async () => {
@@ -129,27 +115,6 @@ describe('useBulkSelection mixed item actions', () => {
     });
   });
 
-  it('waits for an optimistic id before deleting it from the server', async () => {
-    let finishPersistence: (citationId: string) => void = () => undefined;
-    const resolveCitationId = vi.fn(
-      () => new Promise<string>((resolve) => { finishPersistence = resolve; })
-    );
-    const { result } = setup(resolveCitationId);
-    act(() => result.current.handleToggleSelect('word-1', true));
-
-    let deletion: Promise<void>;
-    act(() => { deletion = result.current.handleBatchDelete(); });
-    expect(api.deleteCitation).not.toHaveBeenCalled();
-
-    await act(async () => {
-      finishPersistence('word-persisted');
-      await deletion!;
-    });
-
-    expect(api.deleteCitation).toHaveBeenCalledWith('user-1', 'word-persisted');
-    expect(result.current.currentCitations.some((citation) => citation.id === 'word-1')).toBe(false);
-  });
-
   it('waits for an optimistic id before adding it to a folder', async () => {
     let finishPersistence: (citationId: string) => void = () => undefined;
     const resolveCitationId = vi.fn(
@@ -160,15 +125,14 @@ describe('useBulkSelection mixed item actions', () => {
 
     let folderUpdate: Promise<void>;
     act(() => { folderUpdate = result.current.handleBatchAddToProject('project-1'); });
-    expect(api.addCitationsToProject).not.toHaveBeenCalled();
+    expect(result.current.onAddCitationsToProject).not.toHaveBeenCalled();
 
     await act(async () => {
       finishPersistence('word-persisted');
       await folderUpdate!;
     });
 
-    expect(api.addCitationsToProject).toHaveBeenCalledWith(
-      'user-1',
+    expect(result.current.onAddCitationsToProject).toHaveBeenCalledWith(
       'project-1',
       ['word-persisted']
     );

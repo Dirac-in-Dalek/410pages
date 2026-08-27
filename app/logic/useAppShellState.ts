@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 type UseAppShellStateParams = {
   sessionUserId?: string;
   fetchData: () => Promise<void>;
   selectedBookId: string | null;
   handleLoadChapterBlocks: (bookId: string) => Promise<void>;
+  cancelChapterBlockLoad: () => void;
 };
 
 export const useAppShellState = ({
@@ -12,9 +13,8 @@ export const useAppShellState = ({
   fetchData,
   selectedBookId,
   handleLoadChapterBlocks,
+  cancelChapterBlockLoad,
 }: UseAppShellStateParams) => {
-  const [showBatchDeleteModal, setShowBatchDeleteModal] = useState(false);
-
   useEffect(() => {
     if (sessionUserId) {
       void fetchData();
@@ -23,14 +23,11 @@ export const useAppShellState = ({
 
   useEffect(() => {
     if (!selectedBookId) {
+      cancelChapterBlockLoad();
       return;
     }
 
     void handleLoadChapterBlocks(selectedBookId);
-  }, [handleLoadChapterBlocks, selectedBookId]);
-
-  return {
-    showBatchDeleteModal,
-    setShowBatchDeleteModal,
-  };
+    return cancelChapterBlockLoad;
+  }, [cancelChapterBlockLoad, handleLoadChapterBlocks, selectedBookId]);
 };

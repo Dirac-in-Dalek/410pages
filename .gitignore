@@ -23,3 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 .worktrees/
+
+# Local browser QA artifacts
+.playwright-cli/page-*.yml
+output/playwright/

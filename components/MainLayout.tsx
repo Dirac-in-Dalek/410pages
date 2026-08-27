@@ -1,8 +1,7 @@
 import React from 'react';
 import { Search, UserCircle2 } from 'lucide-react';
-import { CreateBookInput, Project, SidebarItem } from '../types';
+import { AuthorDeletePreview, BookSource, Citation, DeleteAuthorCascadeResult, Project, SidebarItem } from '../types';
 import { useSidebarResize } from './main-layout/useSidebarResize';
-import { LibrarySidebar } from '../features/archive/ui/LibrarySidebar';
 import { ProjectSidebar } from '../features/archive/ui/ProjectSidebar';
 
 interface MainLayoutProps {
@@ -11,24 +10,35 @@ interface MainLayoutProps {
   onProjectSelect: (projectId: string | null) => void;
   selectedProjectId: string | null;
   onDropCitationToProject: (projectId: string, citationId: string) => void;
-  onCreateProject: (name: string) => void;
-  onRenameProject: (id: string, name: string) => void;
+  onCreateProject: (name: string) => boolean | void | Promise<boolean | void>;
+  onRenameProject: (id: string, name: string) => boolean | void | Promise<boolean | void>;
   onDeleteProject: (id: string) => void;
-  onRenameAuthor: (authorId: string, name: string) => void;
-  onRenameBook: (bookId: string, name: string) => void;
-  onCreateBook: (input: CreateBookInput) => Promise<unknown> | unknown;
+  onRenameAuthor: (authorId: string, name: string) => boolean | void | Promise<boolean | void>;
+  onRenameBook: (bookId: string, name: string) => boolean | void | Promise<boolean | void>;
+  books: BookSource[];
+  citations: Citation[];
+  isHomeView: boolean;
+  selectedBookId: string | null;
+  onHomeSelect: () => void;
+  onBookSelect: (book: BookSource) => void;
   onReorderProjects: (dragIndex: number, hoverIndex: number) => void;
   treeData: SidebarItem[];
   onTreeItemClick: (item: SidebarItem) => void;
-  username?: string;
+  authorFolderLoading: boolean;
+  authorFolderLoadError: string | null;
+  onRetryAuthorFolders: () => void | Promise<void>;
+  onCreateAuthorFolder: (name: string) => boolean | void | Promise<boolean | void>;
+  onRenameAuthorFolder: (folderId: string, name: string) => boolean | void | Promise<boolean | void>;
+  onDeleteAuthorFolder: (folderId: string) => boolean | void | Promise<boolean | void>;
+  onMoveAuthorToFolder: (authorId: string, folderId: string) => boolean | void | Promise<boolean | void>;
+  onRemoveAuthorFromFolder: (authorId: string) => boolean | void | Promise<boolean | void>;
+  onDeleteAuthor: (authorId: string) => Promise<DeleteAuthorCascadeResult | undefined>;
+  onPreviewAuthorDelete: (authorId: string) => Promise<AuthorDeletePreview | undefined>;
   avatarUrl?: string | null;
-  onUpdateUsername?: (name: string) => void;
-  onSignOut?: () => void;
   onSearch?: (term: string) => void;
   searchTerm?: string;
-  selectedFilter?: { type: 'author' | 'book'; value: string; author?: string } | null;
+  selectedFilter?: { type: 'author' | 'book'; authorId?: string; bookId?: string; value: string; author?: string } | null;
   onReorderBookAt?: (author: string, dragBook: string, dropIndex: number) => void;
-  onOpenPdfReader: () => void;
   onOpenSettings: () => void;
 }
 
@@ -43,45 +53,43 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   onDeleteProject,
   onRenameAuthor,
   onRenameBook,
-  onCreateBook,
+  books,
+  citations,
+  isHomeView,
+  selectedBookId,
+  onHomeSelect,
+  onBookSelect,
   onReorderProjects,
   treeData,
   onTreeItemClick,
+  authorFolderLoading,
+  authorFolderLoadError,
+  onRetryAuthorFolders,
+  onCreateAuthorFolder,
+  onRenameAuthorFolder,
+  onDeleteAuthorFolder,
+  onMoveAuthorToFolder,
+  onRemoveAuthorFromFolder,
+  onDeleteAuthor,
+  onPreviewAuthorDelete,
   avatarUrl = null,
   onSearch,
   searchTerm = '',
   selectedFilter = null,
   onReorderBookAt,
-  onOpenPdfReader,
   onOpenSettings
 }) => {
   const {
     leftWidth,
-    rightWidth,
     isResizingLeft,
-    isResizingRight,
     startLeftResize,
-    startRightResize
   } = useSidebarResize();
 
   return (
     <div className="font-size-app flex h-screen w-full flex-col overflow-hidden bg-[var(--bg-main)] font-sans text-[var(--text-main)] transition-colors duration-200">
       <header className="border-b border-[var(--border-main)] bg-[var(--bg-card)]">
         <div className="flex h-[3.15rem] items-center gap-4 px-5">
-          <div
-            className="flex shrink-0 items-center gap-2.5"
-            style={{ width: `${leftWidth}px` }}
-          >
-            <div className="text-[var(--accent)]">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M7 6 L12 3 H18 V18 L13 21 H7 V6" />
-              </svg>
-            </div>
-            <div className="brand-wordmark text-[1.05rem] text-[var(--accent)]">
-              <span className="brand-number">410</span>
-              <span className="brand-text">pages</span>
-            </div>
-          </div>
+          <div className="shrink-0" style={{ width: `${leftWidth}px` }} />
 
           <div className="flex min-w-0 flex-1 justify-center">
             <label className="flex h-9 w-full max-w-[34rem] items-center rounded-full border border-transparent bg-[var(--bg-input)] px-4 transition-colors focus-within:border-[var(--accent-border)]">
@@ -98,7 +106,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
           <div
             className="flex shrink-0 items-center justify-end gap-2"
-            style={{ width: `${rightWidth}px` }}
+            style={{ width: `${leftWidth}px` }}
           >
             <button
               type="button"
@@ -126,7 +134,28 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           onRenameProject={onRenameProject}
           onDeleteProject={onDeleteProject}
           onReorderProjects={onReorderProjects}
-          onOpenPdfReader={onOpenPdfReader}
+          books={books}
+          citations={citations}
+          treeData={treeData}
+          selectedBookId={selectedBookId}
+          selectedFilter={selectedFilter}
+          isHomeView={isHomeView}
+          onHomeSelect={onHomeSelect}
+          onBookSelect={onBookSelect}
+          onTreeItemClick={onTreeItemClick}
+          authorFolderLoading={authorFolderLoading}
+          authorFolderLoadError={authorFolderLoadError}
+          onRetryAuthorFolders={onRetryAuthorFolders}
+          onCreateAuthorFolder={onCreateAuthorFolder}
+          onRenameAuthorFolder={onRenameAuthorFolder}
+          onDeleteAuthorFolder={onDeleteAuthorFolder}
+          onMoveAuthorToFolder={onMoveAuthorToFolder}
+          onRemoveAuthorFromFolder={onRemoveAuthorFromFolder}
+          onDeleteAuthor={onDeleteAuthor}
+          onPreviewAuthorDelete={onPreviewAuthorDelete}
+          onRenameAuthor={onRenameAuthor}
+          onRenameBook={onRenameBook}
+          onReorderBookAt={onReorderBookAt}
           width={leftWidth}
           isResizing={isResizingLeft}
           onStartResize={startLeftResize}
@@ -135,23 +164,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         <main className="flex min-w-0 flex-1 flex-col bg-[var(--bg-main)] transition-colors duration-200">
           {children}
         </main>
-
-        <LibrarySidebar
-          treeData={treeData}
-          onTreeItemClick={onTreeItemClick}
-          onProjectSelect={onProjectSelect}
-          selectedProjectId={selectedProjectId}
-          onSearch={onSearch}
-          searchTerm={searchTerm}
-          selectedFilter={selectedFilter}
-          onCreateBook={onCreateBook}
-          onRenameAuthor={onRenameAuthor}
-          onRenameBook={onRenameBook}
-          onReorderBookAt={onReorderBookAt}
-          width={rightWidth}
-          isResizing={isResizingRight}
-          onStartResize={startRightResize}
-        />
       </div>
     </div>
   );

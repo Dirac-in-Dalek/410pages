@@ -12,11 +12,13 @@ import type {
 
 export const createPdfCitationInput = ({
   text,
+  bookId,
   author,
   book,
   page,
 }: {
   text: string;
+  bookId?: string;
   author: string;
   book: string;
   page: string;
@@ -25,6 +27,7 @@ export const createPdfCitationInput = ({
   return {
     kind,
     text,
+    ...(bookId ? { bookId } : {}),
     author: author.trim(),
     book: book.trim(),
     page: kind === 'word' ? undefined : page,
@@ -91,6 +94,7 @@ export const sanitizePersistedReaderSession = (
         )
       : null,
     meta: {
+      bookId: typeof metaRaw.bookId === 'string' ? metaRaw.bookId : undefined,
       author: typeof metaRaw.author === 'string' ? metaRaw.author : '',
       title: typeof metaRaw.title === 'string' ? metaRaw.title : '',
       pdfStartPage,

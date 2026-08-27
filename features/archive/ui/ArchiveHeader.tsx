@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Check, ChevronDown, SlidersHorizontal } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, SlidersHorizontal } from 'lucide-react';
 import { CitationEditor } from '../../citation-entry/ui/CitationEditor';
 import type { ArchiveHeaderProps } from '../contract/archiveUiContract';
 import { getArchiveReadingColumnClass } from './archiveReadingColumn';
@@ -10,6 +10,8 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
     username,
     editorPrefill,
     isBookView = false,
+    onBackToAuthor,
+    authorName,
     onAddCitation,
     sortField,
     dateDirection,
@@ -55,12 +57,18 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
     return (
         <div className="pt-5 md:pt-6 lg:pt-7 pb-1">
             <div className={columnClassName}>
+                {isBookView && onBackToAuthor ? (
+                    <button type="button" onClick={onBackToAuthor} className="mb-3 inline-flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm font-medium text-[var(--text-muted)] transition-[background-color,transform] hover:bg-[var(--sidebar-hover)] active:scale-95">
+                        <ArrowLeft size={16} /> {authorName || '저자'}의 책
+                    </button>
+                ) : null}
                 <div className="mb-3 flex items-start justify-between gap-4">
                     <div className="min-w-0">
+                        {isBookView && authorName ? <p className="mb-1 text-[0.72rem] font-semibold text-[var(--accent)]">{authorName} / {title}</p> : null}
                         <h2 className="truncate text-[1.8rem] font-semibold tracking-[-0.03em] text-[var(--text-main)]">{title}</h2>
                         <p className="mt-1 text-[0.9rem] text-[var(--text-secondary)]">수집한 문장과 단어를 정리하고 다시 읽어보세요.</p>
                     </div>
-                    <div
+                    {!isBookView ? <div
                         ref={filterRef}
                         className="relative shrink-0"
                         onKeyDown={(event) => {
@@ -113,7 +121,7 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
                                 </button>
                             </div>
                         ) : null}
-                    </div>
+                    </div> : null}
                 </div>
                 {showEditor ? (
                     <div className="mb-3 md:mb-4">

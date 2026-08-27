@@ -1,11 +1,9 @@
 import React from 'react';
-import { BookOpen, Settings } from 'lucide-react';
+import { ChevronDown, ChevronRight, Settings } from 'lucide-react';
 import type { Project } from '../../../types';
 import { ProjectSidebarRow, type ProjectSidebarRowControls } from './ProjectSidebarRow';
 import { ProjectCreateComposer } from '../../../shared/ui/project/ProjectCreateComposer';
 import {
-  EditorialListButton,
-  EditorialSectionLabel,
   EditorialToolbarButton,
 } from '../../../shared/ui/sidebar/SidebarPrimitives';
 
@@ -13,9 +11,11 @@ type ProjectSidebarProjectsSectionProps = ProjectSidebarRowControls & {
   projects: Project[];
   isCreating: boolean;
   newProjectName: string;
+  isSubmittingCreate: boolean;
   onNewProjectNameChange: (value: string) => void;
   onToggleManageMode: () => void;
-  onOpenPdfReader: () => void;
+  isExpanded: boolean;
+  onToggleExpanded: () => void;
   onStartCreate: () => void;
   onSubmitCreate: () => void;
   onCancelCreate: () => void;
@@ -29,6 +29,7 @@ export const ProjectSidebarProjectsSection: React.FC<ProjectSidebarProjectsSecti
   isManageMode,
   isCreating,
   newProjectName,
+  isSubmittingCreate,
   editingProjectId,
   deletingProjectId,
   editingName,
@@ -38,7 +39,8 @@ export const ProjectSidebarProjectsSection: React.FC<ProjectSidebarProjectsSecti
   onNewProjectNameChange,
   onEditingNameChange,
   onToggleManageMode,
-  onOpenPdfReader,
+  isExpanded,
+  onToggleExpanded,
   onProjectSelect,
   onStartCreate,
   onSubmitCreate,
@@ -61,33 +63,28 @@ export const ProjectSidebarProjectsSection: React.FC<ProjectSidebarProjectsSecti
   isProjectSortDrag,
 }) => (
   <>
-    <div className="mb-4 px-1">
-      <h2 className="type-title-bounded text-[1.45rem] font-semibold tracking-[-0.03em] text-[var(--text-main)]">
-        폴더
-      </h2>
-      <p className="mt-0.5 text-[0.88rem] text-[var(--text-secondary)]">문장 보관함</p>
-    </div>
-
-    <EditorialListButton
-      onClick={onOpenPdfReader}
-      className="mb-3 flex h-10 items-center justify-center gap-2 rounded-full border-[var(--border-main)] bg-[var(--bg-card)] px-3.5 text-[0.92rem] font-medium text-[var(--text-main)] shadow-[0_1px_2px_rgba(28,22,16,0.04)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]"
-      aria-label="PDF 읽기"
-    >
-      <BookOpen size={16} className="mr-1.5" />
-      PDF 읽기
-    </EditorialListButton>
-
     <div className="mb-2 flex items-center justify-between">
-      <EditorialSectionLabel>폴더 목록</EditorialSectionLabel>
-      <EditorialToolbarButton
-        onClick={onToggleManageMode}
-        active={isManageMode}
-        ariaLabel="폴더 관리"
+      <button
+        type="button"
+        onClick={onToggleExpanded}
+        aria-expanded={isExpanded}
+        className="flex min-h-10 flex-1 items-center gap-2 rounded-lg px-1 text-left text-[0.78rem] font-semibold uppercase tracking-[0.09em] text-[var(--text-muted)] transition-[color,transform] active:scale-95"
       >
-        <Settings size={14} />
-      </EditorialToolbarButton>
+        {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+        폴더
+      </button>
+      {isExpanded ? (
+        <EditorialToolbarButton
+          onClick={onToggleManageMode}
+          active={isManageMode}
+          ariaLabel="폴더 관리"
+        >
+          <Settings size={14} />
+        </EditorialToolbarButton>
+      ) : null}
     </div>
 
+    {isExpanded ? <>
     <div
       className="space-y-0.5"
       onDragOver={(event) => onProjectListDragOver(event, projects)}
@@ -134,6 +131,8 @@ export const ProjectSidebarProjectsSection: React.FC<ProjectSidebarProjectsSecti
       onChange={onNewProjectNameChange}
       onSubmit={onSubmitCreate}
       onCancel={onCancelCreate}
+      isSubmitting={isSubmittingCreate}
     />
+    </> : null}
   </>
 );

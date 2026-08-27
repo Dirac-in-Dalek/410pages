@@ -27,6 +27,7 @@ describe('WordCardGroup', () => {
         selectedIds={new Set()}
         onToggleSelect={vi.fn()}
         onRetrySave={onRetrySave}
+        onUpdate={vi.fn()}
       />
     );
 

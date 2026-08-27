@@ -6,7 +6,9 @@ export type CitationRenderRow =
   | Extract<BookViewItem, { type: 'chapter_block' }>;
 
 const getBookKey = (citation: Citation) =>
-  `${citation.author.trim().toLocaleLowerCase()}\u0000${citation.book.trim().toLocaleLowerCase()}`;
+  citation.bookId
+    ? `id:${citation.bookId}`
+    : `name:${citation.author.trim().toLocaleLowerCase()}\u0000${citation.book.trim().toLocaleLowerCase()}`;
 
 const getCitationKind = (citation: Citation) => citation.kind || 'sentence';
 
@@ -22,7 +24,8 @@ const findLatestPrecedingSentence = (sentences: Citation[], word: Citation) => {
 export const buildCitationRenderRows = (
   visibleCitations: Citation[],
   orderedBaseItems: BookViewItem[],
-  chronologyCitations: Citation[] = visibleCitations
+  chronologyCitations: Citation[] = visibleCitations,
+  wordsAfterSentence = false
 ): CitationRenderRow[] => {
   const sentencesByBook = new Map<string, Citation[]>();
   const words = visibleCitations
@@ -56,16 +59,21 @@ export const buildCitationRenderRows = (
   words.forEach((word) => {
     const bookKey = getBookKey(word);
     const precedingSentence = findLatestPrecedingSentence(sentencesByBook.get(bookKey) || [], word);
+    const sourceBookId = word.bookId || precedingSentence?.bookId;
+    const blocks = sourceBookId ? chapterBlocksByBook.get(sourceBookId) || [] : [];
+    let precedingBlock: Extract<BookViewItem, { type: 'chapter_block' }> | undefined;
+    for (const block of blocks) {
+      if (block.createdAtSort > word.createdAt) break;
+      if (baseItemById.has(block.id)) precedingBlock = block;
+    }
     if (!precedingSentence || !baseItemById.has(precedingSentence.id)) {
-      const boundaryKey = `${bookKey}\u0000${precedingSentence?.id || 'leading'}`;
+      const boundaryKey = `${bookKey}\u0000${precedingBlock?.id || precedingSentence?.id || 'leading'}`;
       const orphanGroup = orphanGroupsByBoundary.get(boundaryKey) || [];
       orphanGroup.push(word);
       orphanGroupsByBoundary.set(boundaryKey, orphanGroup);
       return;
     }
 
-    const sourceBookId = word.bookId || precedingSentence.bookId;
-    const blocks = sourceBookId ? chapterBlocksByBook.get(sourceBookId) || [] : [];
     let interveningBlock: Extract<BookViewItem, { type: 'chapter_block' }> | undefined;
     for (const block of blocks) {
       if (block.createdAtSort > word.createdAt) break;
@@ -91,7 +99,7 @@ export const buildCitationRenderRows = (
 
   orderedBaseItems.forEach((item) => {
     const group = wordGroupsByPlacementId.get(item.id);
-    if (group?.length && item.type === 'citation') {
+    if (group?.length && item.type === 'citation' && !wordsAfterSentence) {
       rows.push(toWordGroup(item.id, group, item));
     }
 
@@ -107,10 +115,12 @@ export const buildCitationRenderRows = (
         : item
     );
 
-    if (group?.length && item.type === 'chapter_block') {
+    if (group?.length && (item.type === 'chapter_block' || wordsAfterSentence)) {
       rows.push(toWordGroup(item.id, group, item));
     }
   });
 
-  return rows;
+  return wordsAfterSentence
+    ? rows.sort((a, b) => a.createdAtSort - b.createdAtSort)
+    : rows;
 };

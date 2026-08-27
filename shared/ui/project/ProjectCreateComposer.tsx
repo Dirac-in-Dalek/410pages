@@ -10,6 +10,7 @@ type ProjectCreateComposerProps = {
   onChange: (value: string) => void;
   onSubmit: () => void;
   onCancel: () => void;
+  isSubmitting?: boolean;
   compact?: boolean;
 };
 
@@ -22,6 +23,7 @@ export const ProjectCreateComposer: React.FC<ProjectCreateComposerProps> = ({
   onChange,
   onSubmit,
   onCancel,
+  isSubmitting = false,
   compact = false,
 }) => {
   if (isCreating) {
@@ -35,11 +37,12 @@ export const ProjectCreateComposer: React.FC<ProjectCreateComposerProps> = ({
       >
         <input
           autoFocus
+          disabled={isSubmitting}
           value={value}
           placeholder={placeholder}
           onChange={(event) => onChange(event.target.value)}
           onKeyDown={(event) => {
-            if (event.key === 'Enter') onSubmit();
+            if (event.key === 'Enter' && !event.nativeEvent.isComposing && !isSubmitting) onSubmit();
             if (event.key === 'Escape') onCancel();
           }}
           className={
@@ -49,7 +52,9 @@ export const ProjectCreateComposer: React.FC<ProjectCreateComposerProps> = ({
           }
         />
         <button
+          type="button"
           onClick={onSubmit}
+          disabled={isSubmitting}
           className={
             compact
               ? 'p-2.5 rounded-md bg-[var(--accent-active)] hover:bg-[var(--accent)] text-[var(--accent-active-text)] transition-colors'
@@ -61,7 +66,9 @@ export const ProjectCreateComposer: React.FC<ProjectCreateComposerProps> = ({
         </button>
         {!compact && (
           <button
+            type="button"
             onClick={onCancel}
+            disabled={isSubmitting}
             className="ml-1 flex h-8 w-8 items-center justify-center rounded-full text-[var(--text-muted)] transition-colors hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]"
             aria-label="새 폴더 취소"
           >

@@ -4,12 +4,14 @@ export type CitationEditorValues = {
   text: string;
   author: string;
   book: string;
+  bookId?: string;
   page: string;
 };
 
 export type CitationEditorPrefill = {
   author: string;
   book: string;
+  bookId?: string;
 };
 
 export type CitationEditorSubmitResult = { ok?: boolean } | void | unknown;
@@ -31,4 +33,5 @@ export type CitationEntryDropPayload = {
   type?: string;
   author?: string;
   book?: string;
+  bookId?: string;
 };

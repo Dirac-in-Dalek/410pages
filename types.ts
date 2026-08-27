@@ -53,8 +53,53 @@ export interface BookSource {
   isSelf: boolean;
 }
 
+export interface AuthorSource {
+  id: string;
+  name: string;
+  sortIndex: number | null;
+  createdAt: number;
+  isSelf: boolean;
+}
+
+export interface AuthorFolder {
+  id: string;
+  name: string;
+  sortIndex: number;
+  createdAt: number;
+}
+
+export interface AuthorFolderMembership {
+  authorId: string;
+  folderId: string;
+  createdAt: number;
+}
+
+export interface DeleteAuthorCascadeResult {
+  authorId: string;
+  deletedBookIds: string[];
+  deletedBookCount: number;
+  deletedCitationCount: number;
+}
+
+export interface AuthorDeletePreview {
+  authorId: string;
+  bookIds: string[];
+  bookCount: number;
+  citationCount: number;
+}
+
+export interface DeleteBookCascadeResult {
+  bookId: string;
+  deletedCitationCount: number;
+}
+
+export interface BookDeletePreview {
+  bookId: string;
+  citationCount: number;
+}
+
 export type CreateBookInput = {
-  author: string;
+  authorId: string;
   title: string;
 };
 
@@ -93,17 +138,19 @@ export interface Project {
 export type SidebarItem = {
   id: string;
   label: string;
-  type: 'author' | 'book' | 'root';
+  type: 'author' | 'book' | 'root' | 'author_folder';
   children?: SidebarItem[];
   data?: {
     authorId?: string;
     author: string;
     bookId?: string;
     book?: string;
+    folderId?: string;
   };
 };
 
 export interface PdfReaderMeta {
+  bookId?: string;
   author: string;
   title: string;
   pdfStartPage?: number;

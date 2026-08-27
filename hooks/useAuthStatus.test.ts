@@ -251,4 +251,63 @@ describe('useAuthStatus', () => {
     act(() => result.current.completePasswordRecovery());
     expect(result.current.isPasswordRecovery).toBe(false);
   });
+
+  it('ignores a stale profile response after switching accounts', async () => {
+    let resolveFirstProfile!: (value: unknown) => void;
+    mockProfileSingle
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveFirstProfile = resolve; }))
+      .mockResolvedValueOnce({
+        data: { username: 'User Two', avatar_path: null },
+        error: null,
+      });
+
+    const { result } = renderHook(() => useAuthStatus());
+    await waitFor(() => expect(mockProfileSingle).toHaveBeenCalledTimes(1));
+
+    act(() => {
+      authStateChangeCallback?.('SIGNED_IN', { user: { id: 'user-2' } });
+    });
+
+    await waitFor(() => expect(result.current.username).toBe('User Two'));
+
+    await act(async () => {
+      resolveFirstProfile({
+        data: { username: 'Stale User One', avatar_path: null },
+        error: null,
+      });
+      await Promise.resolve();
+    });
+
+    expect(result.current.session.user.id).toBe('user-2');
+    expect(result.current.username).toBe('User Two');
+  });
+
+  it('clears the previous account avatar as soon as the active account changes', async () => {
+    let resolveSecondProfile!: (value: unknown) => void;
+    mockProfileSingle
+      .mockResolvedValueOnce({
+        data: { username: 'User One', avatar_path: 'user-1/avatar' },
+        error: null,
+      })
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveSecondProfile = resolve; }));
+
+    const { result } = renderHook(() => useAuthStatus());
+    await waitFor(() => expect(result.current.avatarUrl).toContain('user-1/avatar'));
+
+    act(() => {
+      authStateChangeCallback?.('SIGNED_IN', { user: { id: 'user-2' } });
+    });
+
+    expect(result.current.session.user.id).toBe('user-2');
+    expect(result.current.avatarUrl).toBeNull();
+
+    await act(async () => {
+      resolveSecondProfile({
+        data: { username: 'User Two', avatar_path: 'user-2/avatar' },
+        error: null,
+      });
+      await Promise.resolve();
+    });
+    await waitFor(() => expect(result.current.avatarUrl).toContain('user-2/avatar'));
+  });
 });

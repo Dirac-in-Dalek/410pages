@@ -1,12 +1,32 @@
 import React from 'react';
 import { Check, X } from 'lucide-react';
 
+export const handleMenuKeyboardNavigation = (event: React.KeyboardEvent<HTMLElement>) => {
+  if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+  const items = Array.from(
+    event.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]:not([disabled])')
+  ) as HTMLElement[];
+  if (items.length === 0) return;
+  event.preventDefault();
+  const currentIndex = items.indexOf(document.activeElement as HTMLElement);
+  const nextIndex = event.key === 'Home'
+    ? 0
+    : event.key === 'End'
+      ? items.length - 1
+      : event.key === 'ArrowUp'
+        ? (currentIndex <= 0 ? items.length - 1 : currentIndex - 1)
+        : (currentIndex + 1) % items.length;
+  items[nextIndex].focus();
+};
+
 type EditorialIconActionButtonProps = {
   ariaLabel: string;
   onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
   children: React.ReactNode;
   danger?: boolean;
   className?: string;
+  menuId?: string;
+  menuOpen?: boolean;
 };
 
 export const EditorialIconActionButton: React.FC<EditorialIconActionButtonProps> = ({
@@ -15,12 +35,18 @@ export const EditorialIconActionButton: React.FC<EditorialIconActionButtonProps>
   children,
   danger = false,
   className = '',
+  menuId,
+  menuOpen = false,
 }) => (
   <button
     type="button"
     onMouseDown={(event) => event.preventDefault()}
     onClick={onClick}
     aria-label={ariaLabel}
+    aria-haspopup={menuId ? 'menu' : undefined}
+    aria-expanded={menuId ? menuOpen : undefined}
+    aria-controls={menuId ? `author-actions-menu-${menuId}` : undefined}
+    data-author-actions-menu={menuId}
     className={[
       'ui-btn ui-btn-icon h-[1.625rem] w-[1.625rem] min-h-0 rounded-lg border-transparent',
       danger
@@ -41,6 +67,8 @@ type EditorialInlineRenameFieldProps = {
   onBlur?: () => void;
   placeholder?: string;
   actionsPlacement?: 'inline' | 'below';
+  confirmAriaLabel?: string;
+  cancelAriaLabel?: string;
 };
 
 export const EditorialInlineRenameField: React.FC<EditorialInlineRenameFieldProps> = ({
@@ -51,6 +79,8 @@ export const EditorialInlineRenameField: React.FC<EditorialInlineRenameFieldProp
   onBlur,
   placeholder,
   actionsPlacement = 'inline',
+  confirmAriaLabel = '이름 변경 확인',
+  cancelAriaLabel = '이름 변경 취소',
 }) => (
   <div
     className={[
@@ -67,6 +97,7 @@ export const EditorialInlineRenameField: React.FC<EditorialInlineRenameFieldProp
       onBlur={onBlur}
       onKeyDown={(event) => {
         if (event.key === 'Enter') {
+          if (event.nativeEvent.isComposing) return;
           event.preventDefault();
           onSubmit();
         } else if (event.key === 'Escape') {
@@ -82,10 +113,10 @@ export const EditorialInlineRenameField: React.FC<EditorialInlineRenameFieldProp
         actionsPlacement === 'below' ? 'justify-end' : 'items-center',
       ].join(' ')}
     >
-      <EditorialIconActionButton ariaLabel="이름 변경 확인" onClick={() => onSubmit()}>
+      <EditorialIconActionButton ariaLabel={confirmAriaLabel} onClick={() => onSubmit()}>
         <Check size={14} />
       </EditorialIconActionButton>
-      <EditorialIconActionButton ariaLabel="이름 변경 취소" onClick={() => onCancel()}>
+      <EditorialIconActionButton ariaLabel={cancelAriaLabel} onClick={() => onCancel()}>
         <X size={14} />
       </EditorialIconActionButton>
     </div>

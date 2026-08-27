@@ -1,24 +1,39 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArchiveViewStateInput, ArchiveViewStateResult } from '../contract/archiveViewContract';
-import { buildArchiveTree, deriveBookOrderByAuthor, findLatestCitationBook, getCurrentOrderedAuthors, getCurrentOrderedBooks } from './archiveTree';
+import { buildArchiveTree, deriveBookOrderByAuthor, getCurrentOrderedAuthors, getCurrentOrderedBooks } from './archiveTree';
 import { DEFAULT_ARCHIVE_TITLE, sortFilteredCitations } from './archiveSort';
+
+const EMPTY_AUTHORS: NonNullable<ArchiveViewStateInput['authors']> = [];
 
 export const useArchiveViewState = ({
   citations,
+  authors: inputAuthors,
+  authorFolders = [],
+  authorFolderMemberships = [],
   books,
   projects,
   username,
 }: ArchiveViewStateInput): ArchiveViewStateResult => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const authors = inputAuthors ?? EMPTY_AUTHORS;
+  const [searchTerm, setSearchTermState] = useState('');
   const [filter, setFilter] = useState<ArchiveViewStateResult['filter']>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
-  const [editorPrefill, setEditorPrefill] = useState<ArchiveViewStateResult['editorPrefill']>(undefined);
+  const [isHomeView, setIsHomeView] = useState(true);
   const [sortField, setSortField] = useState<ArchiveViewStateResult['sortField']>('date');
   const [dateDirection, setDateDirection] = useState<ArchiveViewStateResult['dateDirection']>('desc');
   const [pageDirection, setPageDirection] = useState<ArchiveViewStateResult['pageDirection']>('asc');
   const [bookOrderByAuthor, setBookOrderByAuthor] = useState<Record<string, string[]>>({});
-  const didApplyInitialBookRef = useRef(false);
+
+  const setSearchTerm: ArchiveViewStateResult['setSearchTerm'] = (nextValue) => {
+    if (typeof nextValue === 'function') {
+      setSearchTermState(nextValue);
+      setIsHomeView(false);
+      return;
+    }
+    setSearchTermState(nextValue);
+    setIsHomeView(nextValue.trim() ? false : selectedBookId === null && selectedProjectId === null && filter === null);
+  };
 
   useEffect(() => {
     setBookOrderByAuthor(deriveBookOrderByAuthor(citations, books));
@@ -43,59 +58,123 @@ export const useArchiveViewState = ({
   };
 
   const handleProjectSelect = (id: string | null) => {
+    setIsHomeView(id === null);
     setSelectedProjectId(id);
     setSelectedBookId(null);
     setFilter(null);
-    setSearchTerm('');
-    setEditorPrefill(undefined);
+    setSearchTermState('');
   };
 
-  const handleBookSourceSelect = useCallback((book: { id: string; title: string; authorId: string; author: string }) => {
-    setEditorPrefill({
-      author: book.author,
-      book: book.title,
+  const handleHomeSelect = () => handleProjectSelect(null);
+
+  const handleAuthorSourceSelect = useCallback((author: { id: string; name: string }) => {
+    setIsHomeView(false);
+    setFilter({
+      type: 'author',
+      authorId: author.id,
+      value: author.name,
     });
+    setSelectedProjectId(null);
+    setSelectedBookId(null);
+    setSearchTermState('');
+  }, []);
+
+  const handleBookSourceSelect = useCallback((book: { id: string; title: string; authorId: string; author: string }) => {
+    setIsHomeView(false);
     setFilter({
       type: 'book',
+      bookId: book.id,
+      authorId: book.authorId,
       value: book.title,
       author: book.author,
     });
     setSelectedProjectId(null);
     setSelectedBookId(book.id);
-    setSearchTerm('');
+    setSortField('date');
+    setDateDirection('asc');
+    setSearchTermState('');
   }, []);
 
   const handleTreeItemClick = (item: NonNullable<ArchiveViewStateResult['treeData']>[number]) => {
-    if (!item.data) return;
+    if (!item.data || (item.type !== 'author' && item.type !== 'book' && item.type !== 'root')) return;
 
-    setEditorPrefill({
-      author: item.data.author,
-      book: item.data.book || '',
-    });
-    setFilter({
-      type: item.type === 'book' ? 'book' : 'author',
-      value: item.type === 'book' ? item.data.book! : item.data.author,
-      author: item.data.author,
-    });
-    setSelectedProjectId(null);
-    setSelectedBookId(item.type === 'book' ? item.data.bookId || null : null);
-    setSearchTerm('');
+    if (item.type === 'book') {
+      if (!item.data.bookId) return;
+      const book = books.find((entry) => entry.id === item.data?.bookId);
+      if (book) handleBookSourceSelect(book);
+      return;
+    }
+
+    if (!item.data.authorId) return;
+    handleAuthorSourceSelect({ id: item.data.authorId, name: item.data.author });
   };
 
   useEffect(() => {
-    if (didApplyInitialBookRef.current) return;
-    if (citations.length === 0) return;
+    if (!filter) return;
+    if (filter.type === 'book' && !books.some((book) => book.id === filter.bookId)) {
+      const author = authors.find((entry) => entry.id === filter.authorId);
+      if (author) {
+        setFilter({
+          type: 'author',
+          authorId: author.id,
+          value: author.isSelf ? username : author.name.trim() || '이름 없는 저자',
+        });
+        setSelectedBookId(null);
+        return;
+      }
+      setFilter(null);
+      setSelectedBookId(null);
+      setIsHomeView(true);
+      return;
+    }
 
-    const latestBook = findLatestCitationBook(citations, books);
-    if (!latestBook) return;
+    if (
+      filter.type === 'author' &&
+      !authors.some((author) => author.id === filter.authorId) &&
+      !books.some((book) => book.authorId === filter.authorId)
+    ) {
+      setFilter(null);
+      setSelectedBookId(null);
+      setIsHomeView(true);
+    }
+  }, [authors, books, filter, username]);
 
-    didApplyInitialBookRef.current = true;
-    handleBookSourceSelect(latestBook);
-  }, [books, citations, handleBookSourceSelect]);
+  const resolvedFilter = useMemo<ArchiveViewStateResult['filter']>(() => {
+    if (!filter) return null;
+
+    if (filter.type === 'book') {
+      const book = books.find((entry) => entry.id === filter.bookId);
+      return book
+        ? {
+            ...filter,
+            authorId: book.authorId,
+            value: book.title,
+            author: book.author,
+          }
+        : filter;
+    }
+
+    const author = authors.find((entry) => entry.id === filter.authorId);
+    if (author) return { ...filter, value: author.isSelf ? username : author.name.trim() || '이름 없는 저자' };
+    const authorBook = books.find((entry) => entry.authorId === filter.authorId);
+    return authorBook ? { ...filter, value: authorBook.author } : filter;
+  }, [authors, books, filter, username]);
+
+  const editorPrefill = useMemo<ArchiveViewStateResult['editorPrefill']>(() => {
+    if (!resolvedFilter) return undefined;
+    if (resolvedFilter.type === 'book') {
+      return {
+        author: resolvedFilter.author,
+        book: resolvedFilter.value,
+        bookId: resolvedFilter.bookId,
+      };
+    }
+    return { author: resolvedFilter.value, book: '' };
+  }, [resolvedFilter]);
 
   const readCurrentOrderedAuthors = useCallback(
-    () => getCurrentOrderedAuthors(citations, username, books),
-    [books, citations, username]
+    () => getCurrentOrderedAuthors(citations, username, books, authors),
+    [authors, books, citations, username]
   );
 
   const readCurrentOrderedBooks = useCallback(
@@ -104,8 +183,17 @@ export const useArchiveViewState = ({
   );
 
   const treeData = useMemo(
-    () => buildArchiveTree(citations, books, username, readCurrentOrderedAuthors(), readCurrentOrderedBooks),
-    [books, citations, username, readCurrentOrderedAuthors, readCurrentOrderedBooks]
+    () => buildArchiveTree(
+      citations,
+      books,
+      username,
+      readCurrentOrderedAuthors(),
+      readCurrentOrderedBooks,
+      authors,
+      authorFolders,
+      authorFolderMemberships
+    ),
+    [authorFolderMemberships, authorFolders, authors, books, citations, username, readCurrentOrderedAuthors, readCurrentOrderedBooks]
   );
 
   const filteredCitations = useMemo(() => {
@@ -114,20 +202,10 @@ export const useArchiveViewState = ({
     if (selectedProjectId) {
       const project = projects.find((entry) => entry.id === selectedProjectId);
       result = result.filter((citation) => project?.citationIds.includes(citation.id));
-    } else if (filter) {
-      if (filter.type === 'author') {
-        result = result.filter((citation) => {
-          const effectiveAuthor = citation.isSelf ? username : citation.author;
-          return effectiveAuthor === filter.value;
-        });
-      } else if (filter.type === 'book') {
-        result = result.filter((citation) => {
-          const isSameBook = citation.book === filter.value;
-          const effectiveAuthor = citation.isSelf ? username : citation.author;
-          const isSameAuthor = !filter.author || effectiveAuthor === filter.author;
-          return isSameBook && isSameAuthor;
-        });
-      }
+    } else if (filter?.type === 'author') {
+      result = result.filter((citation) => citation.authorId === filter.authorId);
+    } else if (filter?.type === 'book') {
+      result = result.filter((citation) => citation.bookId === filter.bookId);
     }
 
     if (searchTerm.trim()) {
@@ -141,37 +219,39 @@ export const useArchiveViewState = ({
     }
 
     return sortFilteredCitations(result, sortField, dateDirection, pageDirection);
-  }, [citations, selectedProjectId, projects, filter, searchTerm, username, sortField, dateDirection, pageDirection]);
+  }, [citations, selectedProjectId, projects, filter, searchTerm, sortField, dateDirection, pageDirection]);
 
   const viewTitle = useMemo(() => {
     if (searchTerm.trim()) return `Search: ${searchTerm}`;
     if (selectedProjectId) return projects.find((entry) => entry.id === selectedProjectId)?.name || 'Project';
-    if (filter) return filter.value || (filter.type === 'author' ? 'Author View' : 'Book View');
+    if (resolvedFilter) return resolvedFilter.value || (resolvedFilter.type === 'author' ? 'Author View' : 'Book View');
     return DEFAULT_ARCHIVE_TITLE;
-  }, [searchTerm, selectedProjectId, projects, filter]);
+  }, [searchTerm, selectedProjectId, projects, resolvedFilter]);
 
   return {
     searchTerm,
     setSearchTerm,
-    filter,
-    setFilter,
+    filter: resolvedFilter,
     selectedProjectId,
-    setSelectedProjectId,
     selectedBookId,
+    selectedAuthorId: resolvedFilter?.authorId ?? null,
+    isHomeView,
     editorPrefill,
     sortField,
     dateDirection,
     pageDirection,
     isBookView: selectedBookId !== null,
+    isAuthorView: resolvedFilter?.type === 'author' && selectedBookId === null,
     handleDateSortClick,
     handlePageSortClick,
     handleProjectSelect,
+    handleHomeSelect,
     handleTreeItemClick,
+    handleAuthorSourceSelect,
     handleBookSourceSelect,
     treeData,
     filteredCitations,
     viewTitle,
-    getCurrentOrderedAuthors: readCurrentOrderedAuthors,
     getCurrentOrderedBooks: readCurrentOrderedBooks,
     setBookOrderByAuthor,
   };

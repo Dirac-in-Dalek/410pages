@@ -4,8 +4,10 @@ export interface ArchiveHeaderProps {
     title: string;
     showEditor: boolean;
     username: string;
-    editorPrefill?: { author: string; book: string };
+    editorPrefill?: { author: string; book: string; bookId?: string };
     isBookView?: boolean;
+    onBackToAuthor?: () => void;
+    authorName?: string;
     onAddCitation: (data: AddCitationInput) => void | Promise<unknown>;
     sortField: 'date' | 'page';
     dateDirection: 'asc' | 'desc';
@@ -22,7 +24,7 @@ export interface CitationListProps {
     loading: boolean;
     searchTerm: string;
     selectedIds: Set<string>;
-    selectedFilter?: { type: 'author' | 'book'; value: string; author?: string } | null;
+    selectedFilter?: { type: 'author' | 'book'; authorId?: string; bookId?: string; value: string; author?: string } | null;
     onToggleSelect: (id: string, selected: boolean) => void;
     onAddNote: (citationId: string, content: string) => void;
     onUpdateNote: (citationId: string, noteId: string, content: string) => void;
@@ -37,4 +39,5 @@ export interface CitationListProps {
     pageDirection?: 'asc' | 'desc';
     onCreateChapterBlock?: (input: CreateChapterBlockInput) => Promise<unknown> | unknown;
     onDeleteChapterBlock?: (bookId: string, blockId: string) => Promise<unknown> | unknown;
+    chapterActionsDisabled?: boolean;
 }
