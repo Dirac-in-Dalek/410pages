@@ -64,7 +64,7 @@ export const useAuthStatus = () => {
   };
 
   const handleUpdateUsername = async (newUsername: string) => {
-    if (!session) return;
+    if (!session) return false;
     const userId = session.user.id;
 
     try {

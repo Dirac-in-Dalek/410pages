@@ -52,7 +52,10 @@ export const useModalFocus = <T extends HTMLElement>(isOpen: boolean, onEscape: 
           : []
       ) as HTMLElement[];
       const focusable = focusableCandidates.filter(
-        (element) => element.offsetParent !== null || element === document.activeElement
+        (element) => {
+          const style = window.getComputedStyle(element);
+          return element.tabIndex >= 0 && element.getAttribute('aria-hidden') !== 'true' && style.display !== 'none' && style.visibility !== 'hidden';
+        }
       );
       if (focusable.length === 0) {
         event.preventDefault();
@@ -62,7 +65,7 @@ export const useModalFocus = <T extends HTMLElement>(isOpen: boolean, onEscape: 
 
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
-      if (!containerRef.current?.contains(document.activeElement)) {
+      if (!focusable.includes(document.activeElement as HTMLElement)) {
         event.preventDefault();
         (event.shiftKey ? last : first).focus();
       } else if (event.shiftKey && document.activeElement === first) {

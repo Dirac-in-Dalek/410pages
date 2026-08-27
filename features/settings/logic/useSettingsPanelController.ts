@@ -22,10 +22,10 @@ export const useSettingsPanelController = ({
   const [displayName, setDisplayName] = useState('Researcher');
   const [isSavingDisplayName, setIsSavingDisplayName] = useState(false);
   const [isSavingAvatar, setIsSavingAvatar] = useState(false);
+  const [isDisplayNameSaved, setIsDisplayNameSaved] = useState(false);
+  const [isAvatarSaved, setIsAvatarSaved] = useState(false);
   const [displayNameError, setDisplayNameError] = useState<string | null>(null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
-  const displayNameCommitVersionRef = useRef(0);
-  const avatarCommitVersionRef = useRef(0);
   const previousCommittedUsernameRef = useRef(username);
 
   useEffect(() => {
@@ -42,24 +42,26 @@ export const useSettingsPanelController = ({
   }, [username]);
 
   const resetSettingsPanelState = useCallback(() => {
-    displayNameCommitVersionRef.current += 1;
-    avatarCommitVersionRef.current += 1;
     setDisplayName(username);
     setDisplayNameError(null);
     setAvatarError(null);
-    setIsSavingDisplayName(false);
-    setIsSavingAvatar(false);
+    setIsDisplayNameSaved(false);
+    setIsAvatarSaved(false);
   }, [username]);
 
   const openSettings = useCallback(() => {
-    resetSettingsPanelState();
+    if (!isSavingDisplayName && !displayNameError) {
+      resetSettingsPanelState();
+    }
     setIsSettingsOpen(true);
-  }, [resetSettingsPanelState]);
+  }, [displayNameError, isSavingDisplayName, resetSettingsPanelState]);
 
   const closeSettings = useCallback(() => {
-    resetSettingsPanelState();
+    if (!isSavingDisplayName && !displayNameError) {
+      resetSettingsPanelState();
+    }
     setIsSettingsOpen(false);
-  }, [resetSettingsPanelState]);
+  }, [displayNameError, isSavingDisplayName, resetSettingsPanelState]);
 
   const commitDisplayName = useCallback(
     async (nextDisplayName: string) => {
@@ -71,33 +73,39 @@ export const useSettingsPanelController = ({
         return;
       }
 
-      const commitVersion = displayNameCommitVersionRef.current;
       setIsSavingDisplayName(true);
+      setIsDisplayNameSaved(false);
       setDisplayNameError(null);
 
       try {
         const didSave = await Promise.resolve(onUpdateUsername(trimmedDisplayName));
-        if (commitVersion !== displayNameCommitVersionRef.current) {
-          return;
-        }
-
         if (didSave) {
           setDisplayName((currentDraft) =>
             currentDraft === submittedDisplayName ? trimmedDisplayName : currentDraft
           );
           setDisplayNameError(null);
+          setIsDisplayNameSaved(true);
           return;
         }
 
         setDisplayNameError('이름 저장에 실패했습니다.');
+        setIsDisplayNameSaved(false);
+      } catch (error) {
+        console.error('Error saving display name:', error);
+        setDisplayNameError('이름 저장에 실패했습니다.');
+        setIsDisplayNameSaved(false);
       } finally {
-        if (commitVersion === displayNameCommitVersionRef.current) {
-          setIsSavingDisplayName(false);
-        }
+        setIsSavingDisplayName(false);
       }
     },
     [isSavingDisplayName, onUpdateUsername, username]
   );
+
+  const changeDisplayName = useCallback((nextDisplayName: string) => {
+    setDisplayName(nextDisplayName);
+    setDisplayNameError(null);
+    setIsDisplayNameSaved(false);
+  }, []);
 
   const commitAvatar = useCallback(
     async (file: File) => {
@@ -110,26 +118,25 @@ export const useSettingsPanelController = ({
         return false;
       }
 
-      const commitVersion = avatarCommitVersionRef.current;
       setIsSavingAvatar(true);
+      setIsAvatarSaved(false);
       setAvatarError(null);
 
       try {
         const didSave = await Promise.resolve(onUpdateAvatar(file));
-        if (commitVersion !== avatarCommitVersionRef.current) {
-          return false;
-        }
-
         if (!didSave) {
           setAvatarError('프로필 사진 저장에 실패했습니다.');
           return false;
         }
 
+        setIsAvatarSaved(true);
         return true;
+      } catch (error) {
+        console.error('Error saving avatar:', error);
+        setAvatarError('프로필 사진 저장에 실패했습니다.');
+        return false;
       } finally {
-        if (commitVersion === avatarCommitVersionRef.current) {
-          setIsSavingAvatar(false);
-        }
+        setIsSavingAvatar(false);
       }
     },
     [isSavingAvatar, onUpdateAvatar]
@@ -145,10 +152,12 @@ export const useSettingsPanelController = ({
       preferences,
       isSavingDisplayName,
       isSavingAvatar,
+      isDisplayNameSaved,
+      isAvatarSaved,
       avatarError,
       displayNameError,
       onClose: closeSettings,
-      onDisplayNameChange: setDisplayName,
+      onDisplayNameChange: changeDisplayName,
       onDisplayNameCommit: commitDisplayName,
       onAvatarChange: commitAvatar,
       onThemeChange,
@@ -163,11 +172,14 @@ export const useSettingsPanelController = ({
       closeSettings,
       commitAvatar,
       commitDisplayName,
+      changeDisplayName,
       displayName,
       displayNameError,
       isMobile,
       isSavingAvatar,
       isSavingDisplayName,
+      isAvatarSaved,
+      isDisplayNameSaved,
       isSettingsOpen,
       onBaseFontPtChange,
       onCitationWidthRemChange,

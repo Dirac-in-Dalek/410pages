@@ -178,15 +178,18 @@ vi.mock('./features/settings/ui/SettingsPanel', () => ({
         {props.displayNameError ? (
           <div data-testid="settings-display-name-error">{props.displayNameError}</div>
         ) : null}
+        {props.isDisplayNameSaved ? (
+          <div data-testid="settings-display-name-saved">saved</div>
+        ) : null}
         <input
           aria-label="mock-settings-display-name"
           value={props.displayName}
           onChange={(event) => props.onDisplayNameChange(event.target.value)}
         />
-        <button type="button" onClick={() => props.onDisplayNameChange('Draft Name')}>
+        <button type="button" disabled={props.isSavingDisplayName} onClick={() => props.onDisplayNameChange('Draft Name')}>
           change-display-name
         </button>
-        <button type="button" onClick={() => props.onDisplayNameCommit(props.displayName)}>
+        <button type="button" disabled={props.isSavingDisplayName} onClick={() => props.onDisplayNameCommit(props.displayName)}>
           commit-display-name
         </button>
         <button type="button" onClick={() => props.onBaseFontPtChange(22)}>
@@ -267,7 +270,7 @@ describe('App settings display-name flow', () => {
     expect(screen.getByTestId('settings-display-name').textContent).toBe('Committed Name');
   });
 
-  it('shows a save error while open and clears it on close', async () => {
+  it('preserves a failed display-name draft across close and reopen', async () => {
     const user = userEvent.setup();
     mockHandleUpdateUsername.mockResolvedValue(false);
 
@@ -285,8 +288,22 @@ describe('App settings display-name flow', () => {
     expect(screen.queryByTestId('settings-display-name-error')).toBeNull();
 
     await user.click(screen.getByRole('button', { name: 'open-settings' }));
-    expect(screen.queryByTestId('settings-display-name-error')).toBeNull();
-    expect(screen.getByTestId('settings-display-name').textContent).toBe('Committed Name');
+    expect(screen.getByTestId('settings-display-name-error').textContent).toBeTruthy();
+    expect(screen.getByTestId('settings-display-name').textContent).toBe('Draft Name');
+  });
+
+  it('converts a rejected name save into the visible failure state', async () => {
+    const user = userEvent.setup();
+    mockHandleUpdateUsername.mockRejectedValueOnce(new Error('network failed'));
+    render(<App />);
+
+    await user.click(screen.getByRole('button', { name: 'open-settings' }));
+    await user.click(screen.getByRole('button', { name: 'change-display-name' }));
+    await user.click(screen.getByRole('button', { name: 'commit-display-name' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('settings-display-name-error').textContent).toBe('이름 저장에 실패했습니다.');
+    });
   });
 
   it('wires settings font-size changes to setBaseFontPt', async () => {
@@ -328,10 +345,11 @@ describe('App settings display-name flow', () => {
 
     await waitFor(() => {
       expect(screen.queryByTestId('settings-display-name-error')).toBeNull();
+      expect(screen.getByTestId('settings-display-name-saved')).toBeTruthy();
     });
   });
 
-  it('syncs the reopened draft when the committed username changes after a pending save', async () => {
+  it('preserves the submitted draft while a save is pending and syncs the committed result', async () => {
     const user = userEvent.setup();
     const deferredSave = createDeferred<boolean>();
     mockHandleUpdateUsername.mockReturnValue(deferredSave.promise);
@@ -344,7 +362,7 @@ describe('App settings display-name flow', () => {
 
     await user.click(screen.getByRole('button', { name: 'close-settings' }));
     await user.click(screen.getByRole('button', { name: 'open-settings' }));
-    expect(screen.getByTestId('settings-display-name').textContent).toBe('Committed Name');
+    expect(screen.getByTestId('settings-display-name').textContent).toBe('Draft Name');
 
     authState.username = 'Draft Name';
     rerender(<App />);
@@ -356,6 +374,29 @@ describe('App settings display-name flow', () => {
     deferredSave.resolve(true);
     await deferredSave.promise;
     expect(screen.getByTestId('settings-display-name').textContent).toBe('Draft Name');
+  });
+
+  it('keeps a pending name save locked across close and reopen', async () => {
+    const user = userEvent.setup();
+    const deferredSave = createDeferred<boolean>();
+    mockHandleUpdateUsername.mockReturnValue(deferredSave.promise);
+    render(<App />);
+
+    await user.click(screen.getByRole('button', { name: 'open-settings' }));
+    await user.click(screen.getByRole('button', { name: 'change-display-name' }));
+    await user.click(screen.getByRole('button', { name: 'commit-display-name' }));
+    await user.click(screen.getByRole('button', { name: 'close-settings' }));
+    await user.click(screen.getByRole('button', { name: 'open-settings' }));
+
+    expect((screen.getByRole('button', { name: 'change-display-name' }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole('button', { name: 'commit-display-name' }) as HTMLButtonElement).disabled).toBe(true);
+
+    await act(async () => {
+      deferredSave.resolve(true);
+      await deferredSave.promise;
+    });
+
+    await waitFor(() => expect((screen.getByRole('button', { name: 'change-display-name' }) as HTMLButtonElement).disabled).toBe(false));
   });
 
   it('preserves newer local display-name edits when an earlier save resolves', async () => {

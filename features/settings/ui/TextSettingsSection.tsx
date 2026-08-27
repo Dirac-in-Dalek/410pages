@@ -50,6 +50,7 @@ export const FontSelectionList: React.FC<FontSelectionListProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
   const listboxId = useId();
   const selectedOption = useMemo(
     () => getFontOption(selectedFontFamily) ?? FONT_OPTIONS[0],
@@ -70,6 +71,7 @@ export const FontSelectionList: React.FC<FontSelectionListProps> = ({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setIsOpen(false);
+        window.requestAnimationFrame(() => triggerRef.current?.focus());
       }
     };
 
@@ -83,14 +85,14 @@ export const FontSelectionList: React.FC<FontSelectionListProps> = ({
   }, [isOpen]);
 
   return (
-    <div ref={containerRef} className="relative w-full max-w-[18rem]">
+    <div ref={containerRef} className="relative min-w-0 w-full max-w-[15rem]">
       <button
+        ref={triggerRef}
         type="button"
         aria-label={`현재 서체: ${selectedOption.label}`}
         aria-expanded={isOpen}
-        aria-haspopup="listbox"
         aria-controls={listboxId}
-        className="ui-btn ui-btn-row px-4 py-3 shadow-[var(--shadow-card)]"
+        className="ui-btn ui-btn--ghost ui-btn-row min-h-11 px-2 sm:min-h-10"
         onClick={() => setIsOpen((current) => !current)}
       >
         <span className="block min-w-0 truncate" style={{ fontFamily: selectedOption.fontFamily }}>
@@ -105,9 +107,9 @@ export const FontSelectionList: React.FC<FontSelectionListProps> = ({
       {isOpen ? (
         <div
           id={listboxId}
-          role="listbox"
-          aria-label="서체 목록"
-          className="absolute right-0 top-[calc(100%+0.5rem)] z-20 max-h-64 w-full overflow-y-auto rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] p-1 shadow-[var(--shadow-panel)]"
+          role="group"
+          aria-label="서체 선택"
+          className="absolute right-0 top-[calc(100%+0.5rem)] z-20 max-h-64 w-[min(18rem,calc(100vw-2.5rem))] overflow-y-auto rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] p-1 shadow-[var(--shadow-panel)]"
         >
           {GROUPED_FONT_OPTIONS.map((group) => (
             <div key={group.category} role="presentation" className="py-1 first:pt-0 last:pb-0">
@@ -126,6 +128,7 @@ export const FontSelectionList: React.FC<FontSelectionListProps> = ({
                     onClick={() => {
                       onFontFamilyChange(option.id);
                       setIsOpen(false);
+                      window.requestAnimationFrame(() => triggerRef.current?.focus());
                     }}
                   >
                     <span className="block w-full truncate" style={{ fontFamily: option.fontFamily }}>
@@ -141,6 +144,53 @@ export const FontSelectionList: React.FC<FontSelectionListProps> = ({
     </div>
   );
 };
+
+type SettingsStepperProps = {
+  label: string;
+  value: string;
+  decreaseDisabled: boolean;
+  increaseDisabled: boolean;
+  onDecrease: () => void;
+  onIncrease: () => void;
+};
+
+const SettingsStepper: React.FC<SettingsStepperProps> = ({
+  label,
+  value,
+  decreaseDisabled,
+  increaseDisabled,
+  onDecrease,
+  onIncrease,
+}) => (
+  <div role="group" aria-label={`${label} 조절`} className="inline-flex shrink-0 items-center rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)]">
+    <button
+      type="button"
+      aria-label={`${label} 줄이기`}
+      className="ui-btn ui-btn--ghost h-11 min-h-11 w-11 rounded-lg border-0 p-0 sm:h-10 sm:min-h-10 sm:w-10"
+      disabled={decreaseDisabled}
+      onClick={onDecrease}
+    >
+      <span aria-hidden="true">−</span>
+    </button>
+    <span
+      role="status"
+      aria-label={`현재 ${label}`}
+      aria-live="polite"
+      className="ui-label min-w-[3.75rem] text-center tabular-nums text-[var(--text-main)]"
+    >
+      {value}
+    </span>
+    <button
+      type="button"
+      aria-label={`${label} 늘리기`}
+      className="ui-btn ui-btn--ghost h-11 min-h-11 w-11 rounded-lg border-0 p-0 sm:h-10 sm:min-h-10 sm:w-10"
+      disabled={increaseDisabled}
+      onClick={onIncrease}
+    >
+      <span aria-hidden="true">+</span>
+    </button>
+  </div>
+);
 
 export const TextSettingsSection: React.FC<TextSettingsSectionProps> = ({
   fontFamily,
@@ -168,79 +218,37 @@ export const TextSettingsSection: React.FC<TextSettingsSectionProps> = ({
   };
 
   return (
-    <section className="mb-8">
-      <h3 className="ui-label mb-3 font-semibold text-[var(--text-muted)]">텍스트</h3>
+    <section>
+      <h3 className="ui-label mb-2 px-1 font-semibold text-[var(--text-muted)]">읽기</h3>
 
-      <div className="rounded-2xl border border-[var(--border-main)] bg-[var(--bg-sidebar)] p-4 shadow-[var(--shadow-card)]">
-        <div className="mb-5 flex items-center justify-between gap-4">
+      <div className="divide-y divide-[var(--border-main)] rounded-xl bg-[var(--bg-sidebar)] px-1">
+        <div className="flex min-h-14 items-center justify-between gap-4 px-3">
           <p className="ui-label shrink-0 whitespace-nowrap">서체</p>
           <FontSelectionList selectedFontFamily={fontFamily} onFontFamilyChange={onFontFamilyChange} />
         </div>
 
-        <div className="space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <span className="ui-label shrink-0 whitespace-nowrap">글자 크기</span>
-            <div className="flex items-center gap-2">
-              <span
-                role="status"
-                aria-label="현재 글자 크기"
-                aria-live="polite"
-                className="ui-label tabular-nums text-[var(--text-main)]"
-              >
-                {baseFontPt}pt
-              </span>
-              <button
-                type="button"
-                aria-label="글자 크기 늘리기"
-                className="ui-btn ui-btn-icon"
-                disabled={baseFontPt >= MAX_FONT_PT}
-                onClick={() => updateFontSize(FONT_PT_STEP)}
-              >
-                <span aria-hidden="true">+</span>
-              </button>
-              <button
-                type="button"
-                aria-label="글자 크기 줄이기"
-                className="ui-btn ui-btn-icon"
-                disabled={baseFontPt <= MIN_FONT_PT}
-                onClick={() => updateFontSize(-FONT_PT_STEP)}
-              >
-                <span aria-hidden="true">−</span>
-              </button>
-            </div>
-          </div>
+        <div className="flex min-h-14 items-center justify-between gap-3 px-3">
+          <span className="ui-label shrink-0 whitespace-nowrap">글자 크기</span>
+          <SettingsStepper
+            label="글자 크기"
+            value={`${baseFontPt}pt`}
+            decreaseDisabled={baseFontPt <= MIN_FONT_PT}
+            increaseDisabled={baseFontPt >= MAX_FONT_PT}
+            onDecrease={() => updateFontSize(-FONT_PT_STEP)}
+            onIncrease={() => updateFontSize(FONT_PT_STEP)}
+          />
+        </div>
 
-          <div className="flex items-center justify-between gap-3">
-            <span className="ui-label shrink-0 whitespace-nowrap">인용구 너비</span>
-            <div className="flex items-center gap-2">
-              <span
-                role="status"
-                aria-label="현재 인용구 너비"
-                aria-live="polite"
-                className="ui-label tabular-nums text-[var(--text-main)]"
-              >
-                {citationWidthRem}rem
-              </span>
-              <button
-                type="button"
-                aria-label="인용구 너비 늘리기"
-                className="ui-btn ui-btn-icon"
-                disabled={citationWidthRem >= MAX_CITATION_WIDTH_REM}
-                onClick={() => updateCitationWidth(CITATION_WIDTH_STEP_REM)}
-              >
-                <span aria-hidden="true">+</span>
-              </button>
-              <button
-                type="button"
-                aria-label="인용구 너비 줄이기"
-                className="ui-btn ui-btn-icon"
-                disabled={citationWidthRem <= MIN_CITATION_WIDTH_REM}
-                onClick={() => updateCitationWidth(-CITATION_WIDTH_STEP_REM)}
-              >
-                <span aria-hidden="true">−</span>
-              </button>
-            </div>
-          </div>
+        <div className="flex min-h-14 items-center justify-between gap-3 px-3">
+          <span className="ui-label shrink-0 whitespace-nowrap">인용구 너비</span>
+          <SettingsStepper
+            label="인용구 너비"
+            value={`${citationWidthRem}rem`}
+            decreaseDisabled={citationWidthRem <= MIN_CITATION_WIDTH_REM}
+            increaseDisabled={citationWidthRem >= MAX_CITATION_WIDTH_REM}
+            onDecrease={() => updateCitationWidth(-CITATION_WIDTH_STEP_REM)}
+            onIncrease={() => updateCitationWidth(CITATION_WIDTH_STEP_REM)}
+          />
         </div>
       </div>
     </section>

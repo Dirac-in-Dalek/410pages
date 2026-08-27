@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import type { AvatarCropFrame, AvatarCropHandle, AvatarImageRect } from '../../../lib/avatarCrop';
 import {
   createInitialAvatarCropFrame,
@@ -8,6 +8,7 @@ import {
   resizeAvatarCropFrame,
 } from '../../../lib/avatarCrop';
 import { avatarDebugError, avatarDebugInfo, clearAvatarDebugLog } from '../../../lib/avatarDebug';
+import { useModalFocus } from '../../../shared/ui/useModalFocus';
 
 const EDITOR_SIZE = 320;
 const HANDLE_SIZE = 18;
@@ -29,8 +30,8 @@ const HANDLE_CONFIGS: Array<{
     handle: 'top',
     cursor: 'ns-resize',
     width: 34,
-    height: 14,
-    style: { left: '50%', top: '-7px', transform: 'translateX(-50%)' },
+    height: 20,
+    style: { left: '50%', top: '-10px', transform: 'translateX(-50%)' },
   },
   {
     handle: 'top-right',
@@ -42,9 +43,9 @@ const HANDLE_CONFIGS: Array<{
   {
     handle: 'right',
     cursor: 'ew-resize',
-    width: 14,
+    width: 20,
     height: 34,
-    style: { right: '-7px', top: '50%', transform: 'translateY(-50%)' },
+    style: { right: '-10px', top: '50%', transform: 'translateY(-50%)' },
   },
   {
     handle: 'bottom-right',
@@ -57,8 +58,8 @@ const HANDLE_CONFIGS: Array<{
     handle: 'bottom',
     cursor: 'ns-resize',
     width: 34,
-    height: 14,
-    style: { left: '50%', bottom: '-7px', transform: 'translateX(-50%)' },
+    height: 20,
+    style: { left: '50%', bottom: '-10px', transform: 'translateX(-50%)' },
   },
   {
     handle: 'bottom-left',
@@ -70,9 +71,9 @@ const HANDLE_CONFIGS: Array<{
   {
     handle: 'left',
     cursor: 'ew-resize',
-    width: 14,
+    width: 20,
     height: 34,
-    style: { left: '-7px', top: '50%', transform: 'translateY(-50%)' },
+    style: { left: '-10px', top: '50%', transform: 'translateY(-50%)' },
   },
 ];
 
@@ -80,7 +81,7 @@ type AvatarCropModalProps = {
   file: File | null;
   isSaving?: boolean;
   onCancel: () => void;
-  onSave: (file: File) => Promise<void>;
+  onSave: (file: File) => Promise<boolean>;
 };
 
 type InteractionState =
@@ -110,8 +111,17 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
   const [imageRect, setImageRect] = useState<AvatarImageRect | null>(null);
   const [cropFrame, setCropFrame] = useState<AvatarCropFrame | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const interactionRef = useRef<InteractionState | null>(null);
   const imageRectRef = useRef<AvatarImageRect | null>(null);
+  const saveInFlightRef = useRef(false);
+  const titleId = useId();
+  const isInteractionLocked = isSaving || isProcessing;
+  const dialogRef = useModalFocus<HTMLDivElement>(Boolean(previewUrl), () => {
+    if (!isInteractionLocked) {
+      onCancel();
+    }
+  });
 
   useEffect(() => {
     imageRectRef.current = imageRect;
@@ -340,11 +350,45 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
     setCropFrame((currentFrame) => currentFrame || createInitialAvatarCropFrame(nextImageRect));
   };
 
-  const handleSave = async () => {
-    if (!cropFrame || !imageRect || !previewUrl || isSaving) {
+  const resizeCropFrame = (delta: number) => {
+    if (!imageRect) {
+      return;
+    }
+    setCropFrame((currentFrame) =>
+      currentFrame
+        ? resizeAvatarCropFrame(currentFrame, 'bottom-right', delta, delta, imageRect)
+        : currentFrame
+    );
+  };
+
+  const handleCropFrameKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!cropFrame || !imageRect || !event.key.startsWith('Arrow')) {
       return;
     }
 
+    event.preventDefault();
+    event.stopPropagation();
+    const step = event.shiftKey ? 8 : 4;
+
+    if (event.shiftKey) {
+      resizeCropFrame(event.key === 'ArrowRight' || event.key === 'ArrowDown' ? step : -step);
+      return;
+    }
+
+    const deltaX = event.key === 'ArrowLeft' ? -step : event.key === 'ArrowRight' ? step : 0;
+    const deltaY = event.key === 'ArrowUp' ? -step : event.key === 'ArrowDown' ? step : 0;
+    setCropFrame((currentFrame) =>
+      currentFrame ? moveAvatarCropFrame(currentFrame, deltaX, deltaY, imageRect) : currentFrame
+    );
+  };
+
+  const handleSave = async () => {
+    if (!cropFrame || !imageRect || !previewUrl || isInteractionLocked || saveInFlightRef.current) {
+      return;
+    }
+
+    saveInFlightRef.current = true;
+    setIsProcessing(true);
     try {
       setError(null);
       clearAvatarDebugLog();
@@ -361,11 +405,18 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
         croppedSize: croppedFile.size,
         croppedType: croppedFile.type,
       });
-      await onSave(croppedFile);
+      const didSave = await onSave(croppedFile);
+      if (!didSave) {
+        setError('프로필 사진 저장에 실패했습니다.');
+        return;
+      }
       avatarDebugInfo('crop save completed');
     } catch (saveError) {
       avatarDebugError('crop save failed', saveError);
       setError('프로필 사진 편집에 실패했습니다.');
+    } finally {
+      saveInFlightRef.current = false;
+      setIsProcessing(false);
     }
   };
 
@@ -393,26 +444,27 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 px-4 touch-none overscroll-contain"
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 px-2 touch-none overscroll-contain sm:px-4"
       onWheelCapture={(event) => event.preventDefault()}
     >
       <div
-        aria-label="프로필 사진 편집"
+        ref={dialogRef}
+        aria-labelledby={titleId}
         aria-modal="true"
         role="dialog"
-        className="w-full max-w-[520px] rounded-[28px] border border-[var(--border-main)] bg-[var(--bg-card)] p-6 shadow-[var(--shadow-panel)]"
+        className="w-full max-w-[520px] rounded-2xl border border-[var(--border-main)] bg-[var(--bg-card)] p-4 shadow-[var(--shadow-panel)] sm:p-6"
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="ui-title">프로필 사진 편집</h3>
+            <h3 id={titleId} className="ui-title">프로필 사진 편집</h3>
             <p className="ui-body mt-2 text-[var(--text-secondary)]">
-              원형 밖은 실제 프로필에 보이지 않습니다. 프레임을 움직이거나 모서리와 변을 잡아 크기를 조절하세요.
+              원형 밖은 실제 프로필에 보이지 않습니다. 방향키로 이동하고 Shift+방향키 또는 아래 버튼으로 크기를 조절할 수 있습니다.
             </p>
           </div>
           <button
             type="button"
             onClick={onCancel}
-            disabled={isSaving}
+            disabled={isInteractionLocked}
             className="ui-btn ui-btn-icon ui-btn--ghost text-[var(--text-muted)] hover:text-[var(--text-main)]"
           >
             <span aria-hidden="true" className="block text-lg leading-none">
@@ -424,7 +476,7 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
 
         <div className="mt-5 flex justify-center">
           <div
-            className="relative overflow-hidden rounded-[28px] border border-[var(--border-main)] bg-[var(--bg-main)] touch-none select-none overscroll-contain"
+            className="relative overflow-hidden rounded-xl border border-[var(--border-main)] bg-[var(--bg-main)] touch-none select-none overscroll-contain"
             style={{ width: `${EDITOR_SIZE}px`, height: `${EDITOR_SIZE}px` }}
           >
             <img
@@ -433,15 +485,20 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
               className="h-full w-full select-none object-contain"
               draggable={false}
               onLoad={handleImageLoad}
+              onError={() => setError('이미지를 불러오지 못했습니다.')}
             />
 
             {cropFrame ? (
               <>
                 <div className="pointer-events-none absolute inset-0" style={overlayStyle} />
                 <div
-                  className="absolute cursor-move border-2 border-white"
+                  role="region"
+                  aria-label="자르기 영역"
+                  tabIndex={0}
+                  className="absolute cursor-move border-2 border-white outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-ring)]"
                   style={frameStyle}
                   onPointerDown={startMove}
+                  onKeyDown={handleCropFrameKeyDown}
                 >
                   <div
                     className="pointer-events-none absolute inset-0 rounded-full border-2 border-white"
@@ -452,7 +509,9 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
                       key={handle}
                       type="button"
                       aria-label={`${handle} 핸들`}
-                      className="absolute rounded-md border-2 border-white bg-[var(--accent)] shadow-sm"
+                      aria-hidden="true"
+                      tabIndex={-1}
+                      className="absolute rounded-md border-2 border-white bg-[var(--accent)] shadow-sm [@media(pointer:coarse)]:hidden"
                       style={{
                         width: `${width}px`,
                         height: `${height}px`,
@@ -468,13 +527,34 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
           </div>
         </div>
 
-        {error ? <p className="ui-body mt-4 text-red-600">{error}</p> : null}
+        <div role="group" aria-label="자르기 영역 크기 조절" className="mt-4 flex items-center justify-center gap-2">
+          <button
+            type="button"
+            aria-label="자르기 영역 축소"
+            disabled={isInteractionLocked || !cropFrame || !imageRect}
+            className="ui-btn ui-btn-icon h-11 min-h-11 w-11 sm:h-10 sm:min-h-10 sm:w-10"
+            onClick={() => resizeCropFrame(-8)}
+          >
+            <span aria-hidden="true">−</span>
+          </button>
+          <button
+            type="button"
+            aria-label="자르기 영역 확대"
+            disabled={isInteractionLocked || !cropFrame || !imageRect}
+            className="ui-btn ui-btn-icon h-11 min-h-11 w-11 sm:h-10 sm:min-h-10 sm:w-10"
+            onClick={() => resizeCropFrame(8)}
+          >
+            <span aria-hidden="true">+</span>
+          </button>
+        </div>
+
+        {error ? <p role="alert" className="ui-body mt-4 text-red-600">{error}</p> : null}
 
         <div className="mt-6 flex justify-end gap-3">
           <button
             type="button"
             onClick={onCancel}
-            disabled={isSaving}
+            disabled={isInteractionLocked}
             className="ui-btn"
           >
             취소
@@ -482,10 +562,10 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
           <button
             type="button"
             onClick={handleSave}
-            disabled={isSaving || !cropFrame || !imageRect}
+            disabled={isInteractionLocked || !cropFrame || !imageRect}
             className="ui-btn ui-btn--solid"
           >
-            저장
+            {isInteractionLocked ? '저장 중…' : '저장'}
           </button>
         </div>
       </div>

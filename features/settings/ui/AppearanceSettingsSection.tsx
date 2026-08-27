@@ -30,6 +30,7 @@ export const AppearanceSettingsSection: React.FC<AppearanceSettingsSectionProps>
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const listboxId = useId();
   const selectedOption = useMemo(() => getThemeOption(theme) ?? THEME_OPTIONS[0], [theme]);
 
@@ -49,6 +50,7 @@ export const AppearanceSettingsSection: React.FC<AppearanceSettingsSectionProps>
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setIsOpen(false);
+        window.requestAnimationFrame(() => triggerRef.current?.focus());
       }
     };
 
@@ -63,20 +65,20 @@ export const AppearanceSettingsSection: React.FC<AppearanceSettingsSectionProps>
 
   return (
     <section>
-      <h3 className="ui-label mb-3 font-semibold text-[var(--text-muted)]">화면</h3>
+      <h3 className="ui-label mb-2 px-1 font-semibold text-[var(--text-muted)]">화면</h3>
 
-      <div className="rounded-2xl border border-[var(--border-main)] bg-[var(--bg-sidebar)] p-4 shadow-[var(--shadow-card)]">
-        <div className="flex items-center justify-between gap-4">
+      <div className="rounded-xl bg-[var(--bg-sidebar)] px-1">
+        <div className="flex min-h-14 items-center justify-between gap-4 px-3">
           <p className="ui-label shrink-0 whitespace-nowrap">테마</p>
 
-          <div ref={wrapperRef} className="relative w-full max-w-[18rem]">
+          <div ref={wrapperRef} className="relative min-w-0 w-full max-w-[15rem]">
             <button
+              ref={triggerRef}
               type="button"
-              aria-haspopup="listbox"
               aria-expanded={isOpen}
               aria-controls={listboxId}
               aria-label={`현재 테마: ${selectedOption.label}`}
-              className="ui-btn ui-btn-row px-4 py-3 shadow-[var(--shadow-card)]"
+              className="ui-btn ui-btn--ghost ui-btn-row min-h-11 px-2 sm:min-h-10"
               onClick={() => setIsOpen((value) => !value)}
             >
               <span className="block min-w-0 truncate">{selectedOption.label}</span>
@@ -90,9 +92,9 @@ export const AppearanceSettingsSection: React.FC<AppearanceSettingsSectionProps>
             {isOpen ? (
               <div
                 id={listboxId}
-                role="listbox"
+                role="group"
                 aria-label="테마 선택"
-                className="absolute right-0 top-[calc(100%+0.5rem)] z-20 w-full rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] p-1 shadow-[var(--shadow-panel)]"
+                className="absolute right-0 top-[calc(100%+0.5rem)] z-20 w-[min(18rem,calc(100vw-2.5rem))] rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] p-1 shadow-[var(--shadow-panel)]"
               >
                 {GROUPED_THEME_OPTIONS.map((group) => (
                   <div key={group.scheme} role="presentation" className="py-1 first:pt-0 last:pb-0">
@@ -106,13 +108,12 @@ export const AppearanceSettingsSection: React.FC<AppearanceSettingsSectionProps>
                         <button
                           key={option.id}
                           type="button"
-                          role="option"
-                          aria-selected={isActive}
-                          data-active={isActive ? 'true' : undefined}
+                          aria-pressed={isActive}
                           className={themeOptionClass()}
                           onClick={() => {
                             onThemeChange(option.id);
                             setIsOpen(false);
+                            window.requestAnimationFrame(() => triggerRef.current?.focus());
                           }}
                         >
                           <span className="truncate">{option.label}</span>

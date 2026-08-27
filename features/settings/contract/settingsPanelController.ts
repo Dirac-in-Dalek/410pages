@@ -9,8 +9,8 @@ export type SettingsPanelControllerDependencies = {
   onFontFamilyChange: (value: FontPreference) => void;
   onBaseFontPtChange: (value: number) => void;
   onCitationWidthRemChange: (value: number) => void;
-  onUpdateUsername: (value: string) => boolean | void | Promise<boolean | void>;
-  onUpdateAvatar: (file: File) => boolean | void | Promise<boolean | void>;
+  onUpdateUsername: (value: string) => boolean | Promise<boolean>;
+  onUpdateAvatar: (file: File) => boolean | Promise<boolean>;
   onSignOut?: () => void;
 };
 
@@ -23,12 +23,14 @@ export type SettingsPanelBindings = {
   preferences: UserPreferences;
   isSavingDisplayName?: boolean;
   isSavingAvatar?: boolean;
+  isDisplayNameSaved?: boolean;
+  isAvatarSaved?: boolean;
   avatarError?: string | null;
   displayNameError?: string | null;
   onClose: () => void;
   onDisplayNameChange: (value: string) => void;
   onDisplayNameCommit: (value: string) => void | Promise<void>;
-  onAvatarChange: (file: File) => boolean | void | Promise<boolean | void>;
+  onAvatarChange: (file: File) => boolean | Promise<boolean>;
   onThemeChange: (value: ThemePreference) => void;
   onFontFamilyChange: (value: FontPreference) => void;
   onBaseFontPtChange: (value: number) => void;
