@@ -29,6 +29,7 @@ describe('Auth', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     signInWithPassword.mockResolvedValue({ error: null });
+    signUp.mockResolvedValue({ error: null });
     resetPasswordForEmail.mockResolvedValue({ error: null });
     updateUser.mockResolvedValue({ error: null });
   });
@@ -72,6 +73,39 @@ describe('Auth', () => {
     expect(password.type).toBe('text');
     expect(password.value).toBe('secret-value');
     expect(screen.getByRole('button', { name: '비밀번호 숨기기' })).toBeTruthy();
+  });
+
+  it('signs up without exposing an email availability lookup', async () => {
+    const user = userEvent.setup();
+    render(<Auth />);
+
+    await user.click(screen.getByRole('button', { name: '가입하기' }));
+    await user.type(screen.getByLabelText('이름'), 'Reader');
+    await user.type(screen.getByLabelText('이메일'), 'reader@example.com');
+    await user.type(screen.getByLabelText('비밀번호'), 'safe-password');
+    await user.click(screen.getByRole('button', { name: '계정 만들기' }));
+
+    await waitFor(() => expect(signUp).toHaveBeenCalledWith({
+      email: 'reader@example.com',
+      password: 'safe-password',
+      options: { data: { username: 'Reader' } },
+    }));
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it('does not reveal an existing signup email', async () => {
+    const user = userEvent.setup();
+    signUp.mockResolvedValueOnce({ error: new Error('User already registered') });
+    render(<Auth />);
+
+    await user.click(screen.getByRole('button', { name: '가입하기' }));
+    await user.type(screen.getByLabelText('이름'), 'Reader');
+    await user.type(screen.getByLabelText('이메일'), 'existing@example.com');
+    await user.type(screen.getByLabelText('비밀번호'), 'safe-password');
+    await user.click(screen.getByRole('button', { name: '계정 만들기' }));
+
+    expect(await screen.findByRole('heading', { name: '이메일을 확인해주세요' })).toBeTruthy();
+    expect(screen.queryByText('이미 가입된 이메일입니다.')).toBeNull();
   });
 
   it('requests a password reset with the current origin and shows completion guidance', async () => {

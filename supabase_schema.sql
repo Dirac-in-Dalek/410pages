@@ -35,9 +35,16 @@ returns trigger as $$
 begin
   insert into public.profiles (id, username)
   values (new.id, new.raw_user_meta_data->>'username');
+
+  insert into public.authors (name, user_id, is_self)
+  values (new.raw_user_meta_data->>'username', new.id, true);
+
   return new;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer
+set search_path = '';
+
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
 
 -- 4. 트리거 설정 (삭제 후 재생성으로 충돌 방지)
 drop trigger if exists on_auth_user_created on auth.users;
@@ -196,9 +203,10 @@ BEGIN
     WHERE email = email_to_check
   );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = '';
 
-GRANT EXECUTE ON FUNCTION public.check_email_exists(text) TO anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.check_email_exists(text) FROM PUBLIC, anon, authenticated;
 
 -- 12. PROFILE AVATAR STORAGE
 insert into storage.buckets (id, name, public)

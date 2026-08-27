@@ -39,9 +39,6 @@ export const getAuthErrorMessage = (error: unknown): string => {
     if (normalized.includes('email not confirmed')) {
         return '이메일 인증이 필요합니다. 받은편지함의 인증 링크를 확인해주세요.';
     }
-    if (normalized.includes('user already registered')) {
-        return '이미 가입된 이메일입니다.';
-    }
     if (normalized.includes('password') && (normalized.includes('weak') || normalized.includes('short'))) {
         return '더 안전한 비밀번호를 입력해주세요.';
     }
@@ -64,7 +61,6 @@ export const Auth: React.FC<AuthProps> = ({
     const [mode, setMode] = useState<AuthMode>('login');
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<AuthSuccess>(null);
-    const [emailCheckResult, setEmailCheckResult] = useState<{ available: boolean; message: string } | null>(null);
     const [rememberEmail, setRememberEmailState] = useState(false);
     const [autoLogin, setAutoLogin] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -83,7 +79,6 @@ export const Auth: React.FC<AuthProps> = ({
     const resetFeedback = () => {
         setError(null);
         setSuccess(null);
-        setEmailCheckResult(null);
     };
 
     const switchMode = (nextMode: AuthMode) => {
@@ -92,34 +87,6 @@ export const Auth: React.FC<AuthProps> = ({
         setPasswordConfirm('');
         setShowPassword(false);
         resetFeedback();
-    };
-
-    const checkEmailAvailability = async () => {
-        if (!email || !email.includes('@')) {
-            setError('유효한 이메일을 입력해주세요.');
-            return;
-        }
-
-        setLoading(true);
-        resetFeedback();
-        try {
-            const { data: exists, error: rpcError } = await getSupabaseClient().rpc('check_email_exists', {
-                email_to_check: email,
-            });
-
-            if (rpcError) throw rpcError;
-
-            setEmailCheckResult(
-                exists
-                    ? { available: false, message: '이미 사용 중인 이메일입니다.' }
-                    : { available: true, message: '사용 가능한 이메일입니다.' }
-            );
-        } catch (authError) {
-            console.error('Email check error:', authError);
-            setError(getAuthErrorMessage(authError));
-        } finally {
-            setLoading(false);
-        }
     };
 
     const handleAuth = async (event: React.FormEvent) => {
@@ -132,15 +99,15 @@ export const Auth: React.FC<AuthProps> = ({
             const supabase = getSupabaseClient();
 
             if (mode === 'signup') {
-                if (!emailCheckResult?.available) {
-                    throw new Error('먼저 이메일 중복 확인을 완료해주세요.');
-                }
-
                 const { error: signUpError } = await supabase.auth.signUp({
                     email,
                     password,
                     options: { data: { username } },
                 });
+                if (signUpError?.message.toLocaleLowerCase().includes('user already registered')) {
+                    setSuccess('signup');
+                    return;
+                }
                 if (signUpError) throw signUpError;
                 setSuccess('signup');
                 return;
@@ -321,23 +288,7 @@ export const Auth: React.FC<AuthProps> = ({
                             ) : null}
 
                             <div>
-                                <EmailField
-                                    email={email}
-                                    onChange={(nextEmail) => {
-                                        setEmail(nextEmail);
-                                        setEmailCheckResult(null);
-                                    }}
-                                />
-                                {mode === 'signup' ? (
-                                    <div className="mt-2 flex items-center justify-between gap-3">
-                                        <p aria-live="polite" className={`min-w-0 text-xs ${emailCheckResult?.available ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
-                                            {emailCheckResult?.message || '가입 전에 이메일 중복을 확인해주세요.'}
-                                        </p>
-                                        <button type="button" onClick={() => void checkEmailAvailability()} disabled={loading} className="min-h-11 shrink-0 rounded-lg px-3 text-xs font-semibold text-[var(--accent)] transition-[background-color,transform] hover:bg-[var(--accent-soft)] active:scale-95 disabled:opacity-50 motion-reduce:transition-none">
-                                            중복 확인
-                                        </button>
-                                    </div>
-                                ) : null}
+                                <EmailField email={email} onChange={setEmail} />
                             </div>
 
                             <PasswordField
@@ -360,7 +311,7 @@ export const Auth: React.FC<AuthProps> = ({
                             <AuthAlert message={error} />
 
                             <div className="space-y-1">
-                                <button type="submit" disabled={loading || (mode === 'signup' && !emailCheckResult?.available)} className={AUTH_PRIMARY_BUTTON_CLASS}>
+                                <button type="submit" disabled={loading} className={AUTH_PRIMARY_BUTTON_CLASS}>
                                     {loading ? '처리 중…' : mode === 'signup' ? '계정 만들기' : '로그인'}
                                 </button>
 
