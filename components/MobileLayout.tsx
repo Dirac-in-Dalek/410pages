@@ -95,7 +95,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   onOpenSettings,
 }) => {
   const [isNavigationOpen, setIsNavigationOpen] = useState(false);
-  const [isAllBooksOpen, setIsAllBooksOpen] = useState(false);
+  const [isAllBooksOpen, setIsAllBooksOpen] = useState(true);
   const [isFoldersOpen, setIsFoldersOpen] = useState(true);
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [isSubmittingProject, setIsSubmittingProject] = useState(false);

@@ -47,6 +47,7 @@ describe('ProjectSidebar rename', () => {
       />
     );
 
+    expect(screen.getByRole('button', { name: '저자와 책' }).getAttribute('aria-expanded')).toBe('true');
     await user.click(screen.getByRole('button', { name: '폴더 관리' }));
     await user.click(screen.getByRole('button', { name: '폴더 이름 변경' }));
     const input = screen.getByPlaceholderText('폴더 이름');

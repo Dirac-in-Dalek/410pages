@@ -45,7 +45,7 @@ describe('MobileLayout header actions', () => {
     await user.click(screen.getByRole('button', { name: '탐색 열기' }));
     expect(screen.getByRole('heading', { name: '410pages' })).not.toBeNull();
     expect(screen.getByRole('button', { name: '홈' }).className).toContain('justify-center');
-    expect(screen.getByRole('button', { name: /저자와 책/ })).not.toBeNull();
+    expect(screen.getByRole('button', { name: /저자와 책/ }).getAttribute('aria-expanded')).toBe('true');
     expect(screen.getByText('폴더 추가')).not.toBeNull();
     expect(screen.getByRole('button', { name: '폴더' })).not.toBeNull();
   });
