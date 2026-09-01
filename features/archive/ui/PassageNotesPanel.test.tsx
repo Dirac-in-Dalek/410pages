@@ -21,8 +21,33 @@ describe('PassageNotesPanel', () => {
 
     fireEvent.change(screen.getByPlaceholderText('이 구절에 대한 생각을 적으세요.'), { target: { value: '새 메모' } });
     expect(onAddNote).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: '저장' }));
+    fireEvent.click(screen.getByRole('button', { name: '메모 저장' }));
     await waitFor(() => expect(onAddNote).toHaveBeenCalledWith('citation-1', '새 메모'));
+  });
+
+  it('saves with Enter and keeps Shift+Enter for a newline', async () => {
+    const onAddNote = vi.fn().mockResolvedValue(true);
+    render(<PassageNotesPanel citation={citation} onClose={vi.fn()} onAddNote={onAddNote} onUpdateNote={vi.fn()} onDeleteNote={vi.fn()} />);
+    const textbox = screen.getByPlaceholderText('이 구절에 대한 생각을 적으세요.');
+    fireEvent.change(textbox, { target: { value: '키보드 메모' } });
+
+    fireEvent.keyDown(textbox, { key: 'Enter', shiftKey: true });
+    expect(onAddNote).not.toHaveBeenCalled();
+    fireEvent.keyDown(textbox, { key: 'Enter' });
+    await waitFor(() => expect(onAddNote).toHaveBeenCalledWith('citation-1', '키보드 메모'));
+
+    const saveButton = screen.getByRole('button', { name: '메모 저장' });
+    expect(saveButton.textContent).toBe('');
+    expect(saveButton.className).toContain('w-10');
+  });
+
+  it('does not save when Enter confirms an IME composition', () => {
+    const onAddNote = vi.fn();
+    render(<PassageNotesPanel citation={citation} onClose={vi.fn()} onAddNote={onAddNote} onUpdateNote={vi.fn()} onDeleteNote={vi.fn()} />);
+    const textbox = screen.getByPlaceholderText('이 구절에 대한 생각을 적으세요.');
+    fireEvent.change(textbox, { target: { value: '조합 중' } });
+    fireEvent.keyDown(textbox, { key: 'Enter', isComposing: true });
+    expect(onAddNote).not.toHaveBeenCalled();
   });
 
   it('closes on Escape and an outside click but ignores passage triggers', () => {
@@ -42,7 +67,7 @@ describe('PassageNotesPanel', () => {
     const onAddNote = vi.fn(() => new Promise<boolean>((resolve) => { finishSave = resolve; }));
     const { rerender } = render(<PassageNotesPanel citation={citation} onClose={vi.fn()} onAddNote={onAddNote} onUpdateNote={vi.fn()} onDeleteNote={vi.fn()} />);
     fireEvent.change(screen.getByPlaceholderText('이 구절에 대한 생각을 적으세요.'), { target: { value: 'A 메모' } });
-    fireEvent.click(screen.getByRole('button', { name: '저장' }));
+    fireEvent.click(screen.getByRole('button', { name: '메모 저장' }));
 
     rerender(<PassageNotesPanel citation={{ ...citation, id: 'citation-2', text: '다음 문장' }} onClose={vi.fn()} onAddNote={onAddNote} onUpdateNote={vi.fn()} onDeleteNote={vi.fn()} />);
     const textbox = screen.getByPlaceholderText('이 구절에 대한 생각을 적으세요.');
