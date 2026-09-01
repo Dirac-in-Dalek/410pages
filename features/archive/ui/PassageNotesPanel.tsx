@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, MoreHorizontal, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { Check, Pencil, SendHorizontal, Trash2, X } from 'lucide-react';
 import type { Citation } from '../../../types';
 import { useModalFocus } from '../../../shared/ui/useModalFocus';
 
@@ -113,7 +113,18 @@ export const PassageNotesPanel: React.FC<PassageNotesPanelProps> = ({
             <article key={note.id} className="group px-4 py-4">
               {editingId === note.id ? (
                 <div>
-                  <textarea autoFocus value={editDraft} onChange={(event) => setEditDraft(event.target.value)} className="min-h-24 w-full resize-y rounded-lg border border-[var(--border-main)] bg-[var(--bg-input)] p-3 text-sm leading-6 focus:border-[var(--accent-border)] focus:ring-0" />
+                  <textarea
+                    autoFocus
+                    value={editDraft}
+                    onChange={(event) => setEditDraft(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
+                        event.preventDefault();
+                        void saveEdit(note.id);
+                      }
+                    }}
+                    className="min-h-24 w-full resize-y rounded-lg border border-[var(--border-main)] bg-[var(--bg-input)] p-3 text-sm leading-6 focus:border-[var(--accent-border)] focus:ring-0"
+                  />
                   <div className="mt-2 flex justify-end gap-2">
                     <button type="button" onClick={() => setEditingId(null)} className="min-h-10 rounded-lg px-3 text-sm text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]">취소</button>
                     <button type="button" disabled={!editDraft.trim() || saving} onClick={() => void saveEdit(note.id)} className="inline-flex min-h-10 items-center gap-1 rounded-lg bg-[var(--accent)] px-3 text-sm font-semibold text-white disabled:opacity-40"><Check size={14} /> 저장</button>
@@ -138,10 +149,21 @@ export const PassageNotesPanel: React.FC<PassageNotesPanelProps> = ({
       </div>
 
       <div className="border-t border-[var(--border-main)] p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <textarea value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="이 구절에 대한 생각을 적으세요." className="min-h-24 w-full resize-none rounded-lg border border-[var(--border-main)] bg-[var(--bg-input)] p-3 text-sm leading-6 placeholder:text-[var(--text-muted)] focus:border-[var(--accent-border)] focus:ring-0" />
-        <div className="mt-2 flex items-center justify-between">
-          <span className="inline-flex items-center gap-1 text-[0.7rem] text-[var(--text-muted)]"><MoreHorizontal size={14} /> 저장 전에는 반영되지 않습니다.</span>
-          <button type="button" disabled={!draft.trim() || saving} onClick={() => void saveNewNote()} className="inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-[var(--accent)] px-3.5 text-sm font-semibold text-white disabled:opacity-40"><Plus size={15} /> 저장</button>
+        <textarea
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
+              event.preventDefault();
+              void saveNewNote();
+            }
+          }}
+          placeholder="이 구절에 대한 생각을 적으세요."
+          className="min-h-24 w-full resize-none rounded-lg border border-[var(--border-main)] bg-[var(--bg-input)] p-3 text-sm leading-6 placeholder:text-[var(--text-muted)] focus:border-[var(--accent-border)] focus:ring-0"
+        />
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <span className="min-w-0 text-[0.7rem] leading-4 text-[var(--text-muted)]">Enter 저장 · Shift+Enter 줄바꿈</span>
+          <button type="button" disabled={!draft.trim() || saving} onClick={() => void saveNewNote()} className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--accent)] text-white transition-transform active:scale-95 disabled:opacity-40 motion-reduce:transition-none" aria-label="메모 저장" title="저장 (Enter)"><SendHorizontal size={16} /></button>
         </div>
       </div>
     </aside>
