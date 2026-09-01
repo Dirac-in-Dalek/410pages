@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertCircle, ChevronDown, ChevronUp, Copy, MessageCircle, MoreHorizontal, RefreshCw, X } from 'lucide-react';
 import { ChapterBlockCard } from '../../../components/ChapterBlockCard';
 import { ChapterBlockInsertButton } from '../../../components/ChapterBlockInsertButton';
@@ -15,6 +15,7 @@ import { CitationCard } from './CitationCard';
 import { WordCardGroup } from './WordCardGroup';
 import { useModalFocus } from '../../../shared/ui/useModalFocus';
 import { formatCitationRecoveryText, writeTextToClipboard } from '../../../lib/citationCopy';
+import { FlatCitationHighlightText } from './FlatCitationHighlightText';
 
 export const CitationList: React.FC<CitationListProps> = ({
     citations,
@@ -48,6 +49,7 @@ export const CitationList: React.FC<CitationListProps> = ({
     const [expandedCitationIds, setExpandedCitationIds] = useState<Set<string>>(() => new Set());
     const [detailCitationId, setDetailCitationId] = useState<string | null>(null);
     const [copiedRecoveryCitationId, setCopiedRecoveryCitationId] = useState<string | null>(null);
+    const suppressPassageClickRef = useRef<string | null>(null);
     const detailDialogRef = useModalFocus<HTMLElement>(Boolean(detailCitationId), () => setDetailCitationId(null));
     const bookId = chapterBlocks[0]?.bookId ?? citations.find((citation) => citation.bookId)?.bookId;
     const currentSortField: 'date' | 'page' = isBookView ? 'date' : sortField ?? 'page';
@@ -120,6 +122,10 @@ export const CitationList: React.FC<CitationListProps> = ({
             }
             return next;
         });
+    };
+
+    const togglePassageNotes = (citationId: string) => {
+        onPassageNoteCitationChange?.(passageNoteCitationId === citationId ? null : citationId);
     };
 
     const handleCopyRecoveryText = async (citation: typeof citations[number]) => {
@@ -252,24 +258,49 @@ export const CitationList: React.FC<CitationListProps> = ({
                                         />
                                     </label>
                                     <div className="min-w-0 flex-1">
-                                        <button
-                                            type="button"
+                                        <div
                                             data-passage-note-trigger
-                                            onClick={() => onPassageNoteCitationChange?.(
-                                                passageNoteCitationId === item.citation.id ? null : item.citation.id
-                                            )}
-                                            className="w-full px-1 py-5 text-left active:scale-[0.99]"
-                                            aria-label={`구절 메모 ${passageNoteCitationId === item.citation.id ? '닫기' : '열기'}: ${item.citation.text.slice(0, 40)}`}
-                                            aria-expanded={passageNoteCitationId === item.citation.id}
+                                            onClick={() => {
+                                                if (suppressPassageClickRef.current === item.citation.id) {
+                                                    suppressPassageClickRef.current = null;
+                                                    return;
+                                                }
+                                                togglePassageNotes(item.citation.id);
+                                            }}
+                                            className="w-full cursor-pointer px-1 py-5 text-left active:scale-[0.99]"
                                         >
-                                            <span className="block whitespace-pre-wrap font-[var(--font-display-active)] text-[1.02rem] leading-[1.72] text-[var(--text-main)]">{item.citation.text}</span>
+                                            <FlatCitationHighlightText
+                                                citation={item.citation}
+                                                disabled={Boolean(item.citation.saveStatus)}
+                                                onUpdate={onUpdateCitation}
+                                                onHighlight={() => {
+                                                    suppressPassageClickRef.current = item.citation.id;
+                                                    window.setTimeout(() => {
+                                                        if (suppressPassageClickRef.current === item.citation.id) {
+                                                            suppressPassageClickRef.current = null;
+                                                        }
+                                                    }, 0);
+                                                }}
+                                            />
                                             <span className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.76rem] text-[var(--text-muted)]">
                                                 {item.citation.page ? <span>{item.citation.page}쪽</span> : null}
                                                 <span>{new Date(item.citation.createdAt).toLocaleDateString('ko-KR')}</span>
-                                                <span className="inline-flex items-center gap-1"><MessageCircle size={13} /> 메모 {item.citation.notes.length}</span>
+                                                <button
+                                                    type="button"
+                                                    data-passage-note-trigger
+                                                    onClick={(event) => {
+                                                        event.stopPropagation();
+                                                        togglePassageNotes(item.citation.id);
+                                                    }}
+                                                    className="inline-flex min-h-8 items-center gap-1 rounded-md px-1.5 transition-[background-color,color,transform] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)] active:scale-95"
+                                                    aria-label={`구절 메모 ${passageNoteCitationId === item.citation.id ? '닫기' : '열기'}: ${item.citation.text.slice(0, 40)}`}
+                                                    aria-expanded={passageNoteCitationId === item.citation.id}
+                                                >
+                                                    <MessageCircle size={13} /> 메모 {item.citation.notes.length}
+                                                </button>
                                                 {item.citation.saveStatus === 'saving' ? <span role="status">저장 중…</span> : null}
                                             </span>
-                                        </button>
+                                        </div>
                                         {item.citation.saveStatus === 'failed' ? (
                                             <div role="alert" className="mb-3 flex min-h-11 flex-wrap items-center gap-2 rounded-lg bg-red-50 px-2.5 py-1.5 text-[0.8rem] text-red-900 dark:bg-red-500/10 dark:text-red-100">
                                                 <span className="mr-auto inline-flex items-center gap-1.5 font-medium">
