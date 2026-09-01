@@ -58,6 +58,7 @@ describe('archive rename patches', () => {
         toBookId: 'target-shared',
         toBookTitle: 'Shared',
         toBookSortIndex: 4,
+        toBookMemo: 'merged memo',
       }],
     };
 
@@ -67,6 +68,7 @@ describe('archive rename patches', () => {
     expect(nextBooks.map((entry) => entry.id)).toEqual(['source-unique', 'target-shared']);
     expect(nextBooks.every((entry) => entry.authorId === 'author-new' && entry.author === 'New author')).toBe(true);
     expect(nextBooks.find((entry) => entry.id === 'target-shared')?.sortIndex).toBe(4);
+    expect(nextBooks.find((entry) => entry.id === 'target-shared')?.memo).toBe('merged memo');
     expect(nextCitations).toMatchObject([
       { authorId: 'author-new', author: 'New author', bookId: 'target-shared', book: 'Shared' },
       { authorId: 'author-new', author: 'New author', bookId: 'source-unique', book: 'Unique' },
@@ -85,10 +87,11 @@ describe('archive rename patches', () => {
       bookId: 'target',
       bookTitle: 'New title',
       bookSortIndex: 3,
+      bookMemo: 'target memo',
     };
 
     expect(applyRenameBookToBooks(books, result)).toMatchObject([
-      { id: 'target', title: 'New title', sortIndex: 3 },
+      { id: 'target', title: 'New title', sortIndex: 3, memo: 'target memo' },
     ]);
     expect(applyRenameBookToCitations(citations, result)).toMatchObject([
       { bookId: 'target', book: 'New title', bookSortIndex: 3 },
@@ -102,10 +105,11 @@ describe('archive rename patches', () => {
       bookId: 'target',
       bookTitle: 'Target title',
       bookSortIndex: 7,
+      bookMemo: 'merged memo',
     };
 
     expect(applyRenameBookToBooks([book('source', 'Source title', 'author', 'Author')], result)).toMatchObject([
-      { id: 'target', title: 'Target title', sortIndex: 7 },
+      { id: 'target', title: 'Target title', sortIndex: 7, memo: 'merged memo' },
     ]);
   });
 });
@@ -121,6 +125,12 @@ describe('archive query and optimistic save patches', () => {
       'optimistic-failed',
       'server',
     ]);
+  });
+
+  it('keeps a local failed draft over a fetched row with the same UUID', () => {
+    const local = { ...citation('same-id', 'book', 'Book', 'author', 'Author'), text: 'Local edit', saveStatus: 'failed' as const };
+    const server = { ...citation('same-id', 'book', 'Book', 'author', 'Author'), text: 'Server value' };
+    expect(mergeFetchedCitations([local], [server])).toEqual([local]);
   });
 
   it('inserts the persisted citation even if a refresh removed its optimistic row', () => {

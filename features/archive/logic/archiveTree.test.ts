@@ -152,7 +152,7 @@ describe('archiveTree author order', () => {
     expect(getCurrentOrderedAuthors(citations, 'Me')).toEqual(['author-a', 'author-b']);
   });
 
-  it('ignores stale manual sort indexes when ordering authors', () => {
+  it('uses manual sort indexes when ordering authors in the tree', () => {
     const citations = [
       citation({
         id: 'new-a',
@@ -170,7 +170,7 @@ describe('archiveTree author order', () => {
       }),
     ];
 
-    expect(deriveAuthorOrder(citations, 'Me')).toEqual(['author-a', 'author-b']);
+    expect(deriveAuthorOrder(citations, 'Me')).toEqual(['author-b', 'author-a']);
   });
 
   it('excludes the signed-in user from the author list order', () => {
@@ -191,7 +191,7 @@ describe('archiveTree author order', () => {
     expect(getCurrentOrderedAuthors([], 'Me', books)).toEqual(['author-a']);
   });
 
-  it('uses author creation time until a newer citation exists', () => {
+  it('keeps persisted manual order even when another author has newer activity', () => {
     const authors: AuthorSource[] = [
       { id: 'author-a', name: 'Alpha', sortIndex: 0, createdAt: 500, isSelf: false },
       { id: 'author-b', name: 'Beta', sortIndex: 1, createdAt: 300, isSelf: false },
@@ -200,10 +200,10 @@ describe('archiveTree author order', () => {
       citation({ id: 'latest', authorId: 'author-b', author: 'Beta', createdAt: 600 }),
     ];
 
-    expect(deriveAuthorOrder(citations, 'Me', [], authors)).toEqual(['author-b', 'author-a']);
+    expect(deriveAuthorOrder(citations, 'Me', [], authors)).toEqual(['author-a', 'author-b']);
   });
 
-  it('uses the same persisted-sentence activity order for the home and sidebar', () => {
+  it('keeps activity order on the home and manual order in the sidebar', () => {
     const authors: AuthorSource[] = [
       { id: 'author-a', name: 'Alpha', sortIndex: 0, createdAt: 100, isSelf: false },
       { id: 'author-b', name: 'Beta', sortIndex: 1, createdAt: 200, isSelf: false },
@@ -219,8 +219,7 @@ describe('archiveTree author order', () => {
       citation({ id: 'saved', authorId: 'author-b', author: 'Beta', createdAt: 300 }),
     ];
 
-    const expected = ['author-b', 'author-c', 'author-a'];
-    expect(sortAuthorsByActivity(authors, citations).map((author) => author.id)).toEqual(expected);
-    expect(deriveAuthorOrder(citations, 'Me', books, authors)).toEqual(expected);
+    expect(sortAuthorsByActivity(authors, citations).map((author) => author.id)).toEqual(['author-b', 'author-c', 'author-a']);
+    expect(deriveAuthorOrder(citations, 'Me', books, authors)).toEqual(['author-a', 'author-b', 'author-c']);
   });
 });

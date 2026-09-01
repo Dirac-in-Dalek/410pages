@@ -53,6 +53,8 @@ type ArchiveScreenProps = {
   onDeleteNote: (citationId: string, noteId: string) => void;
   onDeleteCitation: (id: string) => void;
   onUpdateCitation: (id: string, data: Partial<Citation>) => void | Promise<unknown>;
+  passageNoteCitationId?: string | null;
+  onPassageNoteCitationChange?: (citationId: string | null) => void;
 };
 
 export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
@@ -97,6 +99,8 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
   onDeleteNote,
   onDeleteCitation,
   onUpdateCitation,
+  passageNoteCitationId,
+  onPassageNoteCitationChange,
 }) => {
   const columnClassName = getArchiveReadingColumnClass({ isBookView, isMobileApp });
 
@@ -174,6 +178,8 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
             onDeleteCitation={onDeleteCitation}
             onUpdateCitation={onUpdateCitation}
             onRetryCitationSave={onRetryCitationSave}
+            passageNoteCitationId={passageNoteCitationId}
+            onPassageNoteCitationChange={onPassageNoteCitationChange}
           />}
         </div>
       </div>

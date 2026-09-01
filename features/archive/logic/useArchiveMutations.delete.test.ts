@@ -3,7 +3,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AuthorFolder, AuthorFolderMembership, AuthorSource, BookSource, ChapterBlock, Citation, Project } from '../../../types';
 
-const { mockAddCitation, mockCreateAuthor, mockCreateBook, mockCreateAuthorFolder, mockDeleteAuthorCascade, mockDeleteBookCascade, mockMoveAuthorToFolder, mockRemoveAuthorFromFolder, mockCreateChapterBlock, mockDeleteChapterBlock, mockDeleteCitations, mockAddCitationsToProject, mockCreateProjectRecord } = vi.hoisted(() => ({
+const { mockAddCitation, mockCreateAuthor, mockCreateBook, mockCreateAuthorFolder, mockDeleteAuthorCascade, mockDeleteBookCascade, mockMoveAuthorToFolder, mockRemoveAuthorFromFolder, mockCreateChapterBlock, mockDeleteChapterBlock, mockDeleteCitations, mockAddCitationsToProject, mockCreateProjectRecord, mockRenameBook, mockUpdateBookMemo } = vi.hoisted(() => ({
   mockAddCitation: vi.fn(),
   mockCreateAuthor: vi.fn(),
   mockCreateBook: vi.fn(),
@@ -17,6 +17,8 @@ const { mockAddCitation, mockCreateAuthor, mockCreateBook, mockCreateAuthorFolde
   mockDeleteCitations: vi.fn(),
   mockAddCitationsToProject: vi.fn(),
   mockCreateProjectRecord: vi.fn(),
+  mockRenameBook: vi.fn(),
+  mockUpdateBookMemo: vi.fn(),
 }));
 
 vi.mock('../../../shared/api/authorFolderApi', () => ({
@@ -38,7 +40,8 @@ vi.mock('../../../shared/api/bookApi', () => ({
   createBook: mockCreateBook,
   deleteBookCascade: mockDeleteBookCascade,
   previewBookDeletion: vi.fn(),
-  renameBook: vi.fn(),
+  renameBook: mockRenameBook,
+  updateBookMemo: mockUpdateBookMemo,
 }));
 
 vi.mock('../../../shared/api/citationApi', async (importOriginal) => {
@@ -62,6 +65,7 @@ vi.mock('../../../shared/api/projectApi', async (importOriginal) => ({
 }));
 
 import { useArchiveMutations } from './useArchiveMutations';
+import { readCitationDrafts, storeCitationDraft } from './citationDraftStorage';
 
 const persistedCitation: Citation = {
   id: 'citation-1',
@@ -129,6 +133,7 @@ const setup = (
 describe('useArchiveMutations grouped citation deletion', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.localStorage.clear();
     mockAddCitation.mockResolvedValue({ ...persistedCitation, id: 'persisted-retry' });
     mockCreateChapterBlock.mockResolvedValue({
       id: 'block-new',
@@ -142,7 +147,7 @@ describe('useArchiveMutations grouped citation deletion', () => {
     mockDeleteCitations.mockResolvedValue(undefined);
   });
 
-  it('deletes persisted ids with one API call and removes failed optimistic ids locally', async () => {
+  it('deletes persisted and failed ids from the server in one call', async () => {
     const { result } = setup([persistedCitation, failedOptimisticCitation]);
 
     let didDelete = false;
@@ -155,19 +160,22 @@ describe('useArchiveMutations grouped citation deletion', () => {
 
     expect(didDelete).toBe(true);
     expect(mockDeleteCitations).toHaveBeenCalledTimes(1);
-    expect(mockDeleteCitations).toHaveBeenCalledWith('user-1', ['citation-1']);
+    expect(mockDeleteCitations).toHaveBeenCalledWith('user-1', [
+      'citation-1',
+      'optimistic-citation-failed',
+    ]);
     expect(result.current.citations).toEqual([]);
     expect(result.current.projects[0].citationIds).toEqual([]);
   });
 
-  it('deletes a failed optimistic group locally without a server request', async () => {
+  it('also deletes a failed draft UUID from the server to prevent resurrection', async () => {
     const { result } = setup([failedOptimisticCitation]);
 
     await act(async () => {
       await result.current.handleDeleteCitations([failedOptimisticCitation.id]);
     });
 
-    expect(mockDeleteCitations).not.toHaveBeenCalled();
+    expect(mockDeleteCitations).toHaveBeenCalledWith('user-1', [failedOptimisticCitation.id]);
     expect(result.current.citations).toEqual([]);
     expect(result.current.projects[0].citationIds).toEqual([]);
   });
@@ -278,7 +286,34 @@ describe('useArchiveMutations grouped citation deletion', () => {
     }));
   });
 
-  it('keeps a newer local book merge when an older save response finishes last', async () => {
+  it('keeps a failed draft storage record aligned after a book merge', async () => {
+    const failedDraft: Citation = {
+      ...failedOptimisticCitation,
+      bookId: 'book-old',
+      book: 'Old book',
+      bookSortIndex: 1,
+    };
+    storeCitationDraft('user-1', failedDraft);
+    mockRenameBook.mockResolvedValueOnce({
+      merged: true,
+      fromBookId: 'book-old',
+      bookId: 'book-new',
+      bookTitle: 'Merged book',
+      bookSortIndex: 2,
+      bookMemo: 'Merged memo',
+    });
+    const { result } = setup([failedDraft]);
+
+    await act(async () => {
+      await result.current.handleRenameBook('book-old', 'Merged book');
+    });
+
+    expect(readCitationDrafts('user-1')).toEqual([
+      expect.objectContaining({ bookId: 'book-new', book: 'Merged book', bookSortIndex: 2 }),
+    ]);
+  });
+
+  it('keeps the same UUID and a newer local book merge when an older save response finishes last', async () => {
     let finishSave!: (citation: Citation) => void;
     mockAddCitation.mockImplementationOnce(
       () => new Promise<Citation>((resolve) => { finishSave = resolve; })
@@ -304,6 +339,7 @@ describe('useArchiveMutations grouped citation deletion', () => {
         citation.id === optimisticId
           ? {
               ...citation,
+              text: 'Newer local text',
               book: 'Merged book',
               bookId: 'merged-book-id',
               bookSortIndex: 9,
@@ -316,7 +352,7 @@ describe('useArchiveMutations grouped citation deletion', () => {
     await act(async () => {
       finishSave({
         ...persistedCitation,
-        id: 'persisted-concurrent',
+        id: optimisticId,
         book: 'Old book',
         bookId: 'old-book-id',
         bookSortIndex: 2,
@@ -327,16 +363,20 @@ describe('useArchiveMutations grouped citation deletion', () => {
 
     expect(result.current.citations).toEqual([
       expect.objectContaining({
-        id: 'persisted-concurrent',
-        optimisticOriginId: optimisticId,
+        id: optimisticId,
+        text: 'Newer local text',
         book: 'Merged book',
         bookId: 'merged-book-id',
         bookSortIndex: 9,
+        saveStatus: 'failed',
       }),
+    ]);
+    expect(readCitationDrafts('user-1')).toEqual([
+      expect.objectContaining({ id: optimisticId, text: 'Newer local text', saveStatus: 'failed' }),
     ]);
   });
 
-  it('returns failure without removing the optimistic failed row', async () => {
+  it('returns immediately and keeps an eventual failure as a retryable local draft', async () => {
     mockAddCitation.mockRejectedValueOnce(new Error('offline'));
     const { result } = setup([]);
 
@@ -347,9 +387,41 @@ describe('useArchiveMutations grouped citation deletion', () => {
       });
     });
 
-    expect(addResult).toMatchObject({ ok: false });
+    expect(addResult).toMatchObject({ ok: true });
     expect(result.current.citations).toHaveLength(1);
-    expect(result.current.citations[0]).toMatchObject({ text: 'Keep this input', saveStatus: 'failed' });
+    await waitFor(() => expect(result.current.citations[0]).toMatchObject({
+      text: 'Keep this input',
+      saveStatus: 'failed',
+    }));
+    expect(mockAddCitation).toHaveBeenCalledWith('user-1', expect.objectContaining({
+      id: result.current.citations[0].id,
+    }));
+  });
+
+  it('retries a lost response with the same UUID and removes the recovered draft', async () => {
+    mockAddCitation.mockRejectedValueOnce(new Error('response lost'));
+    const { result } = setup([]);
+
+    await act(async () => {
+      await result.current.handleAddCitationOptimistic({
+        kind: 'sentence', text: 'Only one row', author: 'Author', book: 'Book', tags: [],
+      });
+    });
+    await waitFor(() => expect(result.current.citations[0]?.saveStatus).toBe('failed'));
+    const citationId = result.current.citations[0].id;
+    expect(readCitationDrafts('user-1').map((citation) => citation.id)).toEqual([citationId]);
+
+    mockAddCitation.mockResolvedValueOnce({ ...persistedCitation, id: citationId, text: 'Only one row' });
+    await act(async () => {
+      await result.current.handleRetryCitationSave(citationId);
+      await result.current.resolveCitationId(citationId);
+    });
+
+    expect(mockAddCitation).toHaveBeenCalledTimes(2);
+    expect(mockAddCitation.mock.calls.map(([, input]) => input.id)).toEqual([citationId, citationId]);
+    expect(result.current.citations.map((citation) => citation.id)).toEqual([citationId]);
+    expect(result.current.citations[0].saveStatus).toBeUndefined();
+    expect(readCitationDrafts('user-1')).toEqual([]);
   });
 
   it('re-fetches the mutated book after creating a chapter block', async () => {
@@ -530,5 +602,31 @@ describe('useArchiveMutations author and book creation', () => {
       expect.objectContaining({ id: 'project-1', citationIds: ['citation-1'] }),
       expect.objectContaining({ id: 'project-2', citationIds: ['citation-2'] }),
     ]);
+  });
+
+  it('updates the local book memo only after the server save succeeds', async () => {
+    const book = { id: 'book-1', title: 'Book', memo: 'old', sortIndex: 0, createdAt: 1, authorId: 'author-1', author: 'Author', authorSortIndex: 0, isSelf: false } as BookSource;
+    mockUpdateBookMemo.mockResolvedValueOnce(undefined);
+    const { result } = setup([], { initialBooks: [book] });
+
+    await act(async () => {
+      expect(await result.current.handleUpdateBookMemo(book.id, 'new')).toBe(true);
+    });
+
+    expect(mockUpdateBookMemo).toHaveBeenCalledWith('user-1', book.id, 'new');
+    expect(result.current.books[0].memo).toBe('new');
+  });
+
+  it('keeps the server memo locally when a save fails', async () => {
+    const book = { id: 'book-1', title: 'Book', memo: 'old', sortIndex: 0, createdAt: 1, authorId: 'author-1', author: 'Author', authorSortIndex: 0, isSelf: false } as BookSource;
+    mockUpdateBookMemo.mockRejectedValueOnce(new Error('network'));
+    const { result } = setup([], { initialBooks: [book] });
+
+    await act(async () => {
+      expect(await result.current.handleUpdateBookMemo(book.id, 'new')).toBe(false);
+    });
+
+    expect(result.current.books[0].memo).toBe('old');
+    expect(result.current.mutationError).toContain('서버에 저장하지 못했습니다');
   });
 });

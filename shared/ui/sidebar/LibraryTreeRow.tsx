@@ -25,6 +25,7 @@ interface LibraryTreeRowProps {
   onDragLeave?: (event: React.DragEvent<HTMLDivElement>) => void;
   onDragEnd?: (event: React.DragEvent<HTMLDivElement>) => void;
   onTouchStart?: (event: React.TouchEvent<HTMLDivElement>) => void;
+  onReorderByKeyboard?: (direction: -1 | 1) => void;
   children: React.ReactNode;
 }
 
@@ -50,6 +51,7 @@ export const LibraryTreeRow: React.FC<LibraryTreeRowProps> = ({
   onDragLeave,
   onDragEnd,
   onTouchStart,
+  onReorderByKeyboard,
   children,
 }) => {
   const paddingLeft = getLibraryTreePaddingLeft(depth);
@@ -84,9 +86,15 @@ export const LibraryTreeRow: React.FC<LibraryTreeRowProps> = ({
         style={{ paddingLeft: `${paddingLeft}px` }}
         title={title}
         aria-label={title}
+        aria-keyshortcuts={onReorderByKeyboard ? 'Alt+ArrowUp Alt+ArrowDown' : undefined}
         onClick={onClick}
         onKeyDown={(event) => {
           if (event.target !== event.currentTarget) return;
+          if (event.altKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown') && onReorderByKeyboard) {
+            event.preventDefault();
+            onReorderByKeyboard(event.key === 'ArrowUp' ? -1 : 1);
+            return;
+          }
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
             onClick();

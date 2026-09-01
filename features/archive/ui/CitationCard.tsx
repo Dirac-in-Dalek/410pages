@@ -383,6 +383,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   };
 
   const handleTextSelection = (event: React.MouseEvent<HTMLElement>) => {
+    if (isSavingCitation) return;
     if (event.detail > 1) return;
 
     const selection = window.getSelection();
@@ -424,6 +425,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   };
 
   const handleRemoveHighlight = (highlightId: string) => {
+    if (isSavingCitation) return;
     const updatedHighlights = localHighlights.filter((highlight) => highlight.id !== highlightId);
     setLocalHighlights(updatedHighlights);
     onUpdate(citation.id, { highlights: updatedHighlights });

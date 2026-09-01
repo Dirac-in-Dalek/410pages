@@ -29,11 +29,25 @@ import {
 import type { BookSource, PdfReaderMeta } from '../types';
 import { useUndoableCitationDelete } from '../features/archive/logic/useUndoableCitationDelete';
 import { UndoDeleteToasts } from '../features/archive/ui/UndoDeleteToasts';
+import { BookMemoPanel } from '../features/archive/ui/BookMemoPanel';
+import { PassageNotesPanel } from '../features/archive/ui/PassageNotesPanel';
+import { NotebookPen } from 'lucide-react';
 
 type AuthStatus = ReturnType<typeof useAuthStatus>;
 
 const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatus }) => {
   const { isMobileApp } = useResponsiveMode();
+  const [isOnline, setIsOnline] = React.useState(() => navigator.onLine);
+  React.useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
   const {
     session, username, avatarUrl, loading: authLoading,
     handleUpdateUsername, handleUpdateAvatar, handleSignOut
@@ -48,7 +62,7 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
     handleBulkUpdateCitationSource, handleCreateAuthor, handleCreateAuthorFolder, handleRenameAuthorFolder, handleDeleteAuthorFolder,
     handleMoveAuthorToFolder, handleRemoveAuthorFromFolder, handleDeleteAuthorCascade, handlePreviewAuthorDeletion,
     handleDeleteBookCascade, handlePreviewBookDeletion, handleCreateBook,
-    handleCreateProject, handleRenameProject, handleDeleteProject, handleRenameAuthor, handleRenameBook,
+    handleCreateProject, handleRenameProject, handleDeleteProject, handleRenameAuthor, handleRenameBook, handleUpdateBookMemo,
     handleLoadChapterBlocks, cancelChapterBlockLoad, handleCreateChapterBlock, handleDeleteChapterBlock,
     handleDropCitationToProject, handleAddCitationsToProject, handleCreateProjectWithCitations, handleReorderProjects,
     mutationError, clearMutationError
@@ -99,8 +113,54 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
     handleTreeItemClick, treeData, filteredCitations, viewTitle,
     editorPrefill, filter, sortField, dateDirection, pageDirection,
     handleDateSortClick, handlePageSortClick, handleAuthorSourceSelect, handleBookSourceSelect,
-    handleReorderBookAt
-  } = useArchiveFilter(citations, authors, authorFolders, authorFolderMemberships, books, projects, username, session?.user?.id);
+    handleReorderBookAt, handleReorderAuthorAt, libraryOrderError, libraryOrderSaving, clearLibraryOrderError
+  } = useArchiveFilter(
+    citations,
+    authors,
+    authorFolders,
+    authorFolderMemberships,
+    books,
+    projects,
+    username,
+    session?.user?.id,
+    fetchData
+  );
+
+  const [passageNoteCitationId, setPassageNoteCitationId] = React.useState<string | null>(null);
+  const [isMobileBookMemoOpen, setIsMobileBookMemoOpen] = React.useState(false);
+  const [isDesktopBookMemoOpen, setIsDesktopBookMemoOpen] = React.useState(true);
+  const selectedBook = selectedBookId ? books.find((book) => book.id === selectedBookId) ?? null : null;
+  const passageNoteCitation = passageNoteCitationId
+    ? citations.find((citation) => citation.id === passageNoteCitationId) ?? null
+    : null;
+
+  React.useEffect(() => {
+    setPassageNoteCitationId(null);
+    setIsMobileBookMemoOpen(false);
+  }, [isBookView, selectedBookId, session?.user?.id]);
+
+  React.useEffect(() => {
+    if (passageNoteCitationId && !passageNoteCitation) setPassageNoteCitationId(null);
+  }, [passageNoteCitation, passageNoteCitationId]);
+
+  const handlePassageNoteCitationChange = React.useCallback((citationId: string | null) => {
+    setPassageNoteCitationId(citationId);
+    if (citationId) setIsMobileBookMemoOpen(false);
+  }, []);
+
+  const openDesktopBookMemo = React.useCallback(() => {
+    setIsDesktopBookMemoOpen(true);
+    window.requestAnimationFrame(() => {
+      document.querySelector<HTMLTextAreaElement>('textarea[aria-label="책 전체 메모"]')?.focus();
+    });
+  }, []);
+
+  const closeDesktopBookMemo = React.useCallback(() => {
+    setIsDesktopBookMemoOpen(false);
+    window.requestAnimationFrame(() => {
+      document.getElementById('book-memo-open-button')?.focus();
+    });
+  }, []);
 
   const {
     selectedIds, isCopying, bulkError, clearBulkError, reportBulkError, handleToggleSelect, handleSelectAll,
@@ -158,6 +218,7 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
   const actionErrors = [
     mutationError ? { id: 'mutation', message: mutationError, dismiss: clearMutationError } : null,
     bulkError ? { id: 'bulk', message: bulkError, dismiss: clearBulkError } : null,
+    libraryOrderError ? { id: 'library-order', message: libraryOrderError, dismiss: clearLibraryOrderError } : null,
   ].filter((entry): entry is NonNullable<typeof entry> => entry !== null);
   const mutationAlerts = actionErrors.length > 0 ? (
     <div className="fixed right-4 top-4 z-[90] flex w-[min(24rem,calc(100vw-2rem))] flex-col gap-2">
@@ -177,6 +238,14 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
           </button>
         </div>
       ))}
+    </div>
+  ) : null;
+  const networkNotice = !isOnline ? (
+    <div
+      role="status"
+      className="fixed left-1/2 top-3 z-[95] w-[min(28rem,calc(100vw-1.5rem))] -translate-x-1/2 rounded-xl bg-[var(--text-main)] px-4 py-2.5 text-center text-sm font-medium text-[var(--bg-main)] shadow-[var(--shadow-popover)]"
+    >
+      오프라인입니다. 실패한 문장은 이 기기에 임시 보관됩니다.
     </div>
   ) : null;
   const handleRenameBookAndKeepSelection = async (bookId: string, name: string) => {
@@ -199,6 +268,7 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
       id: result.bookId,
       title: result.bookTitle,
       sortIndex: result.bookSortIndex,
+      memo: result.bookMemo,
     });
     return true;
   };
@@ -227,6 +297,7 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
         id: targetId,
         title: merge?.toBookTitle ?? targetBook.title,
         sortIndex: merge?.toBookSortIndex ?? targetBook.sortIndex,
+        memo: merge?.toBookMemo ?? targetBook.memo,
         authorId: result.authorId,
         author: result.authorName,
         authorSortIndex: result.authorSortIndex,
@@ -401,6 +472,8 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
       onDeleteNote: handleDeleteNote,
       onDeleteCitation: requestDeleteCitation,
       onUpdateCitation: handleUpdateCitation,
+      passageNoteCitationId,
+      onPassageNoteCitationChange: handlePassageNoteCitationChange,
     })} />
   );
   const mobileLayoutProps = createMobileLayoutProps({
@@ -435,6 +508,11 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
     searchTerm,
     selectedFilter: filter,
     onOpenSettings: openSettings,
+    showBookMemoAction: isBookView && Boolean(selectedBook),
+    onOpenBookMemo: () => {
+      setPassageNoteCitationId(null);
+      setIsMobileBookMemoOpen(true);
+    },
   });
   const readerScreenProps = createReaderScreenProps({
     username,
@@ -456,6 +534,24 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
     onBulkUpdateCitationSource: handleBulkUpdateCitationSource,
   });
   const mainLayoutProps = createMainLayoutProps({
+    leftPanel: passageNoteCitation ? (
+      <PassageNotesPanel
+        citation={passageNoteCitation}
+        onClose={() => setPassageNoteCitationId(null)}
+        onAddNote={handleAddNote}
+        onUpdateNote={handleUpdateNote}
+        onDeleteNote={handleDeleteNote}
+      />
+    ) : undefined,
+    rightPanel: isBookView && selectedBook ? (
+      <BookMemoPanel
+        userId={session.user.id}
+        book={selectedBook}
+        onSave={handleUpdateBookMemo}
+        onClose={closeDesktopBookMemo}
+      />
+    ) : undefined,
+    rightPanelOpen: isDesktopBookMemoOpen,
     projects,
     selectedProjectId,
     onProjectSelect: handleProjectSelect,
@@ -489,6 +585,8 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
     searchTerm,
     selectedFilter: filter,
     onReorderBookAt: handleReorderBookAt,
+    onReorderAuthorAt: handleReorderAuthorAt,
+    libraryOrderSaving,
     onOpenSettings: openSettings,
   });
 
@@ -496,7 +594,37 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
     return (
       <>
         <MobileLayout {...mobileLayoutProps}>{archiveContent}</MobileLayout>
+        {passageNoteCitation ? (
+          <>
+            <button type="button" className="fixed inset-0 z-40 bg-black/35" onClick={() => setPassageNoteCitationId(null)} aria-label="구절 메모 닫기" />
+            <div className="fixed inset-x-0 bottom-0 z-50 h-[min(78dvh,42rem)]">
+              <PassageNotesPanel
+                citation={passageNoteCitation}
+                mobile
+                onClose={() => setPassageNoteCitationId(null)}
+                onAddNote={handleAddNote}
+                onUpdateNote={handleUpdateNote}
+                onDeleteNote={handleDeleteNote}
+              />
+            </div>
+          </>
+        ) : null}
+        {isMobileBookMemoOpen && selectedBook ? (
+          <>
+            <button type="button" className="fixed inset-0 z-40 bg-black/35" onClick={() => setIsMobileBookMemoOpen(false)} aria-label="책 전체 메모 닫기" />
+            <div className="fixed inset-x-0 bottom-0 z-50 h-[min(72dvh,38rem)]">
+              <BookMemoPanel
+                userId={session.user.id}
+                book={selectedBook}
+                mobile
+                onClose={() => setIsMobileBookMemoOpen(false)}
+                onSave={handleUpdateBookMemo}
+              />
+            </div>
+          </>
+        ) : null}
         {settingsPanel}
+        {networkNotice}
         {mutationAlerts}
         <UndoDeleteToasts pendingDeletes={pendingDeletes} onUndo={undoDeleteCitation} />
       </>
@@ -507,6 +635,7 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
     return (
       <>
         <ReaderScreen key={sessionUserId} {...readerScreenProps} />
+        {networkNotice}
         {mutationAlerts}
         <UndoDeleteToasts pendingDeletes={pendingDeletes} onUndo={undoDeleteCitation} />
       </>
@@ -516,7 +645,20 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
   return (
     <>
       <MainLayout {...mainLayoutProps}>{archiveContent}</MainLayout>
+      {isBookView && selectedBook && !isDesktopBookMemoOpen ? (
+        <button
+          id="book-memo-open-button"
+          type="button"
+          onClick={openDesktopBookMemo}
+          className="fixed right-4 top-[calc(3.15rem+0.5rem+0.5px)] z-30 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--bg-input)] text-[var(--text-secondary)] transition-[background-color,color,transform] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)] active:scale-95 motion-reduce:transition-none"
+          aria-label="책 전체 메모 열기"
+          title="책 전체 메모 열기"
+        >
+          <NotebookPen size={18} />
+        </button>
+      ) : null}
       {settingsPanel}
+      {networkNotice}
       {mutationAlerts}
       <UndoDeleteToasts pendingDeletes={pendingDeletes} onUndo={undoDeleteCitation} />
     </>

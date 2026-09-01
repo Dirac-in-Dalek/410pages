@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ChevronDown, ChevronUp, MoreHorizontal, X } from 'lucide-react';
+import { AlertCircle, ChevronDown, ChevronUp, Copy, MessageCircle, MoreHorizontal, RefreshCw, X } from 'lucide-react';
 import { ChapterBlockCard } from '../../../components/ChapterBlockCard';
 import { ChapterBlockInsertButton } from '../../../components/ChapterBlockInsertButton';
 import {
@@ -14,6 +14,7 @@ import type { CitationListProps } from '../contract/archiveUiContract';
 import { CitationCard } from './CitationCard';
 import { WordCardGroup } from './WordCardGroup';
 import { useModalFocus } from '../../../shared/ui/useModalFocus';
+import { formatCitationRecoveryText, writeTextToClipboard } from '../../../lib/citationCopy';
 
 export const CitationList: React.FC<CitationListProps> = ({
     citations,
@@ -39,12 +40,15 @@ export const CitationList: React.FC<CitationListProps> = ({
     onCreateChapterBlock,
     onDeleteChapterBlock,
     chapterActionsDisabled = false,
+    passageNoteCitationId = null,
+    onPassageNoteCitationChange,
 }) => {
     const [activeInsertId, setActiveInsertId] = useState<string | null>(null);
     const [overflowingCitationIds, setOverflowingCitationIds] = useState<Set<string>>(() => new Set());
     const [expandedCitationIds, setExpandedCitationIds] = useState<Set<string>>(() => new Set());
-    const [activeCitationId, setActiveCitationId] = useState<string | null>(null);
-    const detailDialogRef = useModalFocus<HTMLElement>(Boolean(activeCitationId), () => setActiveCitationId(null));
+    const [detailCitationId, setDetailCitationId] = useState<string | null>(null);
+    const [copiedRecoveryCitationId, setCopiedRecoveryCitationId] = useState<string | null>(null);
+    const detailDialogRef = useModalFocus<HTMLElement>(Boolean(detailCitationId), () => setDetailCitationId(null));
     const bookId = chapterBlocks[0]?.bookId ?? citations.find((citation) => citation.bookId)?.bookId;
     const currentSortField: 'date' | 'page' = isBookView ? 'date' : sortField ?? 'page';
     const currentDateDirection: 'asc' | 'desc' = isBookView ? 'asc' : dateDirection ?? 'desc';
@@ -68,12 +72,12 @@ export const CitationList: React.FC<CitationListProps> = ({
     const hasVisibleSentences = visibleSentenceIds.length > 0;
     const allVisibleCitationsExpanded =
         hasVisibleSentences && visibleSentenceIds.every((id) => expandedCitationIds.has(id));
-    const activeCitation = citations.find((citation) => citation.id === activeCitationId) ?? null;
+    const activeCitation = citations.find((citation) => citation.id === detailCitationId) ?? null;
 
     useEffect(() => {
-        if (!activeCitationId) return;
-        if (!citations.some((citation) => citation.id === activeCitationId)) setActiveCitationId(null);
-    }, [activeCitationId, citations]);
+        if (!detailCitationId) return;
+        if (!citations.some((citation) => citation.id === detailCitationId)) setDetailCitationId(null);
+    }, [detailCitationId, citations]);
 
     const handleTextOverflowChange = useCallback((id: string, isOverflowing: boolean) => {
         setOverflowingCitationIds((prev) => {
@@ -116,6 +120,16 @@ export const CitationList: React.FC<CitationListProps> = ({
             }
             return next;
         });
+    };
+
+    const handleCopyRecoveryText = async (citation: typeof citations[number]) => {
+        try {
+            await writeTextToClipboard(formatCitationRecoveryText(citation, username));
+            setCopiedRecoveryCitationId(citation.id);
+            window.setTimeout(() => setCopiedRecoveryCitationId(null), 1600);
+        } catch (error) {
+            console.error('Failed to copy failed citation:', error);
+        }
     };
 
     useEffect(() => {
@@ -222,6 +236,7 @@ export const CitationList: React.FC<CitationListProps> = ({
                                     className={[
                                         'group flex items-start border-b border-[var(--border-main)] transition-[background-color,color] duration-150',
                                         selectedIds.has(item.citation.id) ? 'bg-[var(--accent-soft)]' : 'hover:bg-[var(--sidebar-hover)]',
+                                        item.citation.saveStatus === 'failed' ? 'bg-red-50/60 dark:bg-red-500/10' : '',
                                     ].join(' ')}
                                 >
                                     <label className="flex min-h-14 w-11 shrink-0 cursor-pointer items-center justify-center">
@@ -236,24 +251,55 @@ export const CitationList: React.FC<CitationListProps> = ({
                                             ].join(' ')}
                                         />
                                     </label>
+                                    <div className="min-w-0 flex-1">
+                                        <button
+                                            type="button"
+                                            data-passage-note-trigger
+                                            onClick={() => onPassageNoteCitationChange?.(
+                                                passageNoteCitationId === item.citation.id ? null : item.citation.id
+                                            )}
+                                            className="w-full px-1 py-5 text-left active:scale-[0.99]"
+                                            aria-label={`구절 메모 ${passageNoteCitationId === item.citation.id ? '닫기' : '열기'}: ${item.citation.text.slice(0, 40)}`}
+                                            aria-expanded={passageNoteCitationId === item.citation.id}
+                                        >
+                                            <span className="block whitespace-pre-wrap font-[var(--font-display-active)] text-[1.02rem] leading-[1.72] text-[var(--text-main)]">{item.citation.text}</span>
+                                            <span className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.76rem] text-[var(--text-muted)]">
+                                                {item.citation.page ? <span>{item.citation.page}쪽</span> : null}
+                                                <span>{new Date(item.citation.createdAt).toLocaleDateString('ko-KR')}</span>
+                                                <span className="inline-flex items-center gap-1"><MessageCircle size={13} /> 메모 {item.citation.notes.length}</span>
+                                                {item.citation.saveStatus === 'saving' ? <span role="status">저장 중…</span> : null}
+                                            </span>
+                                        </button>
+                                        {item.citation.saveStatus === 'failed' ? (
+                                            <div role="alert" className="mb-3 flex min-h-11 flex-wrap items-center gap-2 rounded-lg bg-red-50 px-2.5 py-1.5 text-[0.8rem] text-red-900 dark:bg-red-500/10 dark:text-red-100">
+                                                <span className="mr-auto inline-flex items-center gap-1.5 font-medium">
+                                                    <AlertCircle size={14} /> 저장 실패
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    aria-label="실패한 문장 복사"
+                                                    onClick={() => void handleCopyRecoveryText(item.citation)}
+                                                    className="inline-flex min-h-10 touch-manipulation items-center gap-1 rounded-lg px-2 font-medium transition-[background-color,transform] hover:bg-red-100 active:scale-95 dark:hover:bg-red-300/10 motion-reduce:transition-none"
+                                                >
+                                                    <Copy size={13} />
+                                                    {copiedRecoveryCitationId === item.citation.id ? '복사됨' : '복사'}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    aria-label="문장 다시 저장"
+                                                    onClick={() => void Promise.resolve(onRetryCitationSave(item.citation.id))}
+                                                    className="inline-flex min-h-10 touch-manipulation items-center gap-1 rounded-lg bg-red-700 px-2.5 font-semibold text-white transition-[background-color,transform] hover:bg-red-800 active:scale-95 dark:bg-red-300 dark:text-red-950 motion-reduce:transition-none"
+                                                >
+                                                    <RefreshCw size={13} /> 다시 저장
+                                                </button>
+                                            </div>
+                                        ) : null}
+                                    </div>
                                     <button
                                         type="button"
-                                        onClick={() => setActiveCitationId(item.citation.id)}
-                                        className="min-w-0 flex-1 px-1 py-5 text-left active:scale-[0.99]"
-                                        aria-label={`문장 상세 열기: ${item.citation.text.slice(0, 40)}`}
-                                    >
-                                        <span className="block whitespace-pre-wrap font-[var(--font-display-active)] text-[1.02rem] leading-[1.72] text-[var(--text-main)]">{item.citation.text}</span>
-                                        <span className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.76rem] text-[var(--text-muted)]">
-                                            {item.citation.page ? <span>{item.citation.page}쪽</span> : null}
-                                            <span>{new Date(item.citation.createdAt).toLocaleDateString('ko-KR')}</span>
-                                            {item.citation.notes.length ? <span>메모 {item.citation.notes.length}</span> : null}
-                                        </span>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setActiveCitationId(item.citation.id)}
+                                        onClick={() => setDetailCitationId(item.citation.id)}
                                         className="mt-3 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-[var(--text-muted)] opacity-0 transition-[background-color,opacity,transform] hover:bg-[var(--bg-input)] focus-visible:opacity-100 active:scale-95 group-hover:opacity-100"
-                                        aria-label="문장 상세 열기"
+                                        aria-label="문장 편집 및 삭제 열기"
                                     >
                                         <MoreHorizontal size={17} />
                                     </button>
@@ -280,6 +326,7 @@ export const CitationList: React.FC<CitationListProps> = ({
                             ) : item.type === 'word_group' ? (
                                 <WordCardGroup
                                     citations={item.citations}
+                                    username={username}
                                     selectedIds={selectedIds}
                                     onToggleSelect={onToggleSelect}
                                     onRetrySave={onRetryCitationSave}
@@ -338,7 +385,7 @@ export const CitationList: React.FC<CitationListProps> = ({
                     <button
                         type="button"
                         className="fixed inset-0 z-40 bg-black/30"
-                        onClick={() => setActiveCitationId(null)}
+                        onClick={() => setDetailCitationId(null)}
                         aria-label="문장 상세 닫기"
                     />
                     <aside
@@ -357,7 +404,7 @@ export const CitationList: React.FC<CitationListProps> = ({
                             <button
                                 type="button"
                                 autoFocus
-                                onClick={() => setActiveCitationId(null)}
+                                onClick={() => setDetailCitationId(null)}
                                 className="flex h-10 w-10 items-center justify-center rounded-lg text-[var(--text-muted)] transition-[background-color,transform] hover:bg-[var(--sidebar-hover)] active:scale-95"
                                 aria-label="문장 상세 닫기"
                             >
@@ -379,7 +426,7 @@ export const CitationList: React.FC<CitationListProps> = ({
                                 onDeleteNote={onDeleteNote}
                                 onDelete={(id) => {
                                     onDeleteCitation(id);
-                                    setActiveCitationId(null);
+                                    setDetailCitationId(null);
                                 }}
                                 onUpdate={onUpdateCitation}
                                 onRetrySave={onRetryCitationSave}

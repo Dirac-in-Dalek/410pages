@@ -46,4 +46,6 @@ export const createArchiveScreenProps = (
   onDeleteNote: input.onDeleteNote,
   onDeleteCitation: input.onDeleteCitation,
   onUpdateCitation: input.onUpdateCitation,
+  passageNoteCitationId: input.passageNoteCitationId,
+  onPassageNoteCitationChange: input.onPassageNoteCitationChange,
 });

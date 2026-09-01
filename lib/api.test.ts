@@ -9,6 +9,7 @@ const mockChapterBlocksDeleteEq = vi.fn();
 const mockCitationsSingle = vi.fn();
 const mockCitationsSelect = vi.fn(() => ({ single: mockCitationsSingle }));
 const mockCitationsInsert = vi.fn(() => ({ select: mockCitationsSelect }));
+const mockCitationsUpsert = vi.fn(() => ({ select: mockCitationsSelect }));
 const mockCitationsDeleteEq = vi.fn();
 const mockCitationsDeleteIn = vi.fn(() => ({ eq: mockCitationsDeleteEq }));
 const mockCitationsDelete = vi.fn(() => ({ in: mockCitationsDeleteIn }));
@@ -102,7 +103,7 @@ const mockChapterBlocksFrom = vi.fn((table: string) => {
   }
 
   if (table === 'citations') {
-    return { insert: mockCitationsInsert, delete: mockCitationsDelete };
+    return { insert: mockCitationsInsert, upsert: mockCitationsUpsert, delete: mockCitationsDelete };
   }
 
   return {};
@@ -247,6 +248,7 @@ describe('api.addCitation', () => {
         text: '고독',
         page: null,
         page_sort: null,
+        highlights: [{ id: 'hl-1', start: 0, end: 1, color: 'yellow' }],
         created_at: '2026-07-18T06:00:00.000Z',
         author: { id: 'author-1', name: 'Author A', sort_index: 1, is_self: false },
         book: { id: 'book-1', title: 'Book A', sort_index: 2 },
@@ -255,28 +257,36 @@ describe('api.addCitation', () => {
     });
   });
 
-  it('persists a word kind with null page fields', async () => {
+  it('upserts a word with its requested UUID and null page fields', async () => {
+    const citationId = '018f47a2-8594-7c09-a488-2f73384e4711';
     const result = await api.addCitation('user-1', {
-      id: 'ignored-by-input-type',
+      id: citationId,
       kind: 'word',
       text: '고독',
       author: 'Author A',
       book: 'Book A',
       page: '77',
       tags: [],
-      highlights: [],
-    } as any);
+      highlights: [{ id: 'hl-1', start: 0, end: 1, color: 'yellow' }],
+    });
 
-    expect(mockCitationsInsert).toHaveBeenCalledWith({
+    expect(mockCitationsUpsert).toHaveBeenCalledWith({
+      id: citationId,
       kind: 'word',
       text: '고독',
       book_id: 'book-1',
       author_id: 'author-1',
       page: null,
       page_sort: null,
+      highlights: [{ id: 'hl-1', start: 0, end: 1, color: 'yellow' }],
       user_id: 'user-1',
+    }, { onConflict: 'id' });
+    expect(result).toMatchObject({
+      kind: 'word',
+      page: undefined,
+      pageSort: undefined,
+      highlights: [{ id: 'hl-1', start: 0, end: 1, color: 'yellow' }],
     });
-    expect(result).toMatchObject({ kind: 'word', page: undefined, pageSort: undefined });
   });
 
   it('uses a supplied book id as the canonical citation source', async () => {
@@ -343,6 +353,7 @@ describe('api.fetchBooks', () => {
           {
             id: 'book-1',
             title: 'Book A',
+            memo: '책 전체 메모',
             sort_index: 2,
             created_at: '2026-04-07T10:00:00.000Z',
             author: {
@@ -364,6 +375,7 @@ describe('api.fetchBooks', () => {
     expect(mockBooksSelect).toHaveBeenCalledWith(`
         id,
         title,
+        memo,
         sort_index,
         created_at,
         author:authors(id, name, sort_index, is_self)
@@ -380,6 +392,7 @@ describe('api.fetchBooks', () => {
       {
         id: 'book-1',
         title: 'Book A',
+        memo: '책 전체 메모',
         sortIndex: 2,
         createdAt: new Date('2026-04-07T10:00:00.000Z').getTime(),
         authorId: 'author-1',
@@ -448,6 +461,7 @@ describe('api.createBook', () => {
     expect(book).toMatchObject({
       id: 'book-2',
       title: 'Book B',
+      memo: '',
       authorId: 'author-1',
       author: 'Author A',
       sortIndex: 3,
@@ -524,6 +538,7 @@ describe('api.renameBook', () => {
         bookId: 'book-2',
         bookTitle: 'Existing Book',
         bookSortIndex: 2,
+        bookMemo: '합쳐진 메모',
       },
       error: null,
     });
@@ -541,6 +556,51 @@ describe('api.renameBook', () => {
       fromBookId: 'book-1',
       bookId: 'book-2',
     });
+  });
+});
+
+describe('api library reorder', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRpc.mockResolvedValue({ data: null, error: null });
+  });
+
+  it('reorders authors in one atomic RPC', async () => {
+    await api.reorderAuthors('user-1', ['author-2', 'author-1']);
+    expect(mockRpc).toHaveBeenCalledWith('reorder_authors', {
+      ordered_author_ids: ['author-2', 'author-1'],
+    });
+  });
+
+  it('reorders books inside one author in one atomic RPC', async () => {
+    await api.reorderBooks('user-1', 'author-1', ['book-2', 'book-1']);
+    expect(mockRpc).toHaveBeenCalledWith('reorder_books', {
+      source_author_id: 'author-1',
+      ordered_book_ids: ['book-2', 'book-1'],
+    });
+  });
+});
+
+describe('api.updateBookMemo', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockBooksUpdate.mockReturnValue(booksQuery);
+    mockBooksEq.mockReturnValue(booksQuery);
+    mockBooksMaybeSingle.mockResolvedValue({ data: { id: 'book-1' }, error: null });
+  });
+
+  it('updates only the active user book', async () => {
+    await api.updateBookMemo('user-1', 'book-1', '새 메모');
+
+    expect(mockBooksUpdate).toHaveBeenCalledWith({ memo: '새 메모' });
+    expect(mockBooksEq).toHaveBeenNthCalledWith(1, 'id', 'book-1');
+    expect(mockBooksEq).toHaveBeenNthCalledWith(2, 'user_id', 'user-1');
+    expect(mockBooksSelect).toHaveBeenCalledWith('id');
+  });
+
+  it('rejects a save when the book was deleted or merged', async () => {
+    mockBooksMaybeSingle.mockResolvedValueOnce({ data: null, error: null });
+    await expect(api.updateBookMemo('user-1', 'book-gone', '새 메모')).rejects.toThrow('Book no longer exists');
   });
 });
 

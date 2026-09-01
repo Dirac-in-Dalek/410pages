@@ -49,6 +49,8 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
   onRenameAuthor,
   onRenameBook,
   onReorderBookAt,
+  onReorderAuthorAt,
+  libraryOrderSaving = false,
   width,
   isResizing,
   onStartResize,
@@ -449,6 +451,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
             {isAllBooksOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
             저자와 책
           </button>
+          {libraryOrderSaving ? <span role="status" className="shrink-0 text-[0.7rem] text-[var(--text-muted)]">순서 저장 중…</span> : null}
           <button type="button" onClick={() => { setIsCreatingAuthorFolder(true); setIsAllBooksOpen(true); }} className="flex min-h-10 shrink-0 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-[var(--text-muted)] transition-[background-color,transform] hover:bg-[var(--sidebar-hover)] active:scale-95" aria-label="저자 폴더 만들기"><Plus size={15} />폴더 추가</button>
         </div>
         {authorFolderLoadError ? (
@@ -471,6 +474,8 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
             onTreeItemClick={onTreeItemClick}
             selectedFilter={selectedFilter}
             onReorderBookAt={onReorderBookAt}
+            onReorderAuthorAt={onReorderAuthorAt}
+            orderSaving={libraryOrderSaving}
             onRenameAuthor={onRenameAuthor}
             onRenameBook={onRenameBook}
             books={books}

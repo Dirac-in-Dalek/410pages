@@ -50,6 +50,8 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
   onTreeItemClick,
   selectedFilter = null,
   onReorderBookAt,
+  onReorderAuthorAt,
+  orderSaving = false,
   onRenameAuthor,
   onRenameBook,
   books = [],
@@ -208,12 +210,23 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
     else void Promise.resolve(onRemoveAuthorFromFolder?.(authorId));
   };
 
+  const getAuthorGroupItems = (authorGroupId?: string) => authorGroupId === 'outside'
+    ? treeData.filter((item) => item.type === 'author')
+    : treeData.find((item) =>
+        item.type === 'author_folder' && item.data?.folderId === authorGroupId
+      )?.children?.filter((item) => item.type === 'author') || [];
+
   const applyTreeReorder = (
     dragMeta: LibraryTreeDragMeta,
     indicator: LibraryTreeDropIndicator
   ) => {
     if (indicator.listType === 'author') {
-      commitAuthorDrop(dragMeta.id, { outside: true });
+      const groupItems = getAuthorGroupItems(indicator.authorGroupId);
+      onReorderAuthorAt?.(
+        groupItems.map((item) => item.data?.authorId).filter((id): id is string => Boolean(id)),
+        dragMeta.id,
+        indicator.dropIndex
+      );
       return;
     }
 
@@ -233,13 +246,40 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
     return (ownerNode?.children || []).filter((child) => child.type === 'book');
   };
 
+  const handleKeyboardReorder = (
+    item: SidebarItem,
+    rowMeta: LibraryTreeRowMeta,
+    direction: -1 | 1
+  ) => {
+    const items = rowMeta.listType === 'author'
+      ? getAuthorGroupItems(rowMeta.authorGroupId)
+      : rowMeta.parentAuthor
+        ? getBookItemsForAuthor(rowMeta.parentAuthor)
+        : [];
+    if (
+      (direction === -1 && rowMeta.index === 0) ||
+      (direction === 1 && rowMeta.index === items.length - 1)
+    ) return;
+    const dropIndex = direction === -1 ? rowMeta.index - 1 : rowMeta.index + 2;
+    if (rowMeta.listType === 'author' && item.data?.authorId) {
+      onReorderAuthorAt?.(
+        items.map((entry) => entry.data?.authorId).filter((id): id is string => Boolean(id)),
+        item.data.authorId,
+        dropIndex
+      );
+    } else if (rowMeta.parentAuthor && item.data?.bookId) {
+      onReorderBookAt?.(rowMeta.parentAuthor, item.data.bookId, dropIndex);
+    }
+  };
+
   const getPanelBoundaryIndicator = (
     dragMeta: LibraryTreeDragMeta,
     authorItems: SidebarItem[],
     boundary: 'start' | 'end'
   ) => {
     if (dragMeta.itemType === 'author') {
-      return buildLibraryTreeBoundaryIndicator(authorItems, 'author', boundary);
+      if (dragMeta.authorGroupId !== 'outside') return null;
+      return buildLibraryTreeBoundaryIndicator(authorItems, 'author', boundary, undefined, 'outside');
     }
 
     if (dragMeta.itemType === 'book' && dragMeta.authorId) {
@@ -283,7 +323,12 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
     if (!hasLibraryTreeDragType(event) && !activeTreeDragMeta) return;
 
     const dragMeta = resolveLibraryTreeDragMeta(event, activeTreeDragMeta);
-    if (!dragMeta || !canDropInLibraryTreeList(dragMeta, row.listType, row.parentAuthor)) {
+    if (!dragMeta || !canDropInLibraryTreeList(
+      dragMeta,
+      row.listType,
+      row.parentAuthor,
+      row.authorGroupId
+    )) {
       return;
     }
 
@@ -304,6 +349,7 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
       dropIndex,
       listType: row.listType,
       parentAuthor: row.parentAuthor,
+      authorGroupId: row.authorGroupId,
     });
   };
 
@@ -311,14 +357,19 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
     event: React.DragEvent<HTMLDivElement>,
     row: LibraryTreeRowMeta & { itemId: string }
   ) => {
-    event.preventDefault();
-    event.stopPropagation();
-
     const dragMeta = resolveLibraryTreeDragMeta(event, activeTreeDragMeta);
-    if (!dragMeta || !canDropInLibraryTreeList(dragMeta, row.listType, row.parentAuthor)) {
+    if (!dragMeta || !canDropInLibraryTreeList(
+      dragMeta,
+      row.listType,
+      row.parentAuthor,
+      row.authorGroupId
+    )) {
       setTreeDropIndicator(null);
       return;
     }
+
+    event.preventDefault();
+    event.stopPropagation();
 
     const position = calcLibraryTreeDropPosition(
       event,
@@ -333,6 +384,7 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
       dropIndex,
       listType: row.listType,
       parentAuthor: row.parentAuthor,
+      authorGroupId: row.authorGroupId,
     });
 
     setTreeDropIndicator(null);
@@ -345,7 +397,12 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
     if (!hasLibraryTreeDragType(event) && !activeTreeDragMeta) return;
 
     const dragMeta = resolveLibraryTreeDragMeta(event, activeTreeDragMeta);
-    if (!dragMeta || !canDropInLibraryTreeList(dragMeta, list.listType, list.parentAuthor)) {
+    if (!dragMeta || !canDropInLibraryTreeList(
+      dragMeta,
+      list.listType,
+      list.parentAuthor,
+      list.authorGroupId
+    )) {
       return;
     }
 
@@ -365,7 +422,12 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
     if (!hasLibraryTreeDragType(event) && !activeTreeDragMeta) return;
 
     const dragMeta = resolveLibraryTreeDragMeta(event, activeTreeDragMeta);
-    if (!dragMeta || !canDropInLibraryTreeList(dragMeta, list.listType, list.parentAuthor)) {
+    if (!dragMeta || !canDropInLibraryTreeList(
+      dragMeta,
+      list.listType,
+      list.parentAuthor,
+      list.authorGroupId
+    )) {
       return;
     }
 
@@ -541,6 +603,32 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
     resetTreeDragState();
   };
 
+  const handleAuthorListDragOver = (
+    event: React.DragEvent<HTMLDivElement>,
+    list: LibraryTreeListMeta
+  ) => {
+    const dragMeta = resolveLibraryTreeDragMeta(event, activeTreeDragMeta);
+    if (dragMeta?.authorGroupId === list.authorGroupId) {
+      handleTreeListDragOver(event, list);
+      return;
+    }
+    handleAuthorGroupDragOver(event);
+  };
+
+  const handleAuthorListDrop = (
+    event: React.DragEvent<HTMLDivElement>,
+    list: LibraryTreeListMeta,
+    folderId?: string
+  ) => {
+    const dragMeta = resolveLibraryTreeDragMeta(event, activeTreeDragMeta);
+    if (dragMeta?.authorGroupId === list.authorGroupId) {
+      handleTreeListDrop(event, list);
+      resetTreeDragState();
+      return;
+    }
+    handleAuthorGroupDrop(event, folderId);
+  };
+
   const requestDeleteFolder = (item: SidebarItem) => {
     if (!item.data?.folderId) return;
     if (!window.confirm(`‘${item.label}’ 폴더를 삭제할까요? 저자는 폴더 밖에 그대로 남습니다.`)) return;
@@ -587,6 +675,7 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
               type: 'library-tree',
               itemType: 'author',
               id: item.data.authorId,
+              authorGroupId: rowMeta?.authorGroupId,
             }
         : undefined;
 
@@ -598,11 +687,14 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
       isTreeDragging &&
       treeDropIndicator?.itemId === item.id &&
       treeDropIndicator.position === 'after';
-    const canReorder = treeMeta?.itemType === 'book';
+    const canReorder = !mobile && !orderSaving && (
+      (treeMeta?.itemType === 'book' && Boolean(onReorderBookAt)) ||
+      (treeMeta?.itemType === 'author' && Boolean(onReorderAuthorAt))
+    );
     const rowTypeLabel =
       item.type === 'author' ? 'author' : item.type === 'book' ? 'book' : 'section';
     const rowTitle = canReorder
-      ? `Drag to reorder ${rowTypeLabel}. Double-click to rename.`
+      ? `${item.label} — 드래그 또는 Alt+위아래 화살표로 ${rowTypeLabel === 'author' ? '저자' : '책'} 순서 변경. 더블클릭하여 이름 변경.`
       : item.label;
     const isBookRow = item.type === 'book';
     const isRootRow = item.type === 'root';
@@ -671,7 +763,7 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
               startNodeEdit(item, event);
             }
           }}
-          draggable={Boolean(treeMeta) && editingNodeId !== item.id}
+          draggable={!mobile && !orderSaving && Boolean(treeMeta) && editingNodeId !== item.id}
           onDragStart={(event) => handleTreeDragStart(event, item.data, treeMeta)}
           onDragOver={(event) => {
             if (isFolderRow) {
@@ -696,6 +788,9 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
           }}
           onDragEnd={resetTreeDragState}
           onTouchStart={(event) => beginMobileAuthorTouchDrag(event, item)}
+          onReorderByKeyboard={canReorder && rowMeta
+            ? (direction) => handleKeyboardReorder(item, rowMeta, direction)
+            : undefined}
         >
           {item.type === 'root' && (
             <User className="mr-1.5 h-3.5 w-3.5 flex-shrink-0 text-[var(--text-secondary)]" />
@@ -778,11 +873,19 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
                 ? 'bg-[var(--sidebar-hover)] shadow-[inset_0_0_0_1px_var(--accent-border)]'
                 : 'bg-[var(--bg-main)]',
             ].join(' ')}
-            onDragOver={handleAuthorGroupDragOver}
-            onDrop={(event) => handleAuthorGroupDrop(event, item.data?.folderId)}
+            onDragOver={(event) => handleAuthorListDragOver(event, {
+              items: item.children || [],
+              listType: 'author',
+              authorGroupId: item.data?.folderId,
+            })}
+            onDrop={(event) => handleAuthorListDrop(event, {
+              items: item.children || [],
+              listType: 'author',
+              authorGroupId: item.data?.folderId,
+            }, item.data?.folderId)}
           >
             {item.children?.length ? (
-              renderTree(item.children, depth + 1, item.data?.authorId)
+              renderTree(item.children, depth + 1, undefined, item.data?.folderId)
             ) : (
               <p className="flex min-h-8 items-center px-3 text-xs text-[var(--text-muted)]">
                 저자를 여기에 놓으세요
@@ -799,7 +902,8 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
   const renderTree = (
     items: SidebarItem[],
     depth = 0,
-    parentAuthor?: string
+    parentAuthor?: string,
+    authorGroupId?: string
   ): React.ReactNode => {
     if (depth === 0) {
       const roots = items.filter((item) => item.type === 'root');
@@ -820,11 +924,19 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
             aria-label="폴더 밖 저자 영역"
             data-author-outside-drop="true"
             className="min-h-2"
-            onDragOver={handleAuthorGroupDragOver}
-            onDrop={(event) => handleAuthorGroupDrop(event)}
+            onDragOver={(event) => handleAuthorListDragOver(event, {
+              items: authors,
+              listType: 'author',
+              authorGroupId: 'outside',
+            })}
+            onDrop={(event) => handleAuthorListDrop(event, {
+              items: authors,
+              listType: 'author',
+              authorGroupId: 'outside',
+            })}
           >
             {authors.map((item, index) =>
-              renderTreeRow(item, depth, { index, listType: 'author' })
+              renderTreeRow(item, depth, { index, listType: 'author', authorGroupId: 'outside' })
             )}
             {isAuthorDragging && authors.length === 0 ? (
               <p className="flex min-h-10 items-center px-3 text-xs text-[var(--text-muted)]">
@@ -856,6 +968,15 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
           )}
         </div>
       );
+    }
+
+    const areAuthors = items.every((item) => item.type === 'author');
+    if (areAuthors && authorGroupId) {
+      return items.map((item, index) => renderTreeRow(item, depth, {
+        index,
+        listType: 'author',
+        authorGroupId,
+      }));
     }
 
     return items.map((item) => renderTreeRow(item, depth));

@@ -4,7 +4,6 @@ import {
   CITATION_SAVE_FAILED_MESSAGE,
   createOptimisticCitation,
   createRetryCitationInput,
-  isOptimisticCitationId,
 } from './optimisticCitation';
 
 describe('optimistic citation helpers', () => {
@@ -26,6 +25,7 @@ describe('optimistic citation helpers', () => {
   it('creates a saving citation that can be rendered before persistence finishes', () => {
     const citation = createOptimisticCitation(
       {
+        id: '018f47a2-8594-7c09-a488-2f73384e4711',
         kind: 'sentence',
         text: 'Fast quote',
         author: '',
@@ -36,7 +36,7 @@ describe('optimistic citation helpers', () => {
       1700
     );
 
-    expect(isOptimisticCitationId(citation.id)).toBe(true);
+    expect(citation.id).toBe('018f47a2-8594-7c09-a488-2f73384e4711');
     expect(citation.saveStatus).toBe('saving');
     expect(citation.text).toBe('Fast quote');
     expect(citation.book).toBe('The Book');
@@ -59,6 +59,7 @@ describe('optimistic citation helpers', () => {
 
     expect(CITATION_SAVE_FAILED_MESSAGE).toBe('저장에 실패했습니다. 다시 시도해주세요.');
     expect(createRetryCitationInput({ ...citation, saveStatus: 'failed' })).toMatchObject({
+      id: citation.id,
       text: 'Recoverable quote',
       author: 'Simone Weil',
       book: 'Gravity and Grace',

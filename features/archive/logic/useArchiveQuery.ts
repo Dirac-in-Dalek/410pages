@@ -13,6 +13,7 @@ import type {
   ChapterBlocksByBook,
 } from '../contract/archiveMutationContract';
 import { mergeChapterBlocksByBook, mergeFetchedCitations } from './archiveLocalPatch';
+import { readCitationDrafts } from './citationDraftStorage';
 
 type UseArchiveQueryOptions = {
   session: ArchiveSession;
@@ -48,8 +49,25 @@ export const useArchiveQuery = ({
   const chapterRequestGenerationByBookRef = useRef(new Map<string, number>());
   const activeChapterBookIdRef = useRef<string | null>(null);
   const ownerId = session?.user.id ?? null;
+  const previousOwnerIdRef = useRef(ownerId);
 
   useEffect(() => {
+    const didOwnerChange = previousOwnerIdRef.current !== ownerId;
+    previousOwnerIdRef.current = ownerId;
+    const restoredDrafts = ownerId ? readCitationDrafts(ownerId) : [];
+    setCitations((current) => {
+      if (didOwnerChange) return restoredDrafts;
+      const currentIds = new Set(current.map((citation) => citation.id));
+      return [...restoredDrafts.filter((citation) => !currentIds.has(citation.id)), ...current];
+    });
+    if (didOwnerChange) {
+      setAuthors([]);
+      setAuthorFolders([]);
+      setAuthorFolderMemberships([]);
+      setBooks([]);
+      setProjects([]);
+      setChapterBlocksByBook({});
+    }
     requestGenerationRef.current += 1;
     authorFolderRequestGenerationRef.current += 1;
     chapterViewGenerationRef.current += 1;

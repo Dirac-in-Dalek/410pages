@@ -38,6 +38,8 @@ export interface ProjectSidebarProps {
   onPreviewAuthorDelete: (authorId: string) => Promise<AuthorDeletePreview | undefined>;
   onRenameBook?: (bookId: string, name: string) => boolean | void | Promise<boolean | void>;
   onReorderBookAt?: (author: string, dragBook: string, dropIndex: number) => void;
+  onReorderAuthorAt?: (groupAuthorIds: string[], dragAuthorId: string, dropIndex: number) => void;
+  libraryOrderSaving?: boolean;
   width: number;
   isResizing: boolean;
   onStartResize: () => void;

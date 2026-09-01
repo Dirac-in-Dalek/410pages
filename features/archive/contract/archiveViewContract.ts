@@ -65,5 +65,7 @@ export interface ArchiveViewStateResult {
   filteredCitations: Citation[];
   viewTitle: string;
   getCurrentOrderedBooks: (authorId: string) => string[];
+  getCurrentOrderedAuthors: () => string[];
+  setAuthorOrder: Dispatch<SetStateAction<string[]>>;
   setBookOrderByAuthor: Dispatch<SetStateAction<Record<string, string[]>>>;
 }

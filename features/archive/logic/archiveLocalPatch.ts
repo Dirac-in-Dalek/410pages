@@ -31,7 +31,9 @@ export const replaceCitationById = (
 };
 
 export const mergeFetchedCitations = (current: Citation[], fetched: Citation[]) => {
-  const pending = current.filter((citation) => citation.saveStatus === 'saving' || citation.saveStatus === 'failed');
+  const pending = current.filter((citation) =>
+    citation.saveStatus === 'saving' || citation.saveStatus === 'failed'
+  );
   const pendingIds = new Set(pending.map((citation) => citation.id));
   return [...pending, ...fetched.filter((citation) => !pendingIds.has(citation.id))];
 };
@@ -169,6 +171,7 @@ export const applyRenameAuthorToBooks = (
               id: targetMerge.toBookId,
               title: targetMerge.toBookTitle,
               sortIndex: targetMerge.toBookSortIndex,
+              memo: targetMerge.toBookMemo,
             }
           : {}),
         ...(belongsToRenamedAuthor
@@ -217,6 +220,7 @@ export const applyRenameBookToBooks = (
         id: result.bookId,
         title: result.bookTitle,
         sortIndex: result.bookSortIndex,
+        memo: result.bookMemo,
       }];
     })
   );

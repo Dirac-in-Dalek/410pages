@@ -10,6 +10,7 @@ export interface LibraryTreeDragMeta {
   itemType: LibraryTreeItemType;
   id: string;
   authorId?: string;
+  authorGroupId?: string;
 }
 
 export interface LibraryTreeDropIndicator {
@@ -18,18 +19,21 @@ export interface LibraryTreeDropIndicator {
   dropIndex: number;
   listType: LibraryTreeItemType;
   parentAuthor?: string;
+  authorGroupId?: string;
 }
 
 export interface LibraryTreeListMeta {
   items: SidebarItem[];
   listType: LibraryTreeItemType;
   parentAuthor?: string;
+  authorGroupId?: string;
 }
 
 export interface LibraryTreeRowMeta {
   index: number;
   listType: LibraryTreeItemType;
   parentAuthor?: string;
+  authorGroupId?: string;
 }
 
 export interface LibrarySidebarTreeContract {
@@ -37,6 +41,8 @@ export interface LibrarySidebarTreeContract {
   onTreeItemClick: (item: SidebarItem) => void;
   selectedFilter?: LibrarySelectedFilter;
   onReorderBookAt?: (author: string, dragBook: string, dropIndex: number) => void;
+  onReorderAuthorAt?: (groupAuthorIds: string[], dragAuthorId: string, dropIndex: number) => void;
+  orderSaving?: boolean;
   onRenameAuthor?: (authorId: string, name: string) => boolean | void | Promise<boolean | void>;
   books?: BookSource[];
   citations?: Citation[];

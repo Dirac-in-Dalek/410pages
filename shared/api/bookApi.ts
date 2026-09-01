@@ -14,6 +14,9 @@ export const reorderBooks = (userId: string, authorId: string, orderedBookIds: s
 export const renameBook = (userId: string, bookId: string, name: string) =>
   api.renameBook(userId, bookId, name);
 
+export const updateBookMemo = (userId: string, bookId: string, memo: string) =>
+  api.updateBookMemo(userId, bookId, memo);
+
 export const deleteBookCascade = (userId: string, bookId: string) =>
   api.deleteBookCascade(userId, bookId);
 

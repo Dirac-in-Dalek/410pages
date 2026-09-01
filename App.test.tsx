@@ -46,6 +46,9 @@ const archiveDataState = {
   fetchData: vi.fn(),
   chapterBlocksByBook: {},
   handleAddCitation: vi.fn(),
+  handleAddCitationOptimistic: vi.fn(),
+  handleRetryCitationSave: vi.fn(),
+  resolveCitationId: vi.fn(),
   handleAddNote: vi.fn(),
   handleUpdateNote: vi.fn(),
   handleDeleteNote: vi.fn(),
@@ -217,10 +220,6 @@ vi.mock('./components/BulkActionToolbar', () => ({
   BulkActionToolbar: () => null,
 }));
 
-vi.mock('./components/ConfirmModal', () => ({
-  ConfirmModal: () => null,
-}));
-
 vi.mock('./features/archive/ui/ArchiveHeader', () => ({
   ArchiveHeader: () => null,
 }));
@@ -236,6 +235,10 @@ describe('App settings display-name flow', () => {
     mockSetBaseFontPt.mockReset();
     mockSetCitationWidthRem.mockReset();
     authState.username = 'Committed Name';
+    Object.defineProperty(navigator, 'onLine', {
+      configurable: true,
+      value: true,
+    });
 
     Object.defineProperty(window, 'matchMedia', {
       configurable: true,
@@ -251,6 +254,22 @@ describe('App settings display-name flow', () => {
         dispatchEvent: vi.fn(),
       })),
     });
+  });
+
+  it('shows and clears the online-first offline notice', () => {
+    render(<App />);
+
+    act(() => {
+      Object.defineProperty(navigator, 'onLine', { configurable: true, value: false });
+      window.dispatchEvent(new Event('offline'));
+    });
+    expect(screen.getByRole('status').textContent).toContain('오프라인');
+
+    act(() => {
+      Object.defineProperty(navigator, 'onLine', { configurable: true, value: true });
+      window.dispatchEvent(new Event('online'));
+    });
+    expect(screen.queryByRole('status')).toBeNull();
   });
 
   it('restores the committed display name after close and reopen', async () => {

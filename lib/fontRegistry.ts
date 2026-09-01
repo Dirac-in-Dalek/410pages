@@ -157,6 +157,56 @@ export const FONT_OPTIONS = [
 
 export type FontPreference = (typeof FONT_OPTIONS)[number]['id'];
 
+const GOOGLE_FONT_QUERY_BY_ID: Partial<Record<FontPreference, string>> = {
+  serif: 'Noto+Serif+KR:wght@400;500;600;700',
+  'noto-sans-kr': 'Noto+Sans+KR:wght@400;500;600;700',
+  'asta-sans': 'Asta+Sans:wght@300;400;500;600;700;800',
+  'ibm-plex-sans-kr': 'IBM+Plex+Sans+KR:wght@400;500;600;700',
+  'gothic-a1': 'Gothic+A1:wght@400;500;600;700;800',
+  'gowun-dodum': 'Gowun+Dodum',
+  'nanum-gothic': 'Nanum+Gothic:wght@400;700;800',
+  orbit: 'Orbit',
+  'nanum-myeongjo': 'Nanum+Myeongjo:wght@400;700;800',
+  diphylleia: 'Diphylleia',
+  'gowun-batang': 'Gowun+Batang:wght@400;700',
+  'grandiflora-one': 'Grandiflora+One',
+  hahmlet: 'Hahmlet:wght@400;500;600;700',
+  'song-myung': 'Song+Myung',
+  sunflower: 'Sunflower:wght@300;500;700',
+  'nanum-gothic-coding': 'Nanum+Gothic+Coding:wght@400;700',
+  'jetbrains-mono': 'JetBrains+Mono:wght@400;500;600;700',
+  'fira-code': 'Fira+Code:wght@400;500;600;700',
+  'source-code-pro': 'Source+Code+Pro:wght@400;500;600;700',
+  'roboto-mono': 'Roboto+Mono:wght@400;500;600;700',
+  'do-hyeon': 'Do+Hyeon',
+  jua: 'Jua',
+  'black-han-sans': 'Black+Han+Sans',
+};
+
+export const READING_FONT_STYLESHEET_ID = 'selected-reading-font';
+
+export const getReadingFontStylesheetUrl = (value: unknown) => {
+  const query = GOOGLE_FONT_QUERY_BY_ID[normalizeFontPreference(value)];
+  return query ? `https://fonts.googleapis.com/css2?family=${query}&display=swap` : null;
+};
+
+export const ensureReadingFontLoaded = (value: unknown) => {
+  if (typeof document === 'undefined') return;
+  const href = getReadingFontStylesheetUrl(value);
+  const current = document.getElementById(READING_FONT_STYLESHEET_ID);
+
+  if (!href) {
+    current?.remove();
+    return;
+  }
+
+  const link = current instanceof HTMLLinkElement ? current : document.createElement('link');
+  link.id = READING_FONT_STYLESHEET_ID;
+  link.rel = 'stylesheet';
+  if (link.getAttribute('href') !== href) link.href = href;
+  if (!link.isConnected) document.head.appendChild(link);
+};
+
 export const DEFAULT_FONT_ID: FontPreference = 'nanum-myeongjo';
 
 export const FONT_OPTION_BY_ID = new Map<FontPreference, (typeof FONT_OPTIONS)[number]>(

@@ -1,0 +1,1165 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="icon" href="data:,">
+  <title>410pages · 메모 작업공간</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --canvas: oklch(0.155 0.008 58);
+      --rail: oklch(0.185 0.01 58);
+      --surface: oklch(0.215 0.011 58);
+      --surface-active: oklch(0.245 0.018 45 / 0.72);
+      --ink: oklch(0.92 0.014 78);
+      --ink-soft: oklch(0.72 0.014 75);
+      --muted: oklch(0.61 0.012 68);
+      --line: oklch(0.32 0.012 58 / 0.56);
+      --accent: oklch(0.62 0.20 25);
+      --danger: oklch(0.70 0.18 24);
+      --topbar-height: 44px;
+      --rail-width: 304px;
+      --book-note-width: 324px;
+      --r-1: 4px;
+      --r-2: 6px;
+      --r-3: 8px;
+      font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: var(--canvas);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    button,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      touch-action: manipulation;
+    }
+
+    button:focus-visible,
+    textarea:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .topbar {
+      position: relative;
+      z-index: 60;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      height: var(--topbar-height);
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      background: var(--canvas);
+    }
+
+    .breadcrumb {
+      display: flex;
+      min-width: 0;
+      align-items: center;
+      gap: 9px;
+      padding-left: 16px;
+      color: var(--muted);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .breadcrumb strong {
+      color: var(--ink-soft);
+      font-weight: 650;
+    }
+
+    .breadcrumb span:last-child {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding-right: 10px;
+    }
+
+    .quiet-action,
+    .icon-button,
+    .comment-button,
+    .passage-hit,
+    .rail-row,
+    .add-passage {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .quiet-action {
+      display: inline-flex;
+      min-height: 32px;
+      align-items: center;
+      gap: 8px;
+      padding: 0 8px;
+      border-radius: var(--r-1);
+      font-size: 11px;
+    }
+
+    .quiet-action kbd {
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 9px;
+    }
+
+    .icon-button {
+      display: grid;
+      width: 36px;
+      height: 36px;
+      flex: 0 0 auto;
+      place-items: center;
+      border-radius: var(--r-1);
+      transition: transform 140ms ease, opacity 140ms ease;
+    }
+
+    .icon-button:active,
+    .quiet-action:active,
+    .comment-button:active,
+    .primary-button:active,
+    .secondary-button:active,
+    .rail-row:active,
+    .add-passage:active {
+      transform: scale(0.96);
+    }
+
+    .app-shell {
+      display: grid;
+      grid-template-columns: var(--rail-width) minmax(0, 1fr);
+      height: calc(100dvh - var(--topbar-height));
+      min-height: 0;
+    }
+
+    .rail-slot {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+      border-right: 1px solid var(--line);
+      background: var(--rail);
+    }
+
+    .library-rail,
+    .passage-panel {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      min-height: 0;
+      flex-direction: column;
+      background: var(--rail);
+      transition: transform 170ms cubic-bezier(0.16, 1, 0.3, 1), opacity 140ms ease;
+    }
+
+    .library-rail {
+      transform: translateX(0);
+      opacity: 1;
+    }
+
+    .passage-panel {
+      transform: translateX(100%);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    body.passage-open .library-rail {
+      transform: translateX(-100%);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    body.passage-open .passage-panel {
+      transform: translateX(0);
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .rail-header {
+      display: flex;
+      min-height: 52px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 0 12px 0 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .rail-header h2,
+    .book-note-header h2 {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 680;
+      letter-spacing: -0.01em;
+    }
+
+    .rail-header p,
+    .book-note-header p {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .library-scroll,
+    .passage-scroll {
+      min-height: 0;
+      flex: 1;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--line) transparent;
+    }
+
+    .library-scroll {
+      padding: 10px 8px 24px;
+    }
+
+    .rail-section-label {
+      margin: 18px 8px 5px;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .rail-row {
+      display: flex;
+      width: 100%;
+      min-height: 32px;
+      align-items: center;
+      gap: 8px;
+      padding: 0 8px;
+      border-radius: var(--r-1);
+      color: var(--ink-soft);
+      text-align: left;
+      font-size: 12px;
+    }
+
+    .rail-row svg {
+      flex: 0 0 auto;
+      opacity: 0.72;
+    }
+
+    .rail-row.active {
+      background: var(--surface);
+      color: var(--ink);
+    }
+
+    .rail-row .row-copy {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .rail-row strong,
+    .rail-row small {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .rail-row strong {
+      font-size: 12px;
+      font-weight: 560;
+    }
+
+    .rail-row small {
+      margin-top: 1px;
+      color: var(--muted);
+      font-size: 9px;
+    }
+
+    .selected-passage {
+      position: relative;
+      margin: 0;
+      padding: 20px 20px 18px 32px;
+      border-bottom: 1px solid var(--line);
+      color: var(--ink);
+      font-family: "Noto Serif KR", "Nanum Myeongjo", "Iowan Old Style", serif;
+      font-size: 15px;
+      line-height: 1.68;
+      text-wrap: pretty;
+    }
+
+    .selected-passage::before {
+      position: absolute;
+      top: 28px;
+      left: 16px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      content: "";
+    }
+
+    .note-list {
+      padding: 0 16px;
+    }
+
+    .note-item {
+      position: relative;
+      padding: 16px 28px 16px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .note-meta {
+      display: flex;
+      gap: 7px;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .note-meta strong {
+      color: var(--ink-soft);
+      font-weight: 600;
+    }
+
+    .note-copy {
+      margin: 0;
+      color: var(--ink-soft);
+      font-size: 13px;
+      line-height: 1.62;
+      white-space: pre-wrap;
+      text-wrap: pretty;
+    }
+
+    .note-more {
+      position: absolute;
+      top: 7px;
+      right: -6px;
+    }
+
+    .note-menu {
+      position: absolute;
+      z-index: 30;
+      top: 34px;
+      right: 0;
+      display: grid;
+      width: 104px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: var(--r-2);
+      background: var(--surface);
+      box-shadow: 0 12px 28px oklch(0.04 0 0 / 0.42);
+    }
+
+    .note-menu button {
+      min-height: 34px;
+      border: 0;
+      border-radius: var(--r-1);
+      background: transparent;
+      color: var(--ink-soft);
+      text-align: left;
+      padding: 0 9px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .note-menu .danger {
+      color: var(--danger);
+    }
+
+    .empty-note {
+      margin: 18px 16px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .composer {
+      flex: 0 0 auto;
+      padding: 14px 16px 16px;
+      border-top: 1px solid var(--line);
+      background: var(--rail);
+    }
+
+    .composer textarea,
+    .note-editor textarea {
+      width: 100%;
+      min-height: 66px;
+      resize: vertical;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
+      color: var(--ink);
+      padding: 4px 0 10px;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .composer-actions,
+    .note-editor-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .primary-button,
+    .secondary-button {
+      min-height: 32px;
+      padding: 0 11px;
+      border: 0;
+      border-radius: var(--r-1);
+      font-size: 11px;
+      font-weight: 650;
+      cursor: pointer;
+      transition: transform 140ms ease, opacity 140ms ease;
+    }
+
+    .primary-button {
+      background: var(--accent);
+      color: white;
+    }
+
+    .secondary-button {
+      background: transparent;
+      color: var(--muted);
+    }
+
+    .primary-button:disabled {
+      cursor: not-allowed;
+      opacity: 0.38;
+    }
+
+    .note-editor {
+      padding: 4px 0 0;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) var(--book-note-width);
+      min-width: 0;
+      min-height: 0;
+      background: var(--canvas);
+    }
+
+    .reader {
+      min-width: 0;
+      min-height: 0;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--line) transparent;
+    }
+
+    .reader-content {
+      width: min(100%, 720px);
+      margin: 0 auto;
+      padding: 34px 20px 42px;
+    }
+
+    .page-title {
+      margin: 0;
+      font-family: "Noto Serif KR", "Nanum Myeongjo", "Iowan Old Style", serif;
+      font-size: clamp(24px, 2vw, 30px);
+      font-weight: 600;
+      line-height: 1.3;
+      letter-spacing: -0.025em;
+    }
+
+    .page-title,
+    .page-meta {
+      margin-left: 16px;
+      margin-right: 16px;
+    }
+
+    .page-meta {
+      margin: 8px 0 36px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .citation {
+      margin: 0 0 14px;
+    }
+
+    .citation-inner {
+      position: relative;
+      min-height: 74px;
+      padding: 12px 50px 14px 16px;
+      border-radius: var(--r-1);
+    }
+
+    .citation.is-active .citation-inner {
+      background: var(--surface-active);
+    }
+
+    .citation.is-active .citation-inner::before {
+      position: absolute;
+      top: 20px;
+      left: 6px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      content: "";
+    }
+
+    .passage-hit {
+      display: block;
+      width: 100%;
+      padding: 0;
+      color: inherit;
+      text-align: left;
+    }
+
+    .citation-text {
+      display: block;
+      color: var(--ink);
+      font-family: "Noto Serif KR", "Nanum Myeongjo", "Iowan Old Style", serif;
+      font-size: 16px;
+      line-height: 1.72;
+      text-wrap: pretty;
+    }
+
+    .citation-meta {
+      display: flex;
+      gap: 11px;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .comment-button {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      display: flex;
+      min-width: 32px;
+      min-height: 32px;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 0 5px;
+      border-radius: var(--r-1);
+      opacity: 0.44;
+      transition: transform 140ms ease, opacity 140ms ease;
+    }
+
+    .citation.is-active .comment-button,
+    .comment-button.has-notes {
+      color: var(--ink-soft);
+      opacity: 0.88;
+    }
+
+    .comment-button span {
+      font-size: 10px;
+    }
+
+    .comment-button:not(.has-notes) span {
+      display: none;
+    }
+
+    .add-passage {
+      display: flex;
+      width: 100%;
+      min-height: 46px;
+      align-items: center;
+      margin-top: 28px;
+      padding: 0 16px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 11px;
+      text-align: left;
+    }
+
+    .book-note-panel {
+      display: flex;
+      min-width: 0;
+      min-height: 0;
+      flex-direction: column;
+      border-left: 1px solid var(--line);
+      background: var(--rail);
+    }
+
+    .book-note-header {
+      display: flex;
+      min-height: 64px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 0 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .book-save-status {
+      min-width: 82px;
+      color: var(--muted);
+      font-size: 11px;
+      text-align: right;
+      opacity: 0;
+      transition: opacity 140ms ease;
+    }
+
+    .book-save-status.visible {
+      opacity: 1;
+    }
+
+    .book-save-status.failed {
+      color: var(--danger);
+      opacity: 1;
+    }
+
+    .book-note {
+      width: 100%;
+      min-height: 0;
+      flex: 1;
+      resize: none;
+      border: 0;
+      background: transparent;
+      color: var(--ink-soft);
+      padding: 22px 18px;
+      font-family: "Noto Serif KR", "Nanum Myeongjo", "Iowan Old Style", serif;
+      font-size: 14px;
+      line-height: 1.78;
+    }
+
+    .book-note:focus-visible {
+      outline: none;
+      background: oklch(0.19 0.009 58);
+      color: var(--ink);
+    }
+
+    .book-note-footer {
+      display: flex;
+      min-height: 58px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 12px 8px 18px;
+      border-top: 1px solid var(--line);
+    }
+
+    .book-note-hint {
+      margin: 0;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.45;
+    }
+
+    .book-save-action {
+      min-width: 64px;
+      min-height: 40px;
+    }
+
+    .mobile-only,
+    .sheet-backdrop {
+      display: none;
+    }
+
+    @media (hover: hover) {
+      .quiet-action:hover,
+      .icon-button:hover,
+      .rail-row:hover,
+      .comment-button:hover,
+      .add-passage:hover,
+      .note-menu button:hover {
+        background: var(--surface);
+        color: var(--ink);
+      }
+
+      .citation-inner:hover {
+        background: oklch(0.21 0.01 58 / 0.62);
+      }
+
+      .citation-inner:hover .comment-button {
+        opacity: 0.9;
+      }
+    }
+
+    @media (max-width: 1120px) {
+      :root {
+        --rail-width: 280px;
+        --book-note-width: 300px;
+      }
+
+      .reader-content {
+        padding-inline: 16px;
+      }
+    }
+
+    @media (max-width: 980px) {
+      :root {
+        --topbar-height: 50px;
+      }
+
+      .topbar {
+        grid-template-columns: minmax(0, 1fr) auto;
+      }
+
+      .breadcrumb span:not(:first-child),
+      .quiet-action {
+        display: none;
+      }
+
+      .mobile-only {
+        display: grid;
+      }
+
+      .app-shell {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .rail-slot {
+        position: fixed;
+        z-index: 80;
+        inset: auto 0 0;
+        width: 100%;
+        height: min(72dvh, 640px);
+        border: 0;
+        border-radius: var(--r-3) var(--r-3) 0 0;
+        transform: translateY(102%);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        box-shadow: 0 -18px 42px oklch(0.04 0 0 / 0.44);
+        transition: transform 170ms cubic-bezier(0.16, 1, 0.3, 1), opacity 140ms ease;
+      }
+
+      body.passage-open .rail-slot {
+        transform: translateY(0);
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+      }
+
+      .library-rail {
+        display: none;
+      }
+
+      .passage-panel {
+        transform: none;
+      }
+
+      .workspace {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .book-note-panel {
+        position: fixed;
+        z-index: 80;
+        inset: auto 0 0;
+        width: 100%;
+        height: min(84dvh, 700px);
+        border: 0;
+        border-radius: var(--r-3) var(--r-3) 0 0;
+        transform: translateY(102%);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        box-shadow: 0 -18px 42px oklch(0.04 0 0 / 0.44);
+        transition: transform 170ms cubic-bezier(0.16, 1, 0.3, 1), opacity 140ms ease;
+      }
+
+      body.book-note-open .book-note-panel {
+        transform: translateY(0);
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+      }
+
+      .sheet-backdrop {
+        position: fixed;
+        z-index: 70;
+        inset: var(--topbar-height) 0 0;
+        display: block;
+        border: 0;
+        background: oklch(0.04 0 0 / 0.58);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity 140ms ease;
+      }
+
+      body.passage-open .sheet-backdrop,
+      body.book-note-open .sheet-backdrop {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+      }
+    }
+
+    @media (max-width: 540px) {
+      .breadcrumb {
+        padding-left: 12px;
+      }
+
+      .reader-content {
+        padding: 24px 10px 32px;
+      }
+
+      .page-title,
+      .page-meta {
+        margin-left: 6px;
+        margin-right: 6px;
+      }
+
+      .page-title {
+        font-size: 22px;
+      }
+
+      .page-meta {
+        margin-bottom: 24px;
+      }
+
+      .citation {
+        margin-bottom: 8px;
+      }
+
+      .citation-inner {
+        padding-right: 42px;
+      }
+
+      .citation-text {
+        font-size: 15px;
+        line-height: 1.68;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body class="passage-open">
+  <header class="topbar">
+    <div class="breadcrumb" aria-label="현재 위치">
+      <strong>410pages</strong><span>/</span><span>조르조 아감벤</span><span>/</span><span>동시대인이란 무엇인가?</span>
+    </div>
+    <div class="topbar-actions">
+      <button class="quiet-action" type="button" aria-label="검색"><span>검색</span><kbd>⌘ K</kbd></button>
+      <button class="icon-button mobile-only" type="button" data-action="open-book-note" aria-label="책 전체 메모 열기">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4h16v16H4zM9 4v16"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="app-shell">
+    <div class="rail-slot" id="railSlot">
+      <aside class="library-rail" id="libraryRail" aria-label="서재 탐색">
+        <header class="rail-header"><div><h2>서재</h2><p>저자와 책</p></div></header>
+        <div class="library-scroll">
+          <button class="rail-row" type="button">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m3 11 9-8 9 8v10H3z"/></svg>
+            <span class="row-copy"><strong>홈</strong></span>
+          </button>
+          <div class="rail-section-label">최근 책</div>
+          <button class="rail-row active" type="button">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5z"/><path d="M4 6.5v13"/></svg>
+            <span class="row-copy"><strong>동시대인이란 무엇인가?</strong><small>조르조 아감벤</small></span>
+          </button>
+          <button class="rail-row" type="button">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5z"/><path d="M4 6.5v13"/></svg>
+            <span class="row-copy"><strong>비도덕적 의미에서의 진리와 거짓</strong><small>프리드리히 니체</small></span>
+          </button>
+          <button class="rail-row" type="button">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5z"/><path d="M4 6.5v13"/></svg>
+            <span class="row-copy"><strong>비극의 탄생</strong><small>프리드리히 니체</small></span>
+          </button>
+          <div class="rail-section-label">저자와 책</div>
+          <button class="rail-row" type="button"><span class="row-copy"><strong>동우</strong></span></button>
+          <button class="rail-row" type="button"><span class="row-copy"><strong>조르조 아감벤</strong></span></button>
+          <button class="rail-row" type="button"><span class="row-copy"><strong>프리드리히 니체</strong></span></button>
+          <button class="rail-row" type="button"><span class="row-copy"><strong>블라디미르 장켈레비치</strong></span></button>
+          <button class="rail-row" type="button"><span class="row-copy"><strong>마르셀 프루스트</strong></span></button>
+        </div>
+      </aside>
+
+      <aside class="passage-panel" id="passagePanel" aria-label="선택 구절 메모"></aside>
+    </div>
+
+    <main class="workspace">
+      <section class="reader" aria-label="문장 목록">
+        <div class="reader-content">
+          <h1 class="page-title">동시대인이란 무엇인가?</h1>
+          <p class="page-meta">조르조 아감벤 · 5개 문장</p>
+          <div id="citationList"></div>
+          <button class="add-passage" type="button">＋ 새 문장 추가</button>
+        </div>
+      </section>
+
+      <aside class="book-note-panel" id="bookNotePanel" aria-label="책 전체 메모">
+        <header class="book-note-header">
+          <div><h2>책 전체 메모</h2><p>동시대인이란 무엇인가?</p></div>
+          <span class="book-save-status" id="bookNoteStatus" role="status" aria-live="polite"></span>
+          <button class="icon-button mobile-only" type="button" data-action="close-sheets" aria-label="책 전체 메모 닫기">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m6 6 12 12M18 6 6 18"/></svg>
+          </button>
+        </header>
+        <textarea class="book-note" id="bookNote" aria-label="책 전체 메모" placeholder="책 전체를 읽으며 남기고 싶은 생각을 적으세요."></textarea>
+        <footer class="book-note-footer">
+          <p class="book-note-hint">입력을 멈추면 자동 저장됩니다.</p>
+          <button class="primary-button book-save-action" type="button" data-action="save-book-note">저장</button>
+        </footer>
+      </aside>
+    </main>
+  </div>
+
+  <button class="sheet-backdrop" type="button" data-action="close-sheets" aria-label="패널 닫기"></button>
+
+  <script>
+    (() => {
+      const BOOK_NOTE_KEY = '410pages.prototype.comment-notes.book.v2';
+      const initialBookNote = '이 책에서 말하는 동시대성은 단순히 같은 시대에 산다는 뜻이 아니다.\n\n시대의 어둠을 정확히 바라보면서도 그 어둠과 거리를 유지하는 태도에 가깝다.\n\n중요한 것은 시대와 완전히 일치하지 않는 거리, 그러면서도 끝까지 응시하는 태도다.';
+      const citations = [
+        { id: 'c1', text: '중요한 것은 어떤 식으로든 해당 텍스트와 동시대인이 되는 데 성공해야 한다는 것이다.', page: '69쪽', date: '2026. 8. 27.', notes: [{ id: 'n1', text: '텍스트를 과거의 유물로 두지 않고 지금의 문제로 읽어야 한다.', time: '오후 8:14' }] },
+        { id: 'c2', text: '동시대적인 것이란 반시대적인 것이다.', page: '70쪽', date: '2026. 8. 27.', notes: [{ id: 'n2', text: '시대와 완전히 일치하지 않을 때 오히려 시대를 더 정확히 볼 수 있다는 역설.', time: '오후 8:21' }, { id: 'n3', text: '니체의 반시대적 고찰과 연결해서 다시 볼 것.', time: '오후 8:24' }] },
+        { id: 'c3', text: '이 고찰이 반시대적인 것은 시대가 자랑스러워하는 역사적 교양을 내가 여기서 시대의 폐해로, 질병과 결함으로 이해하려 하기 때문이다.', page: '70–71쪽', date: '2026. 8. 27.', notes: [] },
+        { id: 'c4', text: '자신의 시대에 속하는 자, 잠으로 동시대인인 자는 자신의 시대와 완벽히 어울리지 않는 자이다.', page: '71쪽', date: '2026. 8. 27.', notes: [{ id: 'n4', text: '불일치가 곧 무관심은 아니다. 오히려 더 깊게 개입하기 위한 거리다.', time: '오후 8:40' }] },
+        { id: 'c5', text: '동시대인은 시대의 어둠을 응시하면서 그 안에서 자신을 향해 오는 빛을 지각하는 사람이다.', page: '73쪽', date: '2026. 8. 27.', notes: [] }
+      ];
+
+      const state = {
+        activeCitationId: 'c2',
+        passageOpen: true,
+        menuNoteId: null,
+        editingNoteId: null,
+        editDraft: '',
+        newDrafts: Object.fromEntries(citations.map(citation => [citation.id, '']))
+      };
+
+      const passagePanel = document.getElementById('passagePanel');
+      const libraryRail = document.getElementById('libraryRail');
+      const citationList = document.getElementById('citationList');
+      const bookNote = document.getElementById('bookNote');
+      const bookNoteStatus = document.getElementById('bookNoteStatus');
+      let bookNoteTimer = 0;
+      let statusTimer = 0;
+
+      const escapeHtml = value => String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+
+      const commentIcon = '<svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg>';
+      const moreIcon = '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.25"/><circle cx="12" cy="12" r="1.25"/><circle cx="19" cy="12" r="1.25"/></svg>';
+      const closeIcon = '<svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m6 6 12 12M18 6 6 18"/></svg>';
+
+      const activeCitation = () => citations.find(citation => citation.id === state.activeCitationId) || citations[0];
+
+      const renderNote = (citationId, note) => {
+        if (state.editingNoteId === note.id) {
+          return `<article class="note-item"><div class="note-editor"><textarea data-edit-note="${note.id}" aria-label="메모 수정">${escapeHtml(state.editDraft)}</textarea><div class="note-editor-actions"><button class="secondary-button" type="button" data-action="cancel-edit">취소</button><button class="primary-button" type="button" data-action="save-edit" data-citation-id="${citationId}" data-note-id="${note.id}" ${state.editDraft.trim() ? '' : 'disabled'}>저장</button></div></div></article>`;
+        }
+        const menuOpen = state.menuNoteId === note.id;
+        return `<article class="note-item"><div class="note-meta"><strong>내 메모</strong><time>${escapeHtml(note.time)}</time></div><p class="note-copy">${escapeHtml(note.text)}</p><div class="note-more"><button class="icon-button" type="button" data-action="toggle-note-menu" data-note-id="${note.id}" aria-label="메모 더보기" aria-expanded="${menuOpen}">${moreIcon}</button>${menuOpen ? `<div class="note-menu" role="menu"><button type="button" role="menuitem" data-action="edit-note" data-citation-id="${citationId}" data-note-id="${note.id}">수정</button><button class="danger" type="button" role="menuitem" data-action="delete-note" data-citation-id="${citationId}" data-note-id="${note.id}">삭제</button></div>` : ''}</div></article>`;
+      };
+
+      const renderPassagePanel = () => {
+        const citation = activeCitation();
+        passagePanel.innerHTML = `<header class="rail-header"><div><h2>구절 메모</h2><p>${escapeHtml(citation.page)} · 메모 ${citation.notes.length}</p></div><button class="icon-button" type="button" data-action="close-passage" aria-label="구절 메모 닫기">${closeIcon}</button></header><div class="passage-scroll"><blockquote class="selected-passage">“${escapeHtml(citation.text)}”</blockquote>${citation.notes.length ? `<div class="note-list">${citation.notes.map(note => renderNote(citation.id, note)).join('')}</div>` : '<p class="empty-note">아직 남긴 메모가 없습니다.</p>'}</div><div class="composer"><textarea data-new-note="${citation.id}" aria-label="새 구절 메모" placeholder="이 구절에 대한 생각을 남기세요">${escapeHtml(state.newDrafts[citation.id])}</textarea><div class="composer-actions"><button class="secondary-button" type="button" data-action="cancel-new" data-citation-id="${citation.id}">취소</button><button class="primary-button" type="button" data-action="save-new" data-citation-id="${citation.id}" ${state.newDrafts[citation.id].trim() ? '' : 'disabled'}>추가</button></div></div>`;
+      };
+
+      const renderCitations = () => {
+        citationList.innerHTML = citations.map(citation => {
+          const active = state.passageOpen && state.activeCitationId === citation.id;
+          return `<article class="citation ${active ? 'is-active' : ''}"><div class="citation-inner"><button class="passage-hit" type="button" data-action="toggle-passage" data-citation-id="${citation.id}" aria-label="구절 메모 ${active ? '닫기' : '열기'}: ${escapeHtml(citation.text.slice(0, 36))}"><span class="citation-text">“${escapeHtml(citation.text)}”</span><span class="citation-meta"><span>${escapeHtml(citation.page)}</span><span>${escapeHtml(citation.date)}</span></span></button><button class="comment-button ${citation.notes.length ? 'has-notes' : ''}" type="button" data-action="toggle-passage" data-citation-id="${citation.id}" aria-label="구절 메모 ${citation.notes.length}개 ${active ? '닫기' : '열기'}">${commentIcon}<span>${citation.notes.length}</span></button></div></article>`;
+        }).join('');
+      };
+
+      const render = () => {
+        document.body.classList.toggle('passage-open', state.passageOpen);
+        passagePanel.setAttribute('aria-hidden', String(!state.passageOpen));
+        libraryRail.setAttribute('aria-hidden', String(state.passageOpen));
+        renderPassagePanel();
+        renderCitations();
+      };
+
+      const closePassage = () => {
+        if (!state.passageOpen) return;
+        state.passageOpen = false;
+        state.menuNoteId = null;
+        state.editingNoteId = null;
+        state.editDraft = '';
+        render();
+      };
+
+      document.addEventListener('input', event => {
+        const target = event.target;
+        if (target.matches('[data-new-note]')) {
+          state.newDrafts[target.dataset.newNote] = target.value;
+          document.querySelectorAll(`[data-action="save-new"][data-citation-id="${target.dataset.newNote}"]`).forEach(button => button.disabled = !target.value.trim());
+        }
+        if (target.matches('[data-edit-note]')) {
+          state.editDraft = target.value;
+          document.querySelectorAll('[data-action="save-edit"]').forEach(button => button.disabled = !target.value.trim());
+        }
+      });
+
+      document.addEventListener('click', event => {
+        const target = event.target.closest('[data-action]');
+        if (!target) {
+          if (state.passageOpen && !passagePanel.contains(event.target)) closePassage();
+          return;
+        }
+        const action = target.dataset.action;
+        const citationId = target.dataset.citationId;
+        const noteId = target.dataset.noteId;
+        const citation = citations.find(entry => entry.id === citationId);
+
+        if (action === 'toggle-passage') {
+          const shouldClose = state.passageOpen && state.activeCitationId === citationId;
+          state.activeCitationId = citationId;
+          state.passageOpen = !shouldClose;
+          state.menuNoteId = null;
+          state.editingNoteId = null;
+          render();
+          return;
+        }
+        if (action === 'close-passage') {
+          closePassage();
+          return;
+        }
+        if (action === 'open-book-note') {
+          closePassage();
+          document.body.classList.add('book-note-open');
+          requestAnimationFrame(() => bookNote.focus());
+          return;
+        }
+        if (action === 'close-sheets') {
+          document.body.classList.remove('book-note-open');
+          closePassage();
+          return;
+        }
+        if (action === 'save-book-note') {
+          persistBookNote();
+          return;
+        }
+        if (action === 'toggle-note-menu') {
+          state.menuNoteId = state.menuNoteId === noteId ? null : noteId;
+          render();
+          return;
+        }
+        if (action === 'edit-note') {
+          const note = citation.notes.find(entry => entry.id === noteId);
+          state.editingNoteId = noteId;
+          state.editDraft = note.text;
+          state.menuNoteId = null;
+          render();
+          requestAnimationFrame(() => document.querySelector(`[data-edit-note="${noteId}"]`)?.focus());
+          return;
+        }
+        if (action === 'cancel-edit') {
+          state.editingNoteId = null;
+          state.editDraft = '';
+          render();
+          return;
+        }
+        if (action === 'save-edit') {
+          const text = state.editDraft.trim();
+          const note = citation.notes.find(entry => entry.id === noteId);
+          if (!text || !note) return;
+          note.text = text;
+          note.time = '방금 수정됨';
+          state.editingNoteId = null;
+          state.editDraft = '';
+          render();
+          return;
+        }
+        if (action === 'delete-note') {
+          citation.notes = citation.notes.filter(entry => entry.id !== noteId);
+          state.menuNoteId = null;
+          render();
+          return;
+        }
+        if (action === 'cancel-new') {
+          state.newDrafts[citationId] = '';
+          render();
+          return;
+        }
+        if (action === 'save-new') {
+          const text = state.newDrafts[citationId].trim();
+          if (!text) return;
+          citation.notes.push({ id: `note-${Date.now()}`, text, time: '방금' });
+          state.newDrafts[citationId] = '';
+          render();
+        }
+      });
+
+      const showStatus = (text, failed = false) => {
+        clearTimeout(statusTimer);
+        bookNoteStatus.textContent = text;
+        bookNoteStatus.classList.toggle('failed', failed);
+        bookNoteStatus.classList.add('visible');
+        if (!failed && text.startsWith('저장됨')) {
+          statusTimer = setTimeout(() => {
+            bookNoteStatus.classList.remove('visible');
+            bookNoteStatus.textContent = '';
+          }, 1600);
+        }
+      };
+
+      try {
+        bookNote.value = localStorage.getItem(BOOK_NOTE_KEY) || initialBookNote;
+      } catch {
+        bookNote.value = initialBookNote;
+        showStatus('저장소 사용 불가', true);
+      }
+
+      const persistBookNote = () => {
+        clearTimeout(bookNoteTimer);
+        showStatus('저장 중…');
+        try {
+          localStorage.setItem(BOOK_NOTE_KEY, bookNote.value);
+          showStatus('저장됨 · 방금');
+        } catch {
+          showStatus('저장 실패', true);
+        }
+      };
+
+      bookNote.addEventListener('input', () => {
+        clearTimeout(bookNoteTimer);
+        showStatus('저장 중…');
+        bookNoteTimer = setTimeout(persistBookNote, 800);
+      });
+
+      document.addEventListener('keydown', event => {
+        if (event.key !== 'Escape') return;
+        if (document.body.classList.contains('book-note-open')) {
+          document.body.classList.remove('book-note-open');
+          return;
+        }
+        if (state.menuNoteId || state.editingNoteId) {
+          state.menuNoteId = null;
+          state.editingNoteId = null;
+          state.editDraft = '';
+          render();
+          return;
+        }
+        closePassage();
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>

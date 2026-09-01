@@ -45,9 +45,12 @@ export const resolveLibraryTreeDragMeta = (
 export const canDropInLibraryTreeList = (
   dragMeta: LibraryTreeDragMeta,
   listType: 'author' | 'book',
-  parentAuthorId?: string
+  parentAuthorId?: string,
+  authorGroupId?: string
 ) => {
-  if (listType === 'author') return dragMeta.itemType === 'author';
+  if (listType === 'author') {
+    return dragMeta.itemType === 'author' && dragMeta.authorGroupId === authorGroupId;
+  }
   return dragMeta.itemType === 'book' && dragMeta.authorId === parentAuthorId;
 };
 
@@ -66,7 +69,8 @@ export const buildLibraryTreeBoundaryIndicator = (
   items: SidebarItem[],
   listType: 'author' | 'book',
   boundary: 'start' | 'end',
-  parentAuthor?: string
+  parentAuthor?: string,
+  authorGroupId?: string
 ): LibraryTreeDropIndicator | null => {
   if (items.length === 0) return null;
 
@@ -77,6 +81,7 @@ export const buildLibraryTreeBoundaryIndicator = (
       dropIndex: 0,
       listType,
       parentAuthor,
+      ...(authorGroupId ? { authorGroupId } : {}),
     };
   }
 
@@ -86,6 +91,7 @@ export const buildLibraryTreeBoundaryIndicator = (
     dropIndex: items.length,
     listType,
     parentAuthor,
+    ...(authorGroupId ? { authorGroupId } : {}),
   };
 };
 
@@ -114,6 +120,7 @@ export const buildLibraryTreeListIndicator = (
         dropIndex: index,
         listType: list.listType,
         parentAuthor: list.parentAuthor,
+        ...(list.authorGroupId ? { authorGroupId: list.authorGroupId } : {}),
       };
     }
   }
@@ -124,5 +131,6 @@ export const buildLibraryTreeListIndicator = (
     dropIndex: list.items.length,
     listType: list.listType,
     parentAuthor: list.parentAuthor,
+    ...(list.authorGroupId ? { authorGroupId: list.authorGroupId } : {}),
   };
 };
