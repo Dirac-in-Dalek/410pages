@@ -9,6 +9,7 @@ import {
   Menu,
   Settings,
   Plus,
+  NotebookPen,
 } from 'lucide-react';
 import type { AuthorDeletePreview, BookSource, Citation, DeleteAuthorCascadeResult, Project, SidebarItem } from '../types';
 import { findRecentlyCitedBooks } from '../features/archive/logic/archiveTree';
@@ -58,6 +59,8 @@ interface MobileLayoutProps {
   avatarUrl?: string | null;
   onSignOut?: () => void;
   onOpenSettings: () => void;
+  showBookMemoAction?: boolean;
+  onOpenBookMemo?: () => void;
 }
 
 export const MobileLayout: React.FC<MobileLayoutProps> = ({
@@ -93,6 +96,8 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   avatarUrl = null,
   onSignOut,
   onOpenSettings,
+  showBookMemoAction = false,
+  onOpenBookMemo,
 }) => {
   const [isNavigationOpen, setIsNavigationOpen] = useState(false);
   const [isAllBooksOpen, setIsAllBooksOpen] = useState(true);
@@ -156,6 +161,11 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
         <div className="flex h-[3.25rem] items-center justify-between gap-3 px-4">
           <h1 className="type-title-bounded truncate font-semibold tracking-[-0.012em]">{title}</h1>
           <div className="flex items-center gap-2">
+            {showBookMemoAction ? (
+              <EditorialToolbarButton onClick={() => onOpenBookMemo?.()} ariaLabel="책 전체 메모 열기">
+                <NotebookPen size={17} />
+              </EditorialToolbarButton>
+            ) : null}
             <EditorialToolbarButton active={isNavigationOpen} onClick={() => setIsNavigationOpen(true)} ariaLabel="탐색 열기">
               <Menu size={18} />
             </EditorialToolbarButton>

@@ -24,6 +24,7 @@ describe('WordCardGroup', () => {
     render(
       <WordCardGroup
         citations={[word('failed-1', 'failed'), word('saving-1', 'saving'), word('saved-1')]}
+        username="Reader"
         selectedIds={new Set()}
         onToggleSelect={vi.fn()}
         onRetrySave={onRetrySave}
@@ -32,6 +33,7 @@ describe('WordCardGroup', () => {
     );
 
     expect(screen.getByRole('alert').textContent).toContain('1개 저장 실패');
+    expect(screen.getByRole('button', { name: '저장에 실패한 단어 1개 복사' })).toBeTruthy();
     await user.click(screen.getByRole('button', { name: '저장에 실패한 단어 1개 다시 시도' }));
     expect(onRetrySave).toHaveBeenCalledTimes(1);
     expect(onRetrySave).toHaveBeenCalledWith('failed-1');

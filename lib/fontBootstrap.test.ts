@@ -1,7 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_FONT_ID, FONT_IDS } from './fontRegistry';
+import {
+  DEFAULT_FONT_ID,
+  ensureReadingFontLoaded,
+  FONT_IDS,
+  READING_FONT_STYLESHEET_ID,
+} from './fontRegistry';
 
 const INDEX_HTML_PATH = resolve(import.meta.dirname, '..', 'index.html');
 const INDEX_CSS_PATH = resolve(import.meta.dirname, '..', 'index.css');
@@ -193,5 +198,20 @@ describe('index bootstrap', () => {
     runBootstrapScript();
 
     expect(document.documentElement.dataset.font).toBe(DEFAULT_FONT_ID);
+  });
+
+  it('loads only the selected reading font and reuses one stylesheet link', () => {
+    ensureReadingFontLoaded('nanum-myeongjo');
+    const firstLink = document.getElementById(READING_FONT_STYLESHEET_ID) as HTMLLinkElement;
+    expect(firstLink.getAttribute('href')).toContain('Nanum+Myeongjo');
+
+    ensureReadingFontLoaded('jetbrains-mono');
+    const nextLink = document.getElementById(READING_FONT_STYLESHEET_ID) as HTMLLinkElement;
+    expect(nextLink).toBe(firstLink);
+    expect(nextLink.getAttribute('href')).toContain('JetBrains+Mono');
+    expect(document.querySelectorAll(`#${READING_FONT_STYLESHEET_ID}`)).toHaveLength(1);
+
+    ensureReadingFontLoaded('pretendard');
+    expect(document.getElementById(READING_FONT_STYLESHEET_ID)).toBeNull();
   });
 });

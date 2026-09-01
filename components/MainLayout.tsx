@@ -6,6 +6,9 @@ import { ProjectSidebar } from '../features/archive/ui/ProjectSidebar';
 
 interface MainLayoutProps {
   children: React.ReactNode;
+  leftPanel?: React.ReactNode;
+  rightPanel?: React.ReactNode;
+  rightPanelOpen?: boolean;
   projects: Project[];
   onProjectSelect: (projectId: string | null) => void;
   selectedProjectId: string | null;
@@ -39,11 +42,16 @@ interface MainLayoutProps {
   searchTerm?: string;
   selectedFilter?: { type: 'author' | 'book'; authorId?: string; bookId?: string; value: string; author?: string } | null;
   onReorderBookAt?: (author: string, dragBook: string, dropIndex: number) => void;
+  onReorderAuthorAt?: (groupAuthorIds: string[], dragAuthorId: string, dropIndex: number) => void;
+  libraryOrderSaving?: boolean;
   onOpenSettings: () => void;
 }
 
 export const MainLayout: React.FC<MainLayoutProps> = ({
   children,
+  leftPanel,
+  rightPanel,
+  rightPanelOpen = true,
   projects,
   onProjectSelect,
   selectedProjectId,
@@ -77,6 +85,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   searchTerm = '',
   selectedFilter = null,
   onReorderBookAt,
+  onReorderAuthorAt,
+  libraryOrderSaving,
   onOpenSettings
 }) => {
   const {
@@ -125,7 +135,16 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       </header>
 
       <div className="flex min-h-0 flex-1">
-        <ProjectSidebar
+        {leftPanel ? (
+          <div className="relative h-full shrink-0" style={{ width: `${leftWidth}px` }}>
+            {leftPanel}
+            <div
+              onMouseDown={startLeftResize}
+              className="absolute inset-y-0 right-0 z-10 w-1 cursor-col-resize"
+              aria-hidden="true"
+            />
+          </div>
+        ) : <ProjectSidebar
           projects={projects}
           selectedProjectId={selectedProjectId}
           onProjectSelect={onProjectSelect}
@@ -156,14 +175,27 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           onRenameAuthor={onRenameAuthor}
           onRenameBook={onRenameBook}
           onReorderBookAt={onReorderBookAt}
+          onReorderAuthorAt={onReorderAuthorAt}
+          libraryOrderSaving={libraryOrderSaving}
           width={leftWidth}
           isResizing={isResizingLeft}
           onStartResize={startLeftResize}
-        />
+        />}
 
         <main className="flex min-w-0 flex-1 flex-col bg-[var(--bg-main)] transition-colors duration-200">
           {children}
         </main>
+        {rightPanel ? (
+          <div
+            aria-hidden={!rightPanelOpen}
+            className={[
+              'h-full shrink-0 overflow-hidden transition-[width,opacity] duration-200 motion-reduce:transition-none',
+              rightPanelOpen ? 'visible w-[20rem] opacity-100' : 'invisible w-0 opacity-0 pointer-events-none',
+            ].join(' ')}
+          >
+            {rightPanel}
+          </div>
+        ) : null}
       </div>
     </div>
   );

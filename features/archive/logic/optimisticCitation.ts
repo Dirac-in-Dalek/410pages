@@ -1,10 +1,6 @@
 import type { AddCitationInput, Citation } from '../../../types';
 
-export const OPTIMISTIC_CITATION_ID_PREFIX = 'optimistic-citation-';
 export const CITATION_SAVE_FAILED_MESSAGE = '저장에 실패했습니다. 다시 시도해주세요.';
-
-export const isOptimisticCitationId = (citationId: string) =>
-  citationId.startsWith(OPTIMISTIC_CITATION_ID_PREFIX);
 
 export const attachOptimisticOrigin = (
   citation: Citation,
@@ -29,7 +25,7 @@ export const createOptimisticCitation = (
   const page = data.kind === 'word' ? undefined : data.page || undefined;
 
   return {
-    id: `${OPTIMISTIC_CITATION_ID_PREFIX}${now}-${Math.random().toString(36).slice(2, 8)}`,
+    id: data.id ?? globalThis.crypto.randomUUID(),
     kind: data.kind,
     text: data.text,
     author,
@@ -116,6 +112,7 @@ export const reconcilePersistedCitationSource = (
 };
 
 export const createRetryCitationInput = (citation: Citation): AddCitationInput => ({
+  id: citation.id,
   kind: citation.kind,
   text: citation.text,
   author: citation.isSelf && !citation.author ? '' : citation.author,

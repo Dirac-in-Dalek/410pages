@@ -40,4 +40,6 @@ export interface CitationListProps {
     onCreateChapterBlock?: (input: CreateChapterBlockInput) => Promise<unknown> | unknown;
     onDeleteChapterBlock?: (bookId: string, blockId: string) => Promise<unknown> | unknown;
     chapterActionsDisabled?: boolean;
+    passageNoteCitationId?: string | null;
+    onPassageNoteCitationChange?: (citationId: string | null) => void;
 }

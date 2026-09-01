@@ -31,6 +31,7 @@ export type RenameAuthorBookMerge = {
   toBookId: string;
   toBookTitle: string;
   toBookSortIndex: number | null;
+  toBookMemo: string;
 };
 
 export type RenameAuthorMutationResult = {
@@ -50,6 +51,7 @@ export type RenameBookMutationResult = {
   bookId: string;
   bookTitle: string;
   bookSortIndex: number | null;
+  bookMemo: string;
 };
 
 export type ArchiveQueryController = {
@@ -99,6 +101,7 @@ export type ArchiveMutationController = {
   handleDeleteProject: (id: string) => Promise<boolean>;
   handleRenameAuthor: (authorId: string, name: string) => Promise<RenameAuthorMutationResult | undefined>;
   handleRenameBook: (bookId: string, name: string) => Promise<RenameBookMutationResult | undefined>;
+  handleUpdateBookMemo: (bookId: string, memo: string) => Promise<boolean>;
   handleCreateChapterBlock: (input: CreateChapterBlockInput) => Promise<ChapterBlock | false>;
   handleDeleteChapterBlock: (bookId: string, blockId: string) => Promise<boolean>;
   handleReorderProjects: (dragIndex: number, dropIndex: number) => Promise<boolean>;

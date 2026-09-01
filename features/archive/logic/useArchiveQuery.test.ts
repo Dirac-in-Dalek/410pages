@@ -3,6 +3,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AuthorFolder, AuthorFolderMembership, AuthorSource, BookSource, ChapterBlock, Citation, Project } from '../../../types';
 import { useArchiveQuery } from './useArchiveQuery';
+import { getCitationDraftStorageKey, storeCitationDraft } from './citationDraftStorage';
 
 const fetchCitationsMock = vi.fn();
 const fetchBooksMock = vi.fn();
@@ -58,6 +59,7 @@ const renderQuery = () => renderHook(() => {
 describe('useArchiveQuery', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.localStorage.clear();
     fetchCitationsMock.mockResolvedValue([]);
     fetchAuthorsMock.mockResolvedValue([]);
     fetchAuthorFoldersMock.mockResolvedValue({ folders: [], memberships: [] });
@@ -78,6 +80,56 @@ describe('useArchiveQuery', () => {
     expect(result.current.books).toEqual([oldBook]);
     expect(result.current.projects).toEqual([oldProject]);
     expect(result.current.loadError).toBeTruthy();
+  });
+
+  it('restores a failed draft for the same account before the server responds', async () => {
+    const draft: Citation = {
+      id: '018f47a2-8594-7c09-a488-2f73384e4711',
+      kind: 'sentence',
+      text: 'Recovered local draft',
+      author: 'Author',
+      book: 'Book',
+      bookId: 'book-1',
+      notes: [],
+      tags: [],
+      createdAt: 10,
+      saveStatus: 'saving',
+    };
+    storeCitationDraft('user-a', draft);
+
+    const { result } = renderQuery();
+
+    await waitFor(() => expect(result.current.citations.some((citation) =>
+      citation.id === draft.id && citation.saveStatus === 'failed'
+    )).toBe(true));
+  });
+
+  it('keeps a newer local failed draft when the same UUID also exists on the server', async () => {
+    const citationId = '018f47a2-8594-7c09-a488-2f73384e4711';
+    const draft: Citation = {
+      id: citationId,
+      kind: 'sentence',
+      text: 'Possibly persisted',
+      author: 'Author',
+      book: 'Book',
+      notes: [],
+      tags: [],
+      createdAt: 10,
+      saveStatus: 'failed',
+    };
+    const canonical = { ...draft, saveStatus: undefined, createdAt: 20 };
+    storeCitationDraft('user-a', draft);
+    fetchCitationsMock.mockResolvedValueOnce([canonical]);
+    const { result } = renderQuery();
+
+    await act(async () => {
+      await result.current.fetchData();
+    });
+
+    expect(result.current.citations.filter((citation) => citation.id === citationId)).toEqual([
+      expect.objectContaining({ text: 'Possibly persisted', saveStatus: 'failed' }),
+    ]);
+    expect(window.localStorage.getItem(getCitationDraftStorageKey('user-a'))).not.toBeNull();
   });
 
   it('loads persisted authors independently from books', async () => {

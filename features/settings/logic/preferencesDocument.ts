@@ -1,4 +1,5 @@
 import { resolveThemePreference } from '../../../lib/themeRegistry';
+import { ensureReadingFontLoaded } from '../../../lib/fontRegistry';
 import type { UserPreferences } from '../contract/userPreferences';
 
 export const getSystemThemeIsDark = (): boolean =>
@@ -13,6 +14,7 @@ export const applyPreferencesToDocument = (preferences: UserPreferences) => {
   root.classList.toggle('dark', isDark);
   root.dataset.theme = resolvedTheme;
   root.dataset.font = preferences.fontFamily;
+  ensureReadingFontLoaded(preferences.fontFamily);
   root.style.setProperty('--font-base-pt', `${preferences.baseFontPt}pt`);
   root.style.setProperty('--citation-column-width', `${preferences.citationWidthRem}rem`);
   root.style.colorScheme = isDark ? 'dark' : 'light';

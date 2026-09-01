@@ -29,6 +29,7 @@ import {
   deleteBookCascade as deleteBookCascadeRecord,
   previewBookDeletion as previewBookDeletionRecord,
   renameBook as renameBookRecord,
+  updateBookMemo as updateBookMemoRecord,
   type RenameBookResult,
 } from '../../../shared/api/bookApi';
 import {
@@ -80,13 +81,18 @@ import {
   updateCitationNote,
 } from './archiveLocalPatch';
 import {
-  attachOptimisticOrigin,
   createOptimisticCitationEditPatch,
   createOptimisticCitation,
   createRetryCitationInput,
-  isOptimisticCitationId,
   reconcilePersistedCitationSource,
 } from './optimisticCitation';
+import {
+  readCitationDrafts,
+  removeCitationDraft,
+  removeCitationDrafts,
+  storeCitationDraft,
+} from './citationDraftStorage';
+import { moveBookMemoDraftAfterMerge } from './bookMemoDraftStorage';
 
 type UseArchiveMutationsOptions = {
   session: ArchiveSession;
@@ -139,8 +145,12 @@ export const useArchiveMutations = ({
 }: UseArchiveMutationsOptions): ArchiveMutationController => {
   const [mutationError, setMutationError] = useState<string | null>(null);
   const optimisticSaveInFlightRef = useRef(new Map<string, Promise<string | null>>());
-  const persistedCitationIdByOptimisticIdRef = useRef(new Map<string, string>());
   const authorFolderMoveInFlightRef = useRef(new Set<string>());
+  const ownerId = session?.user.id ?? null;
+  const ownerIdRef = useRef(ownerId);
+  ownerIdRef.current = ownerId;
+  const citationsRef = useRef(citations);
+  citationsRef.current = citations;
   const clearMutationError = useCallback(() => setMutationError(null), []);
 
   const persistOptimisticCitation = useCallback(
@@ -151,31 +161,53 @@ export const useArchiveMutations = ({
       }
 
       const persistence = (async () => {
+        const requestOwnerId = session?.user.id;
         try {
-          if (!session) {
+          if (!requestOwnerId) {
             setCitations((current) => patchCitation(current, optimisticCitationId, { saveStatus: 'failed' }));
             return null;
           }
 
-          const newCitation = await addCitationRecord(session.user.id, data);
-          persistedCitationIdByOptimisticIdRef.current.set(optimisticCitationId, newCitation.id);
+          const newCitation = await addCitationRecord(requestOwnerId, { ...data, id: optimisticCitationId });
+          const latestLocal = citationsRef.current.find((citation) => citation.id === optimisticCitationId);
+          const hasNewerLocalChanges = latestLocal &&
+            JSON.stringify(createRetryCitationInput(latestLocal)) !== JSON.stringify(data);
+          if (hasNewerLocalChanges) {
+            const failedDraft = { ...latestLocal, saveStatus: 'failed' as const };
+            storeCitationDraft(requestOwnerId, failedDraft);
+            if (ownerIdRef.current === requestOwnerId) {
+              setCitations((current) => current.map((citation) =>
+                citation.id === optimisticCitationId
+                  ? { ...citation, saveStatus: 'failed' }
+                  : citation
+              ));
+            }
+            return newCitation.id;
+          }
+          removeCitationDraft(requestOwnerId, optimisticCitationId);
+          if (ownerIdRef.current !== requestOwnerId) return newCitation.id;
           invalidateDataLoad();
           setCitations((current) => {
             const currentOptimistic = current.find((citation) => citation.id === optimisticCitationId);
             return replaceCitationById(
               current,
               optimisticCitationId,
-              attachOptimisticOrigin(
-                reconcilePersistedCitationSource(newCitation, currentOptimistic, data),
-                optimisticCitationId
-              )
+              reconcilePersistedCitationSource(newCitation, currentOptimistic, data)
             );
           });
+          setMutationError(null);
           return newCitation.id;
         } catch (error) {
           console.error('Error adding citation:', error);
+          if (requestOwnerId && ownerIdRef.current === requestOwnerId) {
+            setCitations((current) => {
+              const failed = current.find((citation) => citation.id === optimisticCitationId);
+              if (failed) storeCitationDraft(requestOwnerId, { ...failed, saveStatus: 'failed' });
+              return patchCitation(current, optimisticCitationId, { saveStatus: 'failed' });
+            });
+          }
+          if (ownerIdRef.current !== requestOwnerId) return null;
           invalidateDataLoad();
-          setCitations((current) => patchCitation(current, optimisticCitationId, { saveStatus: 'failed' }));
           return null;
         } finally {
           optimisticSaveInFlightRef.current.delete(optimisticCitationId);
@@ -189,23 +221,16 @@ export const useArchiveMutations = ({
   );
 
   const resolveCitationId = useCallback(async (citationId: string) => {
-    if (!isOptimisticCitationId(citationId)) {
-      return citationId;
-    }
-
-    const persistedId = persistedCitationIdByOptimisticIdRef.current.get(citationId);
-    if (persistedId) {
-      return persistedId;
-    }
-
-    return optimisticSaveInFlightRef.current.get(citationId) ?? null;
-  }, []);
+    const inFlight = optimisticSaveInFlightRef.current.get(citationId);
+    if (inFlight) return inFlight;
+    return citations.find((citation) => citation.id === citationId)?.saveStatus === 'failed'
+      ? null
+      : citationId;
+  }, [citations]);
 
   const handleAddCitation = useCallback(
     async (data: AddCitationInput): Promise<AddCitationResult> => {
-      if (!session) {
-        return createNoSessionResult();
-      }
+      if (!session) return createNoSessionResult();
 
       try {
         const newCitation = await addCitationRecord(session.user.id, data);
@@ -227,28 +252,31 @@ export const useArchiveMutations = ({
       }
 
       const optimisticCitation = createOptimisticCitation(data);
+      if (!storeCitationDraft(session.user.id, optimisticCitation)) {
+        setMutationError('브라우저에 임시 초안을 저장하지 못했습니다. 저장 실패 시 복사해 보관해 주세요.');
+      }
       setCitations((current) => prependCitation(current, optimisticCitation));
-      const persistedCitationId = await persistOptimisticCitation(optimisticCitation.id, data);
-
-      return persistedCitationId
-        ? { ok: true, citationId: optimisticCitation.id }
-        : { ok: false, error: new Error('Citation save failed') };
+      void persistOptimisticCitation(optimisticCitation.id, createRetryCitationInput(optimisticCitation));
+      return { ok: true, citationId: optimisticCitation.id };
     },
     [persistOptimisticCitation, session, setCitations]
   );
 
   const handleRetryCitationSave = useCallback(
     async (citationId: string) => {
-      if (!session || !isOptimisticCitationId(citationId)) {
+      if (!session) {
         return;
       }
 
       const citation = citations.find((entry) => entry.id === citationId);
-      if (!citation) {
+      if (!citation || citation.saveStatus !== 'failed') {
         return;
       }
 
       const retryInput = createRetryCitationInput(citation);
+      if (!storeCitationDraft(session.user.id, { ...citation, saveStatus: 'saving' })) {
+        setMutationError('브라우저에 임시 초안을 저장하지 못했습니다. 저장 실패 시 복사해 보관해 주세요.');
+      }
       setCitations((current) => patchCitation(current, citationId, { saveStatus: 'saving' }));
       void persistOptimisticCitation(citationId, retryInput);
     },
@@ -260,7 +288,7 @@ export const useArchiveMutations = ({
       if (!session) {
         return false;
       }
-      if (isOptimisticCitationId(citationId)) {
+      if (citations.find((citation) => citation.id === citationId)?.saveStatus) {
         return false;
       }
 
@@ -276,7 +304,7 @@ export const useArchiveMutations = ({
         return false;
       }
     },
-    [invalidateDataLoad, session, setCitations]
+    [citations, invalidateDataLoad, session, setCitations]
   );
 
   const handleUpdateNote = useCallback(
@@ -284,7 +312,7 @@ export const useArchiveMutations = ({
       if (!session) {
         return false;
       }
-      if (isOptimisticCitationId(citationId)) {
+      if (citations.find((citation) => citation.id === citationId)?.saveStatus) {
         return false;
       }
 
@@ -300,7 +328,7 @@ export const useArchiveMutations = ({
         return false;
       }
     },
-    [invalidateDataLoad, session, setCitations]
+    [citations, invalidateDataLoad, session, setCitations]
   );
 
   const handleDeleteNote = useCallback(
@@ -308,7 +336,7 @@ export const useArchiveMutations = ({
       if (!session) {
         return false;
       }
-      if (isOptimisticCitationId(citationId)) {
+      if (citations.find((citation) => citation.id === citationId)?.saveStatus) {
         return false;
       }
 
@@ -324,7 +352,7 @@ export const useArchiveMutations = ({
         return false;
       }
     },
-    [invalidateDataLoad, session, setCitations]
+    [citations, invalidateDataLoad, session, setCitations]
   );
 
   const handleDeleteCitations = useCallback(
@@ -334,10 +362,16 @@ export const useArchiveMutations = ({
       }
 
       try {
-        const persistedIds = citationIds.filter((citationId) => !isOptimisticCitationId(citationId));
+        const savingDraftIds = new Set(
+          citations
+            .filter((citation) => citation.saveStatus === 'saving')
+            .map((citation) => citation.id)
+        );
+        const persistedIds = citationIds.filter((citationId) => !savingDraftIds.has(citationId));
         if (persistedIds.length > 0) {
           await deleteCitationsRecord(session.user.id, persistedIds);
         }
+        removeCitationDrafts(session.user.id, citationIds);
         invalidateDataLoad();
         const deletedIds = new Set(citationIds);
         setCitations((current) => current.filter((citation) => !deletedIds.has(citation.id)));
@@ -352,7 +386,7 @@ export const useArchiveMutations = ({
         return false;
       }
     },
-    [invalidateDataLoad, session, setCitations, setProjects]
+    [citations, invalidateDataLoad, session, setCitations, setProjects]
   );
 
   const handleUpdateCitation = useCallback(
@@ -360,13 +394,17 @@ export const useArchiveMutations = ({
       if (!session) {
         return false;
       }
-      if (isOptimisticCitationId(citationId)) {
+      const draft = citations.find((citation) => citation.id === citationId && citation.saveStatus);
+      if (draft) {
+        const nextDraft = { ...draft, ...createOptimisticCitationEditPatch(draft, data) };
         setCitations((current) => current.map((citation) =>
-          citation.id === citationId
-            ? { ...citation, ...createOptimisticCitationEditPatch(citation, data) }
-            : citation
+          citation.id === citationId ? nextDraft : citation
         ));
-        setMutationError(null);
+        if (storeCitationDraft(session.user.id, nextDraft)) {
+          setMutationError(null);
+        } else {
+          setMutationError('브라우저에 수정한 임시 초안을 저장하지 못했습니다. 복사해 보관해 주세요.');
+        }
         return true;
       }
 
@@ -382,7 +420,7 @@ export const useArchiveMutations = ({
         return false;
       }
     },
-    [invalidateDataLoad, session, setCitations]
+    [citations, invalidateDataLoad, session, setCitations]
   );
 
   const handleBulkUpdateCitationSource = useCallback(
@@ -749,6 +787,17 @@ export const useArchiveMutations = ({
           authorId,
           trimmed
         )) as RenameAuthorMutationResult;
+        const didPersistBookMemoDrafts = result.bookMerges.reduce((didPersist, merge) => {
+          const targetMemo = books.find((book) => book.id === merge.toBookId)?.memo ?? merge.toBookMemo;
+          const sourceMemo = books.find((book) => book.id === merge.fromBookId)?.memo ?? '';
+          return moveBookMemoDraftAfterMerge(
+            session.user.id,
+            merge.fromBookId,
+            merge.toBookId,
+            targetMemo,
+            sourceMemo
+          ) && didPersist;
+        }, true);
         invalidateDataLoad();
         setCitations((current) => applyRenameAuthorToCitations(current, result));
         setAuthorFolderMemberships((current) => {
@@ -771,7 +820,12 @@ export const useArchiveMutations = ({
               }
             : author));
         setBooks((current) => applyRenameAuthorToBooks(current, result));
-        setMutationError(null);
+        const didPersistDrafts = readCitationDrafts(session.user.id)
+          .map((draft) => applyRenameAuthorToCitations([draft], result)[0])
+          .reduce((didPersist, draft) => storeCitationDraft(session.user.id, draft) && didPersist, true);
+        setMutationError(didPersistDrafts && didPersistBookMemoDrafts
+          ? null
+          : '브라우저의 임시 초안을 병합된 저자와 책으로 옮기지 못했습니다. 복사해 보관해 주세요.');
         return result;
       } catch (error) {
         console.error('Error renaming author:', error);
@@ -780,7 +834,7 @@ export const useArchiveMutations = ({
         void refreshAuthorFolders();
       }
     },
-    [invalidateAuthorFolderLoad, invalidateDataLoad, refreshAuthorFolders, session, setAuthorFolderMemberships, setAuthors, setBooks, setCitations]
+    [books, invalidateAuthorFolderLoad, invalidateDataLoad, refreshAuthorFolders, session, setAuthorFolderMemberships, setAuthors, setBooks, setCitations]
   );
 
   const handleRenameBook = useCallback(
@@ -796,17 +850,50 @@ export const useArchiveMutations = ({
 
       try {
         const result = (await renameBookRecord(session.user.id, bookId, trimmed)) as RenameBookResult;
+        const targetMemo = books.find((book) => book.id === result.bookId)?.memo ?? result.bookMemo;
+        const sourceMemo = books.find((book) => book.id === result.fromBookId)?.memo ?? '';
+        const didPersistBookMemoDraft = moveBookMemoDraftAfterMerge(
+          session.user.id,
+          result.fromBookId,
+          result.bookId,
+          targetMemo,
+          sourceMemo
+        );
         invalidateDataLoad();
         setCitations((current) => applyRenameBookToCitations(current, result));
         setBooks((current) => applyRenameBookToBooks(current, result));
-        setMutationError(null);
+        const didPersistDrafts = readCitationDrafts(session.user.id)
+          .map((draft) => applyRenameBookToCitations([draft], result)[0])
+          .reduce((didPersist, draft) => storeCitationDraft(session.user.id, draft) && didPersist, true);
+        setMutationError(didPersistDrafts && didPersistBookMemoDraft
+          ? null
+          : '브라우저의 임시 초안을 병합된 책으로 옮기지 못했습니다. 복사해 보관해 주세요.');
         return result;
       } catch (error) {
         console.error('Error renaming book:', error);
         setMutationError('책 이름을 저장하지 못했습니다. 입력한 이름은 그대로 유지했습니다.');
       }
     },
-    [invalidateDataLoad, session, setBooks, setCitations]
+    [books, invalidateDataLoad, session, setBooks, setCitations]
+  );
+
+  const handleUpdateBookMemo = useCallback(
+    async (bookId: string, memo: string) => {
+      if (!session) return false;
+      try {
+        await updateBookMemoRecord(session.user.id, bookId, memo);
+        setBooks((current) => current.map((book) =>
+          book.id === bookId ? { ...book, memo } : book
+        ));
+        setMutationError(null);
+        return true;
+      } catch (error) {
+        console.error('Error updating book memo:', error);
+        setMutationError('책 전체 메모를 서버에 저장하지 못했습니다. 메모 패널의 복구 상태를 확인해 주세요.');
+        return false;
+      }
+    },
+    [session, setBooks]
   );
 
   const handleCreateChapterBlock = useCallback(
@@ -891,7 +978,7 @@ export const useArchiveMutations = ({
       if (!session) {
         return false;
       }
-      if (isOptimisticCitationId(citationId)) {
+      if (citations.find((citation) => citation.id === citationId)?.saveStatus) {
         return false;
       }
 
@@ -907,7 +994,7 @@ export const useArchiveMutations = ({
         return false;
       }
     },
-    [invalidateDataLoad, session, setProjects]
+    [citations, invalidateDataLoad, session, setProjects]
   );
 
   const handleAddCitationsToProject = useCallback(async (projectId: string, citationIds: string[]) => {
@@ -973,6 +1060,7 @@ export const useArchiveMutations = ({
     handleDeleteProject,
     handleRenameAuthor,
     handleRenameBook,
+    handleUpdateBookMemo,
     handleCreateChapterBlock,
     handleDeleteChapterBlock,
     handleReorderProjects,

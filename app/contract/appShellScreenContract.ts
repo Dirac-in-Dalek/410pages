@@ -9,6 +9,7 @@ import type {
   Project,
   SidebarItem,
 } from '../../types';
+import type { ReactNode } from 'react';
 import type { PdfReaderPageProps } from '../../features/reader/contract/pdfReaderContract';
 
 export type AppViewMode = 'archive' | 'reader';
@@ -78,6 +79,8 @@ export interface ArchiveScreenFactoryInput {
   onDeleteNote: (citationId: string, noteId: string) => void;
   onDeleteCitation: (id: string) => void;
   onUpdateCitation: (id: string, data: Partial<Citation>) => void | Promise<unknown>;
+  passageNoteCitationId?: string | null;
+  onPassageNoteCitationChange?: (citationId: string | null) => void;
 }
 
 export interface ReaderScreenFactoryInput extends Omit<PdfReaderPageProps, 'loading'> {
@@ -117,9 +120,14 @@ export interface MobileLayoutFactoryInput {
   selectedFilter: ArchiveSelectedFilter;
   onSearch: (term: string) => void;
   onOpenSettings: () => void;
+  showBookMemoAction?: boolean;
+  onOpenBookMemo?: () => void;
 }
 
 export interface MainLayoutFactoryInput {
+  leftPanel?: ReactNode;
+  rightPanel?: ReactNode;
+  rightPanelOpen?: boolean;
   projects: Project[];
   selectedProjectId: string | null;
   onProjectSelect: (projectId: string | null) => void;
@@ -153,5 +161,7 @@ export interface MainLayoutFactoryInput {
   selectedFilter: ArchiveSelectedFilter;
   onSearch: (term: string) => void;
   onReorderBookAt: (author: string, dragBook: string, dropIndex: number) => void;
+  onReorderAuthorAt: (groupAuthorIds: string[], dragAuthorId: string, dropIndex: number) => void;
+  libraryOrderSaving: boolean;
   onOpenSettings: () => void;
 }

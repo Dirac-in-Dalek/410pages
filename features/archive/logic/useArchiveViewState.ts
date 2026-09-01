@@ -1,9 +1,19 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArchiveViewStateInput, ArchiveViewStateResult } from '../contract/archiveViewContract';
 import { buildArchiveTree, deriveBookOrderByAuthor, getCurrentOrderedAuthors, getCurrentOrderedBooks } from './archiveTree';
 import { DEFAULT_ARCHIVE_TITLE, sortFilteredCitations } from './archiveSort';
 
 const EMPTY_AUTHORS: NonNullable<ArchiveViewStateInput['authors']> = [];
+
+const reconcileOrder = (current: string[], derived: string[]) => {
+  const derivedIds = new Set(derived);
+  const retained = current.filter((id) => derivedIds.has(id));
+  const retainedIds = new Set(retained);
+  return [...retained, ...derived.filter((id) => !retainedIds.has(id))];
+};
+
+const isSameOrder = (left: string[], right: string[]) =>
+  left.length === right.length && left.every((id, index) => id === right[index]);
 
 export const useArchiveViewState = ({
   citations,
@@ -24,6 +34,17 @@ export const useArchiveViewState = ({
   const [dateDirection, setDateDirection] = useState<ArchiveViewStateResult['dateDirection']>('desc');
   const [pageDirection, setPageDirection] = useState<ArchiveViewStateResult['pageDirection']>('asc');
   const [bookOrderByAuthor, setBookOrderByAuthor] = useState<Record<string, string[]>>({});
+  const [authorOrder, setAuthorOrder] = useState<string[]>([]);
+  const canonicalAuthorOrderKey = authors
+    .map((author) => `${author.id}:${author.sortIndex ?? ''}`)
+    .sort()
+    .join('|');
+  const canonicalBookOrderKey = books
+    .map((book) => `${book.id}:${book.authorId}:${book.sortIndex ?? ''}`)
+    .sort()
+    .join('|');
+  const canonicalAuthorOrderKeyRef = useRef<string | null>(null);
+  const canonicalBookOrderKeyRef = useRef<string | null>(null);
 
   const setSearchTerm: ArchiveViewStateResult['setSearchTerm'] = (nextValue) => {
     if (typeof nextValue === 'function') {
@@ -36,8 +57,27 @@ export const useArchiveViewState = ({
   };
 
   useEffect(() => {
-    setBookOrderByAuthor(deriveBookOrderByAuthor(citations, books));
-  }, [books, citations]);
+    const derivedAuthors = getCurrentOrderedAuthors(citations, username, books, authors);
+    const authorSourceChanged = canonicalAuthorOrderKeyRef.current !== canonicalAuthorOrderKey;
+    canonicalAuthorOrderKeyRef.current = canonicalAuthorOrderKey;
+    setAuthorOrder((current) => {
+      const next = authorSourceChanged ? derivedAuthors : reconcileOrder(current, derivedAuthors);
+      return isSameOrder(current, next) ? current : next;
+    });
+    const derivedBooks = deriveBookOrderByAuthor(citations, books);
+    const bookSourceChanged = canonicalBookOrderKeyRef.current !== canonicalBookOrderKey;
+    canonicalBookOrderKeyRef.current = canonicalBookOrderKey;
+    setBookOrderByAuthor((current) => {
+      const next = Object.fromEntries(Object.entries(derivedBooks).map(([authorId, ids]) => [
+        authorId,
+        bookSourceChanged ? ids : reconcileOrder(current[authorId] || [], ids),
+      ]));
+      const keys = Object.keys(next);
+      return keys.length === Object.keys(current).length && keys.every((authorId) =>
+        isSameOrder(current[authorId] || [], next[authorId])
+      ) ? current : next;
+    });
+  }, [authors, books, canonicalAuthorOrderKey, canonicalBookOrderKey, citations, username]);
 
   const handleDateSortClick = () => {
     if (sortField === 'date') {
@@ -173,8 +213,8 @@ export const useArchiveViewState = ({
   }, [resolvedFilter]);
 
   const readCurrentOrderedAuthors = useCallback(
-    () => getCurrentOrderedAuthors(citations, username, books, authors),
-    [authors, books, citations, username]
+    () => getCurrentOrderedAuthors(citations, username, books, authors, authorOrder),
+    [authorOrder, authors, books, citations, username]
   );
 
   const readCurrentOrderedBooks = useCallback(
@@ -253,6 +293,8 @@ export const useArchiveViewState = ({
     filteredCitations,
     viewTitle,
     getCurrentOrderedBooks: readCurrentOrderedBooks,
+    getCurrentOrderedAuthors: readCurrentOrderedAuthors,
+    setAuthorOrder,
     setBookOrderByAuthor,
   };
 };

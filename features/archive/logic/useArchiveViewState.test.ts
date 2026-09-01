@@ -20,6 +20,26 @@ const book = (overrides: Partial<BookSource> & Pick<BookSource, 'id' | 'title' |
 });
 
 describe('useArchiveViewState', () => {
+  it('accepts a refreshed canonical author order after an optimistic reorder', async () => {
+    const initialAuthors: AuthorSource[] = [
+      { id: 'author-a', name: 'Author A', sortIndex: 0, createdAt: 1, isSelf: false },
+      { id: 'author-b', name: 'Author B', sortIndex: 1, createdAt: 2, isSelf: false },
+    ];
+    const { result, rerender } = renderHook(
+      ({ authors }) => useArchiveViewState({ authors, books: [], citations: [], projects: [], username: 'Me' }),
+      { initialProps: { authors: initialAuthors } }
+    );
+    await waitFor(() => expect(result.current.getCurrentOrderedAuthors()).toEqual(['author-a', 'author-b']));
+    act(() => result.current.setAuthorOrder(['author-b', 'author-a']));
+    expect(result.current.getCurrentOrderedAuthors()).toEqual(['author-b', 'author-a']);
+
+    rerender({ authors: [
+      { ...initialAuthors[0], sortIndex: 2 },
+      { ...initialAuthors[1], sortIndex: 3 },
+    ] });
+    await waitFor(() => expect(result.current.getCurrentOrderedAuthors()).toEqual(['author-a', 'author-b']));
+  });
+
   it('opens the home bookshelf on initial load', async () => {
     const books = [
       book({ id: 'book-a', title: 'Book A', authorId: 'author-a', author: 'Author A' }),

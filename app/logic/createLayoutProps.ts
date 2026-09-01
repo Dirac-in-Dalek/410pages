@@ -40,11 +40,16 @@ export const createMobileLayoutProps = (
   searchTerm: input.searchTerm,
   selectedFilter: input.selectedFilter,
   onOpenSettings: input.onOpenSettings,
+  showBookMemoAction: input.showBookMemoAction,
+  onOpenBookMemo: input.onOpenBookMemo,
 });
 
 export const createMainLayoutProps = (
   input: MainLayoutFactoryInput
 ): ComponentProps<typeof MainLayout> => ({
+  leftPanel: input.leftPanel,
+  rightPanel: input.rightPanel,
+  rightPanelOpen: input.rightPanelOpen,
   projects: input.projects,
   onProjectSelect: input.onProjectSelect,
   selectedProjectId: input.selectedProjectId,
@@ -78,5 +83,7 @@ export const createMainLayoutProps = (
   searchTerm: input.searchTerm,
   selectedFilter: input.selectedFilter,
   onReorderBookAt: input.onReorderBookAt,
+  onReorderAuthorAt: input.onReorderAuthorAt,
+  libraryOrderSaving: input.libraryOrderSaving,
   onOpenSettings: input.onOpenSettings,
 });

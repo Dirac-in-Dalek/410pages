@@ -1,5 +1,5 @@
 import { getSupabaseClient } from './supabase';
-import { AuthorDeletePreview, AuthorFolder, AuthorFolderMembership, AuthorSource, BookDeletePreview, BookSource, ChapterBlock, Citation, CitationSourceInput, CreateBookInput, CreateChapterBlockInput, DeleteAuthorCascadeResult, DeleteBookCascadeResult, Note, Project } from '../types';
+import { AddCitationInput, AuthorDeletePreview, AuthorFolder, AuthorFolderMembership, AuthorSource, BookDeletePreview, BookSource, ChapterBlock, Citation, CitationSourceInput, CreateBookInput, CreateChapterBlockInput, DeleteAuthorCascadeResult, DeleteBookCascadeResult, Note, Project } from '../types';
 
 export const PROFILE_AVATAR_BUCKET = 'profile-avatars';
 const PROFILE_AVATAR_PUBLIC_PATH_PREFIX = `/storage/v1/object/public/${PROFILE_AVATAR_BUCKET}/`;
@@ -27,6 +27,7 @@ type ChapterBlockRow = {
 type BookSourceRow = {
     id: string;
     title: string;
+    memo: string | null;
     sort_index: number | null;
     created_at: string;
     author?: {
@@ -79,6 +80,7 @@ const mapBookSourceRow = (row: BookSourceRow): BookSource => {
     return {
         id: row.id,
         title: row.title,
+        memo: row.memo || '',
         sortIndex: row.sort_index ?? null,
         createdAt: new Date(row.created_at).getTime(),
         authorId: author?.id || '',
@@ -160,6 +162,7 @@ type BookMergeInfo = {
     toBookId: string;
     toBookTitle: string;
     toBookSortIndex: number | null;
+    toBookMemo: string;
 };
 
 type RenameAuthorResult = {
@@ -179,6 +182,7 @@ type RenameBookResult = {
     bookId: string;
     bookTitle: string;
     bookSortIndex: number | null;
+    bookMemo: string;
 };
 
 const resolveCitationSource = async (
@@ -375,6 +379,7 @@ export const api = {
             .select(`
         id,
         title,
+        memo,
         sort_index,
         created_at,
         author:authors(id, name, sort_index, is_self)
@@ -563,6 +568,7 @@ export const api = {
         return {
             id: result.bookId,
             title: result.bookTitle,
+            memo: '',
             sortIndex: result.bookSortIndex,
             createdAt: new Date(result.bookCreatedAt).getTime(),
             authorId: result.authorId,
@@ -650,7 +656,7 @@ export const api = {
         });
     },
 
-    async addCitation(userId: string, data: Omit<Citation, 'id' | 'createdAt' | 'notes'>) {
+    async addCitation(userId: string, data: AddCitationInput) {
         const resolvedSource = data.bookId
             ? await resolveCitationSourceByBookId(userId, data.bookId)
             : await resolveCitationSource(userId, {
@@ -661,17 +667,21 @@ export const api = {
         // 3. Insert Citation
         // We explicitly provide author_id. Trigger handle_citation_defaults will kick in if we sent nulls, 
         // but we computed them for Book logic anyway.
-        const { data: citation, error } = await getSupabaseClient()
-            .from('citations')
-            .insert({
+        const payload = {
+                ...(data.id ? { id: data.id } : {}),
                 kind: data.kind,
                 text: data.text,
                 book_id: resolvedSource.bookId,
                 author_id: resolvedSource.authorId,
                 page: data.kind === 'word' ? null : data.page,
                 page_sort: data.kind === 'word' ? null : extractPageSort(data.page),
+                ...(data.highlights !== undefined ? { highlights: data.highlights } : {}),
                 user_id: userId
-            })
+            };
+        const citationWrite = getSupabaseClient().from('citations');
+        const { data: citation, error } = await (data.id
+            ? citationWrite.upsert(payload, { onConflict: 'id' })
+            : citationWrite.insert(payload))
             .select(`
                 *,
                 book:books!citations_book_id_fkey(id, title, sort_index),
@@ -699,7 +709,8 @@ export const api = {
             pageSort: citation.kind === 'word' ? undefined : citation.page_sort ?? undefined,
             createdAt: new Date(citation.created_at).getTime(),
             notes: [],
-            tags: []
+            tags: [],
+            highlights: citation.highlights || []
         };
 
         return mapped;
@@ -922,32 +933,20 @@ export const api = {
     },
 
     async reorderAuthors(userId: string, orderedAuthorIds: string[]) {
-        const results = await Promise.all(
-            orderedAuthorIds.map((authorId, index) =>
-                getSupabaseClient()
-                    .from('authors')
-                    .update({ sort_index: index })
-                    .eq('id', authorId)
-                    .eq('user_id', userId)
-            )
-        );
-        const failed = results.find(result => result.error);
-        if (failed?.error) throw failed.error;
+        await requireActiveUser(userId, 'author reorder');
+        const { error } = await getSupabaseClient().rpc('reorder_authors', {
+            ordered_author_ids: orderedAuthorIds,
+        });
+        if (error) throw error;
     },
 
     async reorderBooks(userId: string, authorId: string, orderedBookIds: string[]) {
-        const results = await Promise.all(
-            orderedBookIds.map((bookId, index) =>
-                getSupabaseClient()
-                    .from('books')
-                    .update({ sort_index: index })
-                    .eq('id', bookId)
-                    .eq('author_id', authorId)
-                    .eq('user_id', userId)
-            )
-        );
-        const failed = results.find(result => result.error);
-        if (failed?.error) throw failed.error;
+        await requireActiveUser(userId, 'book reorder');
+        const { error } = await getSupabaseClient().rpc('reorder_books', {
+            source_author_id: authorId,
+            ordered_book_ids: orderedBookIds,
+        });
+        if (error) throw error;
     },
 
     async renameProject(userId: string, id: string, name: string) {
@@ -983,6 +982,19 @@ export const api = {
         });
         if (error) throw error;
         return data as RenameBookResult;
+    },
+
+    async updateBookMemo(userId: string, id: string, memo: string) {
+        await requireActiveUser(userId, 'book memo update');
+        const { data, error } = await getSupabaseClient()
+            .from('books')
+            .update({ memo })
+            .eq('id', id)
+            .eq('user_id', userId)
+            .select('id')
+            .maybeSingle();
+        if (error) throw error;
+        if (!data) throw new Error('Book no longer exists');
     },
 
     async deleteProject(userId: string, id: string) {

@@ -27,3 +27,6 @@ dist-ssr
 # Local browser QA artifacts
 .playwright-cli/page-*.yml
 output/playwright/
+
+# Supabase CLI local project state
+supabase/.temp/

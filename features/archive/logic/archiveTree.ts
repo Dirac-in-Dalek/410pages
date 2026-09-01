@@ -10,10 +10,16 @@ type AuthorNode = {
 
 type LatestAuthorItem = Pick<OrderedLabelItem, 'id' | 'label'> & {
   activityAt: number;
+  sortIndex?: number | null;
 };
 
-const sortByActivityThenLabel = <T extends LatestAuthorItem>(items: T[]) =>
+const sortTreeAuthors = <T extends LatestAuthorItem>(items: T[]) =>
   [...items].sort((a, b) => {
+    if (typeof a.sortIndex === 'number' && typeof b.sortIndex === 'number' && a.sortIndex !== b.sortIndex) {
+      return a.sortIndex - b.sortIndex;
+    }
+    if (typeof a.sortIndex === 'number') return -1;
+    if (typeof b.sortIndex === 'number') return 1;
     if (a.activityAt !== b.activityAt) return b.activityAt - a.activityAt;
     return a.label.localeCompare(b.label, 'ko');
   });
@@ -58,6 +64,7 @@ export const deriveAuthorOrder = (
       id: author.id,
       label: author.name,
       activityAt: activityByAuthorId.get(author.id) ?? 0,
+      sortIndex: author.sortIndex,
     });
   });
 
@@ -73,6 +80,7 @@ export const deriveAuthorOrder = (
       id: book.authorId,
       label,
       activityAt: activityByAuthorId.get(book.authorId) ?? 0,
+      sortIndex: book.authorSortIndex,
     });
   });
 
@@ -88,11 +96,12 @@ export const deriveAuthorOrder = (
       id: citation.authorId,
       label,
       activityAt: activityByAuthorId.get(citation.authorId) ?? 0,
+      sortIndex: citation.authorSortIndex,
     });
     return authors;
   }, authorMap);
 
-  return sortByActivityThenLabel(Array.from(authorMap.values())).map((row) => row.id);
+  return sortTreeAuthors(Array.from(authorMap.values())).map((row) => row.id);
 };
 
 export const findRecentlyCitedBooks = (
@@ -154,8 +163,21 @@ export const getCurrentOrderedAuthors = (
   citations: Citation[],
   username: string,
   books: BookSource[] = [],
-  authors: AuthorSource[] = []
-) => deriveAuthorOrder(citations, username, books, authors);
+  authors: AuthorSource[] = [],
+  authorOrder: string[] = []
+) => {
+  const sorted = deriveAuthorOrder(citations, username, books, authors);
+  if (authorOrder.length === 0) return sorted;
+  const rank = new Map(authorOrder.map((id, index) => [id, index] as const));
+  return [...sorted].sort((a, b) => {
+    const aRank = rank.get(a);
+    const bRank = rank.get(b);
+    if (aRank !== undefined && bRank !== undefined) return aRank - bRank;
+    if (aRank !== undefined) return -1;
+    if (bRank !== undefined) return 1;
+    return 0;
+  });
+};
 
 export const getCurrentOrderedBooks = (
   citations: Citation[],
