@@ -290,7 +290,7 @@ describe('useArchiveQuery', () => {
     });
 
     expect(result.current.loadError).toBeNull();
-    expect(result.current.chapterLoadError).toContain('장 구분');
+    expect(result.current.chapterLoadError).toContain('챕터');
   });
 
   it('cancels a book-scoped chapter error when leaving the book', async () => {
@@ -372,14 +372,14 @@ describe('useArchiveQuery', () => {
       rejectRefresh(new Error('refresh offline'));
       await refreshRequest;
     });
-    expect(result.current.chapterLoadError).toContain('장 구분');
+    expect(result.current.chapterLoadError).toContain('챕터');
     expect(result.current.chapterLoadingBookId).toBeNull();
 
     await act(async () => {
       resolveForeground([{ id: 'stale-block', bookId: 'book-a' } as ChapterBlock]);
       await foregroundRequest;
     });
-    expect(result.current.chapterLoadError).toContain('장 구분');
+    expect(result.current.chapterLoadError).toContain('챕터');
     expect(result.current.chapterBlocksByBook).toEqual({});
   });
 });

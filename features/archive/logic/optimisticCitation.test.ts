@@ -9,7 +9,7 @@ import {
 describe('optimistic citation helpers', () => {
   it('records the optimistic id on the persisted citation without changing its real id', () => {
     const persisted = createOptimisticCitation({
-      kind: 'word',
+      kind: 'sentence',
       text: '고독',
       author: 'Author',
       book: 'Book',
@@ -86,10 +86,10 @@ describe('optimistic citation helpers', () => {
     });
   });
 
-  it('preserves a word kind through optimistic save and retry without page data', () => {
+  it('preserves a short citation and its page through retry', () => {
     const citation = createOptimisticCitation(
       {
-        kind: 'word',
+        kind: 'sentence',
         text: '근원적 고독',
         author: 'Author',
         book: 'Book',
@@ -99,12 +99,12 @@ describe('optimistic citation helpers', () => {
       2000
     );
 
-    expect(citation).toMatchObject({ kind: 'word', page: undefined, pageSort: undefined });
+    expect(citation).toMatchObject({ kind: 'sentence', page: '147', pageSort: 147 });
     expect(createRetryCitationInput({ ...citation, saveStatus: 'failed' })).toMatchObject({
-      kind: 'word',
+      kind: 'sentence',
       text: '근원적 고독',
-      page: undefined,
-      pageSort: undefined,
+      page: '147',
+      pageSort: 147,
     });
   });
 });

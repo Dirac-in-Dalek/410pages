@@ -10,6 +10,7 @@ import { ArchiveHeader } from './ArchiveHeader';
 import { getArchiveReadingColumnClass } from './archiveReadingColumn';
 import { CitationList } from './CitationList';
 import { CitationEditor } from '../../citation-entry/ui/CitationEditor';
+import { useBookMetadata } from '../logic/useBookMetadata';
 
 type ArchiveScreenProps = {
   isMobileApp: boolean;
@@ -45,6 +46,8 @@ type ArchiveScreenProps = {
   onAddToProject: (projectId: string) => void | Promise<unknown>;
   onCreateAndAddToProject: (name: string) => boolean | void | Promise<boolean | void>;
   onCreateChapterBlock?: (input: CreateChapterBlockInput) => Promise<unknown> | unknown;
+  onMoveChapterBlock?: (bookId: string, id: string, createdAtSort: number) => Promise<boolean> | boolean;
+  onRenameChapterBlock?: (bookId: string, id: string, label: string) => Promise<boolean> | boolean;
   onDeleteChapterBlock?: (bookId: string, blockId: string) => Promise<unknown> | unknown;
   chapterActionsDisabled?: boolean;
   onToggleSelect: (id: string, selected: boolean) => void;
@@ -53,6 +56,10 @@ type ArchiveScreenProps = {
   onDeleteNote: (citationId: string, noteId: string) => void;
   onDeleteCitation: (id: string) => void;
   onUpdateCitation: (id: string, data: Partial<Citation>) => void | Promise<unknown>;
+  showAllPassageNotes?: boolean;
+  onToggleAllPassageNotes?: () => void;
+  collapsedDividerIds?: ReadonlySet<string>;
+  onToggleDivider?: (id: string) => void;
   passageNoteCitationId?: string | null;
   onPassageNoteCitationChange?: (citationId: string | null) => void;
 };
@@ -91,6 +98,8 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
   onAddToProject,
   onCreateAndAddToProject,
   onCreateChapterBlock,
+  onMoveChapterBlock,
+  onRenameChapterBlock,
   onDeleteChapterBlock,
   chapterActionsDisabled,
   onToggleSelect,
@@ -99,20 +108,35 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
   onDeleteNote,
   onDeleteCitation,
   onUpdateCitation,
+  showAllPassageNotes = false,
+  onToggleAllPassageNotes,
+  collapsedDividerIds,
+  onToggleDivider,
   passageNoteCitationId,
   onPassageNoteCitationChange,
 }) => {
-  const columnClassName = getArchiveReadingColumnClass({ isBookView, isMobileApp });
+  useBookMetadata(title, authorName || editorPrefill?.author || '', isBookView && !searchTerm);
+  const inlinePassageNotes = isBookView && !isMobileApp;
+  const columnClassName = inlinePassageNotes
+    ? 'w-[var(--book-column-size)] ml-[var(--book-column-left)]'
+    : getArchiveReadingColumnClass({ isBookView, isMobileApp });
+  const bookStyle = inlinePassageNotes ? {
+    containerType: 'inline-size',
+    '--book-column-size': 'min(var(--citation-column-width), calc(var(--book-reference-width, 100cqw) - 3rem))',
+    '--book-column-left': 'calc(var(--book-left-reference, 0px) - var(--book-main-left, 0px) + (var(--book-reference-width, 100cqw) - var(--book-column-size)) / 2)',
+  } as React.CSSProperties : undefined;
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden">
-      <div className="min-h-0 flex-1 overflow-y-auto">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden" style={bookStyle}>
+      <div className="min-h-0 flex-1 overflow-y-auto" data-archive-scroll>
+        <div className={inlinePassageNotes ? columnClassName : undefined}>
         <ArchiveHeader
           title={title}
           showEditor={showEditor && !isBookView}
           username={username}
           editorPrefill={editorPrefill}
           isBookView={isBookView}
+          compactBookHeader={inlinePassageNotes}
           onBackToAuthor={onBackToAuthor}
           authorName={authorName}
           onAddCitation={onAddCitation}
@@ -122,9 +146,10 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
           onDateSortClick={onDateSortClick}
           onPageSortClick={onPageSortClick}
         />
+        </div>
 
       <div className={isMobileApp ? 'pb-8 mt-3' : 'pb-10 mt-1 md:mt-2'}>
-        <div className={columnClassName}>
+        <div className={columnClassName} data-book-column={inlinePassageNotes || undefined}>
           {loadError ? (
             <div
               role="alert"
@@ -155,6 +180,8 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
           />
 
           {loadError && citations.length === 0 && chapterBlocks.length === 0 ? null : <CitationList
+            collapsedDividerIds={collapsedDividerIds}
+            onToggleDivider={onToggleDivider}
             citations={citations}
             allCitations={allCitations}
             projects={projects}
@@ -165,10 +192,15 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
             chapterBlocks={chapterBlocks}
             selectedFilter={selectedFilter}
             isBookView={isBookView}
+            inlinePassageNotes={inlinePassageNotes}
+            showAllPassageNotes={showAllPassageNotes}
+            onToggleAllPassageNotes={onToggleAllPassageNotes}
             sortField={sortField}
             dateDirection={dateDirection}
             pageDirection={pageDirection}
             onCreateChapterBlock={onCreateChapterBlock}
+            onMoveChapterBlock={onMoveChapterBlock}
+            onRenameChapterBlock={onRenameChapterBlock}
             onDeleteChapterBlock={onDeleteChapterBlock}
             chapterActionsDisabled={chapterActionsDisabled}
             onToggleSelect={onToggleSelect}
@@ -185,7 +217,7 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
       </div>
       </div>
       {showEditor && isBookView ? (
-        <div className="shrink-0 border-t border-[var(--border-main)] bg-[var(--bg-main)] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_24px_rgba(31,29,27,0.08)] sm:px-5">
+        <div className={`shrink-0 bg-[var(--bg-main)] pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 ${inlinePassageNotes ? '' : 'px-3 sm:px-5'}`}>
           <div className={columnClassName}>
             <CitationEditor
               onAddCitation={onAddCitation}

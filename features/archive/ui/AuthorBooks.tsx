@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, BookOpen, MoreHorizontal, Pencil, Plus, Quote, Trash2 } from 'lucide-react';
 import type { AuthorSource, BookDeletePreview, BookSource, Citation, CreateBookInput, DeleteBookCascadeResult } from '../../../types';
 import { BookDeleteDialog } from './BookDeleteDialog';
+import { BookCover } from './BookCover';
 import { handleMenuKeyboardNavigation } from '../../../shared/ui/sidebar/SidebarControls';
 
 type AuthorBooksProps = {
@@ -43,7 +44,7 @@ export const AuthorBooks: React.FC<AuthorBooksProps> = ({
   const authorBooks = books.filter((book) => book.authorId === author.id);
   const citationCountByBook = new Map<string, number>();
   citations.forEach((citation) => {
-    if (citation.bookId && (citation.kind || 'sentence') === 'sentence') {
+    if (citation.bookId) {
       citationCountByBook.set(citation.bookId, (citationCountByBook.get(citation.bookId) ?? 0) + 1);
     }
   });
@@ -190,8 +191,9 @@ export const AuthorBooks: React.FC<AuthorBooksProps> = ({
                   <span className="flex h-full flex-col">
                     <span className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-[var(--accent)]">410 · {String(index + 1).padStart(2, '0')}</span>
                     <span className="mt-5 line-clamp-4 font-[var(--font-display-active)] text-[clamp(1rem,2.2vw,1.35rem)] font-semibold leading-[1.35] tracking-[-0.02em] text-[var(--text-main)]">{book.title}</span>
-                    <span className="mt-auto text-xs tabular-nums text-[var(--text-muted)]">{citationCountByBook.get(book.id) ?? 0}문장</span>
                   </span>
+                  <BookCover title={book.title} author={authorName} />
+                  <span className="absolute bottom-3 left-4 rounded bg-[var(--bg-card)] px-2 py-1 text-xs tabular-nums text-[var(--text-muted)]">{citationCountByBook.get(book.id) ?? 0}문장</span>
                 </span>
               </button>
               <button type="button" data-author-book-menu={book.id} aria-label={`${book.title} 관리`} aria-haspopup="menu" aria-controls={`author-book-menu-${book.id}`} aria-expanded={activeMenuBookId === book.id} onClick={(event) => { event.stopPropagation(); setActiveMenuBookId((current) => current === book.id ? null : book.id); }} className={["absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--bg-card)] text-[var(--text-main)] shadow-[var(--shadow-card)] transition-[opacity,transform] active:scale-95", isMobileApp ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100'].join(' ')}>

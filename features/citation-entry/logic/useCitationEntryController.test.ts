@@ -2,15 +2,15 @@ import { describe, expect, it } from 'vitest';
 import { createCitationInput } from './useCitationEntryController';
 
 describe('createCitationInput', () => {
-  it('stores a short entry as a word without page data', () => {
+  it('stores short text as a citation with its page', () => {
     expect(
       createCitationInput({ text: '필연적 선택', author: 'Author', book: 'Book', page: '147' })
     ).toEqual({
-      kind: 'word',
+      kind: 'sentence',
       text: '필연적 선택',
       author: 'Author',
       book: 'Book',
-      page: undefined,
+      page: '147',
       tags: [],
     });
   });

@@ -10,7 +10,7 @@ describe('BookDeleteDialog', () => {
     const onDelete = vi.fn().mockResolvedValue({ bookId: 'book-1', deletedCitationCount: 3 });
     render(<BookDeleteDialog bookId="book-1" bookTitle="Book" citationCount={3} onClose={vi.fn()} onDelete={onDelete} />);
 
-    expect(screen.getByText(/인용문 3개와 메모·장 구분/)).not.toBeNull();
+    expect(screen.getByText(/인용문 3개와 메모·챕터/)).not.toBeNull();
     await user.click(screen.getByRole('button', { name: '삭제 계속' }));
     await user.click(screen.getByRole('button', { name: '책과 모든 기록 삭제' }));
     expect(onDelete).toHaveBeenCalledOnce();

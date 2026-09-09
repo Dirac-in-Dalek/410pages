@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, CloudOff, LoaderCircle, PanelRightClose, X } from 'lucide-react';
+import { CloudOff, PanelRightClose, X } from 'lucide-react';
 import type { BookSource } from '../../../types';
 import {
   BOOK_MEMO_DRAFT_MERGED_EVENT,
@@ -112,6 +112,7 @@ export const BookMemoPanel: React.FC<BookMemoPanelProps> = ({
 
   return (
     <aside
+      data-book-memo-panel
       ref={dialogRef}
       tabIndex={-1}
       role={mobile ? 'dialog' : 'complementary'}
@@ -119,17 +120,15 @@ export const BookMemoPanel: React.FC<BookMemoPanelProps> = ({
       aria-labelledby="book-memo-title"
       className={[
         'flex h-full min-h-0 flex-col bg-[var(--bg-card)] text-[var(--text-main)]',
-        mobile ? 'rounded-t-2xl border-t border-[var(--border-main)] shadow-[var(--shadow-panel)]' : 'w-[20rem] shrink-0 border-l border-[var(--border-main)]',
+        mobile ? 'rounded-t-2xl border-t border-[var(--border-main)] shadow-[var(--shadow-panel)]' : 'w-full shrink-0 border-l border-[var(--border-main)]',
       ].join(' ')}
     >
       <header className="flex min-h-14 items-center gap-3 border-b border-[var(--border-main)] px-4">
         <div className="min-w-0 flex-1">
           <p className="truncate text-[0.72rem] text-[var(--text-muted)]">{book.title}</p>
-          <h2 id="book-memo-title" className="text-sm font-semibold">책 전체 메모</h2>
+          <h2 id="book-memo-title" className="text-sm font-semibold">메모</h2>
         </div>
-        <div aria-live="polite" className="flex min-w-[4.5rem] items-center justify-end gap-1 text-[0.74rem] text-[var(--text-muted)]">
-          {status === 'saving' ? <><LoaderCircle size={13} className="animate-spin" /> 저장 중</> : null}
-          {status === 'saved' ? <><Check size={13} /> 저장됨</> : null}
+        <div aria-live="polite" className="flex items-center justify-end gap-1 text-[0.74rem] text-[var(--text-muted)] empty:hidden">
           {status === 'failed' ? <><CloudOff size={13} /> 실패</> : null}
           {status === 'recovered' ? <><CloudOff size={13} /> 복구됨</> : null}
         </div>
@@ -139,16 +138,17 @@ export const BookMemoPanel: React.FC<BookMemoPanelProps> = ({
           </button>
         ) : null}
       </header>
-      <label className="flex min-h-0 flex-1 flex-col px-4 py-4">
+      <label className="flex min-h-0 flex-1 flex-col px-3 py-3">
         <span className="sr-only">책 전체 메모</span>
         <textarea
+          aria-label="책 전체 메모"
           value={memo}
           onChange={(event) => scheduleSave(event.target.value)}
           placeholder="책 전체를 관통하는 생각, 질문, 다음에 볼 내용을 적어두세요."
-          className="min-h-[12rem] flex-1 resize-none border-0 bg-transparent p-0 font-[var(--font-display-active)] text-[0.94rem] leading-7 text-[var(--text-main)] placeholder:text-[var(--text-muted)] focus:ring-0"
+          className="min-h-[12rem] flex-1 resize-none border-0 bg-transparent p-0 font-sans text-sm leading-6 text-[var(--text-main)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-0 focus:caret-[var(--text-main)]"
         />
       </label>
-      <footer className="flex min-h-14 items-center gap-3 border-t border-[var(--border-main)] px-3 py-2">
+      <footer className="flex min-h-11 items-center gap-2 px-3 py-1.5">
         <p className="min-w-0 flex-1 text-[0.72rem] leading-5 text-[var(--text-muted)]">
           {draftStorageFailed
             ? '브라우저 임시 보관에 실패했습니다. 저장 실패 시 내용을 복사해 두세요.'
@@ -156,12 +156,12 @@ export const BookMemoPanel: React.FC<BookMemoPanelProps> = ({
               ? '입력 내용은 이 브라우저에 임시 보관했습니다.'
               : status === 'recovered'
                 ? '복구된 초안입니다. 확인 후 저장하세요.'
-              : '입력을 멈추면 자동 저장됩니다.'}
+              : null}
         </p>
         <button
           type="button"
           onClick={saveNow}
-          className="min-h-10 shrink-0 rounded-lg bg-[var(--accent)] px-3.5 text-sm font-semibold text-white transition-[background-color,transform] hover:bg-[var(--accent-strong)] active:scale-95 motion-reduce:transition-none"
+          className="min-h-10 shrink-0 rounded-lg px-3.5 text-sm font-semibold text-[var(--text-secondary)] transition-[background-color,transform] hover:bg-[var(--sidebar-hover)] active:scale-95 motion-reduce:transition-none"
         >
           저장
         </button>

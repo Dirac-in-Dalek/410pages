@@ -464,7 +464,6 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
     const dedupeKey = [payload.text, payload.pageLabel, meta.bookId ?? '', meta.author.trim(), meta.title.trim()].join('|');
     const now = Date.now();
     if (
-        citation.kind !== 'word' &&
         lastSavedRef.current &&
         lastSavedRef.current.key === dedupeKey &&
         now - lastSavedRef.current.at < DUPLICATE_WINDOW_MS

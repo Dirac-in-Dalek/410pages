@@ -126,31 +126,31 @@ describe('CitationList expand all', () => {
     expect(screen.getByRole('button', { name: '문장 모두 펼치기' })).toBeTruthy();
   });
 
-  it('excludes word cards from expand and collapse state', () => {
+  it('includes short citations alongside long citations', () => {
     render(
       <CitationList
         {...baseProps}
         citations={[
           citation('citation-1', 'A sentence remains expandable in the archive.'),
-          { ...citation('word-1', '부조리'), kind: 'word', createdAt: 1 },
+          { ...citation('word-1', '부조리'), kind: 'sentence', createdAt: 1 },
         ]}
       />
     );
 
     expect(screen.getByRole('button', { name: '문장 모두 펼치기' })).toBeTruthy();
-    expect(screen.getByRole('checkbox', { name: '단어 선택: 부조리' })).toBeTruthy();
+    expect(screen.getByRole('checkbox', { name: '문장 선택: 부조리' })).toBeTruthy();
   });
 
-  it('does not show expand controls for a word-only list', () => {
+  it('uses citation controls for a short-text-only list', () => {
     render(
       <CitationList
         {...baseProps}
-        citations={[{ ...citation('word-1', '부조리'), kind: 'word' }]}
+        citations={[{ ...citation('word-1', '부조리'), kind: 'sentence' }]}
       />
     );
 
-    expect(screen.queryByRole('button', { name: '문장 모두 펼치기' })).toBeNull();
-    expect(screen.getByRole('checkbox', { name: '단어 선택: 부조리' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '문장 모두 펼치기' })).toBeTruthy();
+    expect(screen.getByRole('checkbox', { name: '문장 선택: 부조리' })).toBeTruthy();
   });
 
   it('does not create a per-card Less action for short citations during bulk expansion', async () => {

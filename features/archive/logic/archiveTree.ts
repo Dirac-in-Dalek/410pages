@@ -25,7 +25,6 @@ const sortTreeAuthors = <T extends LatestAuthorItem>(items: T[]) =>
   });
 
 const isPersistedSentence = (citation: Citation) =>
-  (citation.kind || 'sentence') === 'sentence' &&
   citation.saveStatus !== 'saving' &&
   citation.saveStatus !== 'failed';
 

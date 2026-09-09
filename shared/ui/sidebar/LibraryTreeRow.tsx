@@ -95,7 +95,7 @@ export const LibraryTreeRow: React.FC<LibraryTreeRowProps> = ({
             onReorderByKeyboard(event.key === 'ArrowUp' ? -1 : 1);
             return;
           }
-          if (event.key === 'Enter' || event.key === ' ') {
+          if (item.type !== 'book' && (event.key === 'Enter' || event.key === ' ')) {
             event.preventDefault();
             onClick();
           }

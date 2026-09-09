@@ -385,7 +385,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
       </div>
 
       <div
-        className="flex-1 overflow-y-auto px-3 py-4"
+        className="flex-1 overflow-y-auto px-3 pb-4 pt-14"
         onDragOver={(event) => handleProjectsPanelDragOver(event, projects.map((project) => project.id))}
         onDrop={(event) => handleProjectsPanelDrop(event, projects.map((project) => project.id))}
         onDragLeave={(event) => {
@@ -401,13 +401,6 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
           }
         }}
       >
-        <div className="mb-4 px-1">
-          <div className="brand-wordmark text-[1.25rem] text-[var(--accent)]">
-            <span className="brand-number">410</span><span className="brand-text">pages</span>
-          </div>
-          <p className="mt-1 text-[0.78rem] text-[var(--text-muted)]">문장이 머무는 서재</p>
-        </div>
-
         <EditorialListButton
           active={isHomeView}
           onClick={onHomeSelect}

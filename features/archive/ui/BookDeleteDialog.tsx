@@ -39,7 +39,7 @@ export const BookDeleteDialog: React.FC<BookDeleteDialogProps> = ({
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="delete-book-title" tabIndex={-1} className="w-full max-w-sm rounded-2xl bg-[var(--bg-card)] p-5 shadow-[var(--shadow-popover)]">
         <h2 id="delete-book-title" className="text-lg font-semibold text-[var(--text-main)]">{bookTitle} 삭제</h2>
         <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
-          인용문 {citationCount}개와 메모·장 구분이 함께 삭제됩니다. 이 작업은 실행 취소할 수 없습니다.
+          인용문 {citationCount}개와 메모·챕터가 함께 삭제됩니다. 이 작업은 실행 취소할 수 없습니다.
         </p>
         {step === 2 ? (
           <p role="alert" className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-800 dark:bg-red-500/10 dark:text-red-100">

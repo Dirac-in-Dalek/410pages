@@ -22,7 +22,6 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
     isSelf,
     canSubmit,
     isSequentialPageEntryActive,
-    isWordCandidate,
     textareaRef,
     pageInputRef,
     updateValue,
@@ -74,7 +73,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
 
             event.preventDefault();
 
-            if (isSequentialPageEntryActive && !isWordCandidate) {
+            if (isSequentialPageEntryActive) {
               focusPageInput();
               return;
             }
@@ -86,7 +85,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
         />
       </div>
 
-      <div className="flex flex-wrap items-center gap-1.5 rounded-[0_0_1rem_1rem] border-t border-[var(--border-main)] bg-[var(--bg-card)] p-1.5 sm:flex-nowrap">
+      <div className="flex flex-wrap items-center gap-1.5 rounded-[0_0_1rem_1rem] bg-[var(--bg-card)] p-1.5 sm:flex-nowrap">
         {!hideSourceFields && (
           <>
             <div className="flex min-h-11 min-w-0 basis-[calc(50%_-_0.1875rem)] items-center rounded-[0.9rem] border border-[var(--border-main)] bg-[var(--bg-input)] px-2.5 transition-[border-color,box-shadow] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] sm:min-h-8 sm:flex-[1.15] sm:basis-auto motion-reduce:transition-none">
@@ -133,8 +132,8 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
           </>
         )}
 
-        <div className="flex min-h-11 min-w-0 flex-1 items-center rounded-[0.9rem] border border-[var(--border-main)] bg-[var(--bg-input)] px-2.5 transition-[border-color,box-shadow] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] sm:min-h-8 sm:w-[4.75rem] sm:flex-none motion-reduce:transition-none">
-          <Hash size={12} className="mr-2 text-[var(--text-muted)]" />
+        <div className="ml-auto flex min-h-11 w-[7.5rem] min-w-0 flex-none items-center rounded-[0.9rem] border border-[var(--border-main)] bg-[var(--bg-input)] px-2.5 transition-[border-color,box-shadow] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] sm:min-h-8 motion-reduce:transition-none">
+          <Hash size={12} className="mr-2 shrink-0 text-[var(--text-muted)]" />
           <input
             ref={pageInputRef}
             type="text"
@@ -160,13 +159,13 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
         {!hideSubmit && (
           <button
             type="button"
-            aria-label={isWordCandidate ? '단어 저장' : '문장 저장'}
+            aria-label="문장 저장"
             onClick={() => {
               void handleSubmit();
             }}
             disabled={!canSubmit}
             className={`
-              ml-auto inline-flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center rounded-[0.9rem] transition-[background-color,color,transform] active:scale-95 sm:h-8 sm:w-8 motion-reduce:transition-none
+              inline-flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center rounded-[0.9rem] transition-[background-color,color,transform] active:scale-95 sm:h-8 sm:w-8 motion-reduce:transition-none
               ${canSubmit ? 'bg-[var(--accent)] text-white shadow-sm hover:bg-[var(--accent-strong)]' : 'bg-[var(--bg-input)] text-[var(--text-muted)] cursor-not-allowed'}
             `}
           >

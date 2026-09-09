@@ -51,7 +51,7 @@ const normalizeDraft = (value: unknown): Citation | null => {
 
   return {
     id: candidate.id,
-    kind: candidate.kind,
+    kind: 'sentence',
     text: candidate.text,
     authorId: optionalString(candidate.authorId),
     author: candidate.author,

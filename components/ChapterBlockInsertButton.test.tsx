@@ -19,11 +19,11 @@ describe('ChapterBlockInsertButton', () => {
       />
     );
 
-    await user.type(screen.getByLabelText('장 구분 제목'), '제2장');
-    await user.click(screen.getByRole('button', { name: '장 구분 저장' }));
+    await user.type(screen.getByLabelText('챕터 제목'), '제2장');
+    await user.click(screen.getByRole('button', { name: '챕터 저장' }));
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledWith('제2장'));
-    expect((screen.getByLabelText('장 구분 제목') as HTMLInputElement).value).toBe('제2장');
+    expect((screen.getByLabelText('챕터 제목') as HTMLInputElement).value).toBe('제2장');
     expect(onCancel).not.toHaveBeenCalled();
   });
 
@@ -38,7 +38,7 @@ describe('ChapterBlockInsertButton', () => {
       />
     );
 
-    await user.type(screen.getByLabelText('장 구분 제목'), '제3장');
+    await user.type(screen.getByLabelText('챕터 제목'), '제3장');
     rerender(
       <ChapterBlockInsertButton
         isEditing
@@ -48,8 +48,8 @@ describe('ChapterBlockInsertButton', () => {
       />
     );
 
-    expect((screen.getByLabelText('장 구분 제목') as HTMLInputElement).value).toBe('제3장');
-    expect(screen.getByRole('button', { name: '장 구분 저장' }).hasAttribute('disabled')).toBe(true);
+    expect((screen.getByLabelText('챕터 제목') as HTMLInputElement).value).toBe('제3장');
+    expect(screen.getByRole('button', { name: '챕터 저장' }).hasAttribute('disabled')).toBe(true);
 
     rerender(
       <ChapterBlockInsertButton
@@ -58,6 +58,6 @@ describe('ChapterBlockInsertButton', () => {
         onSubmit={onSubmit}
       />
     );
-    expect((screen.getByLabelText('장 구분 제목') as HTMLInputElement).value).toBe('제3장');
+    expect((screen.getByLabelText('챕터 제목') as HTMLInputElement).value).toBe('제3장');
   });
 });

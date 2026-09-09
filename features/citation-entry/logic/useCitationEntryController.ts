@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AddCitationInput } from '../../../types';
-import { classifyCitationKind } from '../../../shared/lib/citationKind';
 import {
   CitationEditorPrefill,
   CitationEditorProps,
@@ -26,14 +25,13 @@ const createResetValues = (
 });
 
 export const createCitationInput = (values: CitationEditorValues): AddCitationInput => {
-  const kind = classifyCitationKind(values.text);
   return {
-    kind,
+    kind: 'sentence',
     text: values.text,
     author: values.author,
     book: values.book,
     ...(values.bookId ? { bookId: values.bookId } : {}),
-    page: kind === 'word' ? undefined : values.page || undefined,
+    page: values.page || undefined,
     tags: [],
   };
 };
@@ -114,7 +112,6 @@ export const useCitationEntryController = ({
   };
 
   const isSequentialPageEntryActive = isCitationEntrySequentialMode(sequentialPageEntry, readOnly, values);
-  const isWordCandidate = classifyCitationKind(values.text) === 'word';
   const isSelf = isCitationEntrySelfAuthor(values.author, username);
   const canSubmit = canSubmitCitationEntry({
     readOnly,
@@ -195,7 +192,6 @@ export const useCitationEntryController = ({
     isSelf,
     canSubmit,
     isSequentialPageEntryActive,
-    isWordCandidate,
     textareaRef,
     pageInputRef,
     updateValue,

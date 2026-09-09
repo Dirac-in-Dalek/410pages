@@ -605,6 +605,25 @@ export const api = {
         return mapChapterBlockRow(data);
     },
 
+    async moveChapterBlock(userId: string, bookId: string, id: string, createdAtSort: number) {
+        if (!Number.isFinite(createdAtSort)) throw new Error('Invalid chapter position');
+        const { data, error } = await getSupabaseClient().from('chapter_blocks')
+            .update({ created_at_sort: createdAtSort }).eq('user_id', userId).eq('book_id', bookId).eq('id', id)
+            .select('*').single();
+        if (error) throw error;
+        return mapChapterBlockRow(data);
+    },
+
+    async renameChapterBlock(userId: string, bookId: string, id: string, label: string) {
+        const trimmed = label.trim();
+        if (!trimmed) throw new Error('Chapter title is required');
+        const { data, error } = await getSupabaseClient().from('chapter_blocks')
+            .update({ label: trimmed }).eq('user_id', userId).eq('book_id', bookId).eq('id', id)
+            .select('*').single();
+        if (error) throw error;
+        return mapChapterBlockRow(data);
+    },
+
     async deleteChapterBlock(userId: string, id: string) {
         const { error } = await getSupabaseClient()
             .from('chapter_blocks')
@@ -633,7 +652,7 @@ export const api = {
             const authorObj = c.author || c.book?.author;
             return {
                 id: c.id,
-                kind: c.kind === 'word' ? 'word' : 'sentence',
+                kind: 'sentence',
                 text: c.text,
                 authorId: authorObj?.id,
                 author: authorObj?.name || '',
@@ -669,12 +688,12 @@ export const api = {
         // but we computed them for Book logic anyway.
         const payload = {
                 ...(data.id ? { id: data.id } : {}),
-                kind: data.kind,
+                kind: 'sentence',
                 text: data.text,
                 book_id: resolvedSource.bookId,
                 author_id: resolvedSource.authorId,
-                page: data.kind === 'word' ? null : data.page,
-                page_sort: data.kind === 'word' ? null : extractPageSort(data.page),
+                page: data.page,
+                page_sort: extractPageSort(data.page),
                 ...(data.highlights !== undefined ? { highlights: data.highlights } : {}),
                 user_id: userId
             };
@@ -696,7 +715,7 @@ export const api = {
 
         const mapped: Citation = {
             id: citation.id,
-            kind: citation.kind === 'word' ? 'word' : 'sentence',
+            kind: 'sentence',
             text: citation.text,
             authorId: citation.author?.id || resolvedSource.authorId,
             author: citation.author?.name || resolvedSource.authorName,
@@ -705,8 +724,8 @@ export const api = {
             bookId: citation.book?.id || resolvedSource.bookId || undefined,
             book: citation.book?.title || resolvedSource.bookTitle,
             bookSortIndex: citation.book?.sort_index ?? resolvedSource.bookSortIndex,
-            page: citation.kind === 'word' ? undefined : citation.page || undefined,
-            pageSort: citation.kind === 'word' ? undefined : citation.page_sort ?? undefined,
+            page: citation.page || undefined,
+            pageSort: citation.page_sort ?? undefined,
             createdAt: new Date(citation.created_at).getTime(),
             notes: [],
             tags: [],

@@ -125,6 +125,11 @@ export interface MobileLayoutFactoryInput {
 }
 
 export interface MainLayoutFactoryInput {
+  onCloseInlinePassageNotes?: () => void;
+  onRightPanelOpenChange?: (open: boolean) => void;
+  hasInlinePassageNotes?: boolean;
+  homePanelOpen?: boolean;
+  onHomePanelOpenChange?: (open: boolean) => void;
   leftPanel?: ReactNode;
   rightPanel?: ReactNode;
   rightPanelOpen?: boolean;

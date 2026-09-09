@@ -197,7 +197,7 @@ export const useArchiveQuery = ({
           (foreground && viewGeneration === chapterViewGenerationRef.current) ||
           (takesOverForeground && takeoverViewGeneration === chapterViewGenerationRef.current);
         if (isCurrentRequest && ownsVisibleBook) {
-          setChapterLoadError('장 구분을 불러오지 못했습니다. 다시 시도해 주세요.');
+          setChapterLoadError('챕터를 불러오지 못했습니다. 다시 시도해 주세요.');
         }
       } finally {
         const isCurrentRequest =

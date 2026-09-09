@@ -1,6 +1,7 @@
 import type { AddCitationInput, ChapterBlock, Citation, CreateChapterBlockInput, Project } from '../../../types';
 
 export interface ArchiveHeaderProps {
+    compactBookHeader?: boolean;
     title: string;
     showEditor: boolean;
     username: string;
@@ -35,11 +36,18 @@ export interface CitationListProps {
     chapterBlocks?: ChapterBlock[];
     isBookView?: boolean;
     sortField?: 'date' | 'page';
+    inlinePassageNotes?: boolean;
+    showAllPassageNotes?: boolean;
+    onToggleAllPassageNotes?: () => void;
     dateDirection?: 'asc' | 'desc';
     pageDirection?: 'asc' | 'desc';
     onCreateChapterBlock?: (input: CreateChapterBlockInput) => Promise<unknown> | unknown;
+    onMoveChapterBlock?: (bookId: string, id: string, createdAtSort: number) => Promise<boolean> | boolean;
+    onRenameChapterBlock?: (bookId: string, id: string, label: string) => Promise<boolean> | boolean;
     onDeleteChapterBlock?: (bookId: string, blockId: string) => Promise<unknown> | unknown;
     chapterActionsDisabled?: boolean;
+    collapsedDividerIds?: ReadonlySet<string>;
+    onToggleDivider?: (id: string) => void;
     passageNoteCitationId?: string | null;
     onPassageNoteCitationChange?: (citationId: string | null) => void;
 }

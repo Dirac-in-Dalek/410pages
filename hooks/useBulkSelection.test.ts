@@ -23,7 +23,7 @@ const citations: Citation[] = [
   },
   {
     id: 'word-1',
-    kind: 'word',
+    kind: 'sentence',
     text: '부조리',
     author: 'Author',
     book: 'Book',
@@ -71,14 +71,14 @@ describe('useBulkSelection mixed item actions', () => {
     });
   };
 
-  it('copies sentence formatting and plain word text together', async () => {
+  it('copies all selected text with citation formatting', async () => {
     const { result } = setup();
     selectBoth(result);
 
     await act(async () => result.current.handleBatchCopy(true));
 
     expect(writeTextToClipboard).toHaveBeenCalledWith(
-      '"A complete sentence." — Author, 『Book』\n\n부조리'
+      '"A complete sentence." — Author, 『Book』\n\n"부조리" — Author, 『Book』'
     );
   });
 

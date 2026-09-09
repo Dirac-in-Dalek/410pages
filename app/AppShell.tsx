@@ -63,7 +63,7 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
     handleMoveAuthorToFolder, handleRemoveAuthorFromFolder, handleDeleteAuthorCascade, handlePreviewAuthorDeletion,
     handleDeleteBookCascade, handlePreviewBookDeletion, handleCreateBook,
     handleCreateProject, handleRenameProject, handleDeleteProject, handleRenameAuthor, handleRenameBook, handleUpdateBookMemo,
-    handleLoadChapterBlocks, cancelChapterBlockLoad, handleCreateChapterBlock, handleDeleteChapterBlock,
+    handleLoadChapterBlocks, cancelChapterBlockLoad, handleCreateChapterBlock, handleRenameChapterBlock, handleMoveChapterBlock, handleDeleteChapterBlock,
     handleDropCitationToProject, handleAddCitationsToProject, handleCreateProjectWithCitations, handleReorderProjects,
     mutationError, clearMutationError
   } = useArchiveData(session);
@@ -126,9 +126,21 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
     fetchData
   );
 
+  const [showAllPassageNotes, setShowAllPassageNotes] = React.useState(false);
   const [passageNoteCitationId, setPassageNoteCitationId] = React.useState<string | null>(null);
+  const [collapsedDividerIds, setCollapsedDividerIds] = React.useState<Set<string>>(() => new Set());
+  const handleToggleDivider = (id: string) => {
+    setCollapsedDividerIds(previous => {
+      const next = new Set(previous);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
   const [isMobileBookMemoOpen, setIsMobileBookMemoOpen] = React.useState(false);
   const [isDesktopBookMemoOpen, setIsDesktopBookMemoOpen] = React.useState(true);
+  const [isDesktopHomeOpen, setIsDesktopHomeOpen] = React.useState(true);
+  React.useEffect(() => setIsDesktopHomeOpen(true), [session?.user?.id]);
   const selectedBook = selectedBookId ? books.find((book) => book.id === selectedBookId) ?? null : null;
   const passageNoteCitation = passageNoteCitationId
     ? citations.find((citation) => citation.id === passageNoteCitationId) ?? null
@@ -137,6 +149,7 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
   React.useEffect(() => {
     setPassageNoteCitationId(null);
     setIsMobileBookMemoOpen(false);
+    setShowAllPassageNotes(false);
   }, [isBookView, selectedBookId, session?.user?.id]);
 
   React.useEffect(() => {
@@ -428,7 +441,10 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
       onPreviewBookDelete={handlePreviewBookDeletion}
     />
   ) : (
-    <ArchiveScreen {...createArchiveScreenProps({
+    <ArchiveScreen onMoveChapterBlock={handleMoveChapterBlock} onRenameChapterBlock={handleRenameChapterBlock} showAllPassageNotes={showAllPassageNotes} onToggleAllPassageNotes={() => {
+      setShowAllPassageNotes(!showAllPassageNotes);
+      if (showAllPassageNotes) setPassageNoteCitationId(null);
+    }} collapsedDividerIds={collapsedDividerIds} onToggleDivider={handleToggleDivider} {...createArchiveScreenProps({
       isMobileApp,
       title: viewTitle,
       username,
@@ -534,15 +550,14 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
     onBulkUpdateCitationSource: handleBulkUpdateCitationSource,
   });
   const mainLayoutProps = createMainLayoutProps({
-    leftPanel: passageNoteCitation ? (
-      <PassageNotesPanel
-        citation={passageNoteCitation}
-        onClose={() => setPassageNoteCitationId(null)}
-        onAddNote={handleAddNote}
-        onUpdateNote={handleUpdateNote}
-        onDeleteNote={handleDeleteNote}
-      />
-    ) : undefined,
+    onCloseInlinePassageNotes: () => { setPassageNoteCitationId(null); setShowAllPassageNotes(false); },
+    onRightPanelOpenChange: setIsDesktopBookMemoOpen,
+    hasInlinePassageNotes: isBookView && (showAllPassageNotes || Boolean(passageNoteCitation)),
+    homePanelOpen: isDesktopHomeOpen,
+    onHomePanelOpenChange: (open) => {
+      setIsDesktopHomeOpen(open);
+      if (!open && isBookView) setShowAllPassageNotes(true);
+    },
     rightPanel: isBookView && selectedBook ? (
       <BookMemoPanel
         userId={session.user.id}
@@ -649,6 +664,7 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
         <button
           id="book-memo-open-button"
           type="button"
+          data-passage-note-trigger
           onClick={openDesktopBookMemo}
           className="fixed right-4 top-[calc(3.15rem+0.5rem+0.5px)] z-30 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--bg-input)] text-[var(--text-secondary)] transition-[background-color,color,transform] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)] active:scale-95 motion-reduce:transition-none"
           aria-label="책 전체 메모 열기"

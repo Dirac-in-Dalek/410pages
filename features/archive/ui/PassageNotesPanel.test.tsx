@@ -15,6 +15,45 @@ const citation: Citation = {
 };
 
 describe('PassageNotesPanel', () => {
+  it('separates desktop comments with space while preserving the mobile sheet', () => {
+    const props = { citation, onClose: vi.fn(), onAddNote: vi.fn(), onUpdateNote: vi.fn(), onDeleteNote: vi.fn() };
+    const { container, rerender } = render(<PassageNotesPanel {...props} inline />);
+    expect(container.querySelector('article')?.parentElement?.className).toBe('space-y-3');
+    rerender(<PassageNotesPanel {...props} mobile />);
+    expect(container.querySelector('article')?.parentElement?.className).toContain('divide-y');
+  });
+
+  it('keeps inline comments open while using the whole-book memo', () => {
+    const close = vi.fn();
+    render(<><PassageNotesPanel inline citation={citation} onClose={close} onAddNote={vi.fn()} onUpdateNote={vi.fn()} onDeleteNote={vi.fn()} /><aside data-book-memo-panel><textarea aria-label="책 메모 테스트" /></aside></>);
+    fireEvent.pointerDown(screen.getByRole('textbox', { name: '책 메모 테스트' }));
+    expect(close).not.toHaveBeenCalled();
+    fireEvent.pointerDown(document.body);
+    expect(close).toHaveBeenCalledOnce();
+  });
+
+  it('keeps inline comments open when the shared scrollbar is pressed', () => {
+    const close = vi.fn();
+    render(<div data-archive-scroll data-testid="scroll"><PassageNotesPanel inline citation={citation} onClose={close} onAddNote={vi.fn()} onUpdateNote={vi.fn()} onDeleteNote={vi.fn()} /></div>);
+    const viewport = screen.getByTestId('scroll');
+    Object.defineProperty(viewport, 'clientWidth', { value: 100 });
+    fireEvent.pointerDown(viewport, { clientX: 102 });
+    expect(close).not.toHaveBeenCalled();
+    fireEvent.pointerDown(viewport, { clientX: 90 });
+    expect(close).toHaveBeenCalledTimes(1);
+  });
+  it('renders inline comments without duplicating the source and preserves failed input', async () => {
+    const onAddNote = vi.fn().mockResolvedValue(false);
+    render(<PassageNotesPanel inline citation={{ ...citation, page: '35' }} onClose={vi.fn()} onAddNote={onAddNote} onUpdateNote={vi.fn()} onDeleteNote={vi.fn()} />);
+    expect(screen.queryByRole('heading', { name: '댓글 · 35쪽' })).toBeNull();
+    expect(document.querySelector('time')).toBeNull();
+    expect(screen.queryByText('검토할 문장')).toBeNull();
+    const input = screen.getByPlaceholderText('댓글을 남기세요');
+    fireEvent.change(input, { target: { value: '실패해도 남길 댓글' } });
+    fireEvent.click(screen.getByRole('button', { name: '메모 저장' }));
+    await waitFor(() => expect(onAddNote).toHaveBeenCalledWith('citation-1', '실패해도 남길 댓글'));
+    expect((input as HTMLTextAreaElement).value).toBe('실패해도 남길 댓글');
+  });
   it('does not add a draft until explicit save succeeds', async () => {
     const onAddNote = vi.fn().mockResolvedValue(true);
     render(<PassageNotesPanel citation={citation} onClose={vi.fn()} onAddNote={onAddNote} onUpdateNote={vi.fn()} onDeleteNote={vi.fn()} />);

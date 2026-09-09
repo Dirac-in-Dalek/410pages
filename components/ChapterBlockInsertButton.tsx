@@ -3,6 +3,7 @@ import { Check, Plus, X } from 'lucide-react';
 
 interface ChapterBlockInsertButtonProps {
   isEditing: boolean;
+  label?: string;
   disabled?: boolean;
   onOpen: () => void;
   onCancel?: () => void;
@@ -11,6 +12,7 @@ interface ChapterBlockInsertButtonProps {
 
 export const ChapterBlockInsertButton: React.FC<ChapterBlockInsertButtonProps> = ({
   isEditing,
+  label = '챕터 추가',
   disabled = false,
   onOpen,
   onCancel,
@@ -68,15 +70,15 @@ export const ChapterBlockInsertButton: React.FC<ChapterBlockInsertButtonProps> =
     return (
       <button
         type="button"
-        aria-label="장 구분 추가"
-        className="flex h-full w-full items-center gap-2 text-[var(--text-muted)] opacity-0 transition-opacity duration-150 group-hover:opacity-100 focus-visible:opacity-100"
+        aria-label={label}
+        className="relative flex h-full min-h-5 w-full items-center text-[var(--text-muted)]"
         onClick={onOpen}
         disabled={disabled}
       >
         <span className="h-px flex-1 bg-[var(--border-main)]" />
-        <span className="inline-flex h-5 items-center gap-1 rounded-full border border-[var(--border-main)] bg-[var(--bg-card)] px-2 text-[0.68rem] font-medium text-[var(--text-secondary)] shadow-[0_1px_2px_rgba(28,22,16,0.04)] transition-colors hover:border-[var(--accent-border)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]">
+        <span className="inline-flex absolute left-1/2 -translate-x-1/2 h-5 whitespace-nowrap opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 items-center gap-1 rounded-full border border-[var(--border-main)] bg-[var(--bg-card)] px-2 text-[0.68rem] font-medium text-[var(--text-secondary)] shadow-[0_1px_2px_rgba(28,22,16,0.04)] transition-colors hover:border-[var(--accent-border)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]">
           <Plus size={12} />
-          구분 추가
+          챕터 추가
         </span>
         <span className="h-px flex-1 bg-[var(--border-main)]" />
       </button>
@@ -88,11 +90,11 @@ export const ChapterBlockInsertButton: React.FC<ChapterBlockInsertButtonProps> =
       <span className="h-px flex-1 bg-[var(--border-main)]" />
       <input
         ref={inputRef}
-        aria-label="장 구분 제목"
+        aria-label="챕터 제목"
         className="type-body-bounded h-10 min-w-0 flex-[1.2] rounded-full border border-[var(--accent-border)] bg-[var(--bg-card)] px-4 leading-tight text-[var(--text-main)] outline-none shadow-[0_1px_2px_rgba(28,22,16,0.04)] placeholder:text-[var(--text-muted)] focus:ring-2 focus:ring-[var(--accent-ring)]"
         autoFocus
         disabled={isSubmitting || disabled}
-        placeholder="장 제목"
+        placeholder="챕터 제목"
         onInput={(event) => setCanSubmit(event.currentTarget.value.trim().length > 0)}
         onKeyDown={(event) => {
           if (event.key === 'Enter' && event.nativeEvent.isComposing) {
@@ -108,7 +110,7 @@ export const ChapterBlockInsertButton: React.FC<ChapterBlockInsertButtonProps> =
       />
       <button
         type="submit"
-        aria-label="장 구분 저장"
+        aria-label="챕터 저장"
         className="ui-btn ui-btn-icon h-10 w-10 min-h-0 rounded-full border-transparent bg-[var(--accent)] text-white hover:bg-[var(--accent-strong)] disabled:opacity-40"
         disabled={!canSubmit || isSubmitting || disabled}
       >
@@ -116,7 +118,7 @@ export const ChapterBlockInsertButton: React.FC<ChapterBlockInsertButtonProps> =
       </button>
       <button
         type="button"
-        aria-label="장 구분 취소"
+        aria-label="챕터 취소"
         className="ui-btn ui-btn-icon h-10 w-10 min-h-0 rounded-full text-[var(--text-muted)]"
         onClick={() => {
           resetInput();

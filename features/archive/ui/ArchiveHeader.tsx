@@ -10,6 +10,7 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
     username,
     editorPrefill,
     isBookView = false,
+    compactBookHeader = false,
     onBackToAuthor,
     authorName,
     onAddCitation,
@@ -53,6 +54,21 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
     const handlePageSelect = () => {
         onPageSortClick();
     };
+
+    if (isBookView && compactBookHeader) {
+        return (
+            <div className={columnClassName}>
+                <div className="px-12 pb-4 pt-5">
+                    <h2 className="break-words text-[1.55rem] font-semibold leading-snug text-[var(--text-main)]">{title}</h2>
+                    {onBackToAuthor && (
+                        <button type="button" onClick={onBackToAuthor} aria-label={`${authorName || '저자'}의 책`} className="mt-1 min-h-8 text-xs text-[var(--text-muted)] hover:text-[var(--text-main)]">
+                            {authorName || '저자'}
+                        </button>
+                    )}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="pt-5 md:pt-6 lg:pt-7 pb-1">

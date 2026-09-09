@@ -76,7 +76,10 @@ const booksQuery = {
   insert: mockBooksInsert,
   update: mockBooksUpdate,
 };
+const mockChapterBlocksUpdate = vi.fn(() => chapterBlocksQuery);
 const chapterBlocksQuery = {
+  update: mockChapterBlocksUpdate,
+  single: mockChapterBlocksSingle,
   select: mockChapterBlocksSelect,
   eq: mockChapterBlocksEq,
   order: mockChapterBlocksOrder,
@@ -177,6 +180,32 @@ describe('api.uploadProfileAvatar', () => {
   });
 });
 
+describe('api.moveChapterBlock', () => {
+  it('writes only chapter order and rejects invalid positions', async () => {
+    vi.clearAllMocks();
+    mockChapterBlocksSingle.mockResolvedValue({ data: { id: 'block-1', book_id: 'book-1', label: '제목', created_at_sort: 9, created_at: '2026-09-08T00:00:00Z' }, error: null });
+    await api.moveChapterBlock('user-1', 'book-1', 'block-1', 9);
+    expect(mockChapterBlocksUpdate).toHaveBeenCalledWith({ created_at_sort: 9 });
+    expect(mockChapterBlocksEq.mock.calls).toEqual([['user_id', 'user-1'], ['book_id', 'book-1'], ['id', 'block-1']]);
+    await expect(api.moveChapterBlock('user-1', 'book-1', 'block-1', NaN)).rejects.toThrow();
+    expect(mockChapterBlocksUpdate).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('api.renameChapterBlock', () => {
+  it('scopes the update to user, book and id, and rejects blank titles', async () => {
+    vi.clearAllMocks();
+    mockChapterBlocksSingle.mockResolvedValue({ data: { id: 'block-1', book_id: 'book-1', label: '새 제목', created_at_sort: 20, created_at: '2026-09-08T00:00:00Z' }, error: null });
+    expect(await api.renameChapterBlock('user-1', 'book-1', 'block-1', ' 새 제목 ')).toMatchObject({ label: '새 제목', createdAtSort: 20 });
+    expect(mockChapterBlocksUpdate).toHaveBeenCalledWith({ label: '새 제목' });
+    expect(mockChapterBlocksEq.mock.calls).toEqual([['user_id', 'user-1'], ['book_id', 'book-1'], ['id', 'block-1']]);
+    await expect(api.renameChapterBlock('user-1', 'book-1', 'block-1', ' ')).rejects.toThrow();
+    expect(mockChapterBlocksUpdate).toHaveBeenCalledTimes(1);
+    mockChapterBlocksSingle.mockResolvedValue({ data: null, error: new Error('denied') });
+    await expect(api.renameChapterBlock('user-1', 'book-1', 'block-1', '제목')).rejects.toThrow('denied');
+  });
+});
+
 describe('api.createChapterBlock', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -257,11 +286,11 @@ describe('api.addCitation', () => {
     });
   });
 
-  it('upserts a word with its requested UUID and null page fields', async () => {
+  it('writes short text as a citation with page data and reads legacy word responses as citations', async () => {
     const citationId = '018f47a2-8594-7c09-a488-2f73384e4711';
     const result = await api.addCitation('user-1', {
       id: citationId,
-      kind: 'word',
+      kind: 'sentence',
       text: '고독',
       author: 'Author A',
       book: 'Book A',
@@ -272,17 +301,17 @@ describe('api.addCitation', () => {
 
     expect(mockCitationsUpsert).toHaveBeenCalledWith({
       id: citationId,
-      kind: 'word',
+      kind: 'sentence',
       text: '고독',
       book_id: 'book-1',
       author_id: 'author-1',
-      page: null,
-      page_sort: null,
+      page: '77',
+      page_sort: 77,
       highlights: [{ id: 'hl-1', start: 0, end: 1, color: 'yellow' }],
       user_id: 'user-1',
     }, { onConflict: 'id' });
     expect(result).toMatchObject({
-      kind: 'word',
+      kind: 'sentence',
       page: undefined,
       pageSort: undefined,
       highlights: [{ id: 'hl-1', start: 0, end: 1, color: 'yellow' }],

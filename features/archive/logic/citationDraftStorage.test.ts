@@ -27,6 +27,11 @@ describe('citation draft storage', () => {
     vi.restoreAllMocks();
   });
 
+  it('restores a legacy word draft as a citation without losing its id or text', () => {
+    localStorage.setItem(getCitationDraftStorageKey('user-a'), JSON.stringify([{ ...draft, kind: 'word', text: '고독' }]));
+    expect(readCitationDrafts('user-a')).toEqual([expect.objectContaining({ id: draft.id, kind: 'sentence', text: '고독', page: '14', bookId: 'book-1', saveStatus: 'failed' })]);
+  });
+
   it('isolates drafts by account while preserving their book id', () => {
     expect(storeCitationDraft('user-a', draft)).toBe(true);
 

@@ -11,7 +11,7 @@ export interface Highlight {
   color?: string; // 선택적 색상 (기본: yellow)
 }
 
-export type CitationKind = 'sentence' | 'word';
+export type CitationKind = 'sentence';
 
 export interface Citation {
   id: string;

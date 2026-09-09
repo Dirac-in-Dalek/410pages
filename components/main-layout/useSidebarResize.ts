@@ -1,63 +1,49 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-const LEFT_MIN = 232;
-const LEFT_MAX = 320;
-const DEFAULT_LEFT = 272;
+export const PANEL_MIN = 232;
+export const PANEL_MAX = 960;
+const clamp = (width: number) => Math.min(PANEL_MAX, Math.max(PANEL_MIN, width));
 
-const readStoredWidth = (key: string, fallback: number) => {
-  if (typeof window === 'undefined') return fallback;
-  const raw = localStorage.getItem(key);
-  const parsed = raw ? parseInt(raw, 10) : fallback;
-  if (Number.isNaN(parsed)) return fallback;
-  return parsed;
+const usePanelResize = (key: string, fallback: number, right = false) => {
+  const [width, setWidth] = useState(() => {
+    try {
+      const saved = Number(localStorage.getItem(key) || fallback);
+      return Number.isFinite(saved) ? clamp(saved) : fallback;
+    } catch { return fallback; }
+  });
+  const dragStart = useRef({ x: 0, width: fallback });
+  const [resizing, setResizing] = useState(false);
+  useEffect(() => {
+    if (resizing) return;
+    try { localStorage.setItem(key, String(width)); } catch { /* Resizing still works when browser storage is unavailable. */ }
+  }, [key, resizing, width]);
+  useEffect(() => {
+    if (!resizing) return;
+    const oldCursor = document.body.style.cursor;
+    const oldSelect = document.body.style.userSelect;
+    const move = (event: MouseEvent) => setWidth(clamp(dragStart.current.width + (event.clientX - dragStart.current.x) * (right ? -1 : 1)));
+    const end = () => setResizing(false);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', end);
+    window.addEventListener('blur', end);
+    return () => {
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', end);
+      window.removeEventListener('blur', end);
+      document.body.style.cursor = oldCursor;
+      document.body.style.userSelect = oldSelect;
+    };
+  }, [resizing, right]);
+  return { width, resizing, start: (event?: { clientX: number }) => { dragStart.current = { x: event?.clientX ?? 0, width }; setResizing(true); }, adjust: (delta: number) => setWidth(previous => clamp(previous + delta)) };
 };
 
 export const useSidebarResize = () => {
-  const [leftWidth, setLeftWidth] = useState(() => {
-    const width = readStoredWidth('leftSidebarWidth', DEFAULT_LEFT);
-    return Math.min(Math.max(width, LEFT_MIN), LEFT_MAX);
-  });
-
-  const [isResizingLeft, setIsResizingLeft] = useState(false);
-
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    const newWidth = e.clientX;
-    if (isResizingLeft && newWidth >= LEFT_MIN && newWidth <= LEFT_MAX) {
-      setLeftWidth(newWidth);
-    }
-  }, [isResizingLeft]);
-
-  const handleMouseUp = useCallback(() => {
-    setIsResizingLeft(false);
-  }, []);
-
-  useEffect(() => {
-    if (isResizingLeft) return;
-    localStorage.setItem('leftSidebarWidth', leftWidth.toString());
-  }, [isResizingLeft, leftWidth]);
-
-  useEffect(() => {
-    if (isResizingLeft) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
-    } else {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = 'default';
-      document.body.style.userSelect = 'auto';
-    }
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isResizingLeft, handleMouseMove, handleMouseUp]);
-
+  const left = usePanelResize('leftSidebarWidth', 272);
+  const right = usePanelResize('rightSidebarWidth', 320, true);
   return {
-    leftWidth,
-    isResizingLeft,
-    startLeftResize: () => setIsResizingLeft(true),
+    leftWidth: left.width, isResizingLeft: left.resizing, startLeftResize: left.start, adjustLeftWidth: left.adjust,
+    rightWidth: right.width, isResizingRight: right.resizing, startRightResize: right.start, adjustRightWidth: right.adjust,
   };
 };

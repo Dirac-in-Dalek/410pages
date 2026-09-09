@@ -9,3 +9,9 @@ export const createChapterBlock = (userId: string, input: CreateChapterBlockInpu
 
 export const deleteChapterBlock = (userId: string, blockId: string) =>
   api.deleteChapterBlock(userId, blockId);
+
+export const renameChapterBlock = (userId: string, bookId: string, id: string, label: string) =>
+  api.renameChapterBlock(userId, bookId, id, label);
+
+export const moveChapterBlock = (userId: string, bookId: string, id: string, createdAtSort: number) =>
+  api.moveChapterBlock(userId, bookId, id, createdAtSort);

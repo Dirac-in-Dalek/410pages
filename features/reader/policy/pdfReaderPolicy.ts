@@ -3,7 +3,6 @@ import type {
   PdfReaderMeta,
   PdfRectHighlight
 } from '../../../types';
-import { classifyCitationKind } from '../../../shared/lib/citationKind';
 import type {
   MetaFormState,
   PersistedReaderSession,
@@ -23,14 +22,13 @@ export const createPdfCitationInput = ({
   book: string;
   page: string;
 }): AddCitationInput => {
-  const kind = classifyCitationKind(text);
   return {
-    kind,
+    kind: 'sentence',
     text,
     ...(bookId ? { bookId } : {}),
     author: author.trim(),
     book: book.trim(),
-    page: kind === 'word' ? undefined : page,
+    page: page,
     tags: [],
   };
 };

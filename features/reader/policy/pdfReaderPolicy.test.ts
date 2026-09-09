@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createPdfCitationInput } from './pdfReaderPolicy';
 
 describe('createPdfCitationInput', () => {
-  it('captures a one-to-two-word PDF selection as a page-less word', () => {
+  it('keeps the PDF page for short text', () => {
     expect(
       createPdfCitationInput({
         text: '근원적 고독',
@@ -11,11 +11,11 @@ describe('createPdfCitationInput', () => {
         page: '147',
       })
     ).toEqual({
-      kind: 'word',
+      kind: 'sentence',
       text: '근원적 고독',
       author: 'Author',
       book: 'Book',
-      page: undefined,
+      page: '147',
       tags: [],
     });
   });

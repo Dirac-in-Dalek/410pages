@@ -90,7 +90,7 @@ describe('Citation typography', () => {
     expect(document.activeElement).toBe(pageInput);
   });
 
-  it('submits a one-to-two-word entry immediately without a page in sequential mode', async () => {
+  it('uses the same page step for short text in sequential mode', async () => {
     const user = userEvent.setup();
     const onAddCitation = vi.fn().mockResolvedValue({ ok: true, citationId: 'word-1' });
 
@@ -107,10 +107,13 @@ describe('Citation typography', () => {
     const editor = screen.getByPlaceholderText('문장, 인용문 또는 단어를 입력하세요');
     await user.type(editor, '부조리 인간');
     await user.keyboard('{Enter}');
+    expect(onAddCitation).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(screen.getByRole('textbox', { name: '페이지' }));
+    await user.keyboard('{Enter}');
 
     await waitFor(() => {
       expect(onAddCitation).toHaveBeenCalledWith({
-        kind: 'word',
+        kind: 'sentence',
         text: '부조리 인간',
         author: 'Albert Camus',
         book: 'The Myth of Sisyphus',

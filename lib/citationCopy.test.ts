@@ -4,7 +4,7 @@ import { formatCitationCopyText, formatCitationRecoveryText } from './citationCo
 
 const word: Citation = {
   id: 'word-1',
-  kind: 'word',
+  kind: 'sentence',
   text: '필연적 선택',
   author: 'Albert Camus',
   book: 'The Myth of Sisyphus',
@@ -15,9 +15,9 @@ const word: Citation = {
 };
 
 describe('citation copy formatting', () => {
-  it('copies a word as plain text without source, page, or notes', () => {
-    expect(formatCitationCopyText(word, 'Reader', true)).toBe('필연적 선택');
-    expect(formatCitationRecoveryText(word, 'Reader')).toBe('필연적 선택');
+  it('includes the source and notes for short citations', () => {
+    expect(formatCitationCopyText(word, 'Reader', true)).toBe('"필연적 선택" — Albert Camus, 『The Myth of Sisyphus』, p.147\n\nNotes:\n- Hidden note');
+    expect(formatCitationRecoveryText(word, 'Reader')).toContain('페이지: 147');
   });
 
   it('keeps the existing sentence format', () => {

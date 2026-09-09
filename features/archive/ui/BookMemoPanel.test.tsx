@@ -31,11 +31,12 @@ describe('BookMemoPanel', () => {
     fireEvent.change(screen.getByRole('textbox', { name: '책 전체 메모' }), { target: { value: '새 메모' } });
     expect(readBookMemoDraft('user-1', 'book-1')).toBe('새 메모');
     expect(onSave).not.toHaveBeenCalled();
+    expect(screen.queryByText('저장 중')).toBeNull();
 
     await act(async () => vi.advanceTimersByTimeAsync(800));
     expect(onSave).toHaveBeenCalledWith('book-1', '새 메모');
     expect(readBookMemoDraft('user-1', 'book-1')).toBeNull();
-    expect(screen.getByText('저장됨')).toBeTruthy();
+    expect(screen.queryByText('저장됨')).toBeNull();
   });
 
   it('keeps a failed memo draft for recovery', async () => {

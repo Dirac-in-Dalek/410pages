@@ -22,11 +22,11 @@ export const createOptimisticCitation = (
 ): Citation => {
   const author = data.author?.trim() || '';
   const book = data.book?.trim() || '';
-  const page = data.kind === 'word' ? undefined : data.page || undefined;
+  const page = data.page || undefined;
 
   return {
     id: data.id ?? globalThis.crypto.randomUUID(),
-    kind: data.kind,
+    kind: 'sentence',
     text: data.text,
     author,
     authorId: data.authorId,
@@ -113,7 +113,7 @@ export const reconcilePersistedCitationSource = (
 
 export const createRetryCitationInput = (citation: Citation): AddCitationInput => ({
   id: citation.id,
-  kind: citation.kind,
+  kind: 'sentence',
   text: citation.text,
   author: citation.isSelf && !citation.author ? '' : citation.author,
   authorId: citation.authorId,
@@ -122,8 +122,8 @@ export const createRetryCitationInput = (citation: Citation): AddCitationInput =
   book: citation.book,
   bookId: citation.bookId,
   bookSortIndex: citation.bookSortIndex,
-  page: citation.kind === 'word' ? undefined : citation.page,
-  pageSort: citation.kind === 'word' ? undefined : citation.pageSort,
+  page: citation.page,
+  pageSort: citation.pageSort,
   tags: citation.tags,
   highlights: citation.highlights,
 });

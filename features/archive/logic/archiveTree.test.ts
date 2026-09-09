@@ -128,14 +128,14 @@ describe('archiveTree persisted books', () => {
       citation({ id: 'a-new', authorId: 'author-a', author: 'Author A', bookId: 'book-a', book: 'Book A', createdAt: 400 }),
       citation({ id: 'b', authorId: 'author-b', author: 'Author B', bookId: 'book-b', book: 'Book B', createdAt: 300 }),
       citation({ id: 'c', authorId: 'author-c', author: 'Author C', bookId: 'book-c', book: 'Book C', createdAt: 200 }),
-      citation({ id: 'word-only', kind: 'word', authorId: 'author-d', author: 'Author D', bookId: 'empty', book: 'Empty', createdAt: 500 }),
+      citation({ id: 'word-only', kind: 'sentence', authorId: 'author-d', author: 'Author D', bookId: 'empty', book: 'Empty', createdAt: 500 }),
       citation({ id: 'failed-only', saveStatus: 'failed', authorId: 'author-d', author: 'Author D', bookId: 'empty', book: 'Empty', createdAt: 600 }),
     ];
 
     expect(findRecentlyCitedBooks(citations, books).map((entry) => entry.id)).toEqual([
+      'empty',
       'book-a',
       'book-b',
-      'book-c',
     ]);
   });
 });
@@ -213,13 +213,13 @@ describe('archiveTree author order', () => {
       book({ id: 'book-a', title: 'New empty book', authorId: 'author-a', author: 'Alpha', createdAt: 9_000 }),
     ];
     const citations = [
-      citation({ id: 'word', kind: 'word', authorId: 'author-a', author: 'Alpha', createdAt: 1_000 }),
+      citation({ id: 'word', kind: 'sentence', authorId: 'author-a', author: 'Alpha', createdAt: 1_000 }),
       citation({ id: 'saving', saveStatus: 'saving', authorId: 'author-a', author: 'Alpha', createdAt: 1_100 }),
       citation({ id: 'failed', saveStatus: 'failed', authorId: 'author-a', author: 'Alpha', createdAt: 1_200 }),
       citation({ id: 'saved', authorId: 'author-b', author: 'Beta', createdAt: 300 }),
     ];
 
-    expect(sortAuthorsByActivity(authors, citations).map((author) => author.id)).toEqual(['author-b', 'author-c', 'author-a']);
+    expect(sortAuthorsByActivity(authors, citations).map((author) => author.id)).toEqual(['author-a', 'author-b', 'author-c']);
     expect(deriveAuthorOrder(citations, 'Me', books, authors)).toEqual(['author-a', 'author-b', 'author-c']);
   });
 });

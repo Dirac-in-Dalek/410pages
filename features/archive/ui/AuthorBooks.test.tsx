@@ -85,7 +85,7 @@ describe('AuthorBooks', () => {
     expect(screen.getByRole('menu').className).toContain('right-[3.25rem]');
     await user.click(screen.getByRole('menuitem', { name: '삭제' }));
     expect(onPreviewBookDelete).toHaveBeenCalledWith(book.id);
-    expect(screen.getByText(/인용문 3개와 메모·장 구분/)).not.toBeNull();
+    expect(screen.getByText(/인용문 3개와 메모·챕터/)).not.toBeNull();
   });
 
   it('keeps the book rename input when saving fails', async () => {

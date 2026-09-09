@@ -16,6 +16,23 @@ const folderTree: SidebarItem[] = [{
 }];
 
 describe('LibrarySidebarTree author folders', () => {
+  it('opens books by click but not by Enter or Space', async () => {
+    const user = userEvent.setup();
+    const onTreeItemClick = vi.fn();
+    const book: SidebarItem = {
+      id: 'book-1', label: 'Book', type: 'book',
+      data: { authorId: 'author-1', author: 'Author', bookId: 'book-1', book: 'Book' },
+    };
+    render(<LibrarySidebarTree embedded treeData={[{ ...authorItem, children: [book] }]} onTreeItemClick={onTreeItemClick} />);
+    await user.click(screen.getByRole('button', { name: 'Author 펼치기' }));
+    const bookRow = screen.getByRole('button', { name: 'Book' });
+    bookRow.focus();
+    await user.keyboard('{Enter} ');
+    expect(onTreeItemClick).not.toHaveBeenCalled();
+    await user.click(bookRow);
+    expect(onTreeItemClick).toHaveBeenCalledWith(book);
+  });
+
   it('reorders loose authors inside the same group', () => {
     const onReorderAuthorAt = vi.fn();
     const secondAuthor: SidebarItem = {
