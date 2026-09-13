@@ -20,6 +20,8 @@ import { FlatCitationHighlightText } from './FlatCitationHighlightText';
 import { PassageNotesPanel } from './PassageNotesPanel';
 
 export const CitationList: React.FC<CitationListProps> = ({
+    insertionPreview,
+    onSelectInsertion,
     citations,
     allCitations = citations,
     projects,
@@ -371,6 +373,10 @@ export const CitationList: React.FC<CitationListProps> = ({
             if (!chapterBlocks.some(block => block.id === id)) projectedChapters.push({ ...input, id, depth, label: '', createdAt: 0 });
         }
     }
+    if (insertionPreview?.chapterMode) {
+        projectedChapters.push({ id: 'book-insertion-preview', bookId: bookId!, label: '', createdAt: 0,
+            createdAtSort: insertionPreview.position, depth: insertionPreview.depth });
+    }
     const displayChapterDepths = getChapterDepths(projectedChapters);
     const previewChapters = dropTarget && draggedChapterId ? projectedChapters.map(block => block.id === draggedChapterId
         ? { ...block, createdAtSort: dropTarget.position, depth: dropTarget.depth } : block) : projectedChapters;
@@ -389,6 +395,17 @@ export const CitationList: React.FC<CitationListProps> = ({
         else if (draggedChapterId) void moveChapter(draggedChapterId, target.id, target.after, target.depth);
         setDraggedChapterId(null); setDraggedCitationId(null); setDropTarget(null);
     };
+    const insertionMarker = insertionPreview && <div role="status" data-testid="book-insertion-preview"
+        data-insertion-position={insertionPreview.position}
+        data-chapter-node={insertionPreview.chapterMode ? 'book-insertion-preview' : undefined}
+        data-chapter-depth={insertionPreview.depth}
+        className="chapter-row book-insertion-preview"
+        style={{ '--chapter-depth': insertionPreview.depth } as React.CSSProperties}>
+        <span data-chapter-anchor className="chapter-control chapter-fold" aria-hidden="true" />
+        <span>{insertionPreview.label}</span>
+    </div>;
+    const markerBeforeId = insertionPreview ? renderRows.find(row => !hiddenRowIds.has(row.id) && row.createdAtSort > insertionPreview.position)?.id : undefined;
+
     const dropIndicator = dropTarget && <div data-chapter-node={draggedCitationId ? undefined : 'chapter-drop-preview'} data-citation-drop={draggedCitationId ? true : undefined} data-chapter-depth={dropTarget.depth}
         style={{ '--chapter-depth': dropTarget.depth } as React.CSSProperties}
         onDragOver={event => { event.preventDefault(); event.stopPropagation(); event.dataTransfer.dropEffect = 'move'; }}
@@ -417,9 +434,9 @@ export const CitationList: React.FC<CitationListProps> = ({
                 <ChapterBlockInsertButton
                     isEditing={activeInsertId === 'start'}
                     onDepthPreview={previewChapterDepth}
-                    label="맨 위에 챕터 추가"
+                    label={onSelectInsertion ? "맨 위에 삽입" : "맨 위에 챕터 추가"}
                     disabled={chapterActionsDisabled}
-                    onOpen={() => setActiveInsertId('start')}
+                    onOpen={() => onSelectInsertion ? onSelectInsertion(null, 0) : setActiveInsertId('start')}
                     onCancel={() => setActiveInsertId(null)}
                     onSubmit={(label) => {
                         const firstBookItem = sortBookViewItems(
@@ -436,6 +453,7 @@ export const CitationList: React.FC<CitationListProps> = ({
         return (
             <div className="chapter-list">
                 {leadingChapterInsert}
+                {insertionMarker}
                 <div className={[
                     'type-body py-20 text-center text-[var(--text-muted)]',
                     isBookView ? 'border-y border-[var(--border-main)]' : 'rounded-xl border-2 border-dashed border-[var(--border-main)]',
@@ -481,14 +499,14 @@ export const CitationList: React.FC<CitationListProps> = ({
         <div ref={chapterListRef} className="chapter-list relative w-full" onDragLeave={event => {
             if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDropTarget(null);
         }}>
-            {isBookView && <ChapterConnections containerRef={chapterListRef} excludedId={dropTarget ? draggedChapterId : null} depthOverrides={previewDepths} revision={`${dropTarget?.id}:${dropTarget?.after}:${dropTarget?.depth}:${activeInsertId}:${[...hiddenRowIds].join(',')}:${[...displayChapterDepths].join(';')}:${renderRows.map(row => row.id).join(',')}:${[...chapterDepths].map(([id, depth]) => `${id}:${depth}`).join(',')}`} />}
+            {isBookView && <ChapterConnections containerRef={chapterListRef} excludedId={dropTarget ? draggedChapterId : null} depthOverrides={previewDepths} revision={`${insertionPreview?.position}:${insertionPreview?.depth}:${insertionPreview?.chapterMode}:${dropTarget?.id}:${dropTarget?.after}:${dropTarget?.depth}:${activeInsertId}:${[...hiddenRowIds].join(',')}:${[...displayChapterDepths].join(';')}:${renderRows.map(row => row.id).join(',')}:${[...chapterDepths].map(([id, depth]) => `${id}:${depth}`).join(',')}`} />}
             {isBookView && <div className="relative z-20 ml-12 mb-2 flex min-h-9 items-center justify-between gap-3 text-xs text-[var(--text-muted)]">
                 <div>{inlinePassageNotes && onToggleAllPassageNotes && (hasSavedComments || showAllPassageNotes) && <button type="button" data-passage-note-trigger aria-expanded={showAllPassageNotes}
                     aria-label={showAllPassageNotes ? '인용문 메모 모두 접기' : '인용문 메모 모두 펼치기'} onClick={event => { event.stopPropagation(); onToggleAllPassageNotes(); }}
                     className="min-h-9 rounded px-1 hover:text-[var(--text-main)]">인용문 메모 모두 {showAllPassageNotes ? '접기' : '펼치기'}</button>}</div>
                 <details className="relative"><summary className="cursor-pointer rounded px-2 py-2 hover:text-[var(--text-main)]">사용법</summary>
                     <div className="absolute right-0 top-full z-30 w-64 max-w-[70vw] rounded-lg bg-[var(--bg-card)] p-3 text-xs leading-6 shadow-[var(--shadow-popover)]">
-                        챕터 제목: 드래그로 이동, 두 번 클릭해 수정<br />구분선: 클릭해 챕터 추가<br />인용문: 글자를 선택해 강조, 여백이나 손잡이를 끌어 이동<br />제목 맨 앞: Tab·Space로 하위, Backspace·Delete로 상위
+                        챕터 제목: 드래그로 이동, 두 번 클릭해 수정<br />구분선: 삽입 위치 선택, 하단 스위치로 인용문·챕터 선택<br />인용문: 글자를 선택해 강조, 여백이나 손잡이를 끌어 이동<br />제목 맨 앞: Tab·Space로 하위, Backspace·Delete로 상위
                     </div>
                 </details>
             </div>}
@@ -530,6 +548,7 @@ export const CitationList: React.FC<CitationListProps> = ({
                                 event.dataTransfer.dropEffect = 'move';
                             }}
                             onDrop={event => finishDrop(event, projectDrop(event, item.id))}>
+                            {markerBeforeId === item.id && insertionMarker}
                             {dropTarget?.id === item.id && !dropTarget.after && dropIndicator}
                             <div data-row-content data-row-kind={item.type}
                                 data-citation-depth={citation ? citationOwners.get(item.id)?.depth ?? 0 : undefined}
@@ -738,8 +757,9 @@ export const CitationList: React.FC<CitationListProps> = ({
                                         isEditing={activeInsertId === `after-${item.id}`}
                                         onDepthPreview={previewChapterDepth}
                                         previousDepth={item.type === 'chapter_block' ? chapterDepths.get(item.id) : previousDepthByRow.get(item.id)}
+                                        label={onSelectInsertion ? "여기에 삽입" : undefined}
                                         disabled={chapterActionsDisabled}
-                                        onOpen={() => setActiveInsertId(`after-${item.id}`)}
+                                        onOpen={() => onSelectInsertion ? onSelectInsertion(insertionNeighbors(index).left.id, item.type === 'chapter_block' ? chapterDepths.get(item.id) ?? 0 : previousDepthByRow.get(item.id) ?? 0) : setActiveInsertId(`after-${item.id}`)}
                                         onCancel={() => setActiveInsertId(null)}
                                         onSubmit={async (label, depth) => {
                                             const { left, right } = insertionNeighbors(index);
@@ -756,14 +776,16 @@ export const CitationList: React.FC<CitationListProps> = ({
                         </div>
                     );
                 })}
+                {insertionPreview && !markerBeforeId && insertionMarker}
                 {isBookView && onCreateChapterBlock && renderRows.length > 0 && !hiddenRowIds.has(renderRows[renderRows.length - 1].id) && (activeInsertId === null || activeInsertId === 'end') ? (
                     <div className={`chapter-end-divider group flex items-center justify-center ${activeInsertId === 'end' ? 'chapter-divider-editing' : 'chapter-divider-slot'}`}>
                         <ChapterBlockInsertButton
                             isEditing={activeInsertId === 'end'}
                             onDepthPreview={previewChapterDepth}
                             previousDepth={lastChapterDepth}
+                            label={onSelectInsertion ? "여기에 삽입" : undefined}
                             disabled={chapterActionsDisabled}
-                            onOpen={() => setActiveInsertId('end')}
+                            onOpen={() => onSelectInsertion ? onSelectInsertion(insertionNeighbors(renderRows.length - 1).left.id, lastChapterDepth ?? 0) : setActiveInsertId('end')}
                             onCancel={() => setActiveInsertId(null)}
                             onSubmit={async (label, depth) => {
                                 const { left, right } = insertionNeighbors(renderRows.length - 1);

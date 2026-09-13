@@ -207,6 +207,7 @@ export async function fetchCitations() {
     }
 
 export async function addCitation(userId: string, data: AddCitationInput) {
+        if (data.createdAtSort !== undefined && (!Number.isFinite(data.createdAtSort) || !data.bookId)) throw new Error('Invalid citation position');
         const resolvedSource = data.bookId
             ? await resolveCitationSourceByBookId(userId, data.bookId)
             : await resolveCitationSource(userId, {
@@ -219,6 +220,7 @@ export async function addCitation(userId: string, data: AddCitationInput) {
         // but we computed them for Book logic anyway.
         const payload = {
                 ...(data.id ? { id: data.id } : {}),
+                created_at_sort: data.createdAtSort ?? null,
                 kind: 'sentence',
                 text: data.text,
                 book_id: resolvedSource.bookId,
@@ -258,6 +260,7 @@ export async function addCitation(userId: string, data: AddCitationInput) {
             page: citation.page || undefined,
             pageSort: citation.page_sort ?? undefined,
             createdAt: new Date(citation.created_at).getTime(),
+            ...(citation.created_at_sort == null ? {} : { createdAtSort: citation.created_at_sort }),
             notes: [],
             tags: [],
             highlights: citation.highlights || []

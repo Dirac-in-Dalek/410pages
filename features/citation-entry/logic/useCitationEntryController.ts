@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { BookComposerDraftStore } from './bookComposerDrafts';
 import { AddCitationInput } from '../../../types';
 import {
   CitationEditorPrefill,
@@ -41,16 +42,27 @@ export const useCitationEntryController = ({
   prefillData,
   username,
   controlledValues,
+  draftScope,
+  draftStore,
   readOnly = false,
   sequentialPageEntry = false,
   autoFocusText = false,
 }: Pick<
   CitationEditorProps,
-  'onAddCitation' | 'prefillData' | 'username' | 'controlledValues' | 'readOnly' | 'sequentialPageEntry' | 'autoFocusText'
+  'draftStore' | 'draftScope' | 'onAddCitation' | 'prefillData' | 'username' | 'controlledValues' | 'readOnly' | 'sequentialPageEntry' | 'autoFocusText'
 >) => {
-  const [values, setValues] = useState<CitationEditorValues>(createResetValues(prefillData));
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const localDraftStore = useRef(new BookComposerDraftStore()).current;
+  const drafts = draftStore ?? localDraftStore;
+  const scope = draftScope ?? '';
+  const snapshot = useSyncExternalStore(drafts.subscribe, () => drafts.get(scope));
+  const values = snapshot?.values ?? createResetValues(prefillData);
+  const isSubmitting = snapshot?.saving ?? false;
   const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const setValues = (update: React.SetStateAction<CitationEditorValues>) => {
+    const current = drafts.get(scope)?.values ?? createResetValues(prefillData);
+    drafts.patch(scope, { values: typeof update === 'function' ? update(current) : update });
+  };
+  const setIsSubmitting = (saving: boolean) => drafts.patch(scope, { saving });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const pageInputRef = useRef<HTMLInputElement>(null);
 
@@ -128,8 +140,7 @@ export const useCitationEntryController = ({
   };
 
   const handleSubmit = async () => {
-    if (!canSubmit) return false;
-
+    if (!canSubmit || drafts.get(scope)?.saving) return false;
     try {
       setIsSubmitting(true);
       const result = await Promise.resolve(onAddCitation(createCitationInput(values)));

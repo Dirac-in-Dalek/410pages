@@ -89,7 +89,7 @@ export const ChapterBlockInsertButton: React.FC<ChapterBlockInsertButtonProps> =
         onClick={() => { setDepth(previousDepth ?? 0); onOpen(); }}
         disabled={disabled}
       >
-        <span className="chapter-insert-label"><Plus size={12} />챕터 추가</span>
+        <span className="chapter-insert-label"><Plus size={12} />{label.includes("삽입") ? "여기에 삽입" : "챕터 추가"}</span>
       </button>
     );
   }

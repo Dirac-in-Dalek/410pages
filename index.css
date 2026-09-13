@@ -1065,3 +1065,6 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
 
 [data-book-row]:has(> .chapter-divider-slot:hover, > .chapter-divider-slot:focus-within) > .book-row-content::after { opacity: 0.85; }
 .chapter-list:has(.chapter-end-divider:hover, .chapter-end-divider:focus-within) [data-book-row]:not([hidden]):not(:has(~ [data-book-row]:not([hidden]))) > .book-row-content::after { opacity: 0.85; }
+
+.book-insertion-preview { margin-block: 0.5rem; grid-template-columns: 2.75rem minmax(0, 1fr); }
+.book-insertion-preview > span:last-child { display: flex; align-items: center; min-height: 2.75rem; padding: 0.5rem 0.75rem; border: 1px dashed var(--accent); border-radius: 0.5rem; background: var(--accent-soft); color: var(--text-main); font-size: 0.8125rem; overflow-wrap: anywhere; }

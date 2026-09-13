@@ -20,6 +20,9 @@ export interface ArchiveHeaderProps {
 }
 
 export interface CitationListProps {
+    onSelectInsertion?: (afterId: string | null, depth: number) => void;
+    insertionPreview?: { position: number; depth: number; chapterMode: boolean; label: string };
+
     editDrafts?: CitationEditDraftStore;
     citations: Citation[];
     allCitations?: Citation[];

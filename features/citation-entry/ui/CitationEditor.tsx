@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { getChapterLevelDirection } from '../../archive/logic/chapterHierarchy';
 import { Send, User, Book as BookIcon, Hash } from 'lucide-react';
 import { CitationEditorProps } from '../contract/citationEntryContract';
 import { useCitationEntryController } from '../logic/useCitationEntryController';
@@ -14,6 +15,15 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
   sequentialPageEntry = false,
   autoFocusText = false,
   hideSourceFields = false,
+  chapterMode = false,
+  onChapterModeChange,
+  onHierarchyKey,
+  insertionLabel,
+  onCancelInsertion,
+  focusRequest,
+  draftScope,
+  draftStore,
+
 }) => {
   const {
     values,
@@ -35,10 +45,16 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
     prefillData,
     username,
     controlledValues,
+    draftScope,
+    draftStore,
     readOnly,
-    sequentialPageEntry,
+    sequentialPageEntry: sequentialPageEntry && !chapterMode,
     autoFocusText,
   });
+
+  useEffect(() => {
+    if (focusRequest) textareaRef.current?.focus({ preventScroll: true });
+  }, [focusRequest]);
 
   return (
     <div
@@ -59,16 +75,26 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
         </div>
       )}
 
+      {insertionLabel && <div className="flex items-center justify-between gap-2 px-4 pt-2 text-xs text-[var(--text-muted)]">
+        <span role="status">{insertionLabel}</span>
+        {onCancelInsertion && <button type="button" disabled={isSubmitting} onClick={onCancelInsertion} className="min-h-8 px-2">위치 취소</button>}
+      </div>}
       <div className="px-2 pt-2 pb-1">
         <textarea
           ref={textareaRef}
-          aria-label="인용문 입력"
+          aria-label={chapterMode ? "챕터 제목 입력" : "인용문 입력"}
           value={values.text}
           readOnly={readOnly || isSubmitting}
           onChange={(event) => updateValue('text', event.target.value)}
           onKeyDown={async (event) => {
             if (readOnly || isSubmitting) return;
             if (event.nativeEvent.isComposing) return;
+            const direction = getChapterLevelDirection(event);
+            if (direction && onHierarchyKey) {
+              event.preventDefault();
+              onHierarchyKey(direction);
+              return;
+            }
             if (event.key !== 'Enter') return;
             if (event.shiftKey) return;
 
@@ -81,12 +107,19 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
 
             await handleSubmit();
           }}
-          placeholder={placeholder}
+          placeholder={chapterMode ? "챕터 제목" : placeholder}
           className="type-body-bounded min-h-[40px] w-full resize-none overflow-y-auto border-none bg-transparent px-2 py-1.5 text-[var(--text-main)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-0"
         />
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5 rounded-b-xl bg-[var(--bg-card)] p-1.5 sm:flex-nowrap">
+        {onChapterModeChange && <button type="button" role="switch" aria-label="챕터 입력" aria-checked={chapterMode}
+          disabled={readOnly || isSubmitting} onClick={() => onChapterModeChange(!chapterMode)}
+          className="inline-flex min-h-11 items-center gap-2 rounded-md px-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)]">
+          <span aria-hidden="true" className={`flex h-5 w-9 rounded-full p-0.5 ${chapterMode ? 'bg-[var(--accent)]' : 'bg-[var(--text-muted)]'}`}>
+            <span className={`h-4 w-4 rounded-full bg-white transition-transform ${chapterMode ? 'translate-x-4' : ''}`} />
+          </span>{chapterMode ? '챕터' : '인용문'}
+        </button>}
         {!hideSourceFields && (
           <>
             <div className="flex min-h-11 min-w-0 basis-[calc(50%_-_0.1875rem)] items-center rounded-md border border-transparent bg-[var(--bg-input)] px-2.5 transition-[border-color,box-shadow] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] sm:min-h-8 sm:flex-[1.15] sm:basis-auto motion-reduce:transition-none">
@@ -133,7 +166,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
           </>
         )}
 
-        <div className="ml-auto flex min-h-11 w-[7.5rem] min-w-0 flex-none items-center rounded-md border border-transparent bg-[var(--bg-input)] px-2.5 transition-[border-color,box-shadow] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] sm:min-h-8 motion-reduce:transition-none">
+        {!chapterMode && <div className="ml-auto flex min-h-11 w-[7.5rem] min-w-0 flex-none items-center rounded-md border border-transparent bg-[var(--bg-input)] px-2.5 transition-[border-color,box-shadow] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] sm:min-h-8 motion-reduce:transition-none">
           <Hash size={12} className="mr-2 shrink-0 text-[var(--text-muted)]" />
           <input
             ref={pageInputRef}
@@ -157,16 +190,17 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
           />
         </div>
 
+        }
         {!hideSubmit && (
           <button
             type="button"
-            aria-label="문장 저장"
+            aria-label={chapterMode ? "챕터 저장" : "문장 저장"}
             onClick={() => {
               void handleSubmit();
             }}
             disabled={!canSubmit}
             className={`
-              inline-flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center rounded-md transition-[background-color,color,transform] active:scale-95 sm:h-8 sm:w-8 motion-reduce:transition-none
+              ${chapterMode ? 'ml-auto' : ''} inline-flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center rounded-md transition-[background-color,color,transform] active:scale-95 sm:h-8 sm:w-8 motion-reduce:transition-none
               ${canSubmit ? 'bg-[var(--accent)] text-white shadow-sm hover:bg-[var(--accent-strong)]' : 'bg-[var(--bg-input)] text-[var(--text-muted)] cursor-not-allowed'}
             `}
           >
