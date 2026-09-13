@@ -26,6 +26,7 @@ import {
   removePdfReaderCitationHighlights,
   updatePdfReaderBook,
 } from '../features/reader/logic/pdfReaderSession';
+import { BookComposerDraftStore } from '../features/citation-entry/logic/bookComposerDrafts';
 import type { BookSource, PdfReaderMeta } from '../types';
 import { useUndoableCitationDelete } from '../features/archive/logic/useUndoableCitationDelete';
 import { UndoDeleteToasts } from '../features/archive/ui/UndoDeleteToasts';
@@ -127,6 +128,7 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
     hasLoaded
   );
 
+  const composerDrafts = React.useRef(new BookComposerDraftStore()).current;
   const editDrafts = React.useRef(new CitationEditDraftStore()).current;
   const [showAllPassageNotes, setShowAllPassageNotes] = React.useState(false);
   const [passageNoteCitationId, setPassageNoteCitationId] = React.useState<string | null>(null);
@@ -444,7 +446,7 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
       onPreviewBookDelete={handlePreviewBookDeletion}
     />
   ) : (
-    <ArchiveScreen editDrafts={editDrafts} onMoveCitation={handleMoveCitation} onMoveChapterBlock={handleMoveChapterBlock} onRenameChapterBlock={handleRenameChapterBlock} showAllPassageNotes={showAllPassageNotes} onToggleAllPassageNotes={() => {
+    <ArchiveScreen composerDrafts={composerDrafts} editDrafts={editDrafts} onMoveCitation={handleMoveCitation} onMoveChapterBlock={handleMoveChapterBlock} onRenameChapterBlock={handleRenameChapterBlock} showAllPassageNotes={showAllPassageNotes} onToggleAllPassageNotes={() => {
       setShowAllPassageNotes(!showAllPassageNotes);
       if (showAllPassageNotes) setPassageNoteCitationId(null);
     }} collapsedDividerIds={collapsedDividerIds} onToggleDivider={handleToggleDivider} {...createArchiveScreenProps({

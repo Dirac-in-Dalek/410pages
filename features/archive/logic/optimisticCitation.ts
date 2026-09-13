@@ -41,6 +41,7 @@ export const createOptimisticCitation = (
     tags: data.tags || [],
     highlights: data.highlights,
     createdAt: now,
+    ...(data.createdAtSort === undefined ? {} : { createdAtSort: data.createdAtSort }),
     saveStatus: 'saving',
   };
 };
@@ -68,9 +69,11 @@ export const createOptimisticCitationEditPatch = (
     patch.authorId = undefined;
     patch.authorSortIndex = undefined;
     patch.bookId = undefined;
+    patch.createdAtSort = undefined;
     patch.bookSortIndex = undefined;
   } else if (didBookChange) {
     patch.bookId = undefined;
+    patch.createdAtSort = undefined;
     patch.bookSortIndex = undefined;
   }
 
@@ -112,6 +115,7 @@ export const reconcilePersistedCitationSource = (
 };
 
 export const createRetryCitationInput = (citation: Citation): AddCitationInput => ({
+  ...(citation.createdAtSort === undefined ? {} : { createdAtSort: citation.createdAtSort }),
   id: citation.id,
   kind: 'sentence',
   text: citation.text,

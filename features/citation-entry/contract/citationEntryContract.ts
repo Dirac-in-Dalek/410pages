@@ -1,3 +1,4 @@
+import type { BookComposerDraftStore } from '../logic/bookComposerDrafts';
 import { AddCitationInput } from '../../../types';
 
 export type CitationEditorValues = {
@@ -27,6 +28,15 @@ export interface CitationEditorProps {
   sequentialPageEntry?: boolean;
   autoFocusText?: boolean;
   hideSourceFields?: boolean;
+  chapterMode?: boolean;
+  onChapterModeChange?: (enabled: boolean) => void;
+  onHierarchyKey?: (direction: 'in' | 'out') => void;
+  insertionLabel?: string;
+  onCancelInsertion?: () => void;
+  focusRequest?: number;
+  draftScope?: string;
+  draftStore?: BookComposerDraftStore;
+
 }
 
 export type CitationEntryDropPayload = {

@@ -286,6 +286,14 @@ describe('api.addCitation', () => {
     });
   });
 
+  it('rejects invalid insertion positions before writes', async () => {
+    for (const createdAtSort of [NaN, Infinity, -Infinity]) {
+      await expect(api.addCitation('user-1', { kind: 'sentence', text: 'x', author: 'a', book: 'b', bookId: 'book-1', tags: [], createdAtSort })).rejects.toThrow('Invalid citation position');
+    }
+    expect(mockCitationsInsert).not.toHaveBeenCalled();
+    expect(mockCitationsUpsert).not.toHaveBeenCalled();
+  });
+
   it('writes short text as a citation with page data and reads legacy word responses as citations', async () => {
     const citationId = '018f47a2-8594-7c09-a488-2f73384e4711';
     const result = await api.addCitation('user-1', {
@@ -301,6 +309,7 @@ describe('api.addCitation', () => {
 
     expect(mockCitationsUpsert).toHaveBeenCalledWith({
       id: citationId,
+      created_at_sort: null,
       kind: 'sentence',
       text: '고독',
       book_id: 'book-1',

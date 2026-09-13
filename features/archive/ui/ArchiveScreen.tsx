@@ -1,5 +1,9 @@
+import { BookComposerDraftStore } from '../../citation-entry/logic/bookComposerDrafts';
 import { CitationEditDraftStore } from '../logic/citationEditDrafts';
-import React from 'react';
+import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { sortBookViewItems, toBookViewItems } from '../../../lib/bookViewItems';
+import { changeChapterDepth, getChapterDropPlacement } from '../logic/chapterHierarchy';
+import { BookInsertion, changeCitationInsertion, resolveBookInsertion } from '../logic/bookInsertion';
 import { BulkActionToolbar } from './BulkActionToolbar';
 import type {
   ChapterBlock,
@@ -15,6 +19,7 @@ import { useBookMetadata } from '../logic/useBookMetadata';
 
 type ArchiveScreenProps = {
   editDrafts?: CitationEditDraftStore;
+  composerDrafts?: BookComposerDraftStore;
   isMobileApp: boolean;
   title: string;
   showEditor: boolean;
@@ -70,6 +75,7 @@ type ArchiveScreenProps = {
 export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
   isMobileApp,
   editDrafts,
+  composerDrafts,
   title,
   showEditor,
   username,
@@ -120,6 +126,85 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
   passageNoteCitationId,
   onPassageNoteCitationChange,
 }) => {
+  const localComposerDrafts = useRef(new BookComposerDraftStore()).current;
+  const drafts = composerDrafts ?? localComposerDrafts;
+  const bookId = editorPrefill?.bookId ?? (selectedFilter?.type === 'book' ? selectedFilter.bookId : undefined);
+  const scope = bookId ?? '';
+  const composer = useSyncExternalStore(drafts.subscribe, () => drafts.get(scope));
+  const insertion = composer?.insertion ?? null;
+  const chapterMode = composer?.chapterMode ?? false;
+  const savingInsertion = composer?.saving ?? false;
+  const insertionError = composer?.error ?? '';
+  const setInsertion = (update: React.SetStateAction<BookInsertion | null>) => drafts.patch(scope, {
+    insertion: typeof update === 'function' ? update(drafts.get(scope)?.insertion ?? null) : update,
+  });
+  const setChapterMode = (enabled: boolean) => drafts.patch(scope, { chapterMode: enabled });
+  const setInsertionError = (error: string) => drafts.patch(scope, { error });
+  const [focusRequest, setFocusRequest] = useState(0);
+  const screenRef = useRef<HTMLDivElement>(null);
+  const bookItems = sortBookViewItems(toBookViewItems(allCitations.filter(c => c.bookId === bookId), chapterBlocks.filter(c => c.bookId === bookId)), 'date', 'asc');
+  const target = resolveBookInsertion(bookItems, insertion ?? { depth: 0 });
+  const requestedDepth = insertion?.depth ?? target?.previousDepth ?? 0;
+  const chapterPlacement = target ? getChapterDropPlacement(chapterBlocks.filter(c => c.bookId === bookId), 'book-insertion-preview', target.position, requestedDepth) : null;
+  const previewDepth = chapterMode ? chapterPlacement?.depth ?? 0 : target?.previousDepth ?? 0;
+  const parentLabel = chapterMode ? chapterPlacement?.parent?.label : target?.parent?.label;
+  const locationLabel = `${parentLabel ? `${parentLabel} 안` : '최상위'} · ${chapterMode ? '챕터' : '인용문'} 삽입`;
+
+  useEffect(() => {
+    if (!insertion) return;
+    const frame = requestAnimationFrame(() => screenRef.current?.querySelector('[data-testid="book-insertion-preview"]')?.scrollIntoView?.({ block: 'nearest' }));
+    return () => cancelAnimationFrame(frame);
+  }, [insertion, chapterMode]);
+
+  const latestCollapsed = useRef(collapsedDividerIds);
+  latestCollapsed.current = collapsedDividerIds;
+  const revealTarget = (next: BookInsertion) => {
+    const resolved = resolveBookInsertion(bookItems, next);
+    if (!resolved?.parent) return;
+    let depth = resolved.depths.get(resolved.parent.id)!;
+    for (const chapter of [...resolved.chapters].reverse()) {
+      if (chapter.createdAtSort > resolved.parent.createdAtSort || resolved.depths.get(chapter.id)! > depth) continue;
+      if (latestCollapsed.current?.has(chapter.id)) onToggleDivider?.(chapter.id);
+      depth = resolved.depths.get(chapter.id)! - 1;
+    }
+  };
+  useEffect(() => {
+    if (!composer?.revealInsertion || loading) return;
+    revealTarget(composer.revealInsertion);
+    drafts.patch(scope, { revealInsertion: undefined });
+  }, [composer?.revealInsertion, loading]);
+  const selectInsertion = (afterId: string | null, depth: number) => {
+    if (drafts.get(scope)?.saving) return;
+    const next = { afterId, depth };
+    setInsertion(next); revealTarget(next); setInsertionError(''); setFocusRequest(n => n + 1);
+  };
+  const changeLevel = (direction: 'in' | 'out') => {
+    if (!target || drafts.get(scope)?.saving) return;
+    const current = insertion ?? { depth: requestedDepth };
+    const next = chapterMode
+      ? { ...current, depth: changeChapterDepth(previewDepth, target.previousDepth, direction) }
+      : changeCitationInsertion(bookItems, current, direction);
+    setInsertion(next); revealTarget(next);
+  };
+  const submitAtInsertion: ArchiveScreenProps['onAddCitation'] = async data => {
+    if (!bookId || !target || chapterActionsDisabled) {
+      setInsertionError('삽입 위치를 확인할 수 없습니다. 구분선을 다시 선택해 주세요.');
+      return { ok: false };
+    }
+    setInsertionError('');
+    try {
+      const result = chapterMode
+        ? await onCreateChapterBlock?.({ bookId, label: data.text.trim(), createdAtSort: target.position, depth: previewDepth })
+        : await onAddCitation({ ...data, bookId, createdAtSort: target.position });
+      if ((chapterMode && !onCreateChapterBlock) || result === false || (result && typeof result === 'object' && 'ok' in result && result.ok === false)) throw new Error('Save failed');
+      drafts.patch(scope, { insertion: null, chapterMode: false, revealInsertion: insertion ?? { depth: requestedDepth } });
+      return { ok: true };
+    } catch {
+      setInsertionError('저장하지 못했습니다. 내용과 삽입 위치를 유지했습니다. 다시 시도해 주세요.');
+      return { ok: false };
+    }
+  };
+
   useBookMetadata(title, authorName || editorPrefill?.author || '', isBookView && !searchTerm);
   const inlinePassageNotes = isBookView && !isMobileApp;
   const columnClassName = inlinePassageNotes
@@ -132,7 +217,7 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
   } as React.CSSProperties : undefined;
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden" style={bookStyle}>
+    <div ref={screenRef} className="flex h-full min-h-0 flex-col overflow-hidden" style={bookStyle}>
       <div className="min-h-0 flex-1 overflow-y-auto" data-archive-scroll>
         <div className={inlinePassageNotes ? columnClassName : undefined}>
         <ArchiveHeader
@@ -186,6 +271,8 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
           />
 
           {loadError && citations.length === 0 && chapterBlocks.length === 0 ? null : <CitationList
+            onSelectInsertion={showEditor && isBookView ? selectInsertion : undefined}
+            insertionPreview={insertion && target ? { position: target.position, depth: previewDepth, chapterMode, label: locationLabel } : undefined}
             editDrafts={editDrafts}
             collapsedDividerIds={collapsedDividerIds}
             onToggleDivider={onToggleDivider}
@@ -210,7 +297,7 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
             onMoveCitation={onMoveCitation}
             onRenameChapterBlock={onRenameChapterBlock}
             onDeleteChapterBlock={onDeleteChapterBlock}
-            chapterActionsDisabled={chapterActionsDisabled}
+            chapterActionsDisabled={chapterActionsDisabled || savingInsertion}
             onToggleSelect={onToggleSelect}
             onAddNote={onAddNote}
             onUpdateNote={onUpdateNote}
@@ -227,8 +314,23 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
       {showEditor && isBookView ? (
         <div className={`shrink-0 bg-[var(--bg-main)] pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 ${inlinePassageNotes ? '' : 'px-3 sm:px-5'}`}>
           <div className={columnClassName}>
+            {insertionError && <p role="alert" className="mb-1 text-sm text-red-600">{insertionError}</p>}
             <CitationEditor
-              onAddCitation={onAddCitation}
+              onAddCitation={submitAtInsertion}
+              draftScope={bookId}
+              draftStore={drafts}
+              chapterMode={chapterMode}
+              onChapterModeChange={enabled => {
+                if (drafts.get(scope)?.saving) return;
+                setChapterMode(enabled);
+                setInsertion(current => current ?? { depth: target?.previousDepth ?? 0 });
+                setFocusRequest(n => n + 1);
+              }}
+              onHierarchyKey={changeLevel}
+              insertionLabel={insertion ? locationLabel : undefined}
+              onCancelInsertion={insertion ? () => { setInsertion(null); setInsertionError(''); } : undefined}
+              focusRequest={focusRequest}
+              readOnly={Boolean(chapterActionsDisabled) || savingInsertion}
               prefillData={editorPrefill}
               username={username}
               sequentialPageEntry

@@ -39,7 +39,7 @@ export interface Citation {
 
 export type AddCitationInput = Omit<
   Citation,
-  'id' | 'createdAt' | 'createdAtSort' | 'notes' | 'saveStatus' | 'optimisticOriginId'
+  'id' | 'createdAt' | 'notes' | 'saveStatus' | 'optimisticOriginId'
 > & { id?: string };
 export type AddCitationResult = { ok: true; citationId: string } | { ok: false; error: unknown };
 export type BulkSourceUpdateResult = { ok: true; updatedCount: number } | { ok: false; error: unknown };
