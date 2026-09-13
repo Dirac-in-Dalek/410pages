@@ -76,7 +76,7 @@ export const LibraryTreeRow: React.FC<LibraryTreeRowProps> = ({
       ) : null}
 
       <div
-        role="button"
+        role={item.type === 'book' ? 'group' : 'button'}
         tabIndex={0}
         className={[
           'group my-0.5 flex cursor-pointer select-none items-center rounded-[0.8rem] px-2.5 py-1.5 text-[14px] transition-[background-color,color,box-shadow,transform] duration-150 active:scale-[0.985]',
@@ -124,6 +124,15 @@ export const LibraryTreeRow: React.FC<LibraryTreeRowProps> = ({
         )}
 
         {children}
+        {item.type === 'book' && (
+          <button
+            type="button"
+            aria-label={`${item.label} 책 열기`}
+            onClick={event => { event.stopPropagation(); onClick(); }}
+            onDoubleClick={event => event.stopPropagation()}
+            className="ml-1 inline-flex min-h-11 shrink-0 items-center rounded-md px-2 text-xs text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)] sm:min-h-8 [@media(pointer:coarse)]:min-h-11"
+          >열기</button>
+        )}
       </div>
 
       {showAfter && (

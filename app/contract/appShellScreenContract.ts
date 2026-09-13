@@ -9,7 +9,7 @@ import type {
   Project,
   SidebarItem,
 } from '../../types';
-import type { ReactNode } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import type { PdfReaderPageProps } from '../../features/reader/contract/pdfReaderContract';
 
 export type AppViewMode = 'archive' | 'reader';
@@ -28,6 +28,10 @@ export interface UseAppViewModeOptions {
 }
 
 export interface UseAppViewModeResult {
+  Reader: ComponentType<PdfReaderPageProps> | null;
+  readerLoading: boolean;
+  readerLoadError: boolean;
+  cancelReaderLoad: () => void;
   viewMode: AppViewMode;
   isReaderVisible: boolean;
   openArchive: () => void;

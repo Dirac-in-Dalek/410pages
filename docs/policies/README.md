@@ -9,3 +9,4 @@
 - [책과 구절 메모](./memo-workspace.md)
 - [인증 보안](./authentication-security.md)
 - [설정 패널](./settings-panel.md)
+- [코드 구조](./code-organization.md)

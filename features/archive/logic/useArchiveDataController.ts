@@ -56,6 +56,7 @@ export const useArchiveDataController = (session: ArchiveSession): ArchiveDataCo
     books,
     chapterBlocksByBook,
     loading: query.loading,
+    hasLoaded: query.hasLoaded,
     loadError: query.loadError,
     authorFolderLoading: query.authorFolderLoading,
     authorFolderLoadError: query.authorFolderLoadError,

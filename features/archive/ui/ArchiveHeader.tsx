@@ -11,6 +11,7 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
     editorPrefill,
     isBookView = false,
     compactBookHeader = false,
+    isMobileApp = false,
     onBackToAuthor,
     authorName,
     onAddCitation,
@@ -27,7 +28,7 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
     const activeSortLabel = isDateActive ? dateLabel : pageLabel;
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const filterRef = useRef<HTMLDivElement>(null);
-    const columnClassName = getArchiveReadingColumnClass({ isBookView });
+    const columnClassName = getArchiveReadingColumnClass({ isBookView, isMobileApp });
 
     useEffect(() => {
         const handlePointerDown = (event: MouseEvent) => {
@@ -58,8 +59,8 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
     if (isBookView && compactBookHeader) {
         return (
             <div className={columnClassName}>
-                <div className="px-12 pb-4 pt-5">
-                    <h2 className="break-words text-[1.55rem] font-semibold leading-snug text-[var(--text-main)]">{title}</h2>
+                <div className="px-12 pb-2 pt-3">
+                    <h2 data-search-results-title tabIndex={-1} className="book-title break-words text-[var(--text-main)]">{title}</h2>
                     {onBackToAuthor && (
                         <button type="button" onClick={onBackToAuthor} aria-label={`${authorName || '저자'}의 책`} className="mt-1 min-h-8 text-xs text-[var(--text-muted)] hover:text-[var(--text-main)]">
                             {authorName || '저자'}
@@ -71,18 +72,17 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
     }
 
     return (
-        <div className="pt-5 md:pt-6 lg:pt-7 pb-1">
+        <div className="pt-3 md:pt-4 pb-1">
             <div className={columnClassName}>
                 {isBookView && onBackToAuthor ? (
-                    <button type="button" onClick={onBackToAuthor} className="mb-3 inline-flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm font-medium text-[var(--text-muted)] transition-[background-color,transform] hover:bg-[var(--sidebar-hover)] active:scale-95">
+                    <button type="button" onClick={onBackToAuthor} className="mb-1 inline-flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm font-medium text-[var(--text-muted)] transition-[background-color,transform] hover:bg-[var(--sidebar-hover)] active:scale-95">
                         <ArrowLeft size={16} /> {authorName || '저자'}의 책
                     </button>
                 ) : null}
-                <div className="mb-3 flex items-start justify-between gap-4">
+                <div className="mb-2 flex items-start justify-between gap-3" style={isBookView ? { paddingInlineStart: '3rem' } : undefined}>
                     <div className="min-w-0">
-                        {isBookView && authorName ? <p className="mb-1 text-[0.72rem] font-semibold text-[var(--accent)]">{authorName} / {title}</p> : null}
-                        <h2 className="truncate text-[1.8rem] font-semibold tracking-[-0.03em] text-[var(--text-main)]">{title}</h2>
-                        <p className="mt-1 text-[0.9rem] text-[var(--text-secondary)]">수집한 문장과 단어를 정리하고 다시 읽어보세요.</p>
+                        <h2 data-search-results-title tabIndex={-1} className={`${isBookView ? 'book-title' : 'text-[1.8rem] font-semibold'} whitespace-normal break-words tracking-[-0.03em] text-[var(--text-main)]`}>{title}</h2>
+                        {!isBookView && <p className="mt-1 text-[0.9rem] text-[var(--text-secondary)]">수집한 인용문을 정리하고 다시 읽어보세요.</p>}
                     </div>
                     {!isBookView ? <div
                         ref={filterRef}

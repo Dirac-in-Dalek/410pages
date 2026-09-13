@@ -1,4 +1,5 @@
 import React from 'react';
+import { getArchiveSearchLabel } from '../features/archive/logic/archiveSort';
 import { PanelLeftClose, PanelLeftOpen, Search, UserCircle2 } from 'lucide-react';
 import { AuthorDeletePreview, BookSource, Citation, DeleteAuthorCascadeResult, Project, SidebarItem } from '../types';
 import { useSidebarResize } from './main-layout/useSidebarResize';
@@ -135,6 +136,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
   return (
     <div className="font-size-app flex h-screen w-full flex-col overflow-hidden bg-[var(--bg-main)] font-sans text-[var(--text-main)] transition-colors duration-200">
+      <header className="border-b border-[var(--border-main)] bg-[var(--bg-card)]">
+        <div className="flex h-[3.15rem] items-center gap-3 px-4">
       <button
         type="button"
         aria-label={homePanelOpen ? '홈 패널 접기' : '홈 패널 펼치기'}
@@ -146,13 +149,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           if (!homePanelOpen && hasInlinePassageNotes) onCloseInlinePassageNotes?.();
           onHomePanelOpenChange?.(!homePanelOpen);
         }}
-        style={{ left: 16 }}
-        className="fixed top-[calc(3.15rem+0.5rem+0.5px)] z-30 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--bg-input)] text-[var(--text-secondary)] transition-[background-color,color,transform] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)] active:scale-95 motion-reduce:transition-none"
+        className="inline-flex h-9 shrink-0 gap-1.5 px-2 items-center justify-center rounded-lg bg-[var(--bg-input)] text-[var(--text-secondary)] transition-[background-color,color,transform] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)] active:scale-95 motion-reduce:transition-none"
       >
-        {homePanelOpen ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
+        {homePanelOpen ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}<span className="text-sm">서재</span>
       </button>
-      <header className="border-b border-[var(--border-main)] bg-[var(--bg-card)]">
-        <div className="flex h-[3.15rem] items-center gap-4 px-5">
+
           <div className="brand-wordmark shrink-0 text-[1.25rem] text-[var(--accent)]" style={{ width: 112 }}>
             <span className="brand-number">410</span><span className="brand-text">pages</span>
           </div>
@@ -163,8 +164,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               <input
                 value={searchTerm}
                 onChange={(event) => onSearch?.(event.target.value)}
-                aria-label="문장, 저자 또는 책 검색"
-                placeholder="문장, 저자 또는 책 검색…"
+                aria-label={getArchiveSearchLabel(selectedFilter, selectedProjectId)}
+                placeholder={getArchiveSearchLabel(selectedFilter, selectedProjectId)}
                 className="type-body-bounded h-full w-full border-none bg-transparent p-0 text-[var(--text-main)] placeholder:text-[var(--text-secondary)] focus:ring-0"
               />
             </label>
@@ -241,7 +242,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             className="absolute inset-y-0 right-0 z-40 w-2 cursor-col-resize hover:bg-[var(--accent-border)] focus-visible:bg-[var(--accent-border)]" />
         </div>
 
-        <main ref={mainRef} style={{ '--book-reference-width': `calc(100vw - ${leftWidth}px - ${rightPanel ? rightWidth : 0}px)`, '--book-left-reference': `${leftWidth}px` } as React.CSSProperties} className="flex min-w-0 flex-1 flex-col bg-[var(--bg-main)] transition-colors duration-200">
+        <main ref={mainRef} style={{ '--book-reference-width': hasInlinePassageNotes ? `calc(100vw - ${leftWidth}px - ${rightPanel ? rightWidth : 0}px)` : '100cqw', '--book-left-reference': hasInlinePassageNotes ? `${leftWidth}px` : 'var(--book-main-left, 0px)' } as React.CSSProperties} className="flex min-w-0 flex-1 flex-col bg-[var(--bg-main)] transition-colors duration-200">
           {children}
         </main>
         {rightPanel ? (

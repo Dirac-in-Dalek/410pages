@@ -102,6 +102,10 @@ create table if not exists citations (
 
 alter table citations enable row level security;
 
+alter table citations add column if not exists created_at_sort double precision
+  constraint citations_created_at_sort_finite
+  check (created_at_sort > '-Infinity'::double precision and created_at_sort < 'Infinity'::double precision);
+
 alter table citations add column if not exists kind text not null default 'sentence';
 alter table citations drop constraint if exists citations_kind_check;
 alter table citations add constraint citations_kind_check check (kind in ('sentence', 'word'));
@@ -117,6 +121,7 @@ create table if not exists chapter_blocks (
   id uuid default uuid_generate_v4() primary key,
   book_id uuid references books(id) on delete cascade not null,
   label text not null,
+  depth integer not null default 0 constraint chapter_blocks_depth_nonnegative check (depth >= 0),
   page_sort double precision,
   created_at_sort double precision not null,
   user_id uuid references auth.users not null,

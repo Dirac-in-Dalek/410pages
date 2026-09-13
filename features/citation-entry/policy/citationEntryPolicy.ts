@@ -1,6 +1,6 @@
 import { CitationEditorSubmitResult, CitationEditorValues } from '../contract/citationEntryContract';
 
-export const CITATION_ENTRY_EMPTY_TEXTAREA_HEIGHT = 72;
+export const CITATION_ENTRY_EMPTY_TEXTAREA_HEIGHT = 40;
 
 export const isCitationEntrySelfAuthor = (author: string, username: string) =>
   !author.trim() || author.trim() === username;

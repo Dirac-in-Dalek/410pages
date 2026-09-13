@@ -30,6 +30,8 @@ export interface Citation {
   tags: string[];
   highlights?: Highlight[];
   createdAt: number;
+  /** Manual position in the book body; original creation time is preserved. */
+  createdAtSort?: number;
   saveStatus?: 'saving' | 'failed';
   /** Runtime-only link used to move UI state from a temporary citation id after persistence. */
   optimisticOriginId?: string;
@@ -37,7 +39,7 @@ export interface Citation {
 
 export type AddCitationInput = Omit<
   Citation,
-  'id' | 'createdAt' | 'notes' | 'saveStatus' | 'optimisticOriginId'
+  'id' | 'createdAt' | 'createdAtSort' | 'notes' | 'saveStatus' | 'optimisticOriginId'
 > & { id?: string };
 export type AddCitationResult = { ok: true; citationId: string } | { ok: false; error: unknown };
 export type BulkSourceUpdateResult = { ok: true; updatedCount: number } | { ok: false; error: unknown };
@@ -108,6 +110,7 @@ export interface ChapterBlock {
   id: string;
   bookId: string;
   label: string;
+  depth?: number;
   pageSort?: number;
   createdAtSort: number;
   createdAt: number;
@@ -120,6 +123,7 @@ export type BookViewItem =
 export interface CreateChapterBlockInput {
   bookId: string;
   label: string;
+  depth?: number;
   pageSort?: number;
   createdAtSort: number;
 }

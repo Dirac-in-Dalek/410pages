@@ -104,6 +104,7 @@ export const EditorialSearchField: React.FC<EditorialSearchFieldProps> = ({
     <Search size={14} className="mr-2 text-[var(--text-muted)]" />
     <input
       value={value}
+      aria-label={placeholder}
       onChange={(event) => onChange?.(event.target.value)}
       placeholder={placeholder}
       className="type-body-bounded w-full border-none bg-transparent p-0 text-[var(--text-main)] placeholder:text-[var(--text-muted)] focus:ring-0"

@@ -83,7 +83,7 @@ export const FlatCitationHighlightText: React.FC<FlatCitationHighlightTextProps>
       <mark
         key={highlight.id}
         className="cursor-pointer rounded px-0.5"
-        style={{ backgroundColor: 'var(--highlight-bg)' }}
+        style={{ backgroundColor: 'var(--highlight-bg)', color: 'inherit' }}
         title="눌러서 강조 제거"
         onClick={(event) => {
           event.stopPropagation();
@@ -116,7 +116,7 @@ export const FlatCitationHighlightText: React.FC<FlatCitationHighlightTextProps>
       data-testid={`book-citation-text-${citation.id}`}
       onMouseUp={handleSelection}
       aria-busy={saving}
-      className="block select-text whitespace-pre-wrap font-[var(--font-display-active)] text-[1.02rem] leading-[1.72] text-[var(--text-main)]"
+      className="block cursor-text select-text whitespace-pre-wrap break-words font-[var(--font-display-active)] text-[length:var(--type-body-size)] leading-[1.72] text-[var(--text-main)]"
     >
       {segments}
     </span>

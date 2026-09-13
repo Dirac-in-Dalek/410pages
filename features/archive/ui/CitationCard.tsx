@@ -1,12 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useSyncExternalStore } from 'react';
 import { AlertCircle, Copy, MessageSquare, ChevronDown, ChevronUp, User, X, Check, Folder, RefreshCw, Pencil, Trash2 } from 'lucide-react';
 import { Highlight } from '../../../types';
 import { formatCitationRecoveryText, writeTextToClipboard } from '../../../lib/citationCopy';
 import { CITATION_SAVE_FAILED_MESSAGE } from '../logic/optimisticCitation';
-import type { CitationCardProps } from '../contract/citationCardContract';
+import type { CitationCardProps, CitationEditDraft } from '../contract/citationCardContract';
 
 export const CitationCard: React.FC<CitationCardProps> = ({
   citation,
+  editDrafts,
   username,
   selectedFilter = null,
   projectNames = [],
@@ -23,22 +24,34 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   onUpdate,
   onRetrySave
 }) => {
-  const [isNotesExpanded, setIsNotesExpanded] = useState(false);
-  const [newNote, setNewNote] = useState('');
+  const initialDraft = (): CitationEditDraft => ({ saving: false, isNotesExpanded: false, newNote: '', editingNoteId: null, editNoteContent: '', isEditing: false, editText: citation.text, editAuthor: citation.author, editBook: citation.book, editPage: citation.page?.toString() || '' });
+  const [localDraft, setLocalDraft] = useState(initialDraft);
+  const sharedDraft = useSyncExternalStore(editDrafts?.subscribe ?? (() => () => {}), () => editDrafts?.get(citation.id));
+  const draft = editDrafts ? sharedDraft ?? initialDraft() : localDraft;
+  const updateDraft = <K extends keyof CitationEditDraft>(key: K, value: React.SetStateAction<CitationEditDraft[K]>) => {
+    const update = (current: CitationEditDraft) => ({ ...current, [key]: typeof value === 'function' ? (value as (old: CitationEditDraft[K]) => CitationEditDraft[K])(current[key]) : value });
+    if (editDrafts) editDrafts.set(citation.id, update(editDrafts.get(citation.id) ?? initialDraft()));
+    else setLocalDraft(update);
+  };
+  const { isNotesExpanded, newNote, editingNoteId, editNoteContent, isEditing, editText, editAuthor, editBook, editPage } = draft;
+  const setIsNotesExpanded = (value: React.SetStateAction<boolean>) => updateDraft('isNotesExpanded', value);
+  const setNewNote = (value: string) => updateDraft('newNote', value);
+  const setEditingNoteId = (value: string | null) => updateDraft('editingNoteId', value);
+  const setEditNoteContent = (value: string) => updateDraft('editNoteContent', value);
+  const setIsEditing = (value: boolean) => updateDraft('isEditing', value);
+  const setEditText = (value: string) => updateDraft('editText', value);
+  const setEditAuthor = (value: string) => updateDraft('editAuthor', value);
+  const setEditBook = (value: string) => updateDraft('editBook', value);
+  const setEditPage = (value: string) => updateDraft('editPage', value);
   const [recoveryCopied, setRecoveryCopied] = useState(false);
-
-  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
-  const [editNoteContent, setEditNoteContent] = useState('');
-
-  const [isEditing, setIsEditing] = useState(false);
-  const [editText, setEditText] = useState(citation.text);
-  const [editAuthor, setEditAuthor] = useState(citation.author);
-  const [editBook, setEditBook] = useState(citation.book);
-  const [editPage, setEditPage] = useState(citation.page?.toString() || '');
   const [isExpanded, setIsExpanded] = useState(false);
   const [isOverflowing, setIsOverflowing] = useState(false);
   const [collapsedTextEnd, setCollapsedTextEnd] = useState<number | null>(null);
-  const [isSubmittingAction, setIsSubmittingAction] = useState(false);
+  const isSubmittingAction = Boolean(draft.saving);
+  const setIsSubmittingAction = (value: boolean) => {
+    if (!value && editDrafts && !editDrafts.has(citation.id)) return;
+    updateDraft('saving', value);
+  };
 
   const [localHighlights, setLocalHighlights] = useState<Highlight[]>(citation.highlights || []);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -253,7 +266,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
 
   const submitNote = async () => {
     if (isUnsaved) return;
-    if (!newNote.trim() || actionInFlightRef.current) return;
+    if (!newNote.trim() || actionInFlightRef.current || editDrafts?.get(citation.id)?.saving) return;
     actionInFlightRef.current = true;
     setIsSubmittingAction(true);
     try {
@@ -268,6 +281,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   };
 
   const handleCancelNewNote = () => {
+    if (actionInFlightRef.current || editDrafts?.get(citation.id)?.saving) return;
     setNewNote('');
     if (!isEditing) {
       setIsNotesExpanded(false);
@@ -275,7 +289,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   };
 
   const handleSaveNoteEdit = async (noteId: string) => {
-    if (actionInFlightRef.current) return;
+    if (actionInFlightRef.current || editDrafts?.get(citation.id)?.saving) return;
     actionInFlightRef.current = true;
     setIsSubmittingAction(true);
     try {
@@ -294,15 +308,12 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   };
 
   const closeEditingSession = () => {
-    setIsEditing(false);
-    setIsNotesExpanded(false);
-    setEditingNoteId(null);
-    setEditNoteContent('');
-    setNewNote('');
+    if (editDrafts) editDrafts.delete(citation.id);
+    else setLocalDraft(current => ({ ...current, saving: false, isEditing: false, isNotesExpanded: false, editingNoteId: null, editNoteContent: '', newNote: '' }));
   };
 
   const handleSave = async () => {
-    if (!editText.trim() || actionInFlightRef.current) return;
+    if (!editText.trim() || actionInFlightRef.current || editDrafts?.get(citation.id)?.saving) return;
     actionInFlightRef.current = true;
     setIsSubmittingAction(true);
     try {
@@ -328,13 +339,18 @@ export const CitationCard: React.FC<CitationCardProps> = ({
   };
 
   const openEditor = () => {
-    if (isSavingCitation) return;
+    if (isSavingCitation || actionInFlightRef.current || editDrafts?.get(citation.id)?.saving) return;
+    setEditText(citation.text);
+    setEditAuthor(citation.author);
+    setEditBook(citation.book);
+    setEditPage(citation.page?.toString() || '');
     setIsEditing(true);
     setIsNotesExpanded(true);
     setEditingNoteId(null);
   };
 
   const handleCancel = () => {
+    if (actionInFlightRef.current || editDrafts?.get(citation.id)?.saving) return;
     setEditText(citation.text);
     setEditAuthor(citation.author);
     setEditBook(citation.book);
@@ -527,7 +543,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
       ref={cardRef}
       onDoubleClick={handleCardDoubleClick}
       className={`
-        group relative mb-2.5 flex items-start gap-0.5 rounded-[0.75rem] bg-[var(--bg-card)] shadow-[var(--shadow-card)] transition-[background-color,box-shadow,transform] duration-200 motion-reduce:transition-none
+        citation-card group relative mb-2.5 flex items-start gap-0.5 rounded-[0.75rem] bg-[var(--bg-card)] shadow-[var(--shadow-card)] transition-[background-color,box-shadow,transform] duration-200 motion-reduce:transition-none
         ${isSelected ? 'bg-[var(--accent-soft)] ring-1 ring-inset ring-[var(--accent-border)]' : 'hover:shadow-[var(--shadow-card-hover)]'}
         ${isEditing ? 'cursor-default ring-2 ring-[var(--accent-ring)] shadow-[var(--shadow-card-hover)]' : ''}
       `}
@@ -552,6 +568,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                 ref={editTextareaRef}
                 autoFocus
                 value={editText}
+                aria-label="인용문 내용 수정"
                 disabled={isSubmittingAction}
                 onChange={(event) => setEditText(event.target.value)}
                 className="type-body min-h-[84px] w-full resize-none overflow-y-auto rounded-md border border-[var(--border-main)] bg-[var(--bg-input)] p-2 text-[var(--text-main)] focus:border-[var(--accent-border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)]"
@@ -563,6 +580,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                   <input
                     type="text"
                     value={editAuthor}
+                    aria-label="저자 수정"
                     disabled={isSubmittingAction}
                     onChange={(event) => setEditAuthor(event.target.value)}
                     placeholder="직접 작성"
@@ -574,6 +592,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                   <input
                     type="text"
                     value={editBook}
+                    aria-label="책 수정"
                     disabled={isSubmittingAction}
                     onChange={(event) => setEditBook(event.target.value)}
                     className="type-label-bounded w-full rounded-md border border-[var(--border-main)] bg-[var(--bg-input)] p-2 text-[var(--text-main)] focus:border-[var(--accent-border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)]"
@@ -584,6 +603,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                   <input
                     type="text"
                     value={editPage}
+                    aria-label="페이지 수정"
                     disabled={isSubmittingAction}
                     onChange={(event) => setEditPage(event.target.value)}
                     className="type-label-bounded w-full rounded-md border border-[var(--border-main)] bg-[var(--bg-input)] p-2 text-[var(--text-main)] focus:border-[var(--accent-border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)]"
@@ -740,13 +760,13 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                   ))}
                 </div>
 
-                <div className="rounded-[0.9rem] border border-[var(--border-main)] bg-[var(--bg-card)] shadow-sm transition-[border-color,box-shadow] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)]">
+                <div className="citation-note-composer rounded-[0.9rem] border border-[var(--border-main)] bg-[var(--bg-card)] shadow-sm transition-[border-color,box-shadow] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)]">
                   <textarea
                     ref={newNoteTextareaRef}
                     value={newNote}
                     disabled={isSubmittingAction}
                     onChange={(event) => setNewNote(event.target.value)}
-                    placeholder="메모 추가…"
+                    placeholder="이 인용문에 메모 추가…"
                     className="type-note min-h-[52px] w-full resize-none overflow-y-auto border-none bg-transparent p-2.5 text-[var(--text-main)] focus:outline-none focus:ring-0"
                     onKeyDown={(event) => {
                       if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {

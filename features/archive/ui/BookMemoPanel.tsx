@@ -126,9 +126,10 @@ export const BookMemoPanel: React.FC<BookMemoPanelProps> = ({
       <header className="flex min-h-14 items-center gap-3 border-b border-[var(--border-main)] px-4">
         <div className="min-w-0 flex-1">
           <p className="truncate text-[0.72rem] text-[var(--text-muted)]">{book.title}</p>
-          <h2 id="book-memo-title" className="text-sm font-semibold">메모</h2>
+          <h2 id="book-memo-title" className="text-base font-semibold">책 전체 메모</h2>
         </div>
         <div aria-live="polite" className="flex items-center justify-end gap-1 text-[0.74rem] text-[var(--text-muted)] empty:hidden">
+          {status === 'saving' ? '저장 중…' : status === 'saved' ? '저장됨' : status === 'idle' ? '자동 저장' : null}
           {status === 'failed' ? <><CloudOff size={13} /> 실패</> : null}
           {status === 'recovered' ? <><CloudOff size={13} /> 복구됨</> : null}
         </div>
@@ -163,7 +164,7 @@ export const BookMemoPanel: React.FC<BookMemoPanelProps> = ({
           onClick={saveNow}
           className="min-h-10 shrink-0 rounded-lg px-3.5 text-sm font-semibold text-[var(--text-secondary)] transition-[background-color,transform] hover:bg-[var(--sidebar-hover)] active:scale-95 motion-reduce:transition-none"
         >
-          저장
+          {status === 'failed' ? '다시 저장' : '지금 저장'}
         </button>
       </footer>
     </aside>

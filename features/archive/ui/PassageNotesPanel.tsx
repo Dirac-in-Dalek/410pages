@@ -119,7 +119,7 @@ export const PassageNotesPanel: React.FC<PassageNotesPanelProps> = ({
       {!inline && <header className={inline ? 'absolute -top-6 inset-x-0 flex h-6 items-start gap-3' : 'flex min-h-14 items-center gap-3 border-b border-[var(--border-main)] px-4'}>
         <div className="min-w-0 flex-1">
           {!inline && <p className="text-[0.7rem] font-medium text-[var(--accent)]">구절 메모</p>}
-          <h2 id={titleId} className={inline ? 'text-xs leading-6 text-[var(--text-muted)]' : 'text-sm font-semibold'}>{inline ? `댓글${citation.page ? ` · ${citation.page}쪽` : ''}` : citation.notes.length ? `${citation.notes.length}개의 메모` : '메모 없음'}</h2>
+          <h2 id={titleId} className={inline ? 'text-xs leading-6 text-[var(--text-muted)]' : 'text-sm font-semibold'}>{inline ? `인용문 메모${citation.page ? ` · ${citation.page}쪽` : ''}` : citation.notes.length ? `${citation.notes.length}개의 메모` : '메모 없음'}</h2>
         </div>
         <button type="button" onClick={onClose} className={`${inline ? 'h-6 w-6' : 'h-10 w-10'} flex items-center justify-center rounded-lg text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]`} aria-label="구절 메모 닫기">
           <X size={18} />
@@ -178,7 +178,7 @@ export const PassageNotesPanel: React.FC<PassageNotesPanelProps> = ({
         <textarea
           ref={draftRef}
           rows={inline ? 1 : undefined}
-          aria-label="댓글 입력"
+          aria-label="인용문 메모 입력"
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           onKeyDown={(event) => {
@@ -187,7 +187,7 @@ export const PassageNotesPanel: React.FC<PassageNotesPanelProps> = ({
               void saveNewNote();
             }
           }}
-          placeholder={inline ? '댓글을 남기세요' : '이 구절에 대한 생각을 적으세요.'}
+          placeholder={inline ? '이 인용문에 메모를 남기세요' : '이 구절에 대한 생각을 적으세요.'}
           className={inline ? 'min-h-6 w-full resize-none border-0 bg-transparent p-0 text-sm leading-6 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-0' : 'min-h-24 w-full resize-none rounded-lg border border-[var(--border-main)] bg-[var(--bg-input)] p-3 text-sm leading-6 placeholder:text-[var(--text-muted)] focus:border-[var(--accent-border)] focus:ring-0'}
         />
         <div className={`flex items-center gap-2 ${inline ? 'justify-end' : 'mt-2 justify-between'}`}>

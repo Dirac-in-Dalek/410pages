@@ -43,7 +43,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
   return (
     <div
       className={`
-        relative rounded-[1.25rem] border p-0.5 transition-[border-color,background-color,box-shadow] duration-200 focus-within:border-[var(--accent-border)] focus-within:ring-2 focus-within:ring-[var(--accent-ring)] motion-reduce:transition-none
+        citation-composer relative rounded-xl border p-0.5 transition-[border-color,background-color,box-shadow] duration-200 focus-within:border-[var(--accent-border)] focus-within:ring-2 focus-within:ring-[var(--accent-ring)] motion-reduce:transition-none
         ${isDraggingOver ? 'border-[var(--accent-border)] bg-[var(--accent-soft)] ring-4 ring-[var(--accent-ring)]' : 'border-[var(--border-main)] bg-[var(--bg-card)] shadow-[var(--shadow-toolbar)]'}
       `}
       onDragOver={handleDragOver}
@@ -59,9 +59,10 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
         </div>
       )}
 
-      <div className="px-3 pt-3 pb-2.5">
+      <div className="px-2 pt-2 pb-1">
         <textarea
           ref={textareaRef}
+          aria-label="인용문 입력"
           value={values.text}
           readOnly={readOnly || isSubmitting}
           onChange={(event) => updateValue('text', event.target.value)}
@@ -81,14 +82,14 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
             await handleSubmit();
           }}
           placeholder={placeholder}
-          className="type-body-bounded min-h-[52px] w-full resize-none overflow-y-auto border-none bg-transparent px-2 py-1.5 text-[var(--text-main)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-0"
+          className="type-body-bounded min-h-[40px] w-full resize-none overflow-y-auto border-none bg-transparent px-2 py-1.5 text-[var(--text-main)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-0"
         />
       </div>
 
-      <div className="flex flex-wrap items-center gap-1.5 rounded-[0_0_1rem_1rem] bg-[var(--bg-card)] p-1.5 sm:flex-nowrap">
+      <div className="flex flex-wrap items-center gap-1.5 rounded-b-xl bg-[var(--bg-card)] p-1.5 sm:flex-nowrap">
         {!hideSourceFields && (
           <>
-            <div className="flex min-h-11 min-w-0 basis-[calc(50%_-_0.1875rem)] items-center rounded-[0.9rem] border border-[var(--border-main)] bg-[var(--bg-input)] px-2.5 transition-[border-color,box-shadow] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] sm:min-h-8 sm:flex-[1.15] sm:basis-auto motion-reduce:transition-none">
+            <div className="flex min-h-11 min-w-0 basis-[calc(50%_-_0.1875rem)] items-center rounded-md border border-transparent bg-[var(--bg-input)] px-2.5 transition-[border-color,box-shadow] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] sm:min-h-8 sm:flex-[1.15] sm:basis-auto motion-reduce:transition-none">
               <User size={12} className={`mr-2 ${isSelf ? 'text-[var(--text-muted)]' : 'text-[var(--accent)]'}`} />
               <input
                 type="text"
@@ -109,7 +110,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
               />
             </div>
 
-            <div className="flex min-h-11 min-w-0 basis-[calc(50%_-_0.1875rem)] items-center rounded-[0.9rem] border border-[var(--border-main)] bg-[var(--bg-input)] px-2.5 transition-[border-color,box-shadow] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] sm:min-h-8 sm:flex-[1.15] sm:basis-auto motion-reduce:transition-none">
+            <div className="flex min-h-11 min-w-0 basis-[calc(50%_-_0.1875rem)] items-center rounded-md border border-transparent bg-[var(--bg-input)] px-2.5 transition-[border-color,box-shadow] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] sm:min-h-8 sm:flex-[1.15] sm:basis-auto motion-reduce:transition-none">
               <BookIcon size={12} className="mr-2 text-[var(--text-muted)]" />
               <input
                 type="text"
@@ -132,7 +133,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
           </>
         )}
 
-        <div className="ml-auto flex min-h-11 w-[7.5rem] min-w-0 flex-none items-center rounded-[0.9rem] border border-[var(--border-main)] bg-[var(--bg-input)] px-2.5 transition-[border-color,box-shadow] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] sm:min-h-8 motion-reduce:transition-none">
+        <div className="ml-auto flex min-h-11 w-[7.5rem] min-w-0 flex-none items-center rounded-md border border-transparent bg-[var(--bg-input)] px-2.5 transition-[border-color,box-shadow] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] sm:min-h-8 motion-reduce:transition-none">
           <Hash size={12} className="mr-2 shrink-0 text-[var(--text-muted)]" />
           <input
             ref={pageInputRef}
@@ -165,7 +166,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
             }}
             disabled={!canSubmit}
             className={`
-              inline-flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center rounded-[0.9rem] transition-[background-color,color,transform] active:scale-95 sm:h-8 sm:w-8 motion-reduce:transition-none
+              inline-flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center rounded-md transition-[background-color,color,transform] active:scale-95 sm:h-8 sm:w-8 motion-reduce:transition-none
               ${canSubmit ? 'bg-[var(--accent)] text-white shadow-sm hover:bg-[var(--accent-strong)]' : 'bg-[var(--bg-input)] text-[var(--text-muted)] cursor-not-allowed'}
             `}
           >

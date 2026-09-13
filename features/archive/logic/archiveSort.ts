@@ -1,7 +1,10 @@
 import { Citation } from '../../../types';
 import { OrderedLabelItem, SortDirection, SortField } from '../contract/archiveViewContract';
 
-export const DEFAULT_ARCHIVE_TITLE = 'Dashboard';
+export const DEFAULT_ARCHIVE_TITLE = '서재';
+
+export const getArchiveSearchLabel = (filter?: { type: 'author' | 'book' } | null, projectId?: string | null) =>
+  `${projectId ? '이 폴더의' : filter?.type === 'book' ? '이 책의' : filter?.type === 'author' ? '이 저자의' : '전체'} 인용문 검색`;
 
 export const getPageNumber = (citation: Citation): number | undefined => {
   if (typeof citation.pageSort === 'number') return citation.pageSort;

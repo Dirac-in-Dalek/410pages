@@ -37,6 +37,7 @@ export const useArchiveQuery = ({
   setChapterBlocksByBook,
 }: UseArchiveQueryOptions): ArchiveQueryController & { invalidateAuthorFolderLoad: () => void } => {
   const [loading, setLoading] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [authorFolderLoading, setAuthorFolderLoading] = useState(false);
   const [authorFolderLoadError, setAuthorFolderLoadError] = useState<string | null>(null);
@@ -74,6 +75,7 @@ export const useArchiveQuery = ({
     chapterRequestGenerationByBookRef.current.clear();
     activeChapterBookIdRef.current = null;
     setLoading(false);
+    setHasLoaded(false);
     setLoadError(null);
     setAuthorFolderLoading(false);
     setAuthorFolderLoadError(null);
@@ -143,6 +145,7 @@ export const useArchiveQuery = ({
         } : book;
       }));
       setProjects(projectsData);
+      setHasLoaded(true);
     } catch (error) {
       console.error('Error fetching data:', error);
       if (requestGeneration === requestGenerationRef.current) {
@@ -239,6 +242,7 @@ export const useArchiveQuery = ({
   }, []);
 
   return {
+    hasLoaded,
     loading,
     loadError,
     authorFolderLoading,

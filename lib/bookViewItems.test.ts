@@ -174,3 +174,13 @@ describe('bookViewItems', () => {
     expect(getDescendingMidpoint(100.2, 99.8)).toBe(100);
   });
 });
+
+it('uses a citation book position without changing its original creation time or page', () => {
+  const citation = { id: 'moved', kind: 'sentence' as const, text: 'Original', author: 'Author', book: 'Book', bookId: 'book', notes: [], tags: [], page: '50', pageSort: 50, createdAt: 1000, createdAtSort: 25 };
+  const chapter = { id: 'sub', bookId: 'book', label: 'Subchapter', depth: 1, createdAt: 0, createdAtSort: 20 };
+  const items = sortBookViewItems(toBookViewItems([citation], [chapter]), 'date', 'asc');
+  expect(items.map(item => item.id)).toEqual(['sub', 'moved']);
+  expect(items[1].createdAtSort).toBe(25);
+  expect(citation.createdAt).toBe(1000);
+  expect(citation.page).toBe('50');
+});

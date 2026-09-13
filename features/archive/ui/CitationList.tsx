@@ -1,7 +1,10 @@
+import { CitationEditDraftStore } from '../logic/citationEditDrafts';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AlertCircle, ChevronDown, ChevronUp, Copy, MessageCircle, MoreHorizontal, RefreshCw, X } from 'lucide-react';
-import { ChapterBlockCard } from '../../../components/ChapterBlockCard';
-import { ChapterBlockInsertButton } from '../../../components/ChapterBlockInsertButton';
+import { AlertCircle, ChevronDown, ChevronUp, Copy, GripVertical, MessageCircle, MoreHorizontal, RefreshCw, X } from 'lucide-react';
+import { ChapterBlockCard } from './ChapterBlockCard';
+import { ChapterBlockInsertButton } from './ChapterBlockInsertButton';
+import { ChapterConnections } from './ChapterConnections';
+import { getChapterDepths, getChapterDropPlacement } from '../logic/chapterHierarchy';
 import {
     getDescendingMidpoint,
     getInsertionPageSort,
@@ -12,7 +15,6 @@ import {
 import { buildCitationRenderRows } from '../logic/citationRenderRows';
 import type { CitationListProps } from '../contract/archiveUiContract';
 import { CitationCard } from './CitationCard';
-import { useModalFocus } from '../../../shared/ui/useModalFocus';
 import { formatCitationRecoveryText, writeTextToClipboard } from '../../../lib/citationCopy';
 import { FlatCitationHighlightText } from './FlatCitationHighlightText';
 import { PassageNotesPanel } from './PassageNotesPanel';
@@ -21,6 +23,7 @@ export const CitationList: React.FC<CitationListProps> = ({
     citations,
     allCitations = citations,
     projects,
+    editDrafts,
     username,
     loading,
     searchTerm,
@@ -40,6 +43,7 @@ export const CitationList: React.FC<CitationListProps> = ({
     pageDirection,
     onCreateChapterBlock,
     onMoveChapterBlock,
+    onMoveCitation,
     onRenameChapterBlock,
     onDeleteChapterBlock,
     chapterActionsDisabled = false,
@@ -51,23 +55,44 @@ export const CitationList: React.FC<CitationListProps> = ({
     onToggleAllPassageNotes,
     onPassageNoteCitationChange,
 }) => {
+    const localEditDrafts = useRef(new CitationEditDraftStore());
+    const draftStore = editDrafts ?? localEditDrafts.current;
     const [draggedChapterId, setDraggedChapterId] = useState<string | null>(null);
-    const [dropTarget, setDropTarget] = useState<{ id: string; after: boolean } | null>(null);
+    const [draggedCitationId, setDraggedCitationId] = useState<string | null>(null);
+    const [dropTarget, setDropTarget] = useState<{ id: string; after: boolean; position: number; depth: number; parentLabel?: string; citationParentId?: string } | null>(null);
+    const dragOrigin = useRef({ x: 0, depth: 0 });
     const [moveError, setMoveError] = useState(false);
     const movePending = useRef(false);
+    const latestCollapsedIds = useRef(collapsedDividerIds);
+    latestCollapsedIds.current = collapsedDividerIds;
     const openedCommentIds = useRef(new Set<string>());
     const hasSavedComments = citations.some(citation => citation.notes.length > 0);
     const compareComments = inlinePassageNotes && (showAllPassageNotes || Boolean(passageNoteCitationId));
     const [activeInsertId, setActiveInsertId] = useState<string | null>(null);
+    const [chapterDraftDepths, setChapterDraftDepths] = useState<Record<string, number>>({});
+    const previewChapterDepth = useCallback((id: string, depth?: number) => {
+        setChapterDraftDepths(current => {
+            if (current[id] === depth) return current;
+            const next = { ...current };
+            if (depth === undefined) delete next[id];
+            else next[id] = depth;
+            return next;
+        });
+    }, []);
+    const chapterListRef = useRef<HTMLDivElement>(null);
     const [overflowingCitationIds, setOverflowingCitationIds] = useState<Set<string>>(() => new Set());
     const [expandedCitationIds, setExpandedCitationIds] = useState<Set<string>>(() => new Set());
     const [detailCitationId, setDetailCitationId] = useState<string | null>(null);
     const [copiedRecoveryCitationId, setCopiedRecoveryCitationId] = useState<string | null>(null);
     const suppressPassageClickRef = useRef<string | null>(null);
-    const detailDialogRef = useModalFocus<HTMLElement>(Boolean(detailCitationId), () => setDetailCitationId(null));
+    const closeDetail = () => {
+        const previousId = detailCitationId;
+        setDetailCitationId(null);
+        requestAnimationFrame(() => Array.from(document.querySelectorAll<HTMLButtonElement>('[data-citation-detail-trigger]')).find(button => button.dataset.citationDetailTrigger === previousId)?.focus());
+    };
     const bookId = (isBookView && selectedFilter?.type === 'book' ? selectedFilter.bookId : undefined)
         ?? chapterBlocks[0]?.bookId ?? citations.find((citation) => citation.bookId)?.bookId;
-    useEffect(() => { setDraggedChapterId(null); setDropTarget(null); setMoveError(false); }, [bookId]);
+    useEffect(() => { setDraggedChapterId(null); setDraggedCitationId(null); setDropTarget(null); setMoveError(false); }, [bookId]);
     const currentSortField: 'date' | 'page' = isBookView ? 'date' : sortField ?? 'page';
     const currentDateDirection: 'asc' | 'desc' = isBookView ? 'asc' : dateDirection ?? 'desc';
     const currentPageDirection: 'asc' | 'desc' = pageDirection ?? 'asc';
@@ -82,15 +107,42 @@ export const CitationList: React.FC<CitationListProps> = ({
               createdAtSort: citation.createdAt,
           }));
     const renderRows = buildCitationRenderRows(baseItems);
+    const chapterDepths = getChapterDepths(chapterBlocks);
+    const previousDepthByRow = new Map<string, number | undefined>();
+    let lastChapterDepth: number | undefined;
+    for (const row of renderRows) {
+        previousDepthByRow.set(row.id, lastChapterDepth);
+        if (row.type === 'chapter_block') lastChapterDepth = chapterDepths.get(row.id) ?? 0;
+    }
     const hiddenRowIds = new Set<string>();
-    let sectionCollapsed = false;
+    let collapsedDepth: number | null = null;
     for (const row of renderRows) {
         if (row.type === 'chapter_block') {
-            sectionCollapsed = isBookView && Boolean(collapsedDividerIds?.has(row.id));
-        } else if (sectionCollapsed) {
-            hiddenRowIds.add(row.id);
-        }
+            const depth = chapterDepths.get(row.id) ?? 0;
+            if (collapsedDepth !== null && depth <= collapsedDepth) collapsedDepth = null;
+            if (collapsedDepth !== null) hiddenRowIds.add(row.id);
+            else if (isBookView && collapsedDividerIds?.has(row.id)) collapsedDepth = depth;
+        } else if (collapsedDepth !== null) hiddenRowIds.add(row.id);
     }
+    // A separator after a folded chapter is after its whole hidden section.
+    const insertionNeighbors = (index: number) => {
+        const anchor = renderRows[index];
+        if (anchor?.type === 'chapter_block' && collapsedDividerIds?.has(anchor.id)) {
+            // Search may omit citations; the folded boundary still includes the complete book.
+            const items = sortBookViewItems(toBookViewItems(allCitations.filter(citation => citation.bookId === bookId), chapterBlocks), 'date', 'asc');
+            let end = items.findIndex(item => item.id === anchor.id);
+            const depth = chapterDepths.get(anchor.id) ?? 0;
+            while (end + 1 < items.length) {
+                const next = items[end + 1];
+                if (next.type === 'chapter_block' && (chapterDepths.get(next.id) ?? 0) <= depth) break;
+                end += 1;
+            }
+            return { left: items[end], right: items[end + 1] };
+        }
+        let leftIndex = index;
+        while (leftIndex >= 0 && leftIndex + 1 < renderRows.length && hiddenRowIds.has(renderRows[leftIndex + 1].id)) leftIndex += 1;
+        return { left: renderRows[leftIndex], right: renderRows[leftIndex + 1] };
+    };
     const visibleSentenceIds = renderRows
         .filter((item) => item.type === 'sentence' && !hiddenRowIds.has(item.id))
         .map((item) => item.id);
@@ -196,7 +248,8 @@ export const CitationList: React.FC<CitationListProps> = ({
     const handleCreateChapterBlock = async (
         leftItem?: { pageSort?: number; createdAtSort: number },
         rightItem?: { pageSort?: number; createdAtSort: number },
-        label?: string
+        label?: string,
+        depth?: number
     ) => {
         if (!onCreateChapterBlock || !label) return;
 
@@ -207,6 +260,7 @@ export const CitationList: React.FC<CitationListProps> = ({
             onCreateChapterBlock({
                 ...input,
                 label,
+                ...(depth ? { depth } : {}),
             })
         );
         if (result === false) return false;
@@ -214,36 +268,142 @@ export const CitationList: React.FC<CitationListProps> = ({
         return true;
     };
 
-    const moveChapter = async (id: string, targetId: string, after: boolean) => {
-        if (!bookId || !onMoveChapterBlock || chapterActionsDisabled || movePending.current || id === targetId) return;
-        if (!chapterBlocks.some(block => block.id === id && block.bookId === bookId)) return;
+    const getMovePosition = (id: string, targetId: string, after: boolean, kind: 'chapter' | 'citation' = 'chapter') => {
+        if (!bookId || id === targetId) return null;
+        if (kind === 'chapter' ? !chapterBlocks.some(block => block.id === id && block.bookId === bookId)
+            : !allCitations.some(c => c.id === id && c.bookId === bookId && !c.saveStatus)) return null;
         const target = renderRows.find(row => row.id === targetId);
-        if (!target) return;
-        const boundaryId = targetId;
-        const rows = [
-            ...allCitations.filter(citation => citation.bookId === bookId).map(citation => ({ id: citation.id, createdAtSort: citation.createdAt })),
-            ...chapterBlocks.filter(block => block.bookId === bookId && block.id !== id),
-        ].sort((a, b) => a.createdAtSort - b.createdAtSort);
+        if (!target || (kind === 'citation' && target.type === 'sentence' && target.citation.saveStatus)) return null;
+        const targetRowIndex = renderRows.findIndex(row => row.id === targetId);
+        const boundaryId = after && kind === 'chapter' ? insertionNeighbors(targetRowIndex).left.id : targetId;
+        const rows = sortBookViewItems(toBookViewItems(
+            allCitations.filter(c => c.bookId === bookId && (kind !== 'citation' || c.id !== id)),
+            chapterBlocks.filter(c => c.bookId === bookId && (kind !== 'chapter' || c.id !== id)),
+        ), 'date', 'asc');
         const targetIndex = rows.findIndex(row => row.id === boundaryId);
-        if (targetIndex < 0) return;
+        if (targetIndex < 0) return null;
         const insertion = targetIndex + (after ? 1 : 0);
         const left = rows[insertion - 1]?.createdAtSort;
         const right = rows[insertion]?.createdAtSort;
         const position = getMidpoint(left, right);
-        // Existing order values must have space for an exact insertion; never reorder citations to make room.
-        if (position == null || !Number.isFinite(position) || (left != null && position <= left) || (right != null && position >= right)) {
-            setMoveError(true);
-            return;
-        }
+        // Never reorder citations to make room for a chapter.
+        return position != null && Number.isFinite(position) && (left == null || position > left) && (right == null || position < right) ? position : null;
+    };
+
+    const moveChapter = async (id: string, targetId: string, after: boolean, depth?: number) => {
+        if (!bookId || !onMoveChapterBlock || chapterActionsDisabled || movePending.current) return;
+        const position = getMovePosition(id, targetId, after);
+        if (position == null) { setMoveError(true); return; }
         movePending.current = true;
         setMoveError(false);
-        try { if (await onMoveChapterBlock(bookId, id, position) === false) setMoveError(true); }
+        try { if ((depth === undefined ? await onMoveChapterBlock(bookId, id, position) : await onMoveChapterBlock(bookId, id, position, depth)) === false) setMoveError(true); }
         catch { setMoveError(true); }
         finally { movePending.current = false; }
     };
+    const citationDropTarget = (citationId: string, targetId: string, after: boolean) => {
+        const position = getMovePosition(citationId, targetId, after, 'citation');
+        if (position == null) return null;
+        const parent = [...chapterBlocks].filter(c => c.bookId === bookId && c.createdAtSort < position)
+            .sort((a, b) => b.createdAtSort - a.createdAtSort)[0];
+        return { id: targetId, after, position, depth: parent ? chapterDepths.get(parent.id) ?? 0 : 0, parentLabel: parent?.label, citationParentId: parent?.id };
+    };
+    const startCitationDrag = (event: React.DragEvent, citation: typeof citations[number]) => {
+        if (!onMoveCitation || citation.saveStatus || movePending.current || chapterActionsDisabled) { event.preventDefault(); return; }
+        event.stopPropagation();
+        event.dataTransfer.setData('application/x-410pages-citation', citation.id);
+        event.dataTransfer.effectAllowed = 'move';
+        setDraggedCitationId(citation.id); setDraggedChapterId(null); setDropTarget(null);
+    };
+    const prepareWhitespaceDrag = (event: React.MouseEvent<HTMLDivElement>, enabled: boolean) => {
+        const target = event.target instanceof Element ? event.target : null;
+        let protectedTarget = Boolean(target?.closest('button, input, textarea, select, label, a, summary, [contenteditable], .citation-inline-detail, [data-testid="inline-passage-comments"]'));
+        const text = target?.closest('[data-testid^="book-citation-text-"], [data-citation-metadata]');
+        if (text && !protectedTarget) {
+            const range = document.createRange();
+            range.selectNodeContents(text);
+            const boxes = typeof range.getClientRects === 'function' ? [...range.getClientRects()] : [];
+            // Keep ordinary selection on letters and spaces between words; only the trailing blank area can drag.
+            protectedTarget = boxes.length === 0 || boxes.some(box => event.clientX >= box.left && event.clientX <= box.right && event.clientY >= box.top && event.clientY <= box.bottom);
+        }
+        event.currentTarget.draggable = enabled && event.button === 0 && !protectedTarget;
+    };
+    const moveCitationTo = async (id: string, target: NonNullable<typeof dropTarget>) => {
+        if (!bookId || !onMoveCitation || chapterActionsDisabled || movePending.current) return;
+        const position = getMovePosition(id, target.id, target.after, 'citation');
+        if (position == null) { setMoveError(true); return; }
+        movePending.current = true;
+        setMoveError(false);
+        try {
+            if (await onMoveCitation(bookId, id, position) === false) setMoveError(true);
+            else if (target.citationParentId && latestCollapsedIds.current?.has(target.citationParentId)) onToggleDivider?.(target.citationParentId);
+        } catch { setMoveError(true); }
+        finally { movePending.current = false; }
+    };
+    const projectDrop = (event: React.DragEvent, targetId: string) => {
+        if (draggedCitationId) {
+            if (!onMoveCitation || chapterActionsDisabled || movePending.current) return null;
+            const row = renderRows.find(row => row.id === targetId);
+            const rect = event.currentTarget.querySelector('[data-row-content]')?.getBoundingClientRect();
+            if (!row || !rect) return null;
+            // Dropping on a chapter means inside that chapter, even when it is folded.
+            return citationDropTarget(draggedCitationId, targetId, row.type === 'chapter_block' || event.clientY >= rect.top + rect.height / 2);
+        }
+        if (!draggedChapterId || !onMoveChapterBlock || chapterActionsDisabled || movePending.current) return null;
+        const rect = event.currentTarget.querySelector('[data-row-content]')?.getBoundingClientRect();
+        if (!rect) return null;
+        const after = event.clientY >= rect.top + rect.height / 2;
+        const position = getMovePosition(draggedChapterId, targetId, after);
+        if (position == null) return null;
+        const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+        const step = (parseFloat(getComputedStyle(chapterListRef.current!).getPropertyValue('--chapter-indent-step')) || 1) * rem;
+        const requestedDepth = dragOrigin.current.depth + (event.clientX - dragOrigin.current.x) / step;
+        const { depth, parent } = getChapterDropPlacement(chapterBlocks.filter(block => block.bookId === bookId), draggedChapterId, position, requestedDepth);
+        return { id: targetId, after, position, depth, parentLabel: parent?.label };
+    };
+    const projectedChapters = chapterBlocks.map(block => chapterDraftDepths[block.id] === undefined
+        ? block : { ...block, depth: chapterDraftDepths[block.id] });
+    if (activeInsertId && bookId) {
+        const index = activeInsertId === 'start' ? -1 : activeInsertId === 'end' ? renderRows.length - 1
+            : renderRows.findIndex(row => `after-${row.id}` === activeInsertId);
+        const { left, right } = insertionNeighbors(index);
+        const input = buildChapterBlockInput(left, right);
+        if (input) for (const [id, depth] of Object.entries(chapterDraftDepths)) {
+            if (!chapterBlocks.some(block => block.id === id)) projectedChapters.push({ ...input, id, depth, label: '', createdAt: 0 });
+        }
+    }
+    const displayChapterDepths = getChapterDepths(projectedChapters);
+    const previewChapters = dropTarget && draggedChapterId ? projectedChapters.map(block => block.id === draggedChapterId
+        ? { ...block, createdAtSort: dropTarget.position, depth: dropTarget.depth } : block) : projectedChapters;
+    const previewDepths = getChapterDepths(previewChapters);
+    const citationOwners = new Map<string, { id?: string; depth: number }>();
+    let owner: { id?: string; depth: number } = { depth: 0 };
+    for (const item of sortBookViewItems(toBookViewItems(allCitations.filter(c => c.bookId === bookId), projectedChapters.filter(c => c.bookId === bookId)), 'date', 'asc')) {
+        if (item.type === 'chapter_block') owner = { id: item.id, depth: displayChapterDepths.get(item.id) ?? 0 };
+        else citationOwners.set(item.id, owner);
+    }
+    const finishDrop = (event: React.DragEvent, target: typeof dropTarget) => {
+        if ((!draggedChapterId && !draggedCitationId) || !target) return;
+        event.preventDefault();
+        event.stopPropagation();
+        if (draggedCitationId) void moveCitationTo(draggedCitationId, target);
+        else if (draggedChapterId) void moveChapter(draggedChapterId, target.id, target.after, target.depth);
+        setDraggedChapterId(null); setDraggedCitationId(null); setDropTarget(null);
+    };
+    const dropIndicator = dropTarget && <div data-chapter-node={draggedCitationId ? undefined : 'chapter-drop-preview'} data-citation-drop={draggedCitationId ? true : undefined} data-chapter-depth={dropTarget.depth}
+        style={{ '--chapter-depth': dropTarget.depth } as React.CSSProperties}
+        onDragOver={event => { event.preventDefault(); event.stopPropagation(); event.dataTransfer.dropEffect = 'move'; }}
+        onDrop={event => finishDrop(event, dropTarget)}
+        className={`chapter-drop-indicator ${draggedCitationId ? 'citation-drop-indicator' : ''} relative z-10 h-0 border-t-2 border-[var(--accent)]`}>
+        <span data-chapter-anchor className="chapter-drop-anchor" aria-hidden="true" />
+        <span role="status" className="absolute bottom-1 left-0 max-w-full truncate rounded px-2 py-1 text-xs font-medium text-[var(--accent)] bg-[var(--bg-card)] shadow-sm">
+            {draggedCitationId ? (dropTarget.parentLabel ? `${dropTarget.parentLabel} 안으로 인용문 이동` : '첫 챕터 앞에 인용문 이동') : (dropTarget.parentLabel ? `${dropTarget.parentLabel} 아래 · 하위 ${dropTarget.depth}단계` : '최상위에 놓기')}
+        </span>
+    </div>;
+
     const moveByKeyboard = (id: string, direction: -1 | 1) => {
-        const index = renderRows.findIndex(row => row.id === id);
-        const adjacent = renderRows[index + direction];
+        const visibleRows = renderRows.filter(row => !hiddenRowIds.has(row.id));
+        const index = visibleRows.findIndex(row => row.id === id);
+        const adjacent = visibleRows[index + direction];
         if (adjacent) void moveChapter(id, adjacent.id, direction === 1);
     };
 
@@ -253,9 +413,10 @@ export const CitationList: React.FC<CitationListProps> = ({
 
     const leadingChapterInsert = isBookView && bookId && onCreateChapterBlock
         && (activeInsertId === null || activeInsertId === 'start') ? (
-        <div className="group mb-3 flex min-h-11 items-center">
+        <div className={`group chapter-leading-divider ${activeInsertId === 'start' ? 'chapter-divider-editing' : 'chapter-divider-slot'}`}>
                 <ChapterBlockInsertButton
                     isEditing={activeInsertId === 'start'}
+                    onDepthPreview={previewChapterDepth}
                     label="맨 위에 챕터 추가"
                     disabled={chapterActionsDisabled}
                     onOpen={() => setActiveInsertId('start')}
@@ -273,7 +434,7 @@ export const CitationList: React.FC<CitationListProps> = ({
 
     if (renderRows.length === 0) {
         return (
-            <>
+            <div className="chapter-list">
                 {leadingChapterInsert}
                 <div className={[
                     'type-body py-20 text-center text-[var(--text-muted)]',
@@ -282,12 +443,55 @@ export const CitationList: React.FC<CitationListProps> = ({
                     <p>{searchTerm ? '검색 결과가 없습니다.' : '아직 수집한 항목이 없습니다.'}</p>
                     <p className="type-body-muted mt-2">{searchTerm ? '다른 검색어를 입력해보세요.' : `${isBookView ? '아래' : '위'} 입력창에서 문장이나 단어를 추가해보세요.`}</p>
                 </div>
-            </>
+            </div>
         );
     }
 
+    const detailEditor = activeCitation ? (
+        <section data-chapter-connection-obstacle className="citation-inline-detail ml-12 py-2" role="region" aria-labelledby="citation-detail-title"
+            onKeyDown={event => { if (event.key === 'Escape') { event.stopPropagation(); closeDetail(); } }}>
+            <header className="flex items-center justify-between gap-3 pb-2">
+                <h3 id="citation-detail-title" className="text-sm font-semibold text-[var(--text-secondary)]">인용문 편집 · 이 문장의 메모</h3>
+                <button type="button" autoFocus onClick={closeDetail} aria-label="문장 상세 닫기" className="inline-flex min-h-10 items-center gap-1 rounded-md px-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)]"><X size={16} />닫기</button>
+            </header>
+                            <CitationCard
+                                editDrafts={draftStore}
+                                index={0}
+                                citation={activeCitation}
+                                username={username}
+                                selectedFilter={selectedFilter}
+                                projectNames={projects.filter((project) => project.citationIds.includes(activeCitation.id)).map((project) => project.name)}
+                                showDetailActions
+                                isSelected={selectedIds.has(activeCitation.id)}
+                                onToggleSelect={onToggleSelect}
+                                onAddNote={onAddNote}
+                                onUpdateNote={onUpdateNote}
+                                onDeleteNote={onDeleteNote}
+                                onDelete={(id) => {
+                                    onDeleteCitation(id);
+                                    setDetailCitationId(null);
+                                }}
+                                onUpdate={onUpdateCitation}
+                                onRetrySave={onRetryCitationSave}
+                            />
+        </section>
+    ) : null;
+
     return (
-        <div className="w-full">
+        <div ref={chapterListRef} className="chapter-list relative w-full" onDragLeave={event => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDropTarget(null);
+        }}>
+            {isBookView && <ChapterConnections containerRef={chapterListRef} excludedId={dropTarget ? draggedChapterId : null} depthOverrides={previewDepths} revision={`${dropTarget?.id}:${dropTarget?.after}:${dropTarget?.depth}:${activeInsertId}:${[...hiddenRowIds].join(',')}:${[...displayChapterDepths].join(';')}:${renderRows.map(row => row.id).join(',')}:${[...chapterDepths].map(([id, depth]) => `${id}:${depth}`).join(',')}`} />}
+            {isBookView && <div className="relative z-20 ml-12 mb-2 flex min-h-9 items-center justify-between gap-3 text-xs text-[var(--text-muted)]">
+                <div>{inlinePassageNotes && onToggleAllPassageNotes && (hasSavedComments || showAllPassageNotes) && <button type="button" data-passage-note-trigger aria-expanded={showAllPassageNotes}
+                    aria-label={showAllPassageNotes ? '인용문 메모 모두 접기' : '인용문 메모 모두 펼치기'} onClick={event => { event.stopPropagation(); onToggleAllPassageNotes(); }}
+                    className="min-h-9 rounded px-1 hover:text-[var(--text-main)]">인용문 메모 모두 {showAllPassageNotes ? '접기' : '펼치기'}</button>}</div>
+                <details className="relative"><summary className="cursor-pointer rounded px-2 py-2 hover:text-[var(--text-main)]">사용법</summary>
+                    <div className="absolute right-0 top-full z-30 w-64 max-w-[70vw] rounded-lg bg-[var(--bg-card)] p-3 text-xs leading-6 shadow-[var(--shadow-popover)]">
+                        챕터 제목: 드래그로 이동, 두 번 클릭해 수정<br />구분선: 클릭해 챕터 추가<br />인용문: 글자를 선택해 강조, 여백이나 손잡이를 끌어 이동<br />제목 맨 앞: Tab·Space로 하위, Backspace·Delete로 상위
+                    </div>
+                </details>
+            </div>}
             {leadingChapterInsert}
             {moveError && <p role="alert" className="mb-2 text-sm text-red-600">이 위치로 이동하지 못했습니다. 다른 위치를 선택하거나 다시 시도해 주세요.</p>}
             {hasVisibleSentences && !isBookView ? (
@@ -304,16 +508,14 @@ export const CitationList: React.FC<CitationListProps> = ({
                 </button>
             </div>
             ) : null}
+            {!isBookView && detailEditor}
             <div className="flex flex-col">
                 {renderRows.map((item, index) => {
                     const citation = item.type === 'sentence' ? item.citation : undefined;
                     if (citation && inlinePassageNotes && (passageNoteCitationId === item.id || (showAllPassageNotes && citation.notes.length > 0))) {
                         openedCommentIds.current.add(item.id);
                     }
-                    const nextItem = renderRows[index + 1];
-                    const canShowInsertAfter =
-                        item.type !== 'chapter_block' &&
-                        nextItem?.type !== 'chapter_block';
+                    const canDragWhitespace = isBookView && Boolean(citation && onMoveCitation && !citation.saveStatus && !chapterActionsDisabled && detailCitationId !== item.id);
                     const citationProjects = citation
                         ? projects.filter((project) => project.citationIds.includes(citation.id)).map((project) => project.name)
                         : [];
@@ -321,32 +523,57 @@ export const CitationList: React.FC<CitationListProps> = ({
                     return (
                         <div key={item.id} data-book-row={item.id} hidden={hiddenRowIds.has(item.id)} style={{ display: hiddenRowIds.has(item.id) ? 'none' : 'contents' }}
                             onDragOver={event => {
-                                if (!draggedChapterId || draggedChapterId === item.id || !onMoveChapterBlock || chapterActionsDisabled) return;
+                                const target = projectDrop(event, item.id);
+                                setDropTarget(target);
+                                if (!target) return;
                                 event.preventDefault();
                                 event.dataTransfer.dropEffect = 'move';
-                                const rect = (event.currentTarget as HTMLElement).querySelector('[data-row-content]')?.getBoundingClientRect();
-                                if (rect) setDropTarget({ id: item.id, after: event.clientY >= rect.top + rect.height / 2 });
                             }}
-                            onDrop={event => {
-                                if (!draggedChapterId || !dropTarget || dropTarget.id !== item.id) return;
-                                event.preventDefault();
-                                void moveChapter(draggedChapterId, item.id, dropTarget.after);
-                                setDraggedChapterId(null); setDropTarget(null);
-                            }}>
-                            {dropTarget?.id === item.id && !dropTarget.after && <div className="h-0 border-t-2 border-[var(--accent)]" aria-hidden="true" />}
-                            <div data-row-content>
+                            onDrop={event => finishDrop(event, projectDrop(event, item.id))}>
+                            {dropTarget?.id === item.id && !dropTarget.after && dropIndicator}
+                            <div data-row-content data-row-kind={item.type}
+                                data-citation-depth={citation ? citationOwners.get(item.id)?.depth ?? 0 : undefined}
+                                data-citation-owner={citation ? citationOwners.get(item.id)?.id : undefined} className={isBookView ? 'book-row-content' : undefined}
+                                data-whitespace-drag={canDragWhitespace || undefined}
+                                draggable={false}
+                                onMouseMoveCapture={event => { if (event.buttons === 0) prepareWhitespaceDrag(event, canDragWhitespace); }}
+                                onPointerDownCapture={event => prepareWhitespaceDrag(event, canDragWhitespace)}
+                                onMouseDownCapture={event => prepareWhitespaceDrag(event, canDragWhitespace)}
+                                onDragStart={event => { if (event.target === event.currentTarget && event.currentTarget.draggable && item.type === 'sentence') startCitationDrag(event, item.citation); }}
+                                onDragEnd={() => { setDraggedCitationId(null); setDraggedChapterId(null); setDropTarget(null); }}
+                                data-divider-editing={activeInsertId === `after-${item.id}` || (index === renderRows.length - 1 && activeInsertId === 'end')}
+                                style={{ '--divider-depth': item.type === 'chapter_block' ? displayChapterDepths.get(item.id) ?? 0 : 0, '--citation-depth': citationOwners.get(item.id)?.depth ?? 0 } as React.CSSProperties}>
+                            {item.type === 'sentence' && item.id === detailCitationId && isBookView && detailEditor}
                             {item.type === 'sentence' && isBookView ? (
                                 <div
                                     data-testid={`citation-${item.citation.id}`}
+                                    hidden={item.id === detailCitationId}
+                                    style={item.id === detailCitationId ? { display: 'none' } : undefined}
                                     className={[
-                                        compareComments ? 'grid grid-cols-[var(--book-column-left)_2.75rem_minmax(0,1fr)_2.5rem] ml-[calc(-1*var(--book-column-left))]' : 'flex',
+                                        compareComments ? 'grid grid-cols-[var(--book-column-left)_2.75rem_minmax(0,1fr)_auto] ml-[calc(-1*var(--book-column-left))]' : 'flex',
                                         'group relative items-start transition-[background-color,color] duration-150',
-                                        selectedIds.has(item.citation.id) ? 'bg-[var(--accent-soft)]' : 'hover:bg-[var(--sidebar-hover)]',
                                         item.citation.saveStatus === 'failed' ? 'bg-red-50/60 dark:bg-red-500/10' : '',
                                     ].join(' ')}
                                 >
-                                    <div aria-hidden="true" className="absolute bottom-0 right-0 border-b border-[var(--border-main)]" style={{ left: compareComments ? 'var(--book-column-left)' : 0 }} />
-                                    <label className="order-2 flex min-h-14 w-11 shrink-0 cursor-pointer items-center justify-center">
+
+                                    <div data-selected={selectedIds.has(item.id)} className="citation-gutter order-2 flex w-11 shrink-0 flex-col items-center">
+                                    {onMoveCitation && !item.citation.saveStatus && <button type="button" draggable={!chapterActionsDisabled}
+                                        aria-label={`인용문 이동: ${item.citation.text.slice(0, 40)}`}
+                                        title="드래그하여 다른 챕터로 이동 · Alt+위/아래로 순서 이동"
+                                        aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"
+                                        className="citation-move-handle inline-flex h-11 w-11 shrink-0 cursor-grab items-center justify-center rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-input)] focus-visible:outline focus-visible:outline-2 active:cursor-grabbing"
+                                        onDragStart={event => startCitationDrag(event, item.citation)}
+                                        onDragEnd={() => { setDraggedCitationId(null); setDraggedChapterId(null); setDropTarget(null); }}
+                                        onKeyDown={event => {
+                                            if (!event.altKey || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')) return;
+                                            event.preventDefault();
+                                            const rows = renderRows.filter(row => !hiddenRowIds.has(row.id));
+                                            const direction = event.key === 'ArrowUp' ? -1 : 1;
+                                            const adjacent = rows[rows.findIndex(row => row.id === item.id) + direction];
+                                            const target = adjacent && citationDropTarget(item.id, adjacent.id, direction === 1);
+                                            if (target) void moveCitationTo(item.id, target);
+                                        }}><GripVertical size={16} /></button>}
+                                    <label className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center">
                                         <input
                                             type="checkbox"
                                             checked={selectedIds.has(item.citation.id)}
@@ -358,10 +585,11 @@ export const CitationList: React.FC<CitationListProps> = ({
                                             ].join(' ')}
                                         />
                                     </label>
+                                    </div>
                                     {inlinePassageNotes && (
-                                        <div hidden={!compareComments} className="order-1 flex w-[calc(100%+3rem)] shrink-0 self-stretch flex-col items-center py-5" style={!compareComments ? { display: 'none' } : undefined}>
+                                        <div hidden={!compareComments} className="order-1 flex w-[calc(100%+3rem)] shrink-0 self-stretch flex-col items-center py-0" style={!compareComments ? { display: 'none' } : undefined}>
                                             {openedCommentIds.current.has(item.id) && (
-                                                <div hidden={!(showAllPassageNotes && item.citation.notes.length > 0) && passageNoteCitationId !== item.id} data-testid="inline-passage-comments" className="flex w-64 flex-1 flex-col [&[hidden]]:hidden">
+                                                <div hidden={!(showAllPassageNotes && item.citation.notes.length > 0) && passageNoteCitationId !== item.id} data-testid="inline-passage-comments" data-chapter-connection-obstacle className="flex w-64 flex-1 flex-col [&[hidden]]:hidden">
                                                     <PassageNotesPanel inline citation={item.citation}
                                                         readOnly={passageNoteCitationId !== item.id}
                                                         onActivate={() => onPassageNoteCitationChange?.(item.id)}
@@ -371,7 +599,7 @@ export const CitationList: React.FC<CitationListProps> = ({
                                             )}
                                         </div>
                                     )}
-                                    <div className="order-3 min-w-0 flex-1">
+                                    <div data-chapter-connection-obstacle className={`order-3 min-w-0 flex-1 ${selectedIds.has(item.id) ? 'rounded bg-[var(--accent-soft)]' : ''}`}>
                                         <div
                                             data-passage-note-trigger
                                             onClick={() => {
@@ -381,7 +609,7 @@ export const CitationList: React.FC<CitationListProps> = ({
                                                 }
                                                 togglePassageNotes(item.citation.id);
                                             }}
-                                            className="w-full cursor-pointer px-1 py-5 text-left active:scale-[0.99]"
+                                            className="w-full cursor-pointer px-1 py-0 text-left"
                                         >
                                             <FlatCitationHighlightText
                                                 citation={item.citation}
@@ -396,8 +624,9 @@ export const CitationList: React.FC<CitationListProps> = ({
                                                     }, 0);
                                                 }}
                                             />
-                                            <span className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.76rem] text-[var(--text-muted)]">
+                                            <span data-citation-metadata className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.76rem] text-[var(--text-muted)]">
                                                 {item.citation.page ? <span>{item.citation.page}쪽</span> : null}
+                                                {(draftStore.get(item.id)?.isEditing || draftStore.get(item.id)?.newNote || draftStore.get(item.id)?.editingNoteId) && <span>편집 초안 있음</span>}
                                                 <button
                                                     type="button"
                                                     data-passage-note-trigger
@@ -409,17 +638,9 @@ export const CitationList: React.FC<CitationListProps> = ({
                                                     aria-label={`구절 메모 ${passageNoteCitationId === item.citation.id ? '닫기' : '열기'}: ${item.citation.text.slice(0, 40)}`}
                                                     aria-expanded={passageNoteCitationId === item.citation.id}
                                                 >
-                                                    <MessageCircle size={13} /> 메모 {item.citation.notes.length}
+                                                    <MessageCircle size={13} /> 이 문장 메모 {item.citation.notes.length}
                                                 </button>
-                                                {inlinePassageNotes && onToggleAllPassageNotes && (hasSavedComments || showAllPassageNotes) && (
-                                                    <button type="button" data-passage-note-trigger
-                                                        aria-label={showAllPassageNotes ? '댓글 모두 접기' : '댓글 모두 펼치기'}
-                                                        aria-expanded={showAllPassageNotes}
-                                                        onClick={event => { event.stopPropagation(); onToggleAllPassageNotes(); }}
-                                                        className="inline-flex min-h-8 items-center rounded-md px-1.5 text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)] active:scale-95">
-                                                        {showAllPassageNotes ? '전체 접기' : '전체 펼치기'}
-                                                    </button>
-                                                )}
+
                                             </span>
                                         </div>
                                         {item.citation.saveStatus === 'failed' ? (
@@ -447,17 +668,25 @@ export const CitationList: React.FC<CitationListProps> = ({
                                             </div>
                                         ) : null}
                                     </div>
+                                    <div className="order-4 flex shrink-0 items-start">
+
                                     <button
                                         type="button"
+                                        data-passage-note-trigger
+                                        data-citation-detail-trigger={item.id}
+                                        disabled={detailCitationId !== null}
+                                        title={detailCitationId ? '열린 편집 영역을 먼저 닫아주세요' : '이 인용문 편집 및 메모'}
                                         onClick={() => setDetailCitationId(item.citation.id)}
                                         className="order-4 mt-3 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-[var(--text-muted)] opacity-0 transition-[background-color,opacity,transform] hover:bg-[var(--bg-input)] focus-visible:opacity-100 active:scale-95 group-hover:opacity-100"
                                         aria-label="문장 편집 및 삭제 열기"
                                     >
                                         <MoreHorizontal size={17} />
                                     </button>
+                                    </div>
                                 </div>
                             ) : item.type === 'sentence' ? (
                                 <CitationCard
+                                editDrafts={draftStore}
                                     index={index}
                                     citation={item.citation}
                                     username={username}
@@ -479,15 +708,21 @@ export const CitationList: React.FC<CitationListProps> = ({
                                 <ChapterBlockCard
                                     id={item.block.id}
                                     label={item.block.label}
+                                    depth={chapterDepths.get(item.id) ?? 0}
+                                    displayDepth={displayChapterDepths.get(item.id)}
+                                    onDepthPreview={previewChapterDepth}
+                                    previousDepth={previousDepthByRow.get(item.id)}
                                     onDragStart={!chapterActionsDisabled && onMoveChapterBlock ? event => {
                                         if (movePending.current) { event.preventDefault(); return; }
                                         event.dataTransfer.setData('text/plain', item.id);
                                         event.dataTransfer.effectAllowed = 'move';
-                                        setDraggedChapterId(item.id); setMoveError(false);
+                                        dragOrigin.current = { x: event.clientX || 0, depth: chapterDepths.get(item.id) ?? 0 };
+                                        // Keep the error row in place until drop so dragstart cannot shift the source.
+                                        setDraggedChapterId(item.id); setDraggedCitationId(null); setDropTarget(null);
                                     } : undefined}
                                     onDragEnd={() => { setDraggedChapterId(null); setDropTarget(null); }}
                                     onMove={direction => moveByKeyboard(item.id, direction)}
-                                    onRename={!chapterActionsDisabled && onRenameChapterBlock ? label => onRenameChapterBlock(item.block.bookId, item.id, label) : undefined}
+                                    onRename={!chapterActionsDisabled && onRenameChapterBlock ? (label, depth) => depth === undefined ? onRenameChapterBlock(item.block.bookId, item.id, label) : onRenameChapterBlock(item.block.bookId, item.id, label, depth) : undefined}
                                     collapsed={Boolean(collapsedDividerIds?.has(item.id))}
                                     onToggle={isBookView && onToggleDivider ? () => onToggleDivider(item.id) : undefined}
                                     onDelete={!chapterActionsDisabled && onDeleteChapterBlock ? (blockId) => {
@@ -496,19 +731,23 @@ export const CitationList: React.FC<CitationListProps> = ({
                                 />
                             )}
                             </div>
-                            {dropTarget?.id === item.id && dropTarget.after && <div className="h-0 border-t-2 border-[var(--accent)]" aria-hidden="true" />}
-                            {isBookView && onCreateChapterBlock && index < renderRows.length - 1 && canShowInsertAfter && (activeInsertId === null || activeInsertId === `after-${item.id}`) ? (
-                                <div className={`group flex items-center justify-center ${activeInsertId === `after-${item.id}` ? 'my-1.5 min-h-12' : '-mt-2.5 h-5'}`}>
+                            {dropTarget?.id === item.id && dropTarget.after && dropIndicator}
+                            {isBookView && onCreateChapterBlock && index < renderRows.length - 1 && (activeInsertId === null || activeInsertId === `after-${item.id}`) ? (
+                                <div className={`group flex items-center justify-center ${activeInsertId === `after-${item.id}` ? 'chapter-divider-editing' : 'chapter-divider-slot'}`}>
                                     <ChapterBlockInsertButton
                                         isEditing={activeInsertId === `after-${item.id}`}
+                                        onDepthPreview={previewChapterDepth}
+                                        previousDepth={item.type === 'chapter_block' ? chapterDepths.get(item.id) : previousDepthByRow.get(item.id)}
                                         disabled={chapterActionsDisabled}
                                         onOpen={() => setActiveInsertId(`after-${item.id}`)}
                                         onCancel={() => setActiveInsertId(null)}
-                                        onSubmit={async (label) => {
+                                        onSubmit={async (label, depth) => {
+                                            const { left, right } = insertionNeighbors(index);
                                             return handleCreateChapterBlock(
-                                                { pageSort: item.pageSort, createdAtSort: item.createdAtSort },
-                                                renderRows[index + 1],
-                                                label
+                                                left,
+                                                right,
+                                                label,
+                                                depth
                                             );
                                         }}
                                     />
@@ -517,80 +756,29 @@ export const CitationList: React.FC<CitationListProps> = ({
                         </div>
                     );
                 })}
-                {isBookView && onCreateChapterBlock && renderRows.length > 0 && !hiddenRowIds.has(renderRows[renderRows.length - 1].id) && renderRows[renderRows.length - 1].type !== 'chapter_block' && (activeInsertId === null || activeInsertId === 'end') ? (
-                    <div className={`group flex items-center justify-center ${activeInsertId === 'end' ? 'my-1.5 min-h-12' : '-mt-2.5 h-5'}`}>
+                {isBookView && onCreateChapterBlock && renderRows.length > 0 && !hiddenRowIds.has(renderRows[renderRows.length - 1].id) && (activeInsertId === null || activeInsertId === 'end') ? (
+                    <div className={`chapter-end-divider group flex items-center justify-center ${activeInsertId === 'end' ? 'chapter-divider-editing' : 'chapter-divider-slot'}`}>
                         <ChapterBlockInsertButton
                             isEditing={activeInsertId === 'end'}
+                            onDepthPreview={previewChapterDepth}
+                            previousDepth={lastChapterDepth}
                             disabled={chapterActionsDisabled}
                             onOpen={() => setActiveInsertId('end')}
                             onCancel={() => setActiveInsertId(null)}
-                            onSubmit={async (label) => {
-                                const lastItem = renderRows[renderRows.length - 1];
+                            onSubmit={async (label, depth) => {
+                                const { left, right } = insertionNeighbors(renderRows.length - 1);
                                 return handleCreateChapterBlock(
-                                    lastItem ? { pageSort: lastItem.pageSort, createdAtSort: lastItem.createdAtSort } : undefined,
-                                    undefined,
-                                    label
+                                    left,
+                                    right,
+                                    label,
+                                    depth
                                 );
                             }}
                         />
                     </div>
                 ) : null}
             </div>
-            {activeCitation ? (
-                <>
-                    <button
-                        type="button"
-                        className="fixed inset-0 z-40 bg-black/30"
-                        onClick={() => setDetailCitationId(null)}
-                        aria-label="문장 상세 닫기"
-                    />
-                    <aside
-                        ref={detailDialogRef}
-                        role="dialog"
-                        tabIndex={-1}
-                        aria-modal="true"
-                        aria-labelledby="citation-detail-title"
-                        className="fixed inset-y-0 right-0 z-50 flex w-full max-w-[34rem] flex-col overflow-hidden bg-[var(--bg-card)] shadow-[var(--shadow-panel)]"
-                    >
-                        <div className="flex min-h-14 items-center justify-between border-b border-[var(--border-main)] px-4">
-                            <div>
-                                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[var(--accent)]">Citation detail</p>
-                                <h2 id="citation-detail-title" className="text-sm font-semibold text-[var(--text-main)]">문장 상세</h2>
-                            </div>
-                            <button
-                                type="button"
-                                autoFocus
-                                onClick={() => setDetailCitationId(null)}
-                                className="flex h-10 w-10 items-center justify-center rounded-lg text-[var(--text-muted)] transition-[background-color,transform] hover:bg-[var(--sidebar-hover)] active:scale-95"
-                                aria-label="문장 상세 닫기"
-                            >
-                                <X size={18} />
-                            </button>
-                        </div>
-                        <div className="flex-1 overflow-y-auto bg-[var(--bg-main)] p-3 sm:p-5">
-                            <CitationCard
-                                index={0}
-                                citation={activeCitation}
-                                username={username}
-                                selectedFilter={selectedFilter}
-                                projectNames={projects.filter((project) => project.citationIds.includes(activeCitation.id)).map((project) => project.name)}
-                                showDetailActions
-                                isSelected={selectedIds.has(activeCitation.id)}
-                                onToggleSelect={onToggleSelect}
-                                onAddNote={onAddNote}
-                                onUpdateNote={onUpdateNote}
-                                onDeleteNote={onDeleteNote}
-                                onDelete={(id) => {
-                                    onDeleteCitation(id);
-                                    setDetailCitationId(null);
-                                }}
-                                onUpdate={onUpdateCitation}
-                                onRetrySave={onRetryCitationSave}
-                            />
-                        </div>
-                    </aside>
-                </>
-            ) : null}
+
         </div>
     );
 };
