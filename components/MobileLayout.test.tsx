@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { MobileLayout } from './MobileLayout';
@@ -19,6 +19,24 @@ const authorFolderProps = {
 };
 
 describe('MobileLayout header actions', () => {
+  it('shows scoped search results after Enter, but not during Korean composition', async () => {
+    const user = userEvent.setup();
+    const View = () => {
+      const [query, setQuery] = React.useState('');
+      return <MobileLayout {...authorFolderProps} title="410pages" projects={[]} selectedProjectId={null} onProjectSelect={vi.fn()} onCreateProject={vi.fn()} treeData={[]} onTreeItemClick={vi.fn()} onOpenSettings={vi.fn()} selectedFilter={{ type: 'book', bookId: 'b', value: '책' }} searchTerm={query} onSearch={setQuery}>
+        <h2 data-search-results-title tabIndex={-1}>검색 결과: {query}</h2>
+      </MobileLayout>;
+    };
+    render(<View />);
+    await user.click(screen.getByRole('button', { name: '탐색 열기' }));
+    const input = screen.getByRole('textbox', { name: '이 책의 인용문 검색' });
+    await user.type(input, '기록');
+    fireEvent.keyDown(input, { key: 'Enter', isComposing: true });
+    expect(screen.getByRole('dialog', { name: '탐색' })).toBeTruthy();
+    await user.keyboard('{Enter}');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('heading', { name: '검색 결과: 기록' })));
+  });
   it('opens one navigation sheet from the header', async () => {
     const user = userEvent.setup();
 

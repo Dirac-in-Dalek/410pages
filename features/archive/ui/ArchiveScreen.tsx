@@ -1,5 +1,6 @@
+import { CitationEditDraftStore } from '../logic/citationEditDrafts';
 import React from 'react';
-import { BulkActionToolbar } from '../../../components/BulkActionToolbar';
+import { BulkActionToolbar } from './BulkActionToolbar';
 import type {
   ChapterBlock,
   Citation,
@@ -13,6 +14,7 @@ import { CitationEditor } from '../../citation-entry/ui/CitationEditor';
 import { useBookMetadata } from '../logic/useBookMetadata';
 
 type ArchiveScreenProps = {
+  editDrafts?: CitationEditDraftStore;
   isMobileApp: boolean;
   title: string;
   showEditor: boolean;
@@ -46,8 +48,9 @@ type ArchiveScreenProps = {
   onAddToProject: (projectId: string) => void | Promise<unknown>;
   onCreateAndAddToProject: (name: string) => boolean | void | Promise<boolean | void>;
   onCreateChapterBlock?: (input: CreateChapterBlockInput) => Promise<unknown> | unknown;
-  onMoveChapterBlock?: (bookId: string, id: string, createdAtSort: number) => Promise<boolean> | boolean;
-  onRenameChapterBlock?: (bookId: string, id: string, label: string) => Promise<boolean> | boolean;
+  onMoveCitation?: (bookId: string, id: string, createdAtSort: number) => Promise<boolean> | boolean;
+  onMoveChapterBlock?: (bookId: string, id: string, createdAtSort: number, depth?: number) => Promise<boolean> | boolean;
+  onRenameChapterBlock?: (bookId: string, id: string, label: string, depth?: number) => Promise<boolean> | boolean;
   onDeleteChapterBlock?: (bookId: string, blockId: string) => Promise<unknown> | unknown;
   chapterActionsDisabled?: boolean;
   onToggleSelect: (id: string, selected: boolean) => void;
@@ -66,6 +69,7 @@ type ArchiveScreenProps = {
 
 export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
   isMobileApp,
+  editDrafts,
   title,
   showEditor,
   username,
@@ -99,6 +103,7 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
   onCreateAndAddToProject,
   onCreateChapterBlock,
   onMoveChapterBlock,
+  onMoveCitation,
   onRenameChapterBlock,
   onDeleteChapterBlock,
   chapterActionsDisabled,
@@ -137,6 +142,7 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
           editorPrefill={editorPrefill}
           isBookView={isBookView}
           compactBookHeader={inlinePassageNotes}
+          isMobileApp={isMobileApp}
           onBackToAuthor={onBackToAuthor}
           authorName={authorName}
           onAddCitation={onAddCitation}
@@ -148,7 +154,7 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
         />
         </div>
 
-      <div className={isMobileApp ? 'pb-8 mt-3' : 'pb-10 mt-1 md:mt-2'}>
+      <div className={isMobileApp ? 'pb-4 mt-1' : 'pb-6 mt-1'}>
         <div className={columnClassName} data-book-column={inlinePassageNotes || undefined}>
           {loadError ? (
             <div
@@ -180,6 +186,7 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
           />
 
           {loadError && citations.length === 0 && chapterBlocks.length === 0 ? null : <CitationList
+            editDrafts={editDrafts}
             collapsedDividerIds={collapsedDividerIds}
             onToggleDivider={onToggleDivider}
             citations={citations}
@@ -200,6 +207,7 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
             pageDirection={pageDirection}
             onCreateChapterBlock={onCreateChapterBlock}
             onMoveChapterBlock={onMoveChapterBlock}
+            onMoveCitation={onMoveCitation}
             onRenameChapterBlock={onRenameChapterBlock}
             onDeleteChapterBlock={onDeleteChapterBlock}
             chapterActionsDisabled={chapterActionsDisabled}
@@ -217,7 +225,7 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
       </div>
       </div>
       {showEditor && isBookView ? (
-        <div className={`shrink-0 bg-[var(--bg-main)] pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 ${inlinePassageNotes ? '' : 'px-3 sm:px-5'}`}>
+        <div className={`shrink-0 bg-[var(--bg-main)] pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 ${inlinePassageNotes ? '' : 'px-3 sm:px-5'}`}>
           <div className={columnClassName}>
             <CitationEditor
               onAddCitation={onAddCitation}

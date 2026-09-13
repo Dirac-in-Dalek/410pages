@@ -135,7 +135,7 @@ vi.mock('./features/settings/logic/useUserPreferences', () => ({
   }),
 }));
 
-vi.mock('./hooks/useAuthStatus', () => ({
+vi.mock('./features/auth/logic/useAuthStatus', () => ({
   useAuthStatus: () => authState,
 }));
 
@@ -143,11 +143,11 @@ vi.mock('./features/archive/logic/useArchiveDataController', () => ({
   useArchiveDataController: () => archiveDataState,
 }));
 
-vi.mock('./hooks/useArchiveFilter', () => ({
+vi.mock('./features/archive/logic/useArchiveFilter', () => ({
   useArchiveFilter: () => archiveFilterState,
 }));
 
-vi.mock('./hooks/useBulkSelection', () => ({
+vi.mock('./features/archive/logic/useBulkSelection', () => ({
   useBulkSelection: () => bulkSelectionState,
 }));
 
@@ -208,15 +208,15 @@ vi.mock('./features/settings/ui/SettingsPanel', () => ({
     ) : null,
 }));
 
-vi.mock('./Auth', () => ({
+vi.mock('./features/auth/ui/Auth', () => ({
   Auth: () => <div>auth-screen</div>,
 }));
 
-vi.mock('./components/pdf-reader/PdfReaderPage', () => ({
-  PdfReaderPage: () => <div>pdf-reader</div>,
+vi.mock('./features/reader/logic/loadPdfReader', () => ({
+  loadPdfReader: async () => ({ PdfReaderPage: () => <div>pdf-reader</div> }),
 }));
 
-vi.mock('./components/BulkActionToolbar', () => ({
+vi.mock('./features/archive/ui/BulkActionToolbar', () => ({
   BulkActionToolbar: () => null,
 }));
 

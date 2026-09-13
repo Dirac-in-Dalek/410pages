@@ -1,15 +1,15 @@
+import { CitationEditDraftStore } from '../features/archive/logic/citationEditDrafts';
 import React from 'react';
 import { MainLayout } from '../components/MainLayout';
-import { Auth } from '../Auth';
+import { Auth } from '../features/auth/ui/Auth';
 import { MobileLayout } from '../components/MobileLayout';
-import { useAuthStatus } from '../hooks/useAuthStatus';
-import { useArchiveFilter } from '../hooks/useArchiveFilter';
-import { useBulkSelection } from '../hooks/useBulkSelection';
+import { useAuthStatus } from '../features/auth/logic/useAuthStatus';
+import { useArchiveFilter } from '../features/archive/logic/useArchiveFilter';
+import { useBulkSelection } from '../features/archive/logic/useBulkSelection';
 import { ArchiveScreen } from '../features/archive/ui/ArchiveScreen';
 import { LibraryHome } from '../features/archive/ui/LibraryHome';
 import { AuthorBooks } from '../features/archive/ui/AuthorBooks';
 import { useArchiveDataController as useArchiveData } from '../features/archive/logic/useArchiveDataController';
-import { ReaderScreen } from '../features/reader/ui/ReaderScreen';
 import { useUserPreferences } from '../features/settings/logic/useUserPreferences';
 import { useSettingsPanelController } from '../features/settings/logic/useSettingsPanelController';
 import { SettingsPanel } from '../features/settings/ui/SettingsPanel';
@@ -56,14 +56,14 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
     useUserPreferences(session?.user?.id ?? null, { documentThemeOverride: session ? null : 'day' });
 
   const {
-    projects: canonicalProjects, citations: canonicalCitations, authors, authorFolders, authorFolderMemberships, books, chapterBlocksByBook, loading: dataLoading, loadError, authorFolderLoading, authorFolderLoadError, chapterLoadError, chapterLoadingBookId,
+    projects: canonicalProjects, citations: canonicalCitations, authors, authorFolders, authorFolderMemberships, books, chapterBlocksByBook, loading: dataLoading, hasLoaded, loadError, authorFolderLoading, authorFolderLoadError, chapterLoadError, chapterLoadingBookId,
     fetchData, retryAuthorFolders, handleAddCitation, handleAddCitationOptimistic, handleRetryCitationSave, resolveCitationId, handleAddNote, handleUpdateNote,
     handleDeleteNote, handleDeleteCitations, handleUpdateCitation,
     handleBulkUpdateCitationSource, handleCreateAuthor, handleCreateAuthorFolder, handleRenameAuthorFolder, handleDeleteAuthorFolder,
     handleMoveAuthorToFolder, handleRemoveAuthorFromFolder, handleDeleteAuthorCascade, handlePreviewAuthorDeletion,
     handleDeleteBookCascade, handlePreviewBookDeletion, handleCreateBook,
     handleCreateProject, handleRenameProject, handleDeleteProject, handleRenameAuthor, handleRenameBook, handleUpdateBookMemo,
-    handleLoadChapterBlocks, cancelChapterBlockLoad, handleCreateChapterBlock, handleRenameChapterBlock, handleMoveChapterBlock, handleDeleteChapterBlock,
+    handleLoadChapterBlocks, cancelChapterBlockLoad, handleCreateChapterBlock, handleRenameChapterBlock, handleMoveChapterBlock, handleMoveCitation, handleDeleteChapterBlock,
     handleDropCitationToProject, handleAddCitationsToProject, handleCreateProjectWithCitations, handleReorderProjects,
     mutationError, clearMutationError
   } = useArchiveData(session);
@@ -123,9 +123,11 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
     projects,
     username,
     session?.user?.id,
-    fetchData
+    fetchData,
+    hasLoaded
   );
 
+  const editDrafts = React.useRef(new CitationEditDraftStore()).current;
   const [showAllPassageNotes, setShowAllPassageNotes] = React.useState(false);
   const [passageNoteCitationId, setPassageNoteCitationId] = React.useState<string | null>(null);
   const [collapsedDividerIds, setCollapsedDividerIds] = React.useState<Set<string>>(() => new Set());
@@ -138,7 +140,7 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
     });
   };
   const [isMobileBookMemoOpen, setIsMobileBookMemoOpen] = React.useState(false);
-  const [isDesktopBookMemoOpen, setIsDesktopBookMemoOpen] = React.useState(true);
+  const [isDesktopBookMemoOpen, setIsDesktopBookMemoOpen] = React.useState(false);
   const [isDesktopHomeOpen, setIsDesktopHomeOpen] = React.useState(true);
   React.useEffect(() => setIsDesktopHomeOpen(true), [session?.user?.id]);
   const selectedBook = selectedBookId ? books.find((book) => book.id === selectedBookId) ?? null : null;
@@ -195,7 +197,8 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
     handleLoadChapterBlocks,
     cancelChapterBlockLoad,
   });
-  const { viewMode, openArchive, openReader } = useAppViewMode({ isMobileApp });
+  const { viewMode, openArchive, openReader, Reader, readerLoading, readerLoadError, cancelReaderLoad } = useAppViewMode({ isMobileApp });
+  React.useEffect(cancelReaderLoad, [selectedBookId, selectedAuthorId, selectedProjectId, cancelReaderLoad]);
   const [readerInitialMeta, setReaderInitialMeta] = React.useState<{
     userId: string;
     meta: PdfReaderMeta;
@@ -441,7 +444,7 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
       onPreviewBookDelete={handlePreviewBookDeletion}
     />
   ) : (
-    <ArchiveScreen onMoveChapterBlock={handleMoveChapterBlock} onRenameChapterBlock={handleRenameChapterBlock} showAllPassageNotes={showAllPassageNotes} onToggleAllPassageNotes={() => {
+    <ArchiveScreen editDrafts={editDrafts} onMoveCitation={handleMoveCitation} onMoveChapterBlock={handleMoveChapterBlock} onRenameChapterBlock={handleRenameChapterBlock} showAllPassageNotes={showAllPassageNotes} onToggleAllPassageNotes={() => {
       setShowAllPassageNotes(!showAllPassageNotes);
       if (showAllPassageNotes) setPassageNoteCitationId(null);
     }} collapsedDividerIds={collapsedDividerIds} onToggleDivider={handleToggleDivider} {...createArchiveScreenProps({
@@ -556,7 +559,7 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
     homePanelOpen: isDesktopHomeOpen,
     onHomePanelOpenChange: (open) => {
       setIsDesktopHomeOpen(open);
-      if (!open && isBookView) setShowAllPassageNotes(true);
+
     },
     rightPanel: isBookView && selectedBook ? (
       <BookMemoPanel
@@ -646,10 +649,10 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
     );
   }
 
-  if (viewMode === 'reader') {
+  if (viewMode === 'reader' && Reader) {
     return (
       <>
-        <ReaderScreen key={sessionUserId} {...readerScreenProps} />
+        <Reader key={sessionUserId} {...readerScreenProps} />
         {networkNotice}
         {mutationAlerts}
         <UndoDeleteToasts pendingDeletes={pendingDeletes} onUndo={undoDeleteCitation} />
@@ -660,17 +663,24 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
   return (
     <>
       <MainLayout {...mainLayoutProps}>{archiveContent}</MainLayout>
+      {(readerLoading || readerLoadError) && (
+        <div role={readerLoadError ? 'alert' : 'status'} className="fixed right-4 top-16 z-[90] flex w-[min(24rem,calc(100vw-2rem))] flex-wrap items-center gap-3 rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] p-4 text-sm shadow-[var(--shadow-popover)]">
+          <span>{readerLoadError ? 'PDF 화면을 불러오지 못했습니다.' : 'PDF 화면을 불러오는 중…'}</span>
+          {readerLoadError && <button type="button" onClick={() => void openReader()} className="ui-btn">PDF 다시 불러오기</button>}
+          <button type="button" onClick={cancelReaderLoad} className="ui-btn">{readerLoading ? '취소' : '닫기'}</button>
+        </div>
+      )}
       {isBookView && selectedBook && !isDesktopBookMemoOpen ? (
         <button
           id="book-memo-open-button"
           type="button"
           data-passage-note-trigger
           onClick={openDesktopBookMemo}
-          className="fixed right-4 top-[calc(3.15rem+0.5rem+0.5px)] z-30 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--bg-input)] text-[var(--text-secondary)] transition-[background-color,color,transform] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)] active:scale-95 motion-reduce:transition-none"
+          className="fixed right-4 top-[calc(3.15rem+0.5rem+0.5px)] z-30 inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[var(--bg-input)] px-3 text-sm text-[var(--text-secondary)] transition-[background-color,color,transform] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)] active:scale-95 motion-reduce:transition-none"
           aria-label="책 전체 메모 열기"
           title="책 전체 메모 열기"
         >
-          <NotebookPen size={18} />
+          <NotebookPen size={18} /><span>책 메모</span>
         </button>
       ) : null}
       {settingsPanel}

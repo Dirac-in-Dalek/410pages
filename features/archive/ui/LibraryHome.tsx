@@ -117,10 +117,10 @@ export const LibraryHome: React.FC<LibraryHomeProps> = ({
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="mx-auto w-full max-w-[76rem] px-5 pb-20 pt-10 sm:px-8 lg:px-12 lg:pt-14">
-        <header className="mb-10 flex items-end justify-between gap-5 border-b border-[var(--border-main)] pb-5">
+      <div className="mx-auto w-full max-w-[76rem] px-5 pb-12 pt-6 sm:px-8 lg:px-12 lg:pt-8">
+        <header className="mb-6 flex items-end justify-between gap-4 border-b border-[var(--border-main)] pb-3">
           <div>
-            <p className="mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Authors</p>
+            <p className="mb-2 text-[0.72rem] font-semibold text-[var(--accent)]">저자</p>
             <h1 className="font-[var(--font-display-active)] text-[clamp(2rem,5vw,3.6rem)] font-semibold leading-[1.08] tracking-[-0.035em] text-[var(--text-main)]">저자를 고르세요</h1>
             <p className="mt-3 max-w-xl text-sm leading-6 text-[var(--text-muted)]">저자를 열면 그 사람이 쓴 책과 저장한 문장이 이어집니다.</p>
           </div>

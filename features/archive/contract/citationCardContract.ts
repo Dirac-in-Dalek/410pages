@@ -1,6 +1,15 @@
+import { CitationEditDraftStore } from '../logic/citationEditDrafts';
 import { Citation } from '../../../types';
 
+export type CitationEditDraft = {
+  saving?: boolean;
+  isEditing: boolean; isNotesExpanded: boolean; newNote: string;
+  editingNoteId: string | null; editNoteContent: string;
+  editText: string; editAuthor: string; editBook: string; editPage: string;
+};
+
 export interface CitationCardProps {
+  editDrafts?: CitationEditDraftStore;
   citation: Citation;
   index: number;
   username: string;

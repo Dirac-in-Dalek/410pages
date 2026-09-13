@@ -120,11 +120,11 @@ export const AuthorBooks: React.FC<AuthorBooksProps> = ({
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="mx-auto w-full max-w-[76rem] px-5 pb-20 pt-7 sm:px-8 lg:px-12 lg:pt-10">
+      <div className="mx-auto w-full max-w-[76rem] px-5 pb-12 pt-5 sm:px-8 lg:px-12 lg:pt-6">
         <button type="button" onClick={onBack} className="mb-5 inline-flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm font-medium text-[var(--text-muted)] transition-[background-color,transform] hover:bg-[var(--sidebar-hover)] active:scale-95">
           <ArrowLeft size={16} /> 저자
         </button>
-        <header className="mb-10 border-b border-[var(--border-main)] pb-5">
+        <header className="mb-6 border-b border-[var(--border-main)] pb-3">
           <p className="mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">저자 / 책</p>
           <h1 className="font-[var(--font-display-active)] text-[clamp(2rem,5vw,3.4rem)] font-semibold leading-[1.08] tracking-[-0.035em] text-[var(--text-main)]">{authorName}</h1>
           <p className="mt-3 text-sm text-[var(--text-muted)]">읽을 책을 고르거나 새 책을 추가하세요.</p>

@@ -31,12 +31,12 @@ describe('BookMemoPanel', () => {
     fireEvent.change(screen.getByRole('textbox', { name: '책 전체 메모' }), { target: { value: '새 메모' } });
     expect(readBookMemoDraft('user-1', 'book-1')).toBe('새 메모');
     expect(onSave).not.toHaveBeenCalled();
-    expect(screen.queryByText('저장 중')).toBeNull();
+    expect(screen.getByText('저장 중…')).toBeTruthy();
 
     await act(async () => vi.advanceTimersByTimeAsync(800));
     expect(onSave).toHaveBeenCalledWith('book-1', '새 메모');
     expect(readBookMemoDraft('user-1', 'book-1')).toBeNull();
-    expect(screen.queryByText('저장됨')).toBeNull();
+    expect(screen.getByText('저장됨')).toBeTruthy();
   });
 
   it('keeps a failed memo draft for recovery', async () => {
@@ -59,7 +59,7 @@ describe('BookMemoPanel', () => {
     await act(async () => vi.advanceTimersByTimeAsync(800));
     expect(onSave).not.toHaveBeenCalled();
 
-    await act(async () => fireEvent.click(screen.getByRole('button', { name: '저장' })));
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: '지금 저장' })));
     expect(onSave).toHaveBeenCalledWith('book-1', '다른 기기와 비교할 초안');
   });
 
@@ -68,7 +68,7 @@ describe('BookMemoPanel', () => {
     render(<BookMemoPanel userId="user-1" book={book} onSave={onSave} />);
     fireEvent.change(screen.getByRole('textbox', { name: '책 전체 메모' }), { target: { value: '즉시 저장할 메모' } });
 
-    await act(async () => fireEvent.click(screen.getByRole('button', { name: '저장' })));
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: '지금 저장' })));
 
     expect(onSave).toHaveBeenCalledTimes(1);
     expect(onSave).toHaveBeenCalledWith('book-1', '즉시 저장할 메모');

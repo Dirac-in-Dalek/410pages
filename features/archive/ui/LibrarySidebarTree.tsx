@@ -992,7 +992,7 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
     >
       {!embedded ? (
         <div className="mb-2.5 px-1 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
-          Authors & Books
+          저자와 책
         </div>
       ) : null}
       {renderTree(treeData)}

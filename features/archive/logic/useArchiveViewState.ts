@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArchiveViewStateInput, ArchiveViewStateResult } from '../contract/archiveViewContract';
 import { buildArchiveTree, deriveBookOrderByAuthor, getCurrentOrderedAuthors, getCurrentOrderedBooks } from './archiveTree';
 import { DEFAULT_ARCHIVE_TITLE, sortFilteredCitations } from './archiveSort';
+import { readArchiveLocation, writeArchiveLocation, type ArchiveHistoryMode } from './archiveLocation';
 
 const EMPTY_AUTHORS: NonNullable<ArchiveViewStateInput['authors']> = [];
 
@@ -16,6 +17,8 @@ const isSameOrder = (left: string[], right: string[]) =>
   left.length === right.length && left.every((id, index) => id === right[index]);
 
 export const useArchiveViewState = ({
+  ownerKey,
+  dataReady = true,
   citations,
   authors: inputAuthors,
   authorFolders = [],
@@ -97,17 +100,19 @@ export const useArchiveViewState = ({
     setSortField('page');
   };
 
-  const handleProjectSelect = (id: string | null) => {
+  const handleProjectSelect = useCallback((id: string | null, history: ArchiveHistoryMode = 'push') => {
+    writeArchiveLocation(id ? { folder: id } : {}, ownerKey, history);
     setIsHomeView(id === null);
     setSelectedProjectId(id);
     setSelectedBookId(null);
     setFilter(null);
     setSearchTermState('');
-  };
+  }, [ownerKey]);
 
   const handleHomeSelect = () => handleProjectSelect(null);
 
-  const handleAuthorSourceSelect = useCallback((author: { id: string; name: string }) => {
+  const handleAuthorSourceSelect = useCallback((author: { id: string; name: string }, history: ArchiveHistoryMode = 'push') => {
+    writeArchiveLocation({ author: author.id }, ownerKey, history);
     setIsHomeView(false);
     setFilter({
       type: 'author',
@@ -117,9 +122,10 @@ export const useArchiveViewState = ({
     setSelectedProjectId(null);
     setSelectedBookId(null);
     setSearchTermState('');
-  }, []);
+  }, [ownerKey]);
 
-  const handleBookSourceSelect = useCallback((book: { id: string; title: string; authorId: string; author: string }) => {
+  const handleBookSourceSelect = useCallback((book: { id: string; title: string; authorId: string; author: string }, history: ArchiveHistoryMode = 'push') => {
+    writeArchiveLocation({ book: book.id, author: book.authorId }, ownerKey, history);
     setIsHomeView(false);
     setFilter({
       type: 'book',
@@ -133,7 +139,34 @@ export const useArchiveViewState = ({
     setSortField('date');
     setDateDirection('asc');
     setSearchTermState('');
-  }, []);
+  }, [ownerKey]);
+
+  const locationRestoredRef = useRef(false);
+  const restoreLocation = useCallback(() => {
+    if (!ownerKey || !dataReady) return;
+    const location = readArchiveLocation(ownerKey);
+    const book = books.find(entry => entry.id === location.book);
+    const author = authors.find(entry => entry.id === location.author);
+    if (book) handleBookSourceSelect(book, 'replace');
+    else if (author) handleAuthorSourceSelect(author, 'replace');
+    else handleProjectSelect(projects.some(entry => entry.id === location.folder) ? location.folder! : null, 'replace');
+  }, [ownerKey, dataReady, books, authors, projects, handleBookSourceSelect, handleAuthorSourceSelect, handleProjectSelect]);
+
+  useEffect(() => {
+    if (!ownerKey || !dataReady || locationRestoredRef.current) return;
+    locationRestoredRef.current = true;
+    restoreLocation();
+  }, [ownerKey, dataReady, restoreLocation]);
+
+  useEffect(() => {
+    if (!ownerKey) return;
+    const onPopState = () => {
+      if (dataReady) restoreLocation();
+      else locationRestoredRef.current = false;
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [ownerKey, dataReady, restoreLocation]);
 
   const handleTreeItemClick = (item: NonNullable<ArchiveViewStateResult['treeData']>[number]) => {
     if (!item.data || (item.type !== 'author' && item.type !== 'book' && item.type !== 'root')) return;
@@ -154,6 +187,7 @@ export const useArchiveViewState = ({
     if (filter.type === 'book' && !books.some((book) => book.id === filter.bookId)) {
       const author = authors.find((entry) => entry.id === filter.authorId);
       if (author) {
+        writeArchiveLocation({ author: author.id }, ownerKey, 'replace');
         setFilter({
           type: 'author',
           authorId: author.id,
@@ -163,6 +197,7 @@ export const useArchiveViewState = ({
         return;
       }
       setFilter(null);
+      writeArchiveLocation({}, ownerKey, 'replace');
       setSelectedBookId(null);
       setIsHomeView(true);
       return;
@@ -174,10 +209,11 @@ export const useArchiveViewState = ({
       !books.some((book) => book.authorId === filter.authorId)
     ) {
       setFilter(null);
+      writeArchiveLocation({}, ownerKey, 'replace');
       setSelectedBookId(null);
       setIsHomeView(true);
     }
-  }, [authors, books, filter, username]);
+  }, [authors, books, filter, username, ownerKey]);
 
   const resolvedFilter = useMemo<ArchiveViewStateResult['filter']>(() => {
     if (!filter) return null;
@@ -262,9 +298,9 @@ export const useArchiveViewState = ({
   }, [citations, selectedProjectId, projects, filter, searchTerm, sortField, dateDirection, pageDirection]);
 
   const viewTitle = useMemo(() => {
-    if (searchTerm.trim()) return `Search: ${searchTerm}`;
-    if (selectedProjectId) return projects.find((entry) => entry.id === selectedProjectId)?.name || 'Project';
-    if (resolvedFilter) return resolvedFilter.value || (resolvedFilter.type === 'author' ? 'Author View' : 'Book View');
+    if (searchTerm.trim()) return `검색 결과: ${searchTerm}`;
+    if (selectedProjectId) return projects.find((entry) => entry.id === selectedProjectId)?.name || '폴더';
+    if (resolvedFilter) return resolvedFilter.value || (resolvedFilter.type === 'author' ? '저자의 책' : '책의 인용문');
     return DEFAULT_ARCHIVE_TITLE;
   }, [searchTerm, selectedProjectId, projects, resolvedFilter]);
 

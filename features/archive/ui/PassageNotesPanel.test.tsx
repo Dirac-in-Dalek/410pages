@@ -48,7 +48,7 @@ describe('PassageNotesPanel', () => {
     expect(screen.queryByRole('heading', { name: '댓글 · 35쪽' })).toBeNull();
     expect(document.querySelector('time')).toBeNull();
     expect(screen.queryByText('검토할 문장')).toBeNull();
-    const input = screen.getByPlaceholderText('댓글을 남기세요');
+    const input = screen.getByPlaceholderText('이 인용문에 메모를 남기세요');
     fireEvent.change(input, { target: { value: '실패해도 남길 댓글' } });
     fireEvent.click(screen.getByRole('button', { name: '메모 저장' }));
     await waitFor(() => expect(onAddNote).toHaveBeenCalledWith('citation-1', '실패해도 남길 댓글'));

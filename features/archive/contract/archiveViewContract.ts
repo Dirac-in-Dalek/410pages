@@ -31,6 +31,8 @@ export interface OrderedLabelItem {
 }
 
 export interface ArchiveViewStateInput {
+  ownerKey?: string;
+  dataReady?: boolean;
   citations: Citation[];
   authors?: AuthorSource[];
   authorFolders?: AuthorFolder[];

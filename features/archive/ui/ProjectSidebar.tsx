@@ -385,7 +385,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
       </div>
 
       <div
-        className="flex-1 overflow-y-auto px-3 pb-4 pt-14"
+        className="flex-1 overflow-y-auto px-3 pb-4 pt-3"
         onDragOver={(event) => handleProjectsPanelDragOver(event, projects.map((project) => project.id))}
         onDrop={(event) => handleProjectsPanelDrop(event, projects.map((project) => project.id))}
         onDragLeave={(event) => {
@@ -405,7 +405,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
           active={isHomeView}
           onClick={onHomeSelect}
           className={[
-            'mb-5 flex min-h-10 items-center gap-2',
+            'mb-2 flex min-h-10 items-center gap-2',
             isHomeView ? '!border-transparent !bg-[var(--accent-soft)] !text-[var(--accent-strong)]' : '',
           ].join(' ')}
         >
@@ -413,7 +413,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
           홈
         </EditorialListButton>
 
-        <EditorialSectionLabel>최근 문장을 저장한 책</EditorialSectionLabel>
+        <EditorialSectionLabel>최근 기록한 책</EditorialSectionLabel>
         <div className="mb-4 space-y-0.5">
           {recentBooks.length ? recentBooks.map((book) => (
             <button
@@ -439,6 +439,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
           )}
         </div>
 
+        <p className="px-1 pt-3 text-[0.68rem] text-[var(--text-muted)]">서재 정리</p>
         <div className="flex items-center gap-1" aria-busy={authorFolderLoading}>
           <button type="button" onClick={() => setIsAllBooksOpen((value) => !value)} aria-expanded={isAllBooksOpen} className="flex min-h-10 min-w-0 flex-1 items-center gap-2 rounded-lg px-1 text-left text-[0.78rem] font-semibold uppercase tracking-[0.09em] text-[var(--text-muted)] transition-[color,transform] active:scale-95">
             {isAllBooksOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
@@ -482,7 +483,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
           />
         ) : null}
 
-        <div className="my-3 h-px bg-[var(--border-main)]" />
+        <p className="px-1 pt-4 pb-1 text-[0.68rem] text-[var(--text-muted)]">인용문 모아보기</p>
         <ProjectSidebarProjectsSection
           projects={projects}
           selectedProjectId={selectedProjectId}

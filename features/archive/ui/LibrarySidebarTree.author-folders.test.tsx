@@ -25,11 +25,16 @@ describe('LibrarySidebarTree author folders', () => {
     };
     render(<LibrarySidebarTree embedded treeData={[{ ...authorItem, children: [book] }]} onTreeItemClick={onTreeItemClick} />);
     await user.click(screen.getByRole('button', { name: 'Author 펼치기' }));
-    const bookRow = screen.getByRole('button', { name: 'Book' });
+    const bookRow = screen.getByRole('group', { name: 'Book' });
     bookRow.focus();
     await user.keyboard('{Enter} ');
     expect(onTreeItemClick).not.toHaveBeenCalled();
     await user.click(bookRow);
+    expect(onTreeItemClick).toHaveBeenCalledWith(book);
+    onTreeItemClick.mockClear();
+    screen.getByRole('button', { name: 'Book 책 열기' }).focus();
+    await user.keyboard('{Enter}');
+    expect(onTreeItemClick).toHaveBeenCalledOnce();
     expect(onTreeItemClick).toHaveBeenCalledWith(book);
   });
 
@@ -239,7 +244,7 @@ describe('LibrarySidebarTree author folders', () => {
     const authorRow = screen.getByRole('button', { name: 'Author' });
     expect(authorRow.getAttribute('draggable')).toBe('false');
     await user.click(screen.getByRole('button', { name: 'Author 펼치기' }));
-    const bookRow = screen.getByRole('button', { name: 'Book' });
+    const bookRow = screen.getByRole('group', { name: 'Book' });
     expect(bookRow.getAttribute('draggable')).toBe('false');
   });
 
@@ -277,7 +282,7 @@ describe('LibrarySidebarTree author folders', () => {
 
     await user.click(screen.getByRole('button', { name: '철학 펼치기' }));
     await user.click(screen.getByRole('button', { name: 'Author 펼치기' }));
-    fireEvent.dragStart(screen.getByRole('button', { name: /책 순서 변경/ }), { dataTransfer });
+    fireEvent.dragStart(screen.getByRole('group', { name: /책 순서 변경/ }), { dataTransfer });
     expect(screen.getByLabelText('철학 저자 놓기 영역').className).not.toContain('sidebar-hover');
     fireEvent.dragOver(screen.getByLabelText('철학 저자 놓기 영역'), { dataTransfer });
     fireEvent.drop(screen.getByLabelText('철학 저자 놓기 영역'), { dataTransfer });
@@ -304,7 +309,7 @@ describe('LibrarySidebarTree author folders', () => {
 
     await user.click(screen.getByRole('button', { name: '철학 펼치기' }));
     await user.click(screen.getByRole('button', { name: 'Author 펼치기' }));
-    fireEvent.dragStart(screen.getByRole('button', { name: /책 순서 변경/ }), { dataTransfer, clientY: 0 });
+    fireEvent.dragStart(screen.getByRole('group', { name: /책 순서 변경/ }), { dataTransfer, clientY: 0 });
     fireEvent.dragOver(container.firstElementChild!, { dataTransfer, clientY: 0 });
     fireEvent.drop(container.firstElementChild!, { dataTransfer, clientY: 0 });
 

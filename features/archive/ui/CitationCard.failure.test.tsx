@@ -56,12 +56,12 @@ describe('CitationCard failed saves', () => {
     renderCard({ onAddNote });
 
     await user.click(screen.getByRole('button', { name: '메모 0개' }));
-    const noteInput = screen.getByPlaceholderText('메모 추가…');
+    const noteInput = screen.getByPlaceholderText('이 인용문에 메모 추가…');
     await user.type(noteInput, 'Do not lose this');
     await user.click(screen.getByRole('button', { name: '추가' }));
 
     await waitFor(() => expect(onAddNote).toHaveBeenCalledWith('citation-1', 'Do not lose this'));
-    expect((screen.getByPlaceholderText('메모 추가…') as HTMLTextAreaElement).value).toBe('Do not lose this');
+    expect((screen.getByPlaceholderText('이 인용문에 메모 추가…') as HTMLTextAreaElement).value).toBe('Do not lose this');
   });
 
   it('submits a new note only once while the first request is pending', async () => {
@@ -73,7 +73,7 @@ describe('CitationCard failed saves', () => {
     renderCard({ onAddNote });
 
     await user.click(screen.getByRole('button', { name: '메모 0개' }));
-    const noteInput = screen.getByPlaceholderText('메모 추가…');
+    const noteInput = screen.getByPlaceholderText('이 인용문에 메모 추가…');
     await user.type(noteInput, 'Only once');
     const addButton = screen.getByRole('button', { name: '추가' });
     await user.click(addButton);
@@ -92,7 +92,7 @@ describe('CitationCard failed saves', () => {
     renderCard({ onAddNote });
 
     await user.click(screen.getByRole('button', { name: '메모 0개' }));
-    const noteInput = screen.getByPlaceholderText('메모 추가…');
+    const noteInput = screen.getByPlaceholderText('이 인용문에 메모 추가…');
     await user.type(noteInput, '한');
 
     const keyDownEvent = new KeyboardEvent('keydown', {

@@ -124,6 +124,7 @@ export const ProjectSidebarProjectsSection: React.FC<ProjectSidebarProjectsSecti
     </div>
 
     <ProjectCreateComposer
+      compact
       isCreating={isCreating}
       value={newProjectName}
       createLabel="새 폴더"

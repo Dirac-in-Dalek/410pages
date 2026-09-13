@@ -1,10 +1,9 @@
-import type { ComponentProps } from 'react';
-import { ReaderScreen } from '../../features/reader/ui/ReaderScreen';
+import type { PdfReaderPageProps } from '../../features/reader/contract/pdfReaderContract';
 import type { ReaderScreenFactoryInput } from '../contract/appShellScreenContract';
 
 export const createReaderScreenProps = (
   input: ReaderScreenFactoryInput
-): ComponentProps<typeof ReaderScreen> => ({
+): PdfReaderPageProps => ({
   username: input.username,
   onBack: input.onBack,
   citations: input.citations,

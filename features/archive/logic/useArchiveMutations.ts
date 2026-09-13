@@ -1,21 +1,8 @@
+import { useLibrarySourceMutations } from './useLibrarySourceMutations';
+import type { UseArchiveMutationsOptions } from '../contract/archiveMutationContract';
 import { renameChapterBlock as renameChapterBlockRecord, moveChapterBlock as moveChapterBlockRecord } from '../../../shared/api/chapterBlockApi';
 import { useCallback, useRef, useState } from 'react';
-import type { Dispatch, SetStateAction } from 'react';
-import type {
-  AddCitationInput,
-  AddCitationResult,
-  AuthorFolder,
-  AuthorFolderMembership,
-  AuthorSource,
-  BookSource,
-  BulkSourceUpdateResult,
-  Citation,
-  CitationSourceInput,
-  CreateBookInput,
-  CreateChapterBlockInput,
-  Project,
-} from '../../../types';
-import { createAuthor as createAuthorRecord, renameAuthor as renameAuthorRecord } from '../../../shared/api/authorApi';
+import type { AddCitationInput, AddCitationResult, BulkSourceUpdateResult, Citation, CitationSourceInput, CreateChapterBlockInput } from '../../../types';
 import {
   createAuthorFolder as createAuthorFolderRecord,
   deleteAuthorCascade as deleteAuthorCascadeRecord,
@@ -25,14 +12,7 @@ import {
   renameAuthorFolder as renameAuthorFolderRecord,
   previewAuthorDeletion as previewAuthorDeletionRecord,
 } from '../../../shared/api/authorFolderApi';
-import {
-  createBook as createBookRecord,
-  deleteBookCascade as deleteBookCascadeRecord,
-  previewBookDeletion as previewBookDeletionRecord,
-  renameBook as renameBookRecord,
-  updateBookMemo as updateBookMemoRecord,
-  type RenameBookResult,
-} from '../../../shared/api/bookApi';
+import { deleteBookCascade as deleteBookCascadeRecord, previewBookDeletion as previewBookDeletionRecord, updateBookMemo as updateBookMemoRecord } from '../../../shared/api/bookApi';
 import {
   createChapterBlock as createChapterBlockRecord,
   deleteChapterBlock as deleteChapterBlockRecord,
@@ -44,6 +24,7 @@ import {
   deleteCitations as deleteCitationsRecord,
   deleteNote as deleteNoteRecord,
   updateCitation as updateCitationRecord,
+  moveCitation as moveCitationRecord,
   updateNote as updateNoteRecord,
 } from '../../../shared/api/citationApi';
 import {
@@ -54,66 +35,15 @@ import {
   renameProject as renameProjectRecord,
   reorderProjects as reorderProjectsRecord,
 } from '../../../shared/api/projectApi';
-import type {
-  ArchiveMutationController,
-  ArchiveSession,
-  ChapterBlocksByBook,
-  RenameAuthorMutationResult,
-} from '../contract/archiveMutationContract';
-import {
-  appendChapterBlock,
-  appendBookSource,
-  appendCitationNote,
-  appendProject,
-  attachCitationToProject,
-  deleteChapterBlock,
-  deleteCitationNote,
-  deleteProject,
-  patchCitation,
-  patchCitations,
-  prependCitation,
-  replaceCitationById,
-  renameProject,
-  reorderProjectsLocally,
-  applyRenameAuthorToCitations,
-  applyRenameAuthorToBooks,
-  applyRenameBookToCitations,
-  applyRenameBookToBooks,
-  updateCitationNote,
-} from './archiveLocalPatch';
+import type { ArchiveMutationController } from '../contract/archiveMutationContract';
+import { appendChapterBlock, appendCitationNote, appendProject, attachCitationToProject, deleteChapterBlock, deleteCitationNote, deleteProject, patchCitation, patchCitations, prependCitation, replaceCitationById, renameProject, reorderProjectsLocally, updateCitationNote } from './archiveLocalPatch';
 import {
   createOptimisticCitationEditPatch,
   createOptimisticCitation,
   createRetryCitationInput,
   reconcilePersistedCitationSource,
 } from './optimisticCitation';
-import {
-  readCitationDrafts,
-  removeCitationDraft,
-  removeCitationDrafts,
-  storeCitationDraft,
-} from './citationDraftStorage';
-import { moveBookMemoDraftAfterMerge } from './bookMemoDraftStorage';
-
-type UseArchiveMutationsOptions = {
-  session: ArchiveSession;
-  projects: Project[];
-  citations: Citation[];
-  authors: AuthorSource[];
-  books: BookSource[];
-  authorFolderMemberships: AuthorFolderMembership[];
-  setProjects: Dispatch<SetStateAction<Project[]>>;
-  setCitations: Dispatch<SetStateAction<Citation[]>>;
-  setAuthors: Dispatch<SetStateAction<AuthorSource[]>>;
-  setAuthorFolders: Dispatch<SetStateAction<AuthorFolder[]>>;
-  setAuthorFolderMemberships: Dispatch<SetStateAction<AuthorFolderMembership[]>>;
-  setBooks: Dispatch<SetStateAction<BookSource[]>>;
-  setChapterBlocksByBook: Dispatch<SetStateAction<ChapterBlocksByBook>>;
-  invalidateDataLoad?: () => void;
-  invalidateAuthorFolderLoad?: () => void;
-  refreshAuthorFolders?: () => void | Promise<void>;
-  refreshChapterBlocks?: (bookId: string) => void | Promise<void>;
-};
+import { removeCitationDraft, removeCitationDrafts, storeCitationDraft } from './citationDraftStorage';
 
 const createNoSessionResult = (): AddCitationResult => ({
   ok: false,
@@ -145,6 +75,7 @@ export const useArchiveMutations = ({
   refreshChapterBlocks = () => undefined,
 }: UseArchiveMutationsOptions): ArchiveMutationController => {
   const [mutationError, setMutationError] = useState<string | null>(null);
+  const { handleCreateBook, handleCreateAuthor, handleRenameAuthor, handleRenameBook } = useLibrarySourceMutations({ session, books, setBooks, setAuthors, setCitations, setAuthorFolderMemberships, invalidateDataLoad, invalidateAuthorFolderLoad, refreshAuthorFolders, setMutationError });
   const optimisticSaveInFlightRef = useRef(new Map<string, Promise<string | null>>());
   const authorFolderMoveInFlightRef = useRef(new Set<string>());
   const ownerId = session?.user.id ?? null;
@@ -390,6 +321,20 @@ export const useArchiveMutations = ({
     [citations, invalidateDataLoad, session, setCitations, setProjects]
   );
 
+  const handleMoveCitation = useCallback(async (bookId: string, citationId: string, createdAtSort: number) => {
+    if (!session || !citations.some(c => c.id === citationId && c.bookId === bookId && !c.saveStatus)) return false;
+    try {
+      const patch = await moveCitationRecord(session.user.id, bookId, citationId, createdAtSort);
+      invalidateDataLoad();
+      setCitations(current => patchCitation(current, citationId, patch));
+      setMutationError(null);
+      return true;
+    } catch {
+      setMutationError('인용문을 이동하지 못했습니다. 기존 위치를 유지했습니다.');
+      return false;
+    }
+  }, [session, citations, invalidateDataLoad, setCitations]);
+
   const handleUpdateCitation = useCallback(
     async (citationId: string, data: Partial<Citation>) => {
       if (!session) {
@@ -447,60 +392,6 @@ export const useArchiveMutations = ({
       }
     },
     [invalidateDataLoad, session, setCitations]
-  );
-
-  const handleCreateBook = useCallback(
-    async (input: CreateBookInput) => {
-      if (!session) {
-        return undefined;
-      }
-
-      const title = input.title.trim();
-      if (!title) {
-        return undefined;
-      }
-
-      try {
-        const newBook = await createBookRecord(session.user.id, {
-          authorId: input.authorId,
-          title,
-        });
-        invalidateDataLoad();
-        setBooks((current) => appendBookSource(current, newBook));
-        setMutationError(null);
-        return newBook;
-      } catch (error) {
-        console.error('Error creating book:', error);
-        setMutationError('새 책을 만들지 못했습니다. 입력한 제목은 그대로 유지했습니다.');
-        return undefined;
-      }
-    },
-    [invalidateDataLoad, session, setBooks]
-  );
-
-  const handleCreateAuthor = useCallback(
-    async (name: string) => {
-      if (!session) return undefined;
-      const trimmed = name.trim();
-      if (!trimmed) return undefined;
-
-      try {
-        const author = await createAuthorRecord(session.user.id, trimmed);
-        invalidateDataLoad();
-        setAuthors((current) => {
-          const existingIndex = current.findIndex((entry) => entry.id === author.id);
-          if (existingIndex < 0) return [author, ...current];
-          return current.map((entry) => (entry.id === author.id ? author : entry));
-        });
-        setMutationError(null);
-        return author;
-      } catch (error) {
-        console.error('Error creating author:', error);
-        setMutationError('저자를 추가하지 못했습니다. 입력한 이름은 그대로 유지했습니다.');
-        return undefined;
-      }
-    },
-    [invalidateDataLoad, session, setAuthors]
   );
 
   const handleCreateAuthorFolder = useCallback(async (name: string) => {
@@ -769,115 +660,6 @@ export const useArchiveMutations = ({
     [invalidateDataLoad, session, setProjects]
   );
 
-  const handleRenameAuthor = useCallback(
-    async (authorId: string, name: string) => {
-      if (!session) {
-        return;
-      }
-
-      const trimmed = name.trim();
-      if (!trimmed) {
-        return;
-      }
-
-      invalidateAuthorFolderLoad();
-
-      try {
-        const result = (await renameAuthorRecord(
-          session.user.id,
-          authorId,
-          trimmed
-        )) as RenameAuthorMutationResult;
-        const didPersistBookMemoDrafts = result.bookMerges.reduce((didPersist, merge) => {
-          const targetMemo = books.find((book) => book.id === merge.toBookId)?.memo ?? merge.toBookMemo;
-          const sourceMemo = books.find((book) => book.id === merge.fromBookId)?.memo ?? '';
-          return moveBookMemoDraftAfterMerge(
-            session.user.id,
-            merge.fromBookId,
-            merge.toBookId,
-            targetMemo,
-            sourceMemo
-          ) && didPersist;
-        }, true);
-        invalidateDataLoad();
-        setCitations((current) => applyRenameAuthorToCitations(current, result));
-        setAuthorFolderMemberships((current) => {
-          if (!result.merged || result.fromAuthorId === result.authorId) return current;
-          return [
-            ...current.filter((membership) =>
-              membership.authorId !== result.fromAuthorId && membership.authorId !== result.authorId
-            ),
-            ...(result.folderId ? [{ authorId: result.authorId, folderId: result.folderId, createdAt: Date.now() }] : []),
-          ];
-        });
-        setAuthors((current) => current
-          .filter((author) => author.id !== result.fromAuthorId || author.id === result.authorId)
-          .map((author) => author.id === result.authorId
-            ? {
-                ...author,
-                name: result.authorName,
-                sortIndex: result.authorSortIndex,
-                isSelf: result.isSelf,
-              }
-            : author));
-        setBooks((current) => applyRenameAuthorToBooks(current, result));
-        const didPersistDrafts = readCitationDrafts(session.user.id)
-          .map((draft) => applyRenameAuthorToCitations([draft], result)[0])
-          .reduce((didPersist, draft) => storeCitationDraft(session.user.id, draft) && didPersist, true);
-        setMutationError(didPersistDrafts && didPersistBookMemoDrafts
-          ? null
-          : '브라우저의 임시 초안을 병합된 저자와 책으로 옮기지 못했습니다. 복사해 보관해 주세요.');
-        return result;
-      } catch (error) {
-        console.error('Error renaming author:', error);
-        setMutationError('저자 이름을 저장하지 못했습니다. 입력한 이름은 그대로 유지했습니다.');
-      } finally {
-        void refreshAuthorFolders();
-      }
-    },
-    [books, invalidateAuthorFolderLoad, invalidateDataLoad, refreshAuthorFolders, session, setAuthorFolderMemberships, setAuthors, setBooks, setCitations]
-  );
-
-  const handleRenameBook = useCallback(
-    async (bookId: string, name: string) => {
-      if (!session) {
-        return;
-      }
-
-      const trimmed = name.trim();
-      if (!trimmed) {
-        return;
-      }
-
-      try {
-        const result = (await renameBookRecord(session.user.id, bookId, trimmed)) as RenameBookResult;
-        const targetMemo = books.find((book) => book.id === result.bookId)?.memo ?? result.bookMemo;
-        const sourceMemo = books.find((book) => book.id === result.fromBookId)?.memo ?? '';
-        const didPersistBookMemoDraft = moveBookMemoDraftAfterMerge(
-          session.user.id,
-          result.fromBookId,
-          result.bookId,
-          targetMemo,
-          sourceMemo
-        );
-        invalidateDataLoad();
-        setCitations((current) => applyRenameBookToCitations(current, result));
-        setBooks((current) => applyRenameBookToBooks(current, result));
-        const didPersistDrafts = readCitationDrafts(session.user.id)
-          .map((draft) => applyRenameBookToCitations([draft], result)[0])
-          .reduce((didPersist, draft) => storeCitationDraft(session.user.id, draft) && didPersist, true);
-        setMutationError(didPersistDrafts && didPersistBookMemoDraft
-          ? null
-          : '브라우저의 임시 초안을 병합된 책으로 옮기지 못했습니다. 복사해 보관해 주세요.');
-        return result;
-      } catch (error) {
-        console.error('Error renaming book:', error);
-        setMutationError('책 이름을 저장하지 못했습니다. 입력한 이름은 그대로 유지했습니다.');
-      }
-    },
-    [books, invalidateDataLoad, session, setBooks, setCitations]
-  );
-
   const handleUpdateBookMemo = useCallback(
     async (bookId: string, memo: string) => {
       if (!session) return false;
@@ -919,25 +701,25 @@ export const useArchiveMutations = ({
     [invalidateDataLoad, refreshChapterBlocks, session, setChapterBlocksByBook]
   );
 
-  const handleRenameChapterBlock = useCallback(async (bookId: string, id: string, label: string) => {
+  const handleRenameChapterBlock = useCallback(async (bookId: string, id: string, label: string, depth?: number) => {
     if (!session) return false;
     try {
-      const updated = await renameChapterBlockRecord(session.user.id, bookId, id, label);
+      const updated = await renameChapterBlockRecord(session.user.id, bookId, id, label, depth);
       invalidateDataLoad();
       setChapterBlocksByBook(current => ({ ...current, [bookId]: (current[bookId] || []).map(block => block.id === id ? updated : block) }));
       void refreshChapterBlocks(bookId);
       setMutationError(null);
       return true;
     } catch {
-      setMutationError('챕터 제목을 저장하지 못했습니다. 입력한 제목을 유지했습니다.');
+      setMutationError('챕터 제목과 단계를 저장하지 못했습니다. 입력을 유지했습니다.');
       return false;
     }
   }, [session, invalidateDataLoad, refreshChapterBlocks, setChapterBlocksByBook]);
 
-  const handleMoveChapterBlock = useCallback(async (bookId: string, id: string, createdAtSort: number) => {
+  const handleMoveChapterBlock = useCallback(async (bookId: string, id: string, createdAtSort: number, depth?: number) => {
     if (!session) return false;
     try {
-      const updated = await moveChapterBlockRecord(session.user.id, bookId, id, createdAtSort);
+      const updated = await moveChapterBlockRecord(session.user.id, bookId, id, createdAtSort, depth);
       invalidateDataLoad();
       setChapterBlocksByBook(current => ({ ...current, [bookId]: (current[bookId] || []).map(block => block.id === id ? updated : block) }));
       void refreshChapterBlocks(bookId);
@@ -1074,6 +856,7 @@ export const useArchiveMutations = ({
     handleDeleteNote,
     handleDeleteCitations,
     handleUpdateCitation,
+    handleMoveCitation,
     handleBulkUpdateCitationSource,
     handleCreateAuthor,
     handleCreateAuthorFolder,

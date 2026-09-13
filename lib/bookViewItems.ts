@@ -34,7 +34,7 @@ export const toBookViewItems = (
       id: citation.id,
       citation,
       pageSort: effectivePages.get(citation.id),
-      createdAtSort: citation.createdAt,
+      createdAtSort: citation.createdAtSort ?? citation.createdAt,
     })),
     ...chapterBlocks.map((block) => ({
       type: 'chapter_block' as const,

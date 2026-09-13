@@ -1,7 +1,9 @@
+import { CitationEditDraftStore } from '../logic/citationEditDrafts';
 import type { AddCitationInput, ChapterBlock, Citation, CreateChapterBlockInput, Project } from '../../../types';
 
 export interface ArchiveHeaderProps {
     compactBookHeader?: boolean;
+    isMobileApp?: boolean;
     title: string;
     showEditor: boolean;
     username: string;
@@ -18,6 +20,7 @@ export interface ArchiveHeaderProps {
 }
 
 export interface CitationListProps {
+    editDrafts?: CitationEditDraftStore;
     citations: Citation[];
     allCitations?: Citation[];
     projects: Project[];
@@ -42,8 +45,9 @@ export interface CitationListProps {
     dateDirection?: 'asc' | 'desc';
     pageDirection?: 'asc' | 'desc';
     onCreateChapterBlock?: (input: CreateChapterBlockInput) => Promise<unknown> | unknown;
-    onMoveChapterBlock?: (bookId: string, id: string, createdAtSort: number) => Promise<boolean> | boolean;
-    onRenameChapterBlock?: (bookId: string, id: string, label: string) => Promise<boolean> | boolean;
+    onMoveCitation?: (bookId: string, id: string, createdAtSort: number) => Promise<boolean> | boolean;
+  onMoveChapterBlock?: (bookId: string, id: string, createdAtSort: number, depth?: number) => Promise<boolean> | boolean;
+    onRenameChapterBlock?: (bookId: string, id: string, label: string, depth?: number) => Promise<boolean> | boolean;
     onDeleteChapterBlock?: (bookId: string, blockId: string) => Promise<unknown> | unknown;
     chapterActionsDisabled?: boolean;
     collapsedDividerIds?: ReadonlySet<string>;

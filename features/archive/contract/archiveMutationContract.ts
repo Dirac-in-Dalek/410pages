@@ -1,3 +1,4 @@
+import type { Dispatch, SetStateAction } from 'react';
 import type {
   AddCitationInput,
   AddCitationResult,
@@ -55,6 +56,7 @@ export type RenameBookMutationResult = {
 };
 
 export type ArchiveQueryController = {
+  hasLoaded: boolean;
   loading: boolean;
   loadError: string | null;
   authorFolderLoading: boolean;
@@ -102,8 +104,9 @@ export type ArchiveMutationController = {
   handleRenameAuthor: (authorId: string, name: string) => Promise<RenameAuthorMutationResult | undefined>;
   handleRenameBook: (bookId: string, name: string) => Promise<RenameBookMutationResult | undefined>;
   handleUpdateBookMemo: (bookId: string, memo: string) => Promise<boolean>;
-  handleMoveChapterBlock: (bookId: string, id: string, createdAtSort: number) => Promise<boolean>;
-  handleRenameChapterBlock: (bookId: string, id: string, label: string) => Promise<boolean>;
+  handleMoveCitation: (bookId: string, id: string, createdAtSort: number) => Promise<boolean>;
+  handleMoveChapterBlock: (bookId: string, id: string, createdAtSort: number, depth?: number) => Promise<boolean>;
+  handleRenameChapterBlock: (bookId: string, id: string, label: string, depth?: number) => Promise<boolean>;
   handleCreateChapterBlock: (input: CreateChapterBlockInput) => Promise<ChapterBlock | false>;
   handleDeleteChapterBlock: (bookId: string, blockId: string) => Promise<boolean>;
   handleReorderProjects: (dragIndex: number, dropIndex: number) => Promise<boolean>;
@@ -122,3 +125,23 @@ export type ArchiveDataController = ArchiveQueryController &
     books: BookSource[];
     chapterBlocksByBook: ChapterBlocksByBook;
   };
+
+export type UseArchiveMutationsOptions = {
+  session: ArchiveSession;
+  projects: Project[];
+  citations: Citation[];
+  authors: AuthorSource[];
+  books: BookSource[];
+  authorFolderMemberships: AuthorFolderMembership[];
+  setProjects: Dispatch<SetStateAction<Project[]>>;
+  setCitations: Dispatch<SetStateAction<Citation[]>>;
+  setAuthors: Dispatch<SetStateAction<AuthorSource[]>>;
+  setAuthorFolders: Dispatch<SetStateAction<AuthorFolder[]>>;
+  setAuthorFolderMemberships: Dispatch<SetStateAction<AuthorFolderMembership[]>>;
+  setBooks: Dispatch<SetStateAction<BookSource[]>>;
+  setChapterBlocksByBook: Dispatch<SetStateAction<ChapterBlocksByBook>>;
+  invalidateDataLoad?: () => void;
+  invalidateAuthorFolderLoad?: () => void;
+  refreshAuthorFolders?: () => void | Promise<void>;
+  refreshChapterBlocks?: (bookId: string) => void | Promise<void>;
+};

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { getArchiveSearchLabel } from '../features/archive/logic/archiveSort';
 import {
   Book,
   ChevronDown,
@@ -100,6 +101,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   onOpenBookMemo,
 }) => {
   const [isNavigationOpen, setIsNavigationOpen] = useState(false);
+  const mainRef = useRef<HTMLElement>(null);
   const [isAllBooksOpen, setIsAllBooksOpen] = useState(true);
   const [isFoldersOpen, setIsFoldersOpen] = useState(true);
   const [isCreatingProject, setIsCreatingProject] = useState(false);
@@ -176,7 +178,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
         </div>
       </header>
 
-      <main className="min-h-0 flex-1 overflow-hidden">{children}</main>
+      <main ref={mainRef} className="min-h-0 flex-1 overflow-hidden">{children}</main>
 
       {isNavigationOpen ? (
         <>
@@ -309,7 +311,18 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
                 ) : null}
 
                 <div className="my-4 h-px bg-[var(--border-main)]" />
-                <EditorialSearchField value={searchTerm} onChange={onSearch} placeholder="문장, 저자 또는 책 검색" />
+                <form
+                  onKeyDown={event => { if (event.key === 'Enter' && event.nativeEvent.isComposing) event.preventDefault(); }}
+                  onSubmit={event => {
+                    event.preventDefault();
+                    if (!searchTerm.trim()) return;
+                    closeNavigation();
+                    window.requestAnimationFrame(() => mainRef.current?.querySelector<HTMLElement>('[data-search-results-title]')?.focus());
+                  }}
+                >
+                  <EditorialSearchField value={searchTerm} onChange={onSearch} placeholder={getArchiveSearchLabel(selectedFilter, selectedProjectId)} />
+                  <button type="submit" disabled={!searchTerm.trim()} className="ui-btn mt-2 w-full disabled:opacity-40">검색 결과 보기</button>
+                </form>
                 <EditorialProfileCard username={username} avatarUrl={avatarUrl} subtitle="나의 독서 아카이브">
                   <div className="grid grid-cols-2 gap-2">
                     <button type="button" onClick={() => { onOpenSettings(); closeNavigation(); }} className="flex min-h-11 items-center justify-center gap-1 rounded-lg bg-[var(--bg-input)] text-sm text-[var(--text-muted)] active:scale-95"><Settings size={14} /> 설정</button>
