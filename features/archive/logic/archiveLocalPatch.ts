@@ -107,6 +107,7 @@ export const applyRenameAuthorToCitations = (
         toBookId: merge.toBookId,
         toBookTitle: merge.toBookTitle,
         toBookSortIndex: merge.toBookSortIndex,
+        citationOrderKeys: merge.citationOrderKeys,
       },
     ])
   );
@@ -131,6 +132,7 @@ export const applyRenameAuthorToCitations = (
         bookId: mergeTarget.toBookId,
         book: mergeTarget.toBookTitle,
         bookSortIndex: mergeTarget.toBookSortIndex,
+        ...(mergeTarget.citationOrderKeys?.[citation.id] ? { orderKey: mergeTarget.citationOrderKeys[citation.id] } : {}),
       };
     }
 
@@ -198,9 +200,42 @@ export const applyRenameBookToCitations = (
           bookId: result.bookId,
           book: result.bookTitle,
           bookSortIndex: result.bookSortIndex,
+          ...(result.citationOrderKeys?.[citation.id] ? { orderKey: result.citationOrderKeys[citation.id] } : {}),
         }
       : citation
   );
+
+const applyBookMergeToChapterBlocks = (
+  current: ChapterBlocksByBook,
+  fromBookId: string,
+  toBookId: string,
+  orderKeys?: Record<string, string>,
+): ChapterBlocksByBook => {
+  if (fromBookId === toBookId) return current;
+  const { [fromBookId]: source, ...remaining } = current;
+  const target = current[toBookId];
+  if (!source && !target) return remaining;
+  const blocks = new Map([...(source ?? []), ...(target ?? [])].map((block) => [block.id, block]));
+  return {
+    ...remaining,
+    [toBookId]: [...blocks.values()].map((block) => ({
+      ...block,
+      bookId: toBookId,
+      ...(orderKeys?.[block.id] ? { orderKey: orderKeys[block.id] } : {}),
+    })),
+  };
+};
+
+export const applyRenameBookToChapterBlocks = (
+  current: ChapterBlocksByBook,
+  result: RenameBookMutationResult,
+) => applyBookMergeToChapterBlocks(current, result.fromBookId, result.bookId, result.chapterOrderKeys);
+
+export const applyRenameAuthorToChapterBlocks = (
+  current: ChapterBlocksByBook,
+  result: RenameAuthorMutationResult,
+) => result.bookMerges.reduce((next, merge) =>
+  applyBookMergeToChapterBlocks(next, merge.fromBookId, merge.toBookId, merge.chapterOrderKeys), current);
 
 export const applyRenameBookToBooks = (
   books: BookSource[],

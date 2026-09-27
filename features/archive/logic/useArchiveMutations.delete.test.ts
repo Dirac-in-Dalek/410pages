@@ -3,8 +3,9 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AuthorFolder, AuthorFolderMembership, AuthorSource, BookSource, ChapterBlock, Citation, Project } from '../../../types';
 
-const { mockAddCitation, mockCreateAuthor, mockCreateBook, mockCreateAuthorFolder, mockDeleteAuthorCascade, mockDeleteBookCascade, mockMoveAuthorToFolder, mockRemoveAuthorFromFolder, mockCreateChapterBlock, mockDeleteChapterBlock, mockDeleteCitations, mockAddCitationsToProject, mockCreateProjectRecord, mockRenameBook, mockUpdateBookMemo } = vi.hoisted(() => ({
+const { mockAddCitation, mockBulkUpdateCitationSource, mockCreateAuthor, mockCreateBook, mockCreateAuthorFolder, mockDeleteAuthorCascade, mockDeleteBookCascade, mockMoveAuthorToFolder, mockRemoveAuthorFromFolder, mockCreateChapterBlock, mockDeleteChapterBlock, mockDeleteCitations, mockAddCitationsToProject, mockCreateProjectRecord, mockRenameBook, mockUpdateBookMemo } = vi.hoisted(() => ({
   mockAddCitation: vi.fn(),
+  mockBulkUpdateCitationSource: vi.fn(),
   mockCreateAuthor: vi.fn(),
   mockCreateBook: vi.fn(),
   mockCreateAuthorFolder: vi.fn(),
@@ -49,6 +50,7 @@ vi.mock('../../../shared/api/citationApi', async (importOriginal) => {
   return {
     ...actual,
     addCitation: mockAddCitation,
+    bulkUpdateCitationSource: mockBulkUpdateCitationSource,
     deleteCitations: mockDeleteCitations,
   };
 });
@@ -178,6 +180,27 @@ describe('useArchiveMutations grouped citation deletion', () => {
     expect(mockDeleteCitations).toHaveBeenCalledWith('user-1', [failedOptimisticCitation.id]);
     expect(result.current.citations).toEqual([]);
     expect(result.current.projects[0].citationIds).toEqual([]);
+  });
+
+  it('applies the distinct server order key for each citation moved to another book', async () => {
+    const first = { ...persistedCitation, id: 'first', bookId: 'old-book', orderKey: 'a0old1' };
+    const second = { ...persistedCitation, id: 'second', bookId: 'old-book', orderKey: 'a0old2' };
+    mockBulkUpdateCitationSource.mockResolvedValue({
+      updatedCount: 2,
+      updatedIds: ['first', 'second'],
+      patch: { bookId: 'new-book', book: 'New book' },
+      orderKeys: { first: 'a0new1', second: 'a0new2' },
+    });
+    const { result } = setup([first, second]);
+
+    await act(async () => {
+      await result.current.handleBulkUpdateCitationSource(['first', 'second'], { author: 'Author', book: 'New book' });
+    });
+
+    expect(result.current.citations.map(({ id, bookId, orderKey }) => ({ id, bookId, orderKey }))).toEqual([
+      { id: 'first', bookId: 'new-book', orderKey: 'a0new1' },
+      { id: 'second', bookId: 'new-book', orderKey: 'a0new2' },
+    ]);
   });
 
   it('returns one group failure without applying a partial local deletion', async () => {

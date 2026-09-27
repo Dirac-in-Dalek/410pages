@@ -1,11 +1,13 @@
 import { BookComposerDraftStore } from '../../citation-entry/logic/bookComposerDrafts';
 import { CitationEditDraftStore } from '../logic/citationEditDrafts';
-import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { sortBookViewItems, toBookViewItems } from '../../../lib/bookViewItems';
+import { bookPositionPatch, compareBookPositions, getBookPosition } from '../../../lib/bookOrder';
 import { changeChapterDepth, getChapterDropPlacement } from '../logic/chapterHierarchy';
 import { BookInsertion, resolveBookInsertion } from '../logic/bookInsertion';
 import { BulkActionToolbar } from './BulkActionToolbar';
 import type {
+  BookPosition,
   ChapterBlock,
   Citation,
   CreateChapterBlockInput,
@@ -53,8 +55,8 @@ type ArchiveScreenProps = {
   onAddToProject: (projectId: string) => void | Promise<unknown>;
   onCreateAndAddToProject: (name: string) => boolean | void | Promise<boolean | void>;
   onCreateChapterBlock?: (input: CreateChapterBlockInput) => Promise<unknown> | unknown;
-  onMoveCitation?: (bookId: string, id: string, createdAtSort: number) => Promise<boolean> | boolean;
-  onMoveChapterBlock?: (bookId: string, id: string, createdAtSort: number, depth?: number) => Promise<boolean> | boolean;
+  onMoveCitation?: (bookId: string, id: string, position: BookPosition) => Promise<boolean> | boolean;
+  onMoveChapterBlock?: (bookId: string, id: string, position: BookPosition, depth?: number) => Promise<boolean> | boolean;
   onRenameChapterBlock?: (bookId: string, id: string, label: string, depth?: number) => Promise<boolean> | boolean;
   onDeleteChapterBlock?: (bookId: string, blockId: string) => Promise<unknown> | unknown;
   chapterActionsDisabled?: boolean;
@@ -141,8 +143,11 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
   const setChapterMode = (enabled: boolean) => drafts.patch(scope, { chapterMode: enabled });
   const setInsertionError = (error: string) => drafts.patch(scope, { error });
   const [focusRequest, setFocusRequest] = useState(0);
-  const bookItems = sortBookViewItems(toBookViewItems(allCitations.filter(c => c.bookId === bookId), chapterBlocks.filter(c => c.bookId === bookId)), 'date', 'asc');
-  const target = resolveBookInsertion(bookItems, insertion ?? { depth: 0 });
+  const bookItems = useMemo(
+    () => sortBookViewItems(toBookViewItems(allCitations.filter(c => c.bookId === bookId), chapterBlocks.filter(c => c.bookId === bookId)), 'date', 'asc'),
+    [allCitations, bookId, chapterBlocks],
+  );
+  const target = useMemo(() => resolveBookInsertion(bookItems, insertion ?? { depth: 0 }), [bookItems, insertion]);
   const requestedDepth = insertion?.depth ?? target?.previousDepth ?? 0;
   const chapterPlacement = target ? getChapterDropPlacement(chapterBlocks.filter(c => c.bookId === bookId), 'book-insertion-preview', target.position, requestedDepth) : null;
   const previewDepth = chapterMode ? chapterPlacement?.depth ?? 0 : target?.previousDepth ?? 0;
@@ -156,7 +161,7 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
     if (!resolved?.parent) return;
     let depth = resolved.depths.get(resolved.parent.id)!;
     for (const chapter of [...resolved.chapters].reverse()) {
-      if (chapter.createdAtSort > resolved.parent.createdAtSort || resolved.depths.get(chapter.id)! > depth) continue;
+      if (compareBookPositions(getBookPosition(chapter), getBookPosition(resolved.parent)) > 0 || resolved.depths.get(chapter.id)! > depth) continue;
       if (latestCollapsed.current?.has(chapter.id)) onToggleDivider?.(chapter.id);
       depth = resolved.depths.get(chapter.id)! - 1;
     }
@@ -186,8 +191,8 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
     setInsertionError('');
     try {
       const result = chapterMode
-        ? await onCreateChapterBlock?.({ bookId, label: data.text.trim(), createdAtSort: target.position, depth: previewDepth })
-        : await onAddCitation({ ...data, bookId, createdAtSort: target.position });
+        ? await onCreateChapterBlock?.({ bookId, label: data.text.trim(), createdAtSort: Date.now(), ...bookPositionPatch(target.position), depth: previewDepth })
+        : await onAddCitation({ ...data, bookId, ...bookPositionPatch(target.position) });
       if ((chapterMode && !onCreateChapterBlock) || result === false || (result && typeof result === 'object' && 'ok' in result && result.ok === false)) throw new Error('Save failed');
       const savedId = result && typeof result === 'object'
         ? ('citationId' in result ? result.citationId : 'id' in result ? result.id : undefined)

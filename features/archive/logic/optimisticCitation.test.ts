@@ -3,7 +3,9 @@ import {
   attachOptimisticOrigin,
   CITATION_SAVE_FAILED_MESSAGE,
   createOptimisticCitation,
+  createOptimisticCitationEditPatch,
   createRetryCitationInput,
+  reconcilePersistedCitationSource,
 } from './optimisticCitation';
 
 describe('optimistic citation helpers', () => {
@@ -52,6 +54,7 @@ describe('optimistic citation helpers', () => {
         author: 'Simone Weil',
         book: 'Gravity and Grace',
         page: '30-31',
+        orderKey: 'a1V',
         tags: [],
       },
       1800
@@ -60,10 +63,12 @@ describe('optimistic citation helpers', () => {
     expect(CITATION_SAVE_FAILED_MESSAGE).toBe('저장에 실패했습니다. 다시 시도해주세요.');
     expect(createRetryCitationInput({ ...citation, saveStatus: 'failed' })).toMatchObject({
       id: citation.id,
+      createdAt: 1800,
       text: 'Recoverable quote',
       author: 'Simone Weil',
       book: 'Gravity and Grace',
       page: '30-31',
+      orderKey: 'a1V',
       tags: [],
     });
   });
@@ -105,6 +110,30 @@ describe('optimistic citation helpers', () => {
       text: '근원적 고독',
       page: '147',
       pageSort: 147,
+    });
+  });
+
+  it('clears a stale order key when the optimistic source changes', () => {
+    const citation = createOptimisticCitation({
+      kind: 'sentence', text: 'quote', author: 'Author', book: 'Old Book', bookId: 'old-book',
+      orderKey: 'a1V', tags: [],
+    }, 2100);
+
+    expect(createOptimisticCitationEditPatch(citation, { book: 'New Book' })).toMatchObject({
+      book: 'New Book', bookId: undefined, orderKey: undefined,
+    });
+  });
+
+  it('does not carry the persisted source key onto a newer local source', () => {
+    const submitted = createRetryCitationInput(createOptimisticCitation({
+      kind: 'sentence', text: 'quote', author: 'Author', book: 'Old Book', bookId: 'old-book',
+      orderKey: 'a1V', tags: [],
+    }, 2200));
+    const current = { ...createOptimisticCitation(submitted, 2200), book: 'New Book', bookId: undefined, orderKey: undefined };
+    const persisted = { ...current, book: 'Old Book', bookId: 'old-book', orderKey: 'a2V', saveStatus: undefined };
+
+    expect(reconcilePersistedCitationSource(persisted, current, submitted)).toMatchObject({
+      book: 'New Book', bookId: undefined, orderKey: undefined,
     });
   });
 });

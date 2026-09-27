@@ -3,14 +3,14 @@ import type { CreateBookInput } from '../../../types';
 import type { UseArchiveMutationsOptions, RenameAuthorMutationResult } from '../contract/archiveMutationContract';
 import { createAuthor as createAuthorRecord, renameAuthor as renameAuthorRecord } from '../../../shared/api/authorApi';
 import { createBook as createBookRecord, renameBook as renameBookRecord, type RenameBookResult } from '../../../shared/api/bookApi';
-import { appendBookSource, applyRenameAuthorToCitations, applyRenameAuthorToBooks, applyRenameBookToCitations, applyRenameBookToBooks } from './archiveLocalPatch';
+import { appendBookSource, applyRenameAuthorToChapterBlocks, applyRenameBookToChapterBlocks, applyRenameAuthorToCitations, applyRenameAuthorToBooks, applyRenameBookToCitations, applyRenameBookToBooks } from './archiveLocalPatch';
 import { readCitationDrafts, storeCitationDraft } from './citationDraftStorage';
 import { moveBookMemoDraftAfterMerge } from './bookMemoDraftStorage';
 
-type LibrarySourceOptions = Required<Pick<UseArchiveMutationsOptions, 'session' | 'books' | 'setBooks' | 'setAuthors' | 'setCitations' | 'setAuthorFolderMemberships' | 'invalidateDataLoad' | 'invalidateAuthorFolderLoad' | 'refreshAuthorFolders'>> & { setMutationError: (error: string | null) => void };
+type LibrarySourceOptions = Required<Pick<UseArchiveMutationsOptions, 'session' | 'books' | 'setBooks' | 'setAuthors' | 'setCitations' | 'setChapterBlocksByBook' | 'refreshChapterBlocks' | 'setAuthorFolderMemberships' | 'invalidateDataLoad' | 'invalidateAuthorFolderLoad' | 'refreshAuthorFolders'>> & { setMutationError: (error: string | null) => void };
 
 // Author/book identity changes reconcile the existing stores; this hook owns no state.
-export function useLibrarySourceMutations({ session, books, setBooks, setAuthors, setCitations, setAuthorFolderMemberships, invalidateDataLoad, invalidateAuthorFolderLoad, refreshAuthorFolders, setMutationError }: LibrarySourceOptions) {
+export function useLibrarySourceMutations({ session, books, setBooks, setAuthors, setCitations, setChapterBlocksByBook, refreshChapterBlocks, setAuthorFolderMemberships, invalidateDataLoad, invalidateAuthorFolderLoad, refreshAuthorFolders, setMutationError }: LibrarySourceOptions) {
 const handleCreateBook = useCallback(
     async (input: CreateBookInput) => {
       if (!session) {
@@ -97,6 +97,8 @@ const handleRenameAuthor = useCallback(
         }, true);
         invalidateDataLoad();
         setCitations((current) => applyRenameAuthorToCitations(current, result));
+        setChapterBlocksByBook((current) => applyRenameAuthorToChapterBlocks(current, result));
+        for (const merge of result.bookMerges) void refreshChapterBlocks(merge.toBookId);
         setAuthorFolderMemberships((current) => {
           if (!result.merged || result.fromAuthorId === result.authorId) return current;
           return [
@@ -131,7 +133,7 @@ const handleRenameAuthor = useCallback(
         void refreshAuthorFolders();
       }
     },
-    [books, invalidateAuthorFolderLoad, invalidateDataLoad, refreshAuthorFolders, session, setAuthorFolderMemberships, setAuthors, setBooks, setCitations]
+    [books, invalidateAuthorFolderLoad, invalidateDataLoad, refreshAuthorFolders, session, setAuthorFolderMemberships, setAuthors, setBooks, setCitations, setChapterBlocksByBook, refreshChapterBlocks]
   );
 
 const handleRenameBook = useCallback(
@@ -158,6 +160,8 @@ const handleRenameBook = useCallback(
         );
         invalidateDataLoad();
         setCitations((current) => applyRenameBookToCitations(current, result));
+        setChapterBlocksByBook((current) => applyRenameBookToChapterBlocks(current, result));
+        if (result.merged) void refreshChapterBlocks(result.bookId);
         setBooks((current) => applyRenameBookToBooks(current, result));
         const didPersistDrafts = readCitationDrafts(session.user.id)
           .map((draft) => applyRenameBookToCitations([draft], result)[0])
@@ -171,7 +175,7 @@ const handleRenameBook = useCallback(
         setMutationError('책 이름을 저장하지 못했습니다. 입력한 이름은 그대로 유지했습니다.');
       }
     },
-    [books, invalidateDataLoad, session, setBooks, setCitations]
+    [books, invalidateDataLoad, session, setBooks, setCitations, setChapterBlocksByBook, refreshChapterBlocks]
   );
   return { handleCreateBook, handleCreateAuthor, handleRenameAuthor, handleRenameBook };
 }

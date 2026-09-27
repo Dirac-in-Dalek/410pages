@@ -2,7 +2,8 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import type { ChapterBlock, Citation, Project } from '../../../types';
+import type { BookPosition, ChapterBlock, Citation, Project } from '../../../types';
+import { bookPositionPatch, compareBookPositions, legacyOrderKey } from '../../../lib/bookOrder';
 import { CitationList } from './CitationList';
 
 vi.mock('./CitationCard', () => ({
@@ -50,6 +51,11 @@ function dragEvent(element: Element, type: string, clientX: number, clientY: num
   fireEvent(element, event);
 }
 
+const expectBetween = (position: BookPosition, left: number, right?: number) => {
+  expect(compareBookPositions(legacyOrderKey(left), position)).toBeLessThan(0);
+  if (right != null) expect(compareBookPositions(position, legacyOrderKey(right))).toBeLessThan(0);
+};
+
 describe('CitationList chapter blocks', () => {
   it('adds a child after the last chapter even without citations', async () => {
     const user = userEvent.setup();
@@ -62,7 +68,8 @@ describe('CitationList chapter blocks', () => {
     await user.keyboard('{Tab}');
     await user.type(screen.getByRole('textbox', { name: '챕터 제목' }), '하위 제목');
     await user.click(screen.getByRole('button', { name: '챕터 저장' }));
-    expect(create).toHaveBeenCalledWith(expect.objectContaining({ label: '하위 제목', depth: 1, bookId: 'book-1', createdAtSort: 2.9 }));
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ label: '하위 제목', depth: 1, bookId: 'book-1', createdAtSort: expect.any(Number), orderKey: expect.any(String) }));
+    expectBetween(create.mock.calls[0][0].orderKey, 2);
   });
   it('moves only the chapter before or after a row without changing citations', async () => {
     const user = userEvent.setup();
@@ -79,13 +86,14 @@ describe('CitationList chapter blocks', () => {
     Object.defineProperty(over, 'dataTransfer', { value: dataTransfer });
     fireEvent(last, over);
     dragEvent(last, 'drop', 0, 10);
-    expect(move).toHaveBeenCalledWith('book-1', 'move-me', 5.9, 0);
+    expect(move).toHaveBeenCalledWith('book-1', 'move-me', expect.any(String), 0);
+    expectBetween(move.mock.calls[0][2], 5);
     expect(updateCitation).not.toHaveBeenCalled();
     // Same saved position remains until the owner accepts a server response.
     expect(screen.getAllByRole('checkbox').map(el => el.getAttribute('aria-label'))).toEqual(['문장 선택: Quote 1', '문장 선택: Quote 3', '문장 선택: Quote 5']);
     await user.click(handle);
     await user.keyboard('{Alt>}{ArrowUp}{/Alt}');
-    expect(move).toHaveBeenLastCalledWith('book-1', 'move-me', 0.9);
+    expect(move).toHaveBeenLastCalledWith('book-1', 'move-me', expect.any(String));
   });
 
   it('moves a chapter relative to an individual short citation', () => {
@@ -103,7 +111,8 @@ describe('CitationList chapter blocks', () => {
     Object.defineProperty(over, 'dataTransfer', { value: dataTransfer });
     fireEvent(group, over);
     dragEvent(group, 'drop', 0, -1);
-    expect(move).toHaveBeenCalledWith('book-1', 'source', 5.5, 0);
+    expect(move).toHaveBeenCalledWith('book-1', 'source', expect.any(String), 0);
+    expectBetween(move.mock.calls[0][2], 1, 10);
   });
 
   it('folds only until the next divider and preserves folds when the list is reopened', async () => {
@@ -168,7 +177,7 @@ describe('CitationList chapter blocks', () => {
     await user.type(screen.getByRole('textbox', { name: '챕터 제목' }), '1장');
     await user.click(screen.getByRole('button', { name: '챕터 저장' }));
 
-    expect(onCreateChapterBlock).toHaveBeenCalledWith({ bookId: 'book-1', label: '1장', pageSort: 10, createdAtSort: 999.9 });
+    expect(onCreateChapterBlock).toHaveBeenCalledWith({ bookId: 'book-1', label: '1장', pageSort: 10, createdAtSort: expect.any(Number), orderKey: expect.any(String) });
   });
 
   it('creates the first chapter in an empty selected book', async () => {
@@ -186,7 +195,7 @@ describe('CitationList chapter blocks', () => {
     await user.type(screen.getByRole('textbox', { name: '챕터 제목' }), '들어가며');
     await user.click(screen.getByRole('button', { name: '챕터 저장' }));
 
-    expect(onCreateChapterBlock).toHaveBeenCalledWith({ bookId: 'empty-book', label: '들어가며', pageSort: undefined, createdAtSort: expect.any(Number) });
+    expect(onCreateChapterBlock).toHaveBeenCalledWith({ bookId: 'empty-book', label: '들어가며', pageSort: undefined, createdAtSort: expect.any(Number), orderKey: expect.any(String) });
   });
 
   it('keeps leading insertion at the book start when search hides earlier citations', async () => {
@@ -202,7 +211,7 @@ describe('CitationList chapter blocks', () => {
     await user.click(screen.getByRole('button', { name: '맨 위에 챕터 추가' }));
     await user.type(screen.getByRole('textbox', { name: '챕터 제목' }), '1장');
     await user.click(screen.getByRole('button', { name: '챕터 저장' }));
-    expect(onCreateChapterBlock).toHaveBeenCalledWith({ bookId: 'book-1', label: '1장', pageSort: undefined, createdAtSort: 999.9 });
+    expect(onCreateChapterBlock).toHaveBeenCalledWith({ bookId: 'book-1', label: '1장', pageSort: undefined, createdAtSort: expect.any(Number), orderKey: expect.any(String) });
   });
 
   it('keeps book citations and chapter blocks in oldest-first time order', () => {
@@ -422,7 +431,8 @@ describe('CitationList chapter blocks', () => {
       bookId: 'book-1',
       label: '3장',
       pageSort: 150,
-      createdAtSort: 1500,
+      createdAtSort: expect.any(Number),
+      orderKey: expect.any(String),
     });
   });
 
@@ -503,7 +513,8 @@ describe('CitationList chapter blocks', () => {
       bookId: 'book-1',
       label: '프롤로그',
       pageSort: 100,
-      createdAtSort: 1000.9,
+      createdAtSort: expect.any(Number),
+      orderKey: expect.any(String),
     });
   });
 
@@ -734,7 +745,8 @@ it('previews the destination parent and drops at that depth, retaining the origi
   expect(screen.getByRole('status').textContent).toBe('최상위에 놓기');
   dragEvent(row, 'dragover', 116, 10);
   dragEvent(row, 'drop', 116, 10);
-  expect(move).toHaveBeenCalledWith('b', 'moved', 20.9, 1);
+  expect(move).toHaveBeenCalledWith('b', 'moved', expect.any(String), 1);
+  expectBetween(move.mock.calls[0][2], 20);
   await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('이동하지 못했습니다'));
   expect(document.querySelector('[data-chapter-node="moved"]')?.getAttribute('data-chapter-depth')).toBe('0');
   expect(screen.queryByRole('status')).toBeNull();
@@ -767,7 +779,8 @@ describe('approved chapter placement and subtree folding', () => {
     expect(input.closest('form')?.dataset.chapterDepth).toBe('1');
     await user.type(input, '다시 읽기');
     await user.click(screen.getByRole('button', { name: '챕터 저장' }));
-    expect(create).toHaveBeenLastCalledWith(expect.objectContaining({ label: '다시 읽기', depth: 1, createdAtSort: 22.5 }));
+    expect(create).toHaveBeenLastCalledWith(expect.objectContaining({ label: '다시 읽기', depth: 1, createdAtSort: expect.any(Number), orderKey: expect.any(String) }));
+    expectBetween(create.mock.calls.at(-1)![0].orderKey, 20, 25);
     expect(input).toBe(screen.getByRole('textbox', { name: '챕터 제목' }));
     await user.click(screen.getByRole('button', { name: '챕터 취소' }));
     await user.click(within(row('q')).getByRole('button', { name: '챕터 추가' }));
@@ -807,11 +820,13 @@ describe('approved chapter placement and subtree folding', () => {
     await user.click(within(row('a')).getByRole('button', { name: '챕터 추가' }));
     await user.type(screen.getByRole('textbox', { name: '챕터 제목' }), '새 이야기');
     await user.click(screen.getByRole('button', { name: '챕터 저장' }));
-    expect(create).toHaveBeenCalledWith(expect.objectContaining({ label: '새 이야기', createdAtSort: 45 }));
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ label: '새 이야기', createdAtSort: expect.any(Number), orderKey: expect.any(String) }));
+    expectBetween(create.mock.calls[0][0].orderKey, 40, 50);
     dragEvent(screen.getByRole('heading', { name: '다음 이야기' }), 'dragstart', 100, 100);
     dragEvent(row('a'), 'dragover', 100, 10);
     dragEvent(row('a'), 'drop', 100, 10);
-    expect(move).toHaveBeenCalledWith('b', 'd', 40.9, 0);
+    expect(move).toHaveBeenCalledWith('b', 'd', expect.any(String), 0);
+    expectBetween(move.mock.calls[0][2], 40);
   });
 });
 
@@ -869,7 +884,8 @@ it('uses the full folded boundary at the last separator with filtered-out traili
   await user.click(screen.getByRole('button', { name: '챕터 추가' }));
   await user.type(screen.getByRole('textbox', { name: '챕터 제목' }), '새 장');
   await user.click(screen.getByRole('button', { name: '챕터 저장' }));
-  expect(create).toHaveBeenCalledWith(expect.objectContaining({ label: '새 장', createdAtSort: 40.9 }));
+  expect(create).toHaveBeenCalledWith(expect.objectContaining({ label: '새 장', createdAtSort: expect.any(Number), orderKey: expect.any(String) }));
+  expectBetween(create.mock.calls[0][0].orderKey, 40);
 });
 
 it('accepts the displayed drop marker without reinterpreting its enclosing row', () => {
@@ -885,7 +901,8 @@ it('accepts the displayed drop marker without reinterpreting its enclosing row',
   expect(marker.getAttribute('data-chapter-depth')).toBe('1');
   dragEvent(marker, 'drop', 100, 100);
   expect(move).toHaveBeenCalledOnce();
-  expect(move).toHaveBeenCalledWith('book', 'moved', 1.5, 1);
+  expect(move).toHaveBeenCalledWith('book', 'moved', expect.any(String), 1);
+  expectBetween(move.mock.calls[0][2], 1, 2);
 });
 
 describe('CitationList citation movement', () => {
@@ -916,13 +933,14 @@ describe('CitationList citation movement', () => {
         collapsedDividerIds={folds} onToggleDivider={id => setFolds(old => { const next = new Set(old); next.delete(id); return next; })}
         onMoveCitation={async (book, id, position) => {
           move(book, id, position);
-          setItems(old => old.map(item => item.id === id ? { ...item, createdAtSort: position } : item));
+          setItems(old => old.map(item => item.id === id ? { ...item, ...bookPositionPatch(position) } : item));
           return true;
         }} />;
     }
     render(<Host />);
     dragToChild();
-    expect(move).toHaveBeenCalledExactlyOnceWith('book-1', 'source', 25);
+    expect(move).toHaveBeenCalledExactlyOnceWith('book-1', 'source', expect.any(String));
+    expectBetween(move.mock.calls[0][2], 20, 30);
     await waitFor(() => expect(screen.getByRole('button', { name: '챕터 접기 Child' })).toBeTruthy());
     expect(Array.from(document.querySelectorAll('[data-book-row]')).map(e => e.getAttribute('data-book-row'))).toEqual(['root', 'child', 'source', 'resident', 'next']);
     expect(screen.getByText('42쪽')).toBeTruthy();
@@ -952,11 +970,12 @@ describe('CitationList citation movement', () => {
     render(<CitationList {...baseProps} citations={[quotes[0], { ...quotes[1], createdAtSort: 25 }]} chapterBlocks={blocks} isBookView onMoveCitation={move} onMoveChapterBlock={moveChapter} />);
     screen.getByRole('button', { name: '인용문 이동: Move this sentence' }).focus();
     await user.keyboard('{Alt>}{ArrowDown}{/Alt}');
-    expect(move).toHaveBeenCalledWith('book-1', 'source', 35);
+    expect(move).toHaveBeenCalledWith('book-1', 'source', expect.any(String));
+    expectBetween(move.mock.calls[0][2], 30, 40);
     dragEvent(screen.getByRole('heading', { name: 'Second' }), 'dragstart', 0, 0);
     dragEvent(document.querySelector('[data-book-row="source"]')!, 'dragover', 0, 10);
     dragEvent(document.querySelector('[data-book-row="source"]')!, 'drop', 0, 10);
-    expect(moveChapter).toHaveBeenCalledWith('book-1', 'next', 27.5, 0);
+    expect(moveChapter).toHaveBeenCalledWith('book-1', 'next', expect.any(String), 0);
   });
   it('does not refold a destination manually opened while the move is saving', async () => {
     let resolve!: (value: boolean) => void;
@@ -995,7 +1014,8 @@ it('starts citation moves from blank row space without making text or controls d
   const target = document.querySelector('[data-book-row="destination"]')!;
   dragEvent(target, 'dragover', 0, 10);
   dragEvent(document.querySelector('[data-citation-drop]')!, 'drop', 0, 10);
-  expect(move).toHaveBeenCalledExactlyOnceWith('book-1', 'space-source', 10.9);
+  expect(move).toHaveBeenCalledExactlyOnceWith('book-1', 'space-source', expect.any(String));
+  expectBetween(move.mock.calls[0][2], 10);
   fireEvent.mouseDown(screen.getByText('Select this text'), { button: 0 });
   expect(row.draggable).toBe(false);
   fireEvent.mouseDown(screen.getByRole('checkbox'), { button: 0 });

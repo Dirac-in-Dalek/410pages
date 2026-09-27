@@ -1,9 +1,11 @@
-import type { ChapterBlock } from '../../../types';
+import type { BookPosition, ChapterBlock } from '../../../types';
+import { compareBookPositions, getBookPosition } from '../../../lib/bookOrder';
 
 export function getChapterDepths(chapters: ChapterBlock[]) {
   const depths = new Map<string, number>();
   let previous = -1;
-  for (const chapter of [...chapters].sort((a, b) => a.createdAtSort - b.createdAtSort)) {
+  for (const chapter of [...chapters].sort((a, b) =>
+    compareBookPositions(getBookPosition(a), getBookPosition(b)))) {
     const stored = Number.isSafeInteger(chapter.depth) && chapter.depth! >= 0 ? chapter.depth! : 0;
     // A moved chapter cannot have ancestors that do not exist before it.
     const depth = Math.min(stored, previous + 1);
@@ -13,9 +15,10 @@ export function getChapterDepths(chapters: ChapterBlock[]) {
   return depths;
 }
 
-export function getChapterDropPlacement(chapters: ChapterBlock[], movedId: string, position: number, requestedDepth: number) {
-  const preceding = chapters.filter(chapter => chapter.id !== movedId && chapter.createdAtSort < position)
-    .sort((a, b) => a.createdAtSort - b.createdAtSort);
+export function getChapterDropPlacement(chapters: ChapterBlock[], movedId: string, position: BookPosition, requestedDepth: number) {
+  const preceding = chapters.filter(chapter => chapter.id !== movedId
+      && compareBookPositions(getBookPosition(chapter), position) < 0)
+    .sort((a, b) => compareBookPositions(getBookPosition(a), getBookPosition(b)));
   const depths = getChapterDepths(preceding);
   const previous = preceding.at(-1);
   const depth = Math.max(0, Math.min(Math.round(requestedDepth), previous ? depths.get(previous.id)! + 1 : 0));

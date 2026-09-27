@@ -2,7 +2,7 @@ import { useLibrarySourceMutations } from './useLibrarySourceMutations';
 import type { UseArchiveMutationsOptions } from '../contract/archiveMutationContract';
 import { renameChapterBlock as renameChapterBlockRecord, moveChapterBlock as moveChapterBlockRecord } from '../../../shared/api/chapterBlockApi';
 import { useCallback, useRef, useState } from 'react';
-import type { AddCitationInput, AddCitationResult, BulkSourceUpdateResult, Citation, CitationSourceInput, CreateChapterBlockInput } from '../../../types';
+import type { AddCitationInput, AddCitationResult, BookPosition, BulkSourceUpdateResult, Citation, CitationSourceInput, CreateChapterBlockInput } from '../../../types';
 import {
   createAuthorFolder as createAuthorFolderRecord,
   deleteAuthorCascade as deleteAuthorCascadeRecord,
@@ -36,7 +36,7 @@ import {
   reorderProjects as reorderProjectsRecord,
 } from '../../../shared/api/projectApi';
 import type { ArchiveMutationController } from '../contract/archiveMutationContract';
-import { appendChapterBlock, appendCitationNote, appendProject, attachCitationToProject, deleteChapterBlock, deleteCitationNote, deleteProject, patchCitation, patchCitations, prependCitation, replaceCitationById, renameProject, reorderProjectsLocally, updateCitationNote } from './archiveLocalPatch';
+import { appendChapterBlock, appendCitationNote, appendProject, attachCitationToProject, deleteChapterBlock, deleteCitationNote, deleteProject, patchCitation, prependCitation, replaceCitationById, renameProject, reorderProjectsLocally, updateCitationNote } from './archiveLocalPatch';
 import {
   createOptimisticCitationEditPatch,
   createOptimisticCitation,
@@ -75,7 +75,7 @@ export const useArchiveMutations = ({
   refreshChapterBlocks = () => undefined,
 }: UseArchiveMutationsOptions): ArchiveMutationController => {
   const [mutationError, setMutationError] = useState<string | null>(null);
-  const { handleCreateBook, handleCreateAuthor, handleRenameAuthor, handleRenameBook } = useLibrarySourceMutations({ session, books, setBooks, setAuthors, setCitations, setAuthorFolderMemberships, invalidateDataLoad, invalidateAuthorFolderLoad, refreshAuthorFolders, setMutationError });
+  const { handleCreateBook, handleCreateAuthor, handleRenameAuthor, handleRenameBook } = useLibrarySourceMutations({ session, books, setBooks, setAuthors, setCitations, setChapterBlocksByBook, refreshChapterBlocks, setAuthorFolderMemberships, invalidateDataLoad, invalidateAuthorFolderLoad, refreshAuthorFolders, setMutationError });
   const optimisticSaveInFlightRef = useRef(new Map<string, Promise<string | null>>());
   const authorFolderMoveInFlightRef = useRef(new Set<string>());
   const ownerId = session?.user.id ?? null;
@@ -321,10 +321,10 @@ export const useArchiveMutations = ({
     [citations, invalidateDataLoad, session, setCitations, setProjects]
   );
 
-  const handleMoveCitation = useCallback(async (bookId: string, citationId: string, createdAtSort: number) => {
+  const handleMoveCitation = useCallback(async (bookId: string, citationId: string, position: BookPosition) => {
     if (!session || !citations.some(c => c.id === citationId && c.bookId === bookId && !c.saveStatus)) return false;
     try {
-      const patch = await moveCitationRecord(session.user.id, bookId, citationId, createdAtSort);
+      const patch = await moveCitationRecord(session.user.id, bookId, citationId, position);
       invalidateDataLoad();
       setCitations(current => patchCitation(current, citationId, patch));
       setMutationError(null);
@@ -384,7 +384,10 @@ export const useArchiveMutations = ({
       try {
         const result = await bulkUpdateCitationSourceRecord(session.user.id, citationIds, source);
         invalidateDataLoad();
-        setCitations((current) => patchCitations(current, result.updatedIds, result.patch));
+        const updatedIds = new Set(result.updatedIds);
+        setCitations((current) => current.map((citation) => updatedIds.has(citation.id)
+          ? { ...citation, ...result.patch, orderKey: result.orderKeys[citation.id] }
+          : citation));
         return { ok: true, updatedCount: result.updatedCount };
       } catch (error) {
         console.error('Error bulk updating citation source:', error);
@@ -716,10 +719,10 @@ export const useArchiveMutations = ({
     }
   }, [session, invalidateDataLoad, refreshChapterBlocks, setChapterBlocksByBook]);
 
-  const handleMoveChapterBlock = useCallback(async (bookId: string, id: string, createdAtSort: number, depth?: number) => {
+  const handleMoveChapterBlock = useCallback(async (bookId: string, id: string, position: BookPosition, depth?: number) => {
     if (!session) return false;
     try {
-      const updated = await moveChapterBlockRecord(session.user.id, bookId, id, createdAtSort, depth);
+      const updated = await moveChapterBlockRecord(session.user.id, bookId, id, position, depth);
       invalidateDataLoad();
       setChapterBlocksByBook(current => ({ ...current, [bookId]: (current[bookId] || []).map(block => block.id === id ? updated : block) }));
       void refreshChapterBlocks(bookId);

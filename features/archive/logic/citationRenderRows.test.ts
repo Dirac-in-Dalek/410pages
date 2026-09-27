@@ -25,6 +25,7 @@ const sentenceItem = (entry: Citation, pageSort?: number): BookViewItem => ({
   citation: entry,
   pageSort,
   createdAtSort: entry.createdAt,
+  orderKey: entry.orderKey,
 });
 
 const chapterItem = (createdAtSort: number): BookViewItem => {
@@ -47,4 +48,10 @@ describe('buildCitationRenderRows', () => {
     expect(rows.map(row => row.type)).toEqual(['sentence', 'chapter_block', 'sentence']);
     expect(rows[0]).toMatchObject({ citation: other, pageSort: 20 });
   });
+});
+
+it('keeps a citation order key on the projected sentence row', () => {
+  const keyed = citation('keyed', 'sentence', 100);
+  keyed.orderKey = 'a0deadbeefV';
+  expect(buildCitationRenderRows([sentenceItem(keyed)])[0]).toMatchObject({ orderKey: keyed.orderKey });
 });

@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ArchiveScreen } from './ArchiveScreen';
 import userEvent from '@testing-library/user-event';
 import { BookComposerDraftStore } from '../../citation-entry/logic/bookComposerDrafts';
+import { compareBookPositions, legacyOrderKey } from '../../../lib/bookOrder';
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
@@ -102,9 +103,18 @@ describe('ArchiveScreen book flow', () => {
     const props = { composerDrafts: drafts, chapterBlocks, onCreateChapterBlock, onAddCitation };
     const view = renderBookScreen(props);
     const user = userEvent.setup();
+    const previewPosition = screen.getByTestId('book-insertion-preview').getAttribute('data-insertion-position');
     await user.type(screen.getByRole('textbox', { name: '챕터 제목 입력' }), '2-1장{Enter}');
     await waitFor(() => expect(drafts.get('book-1')?.insertion).toEqual({ afterId: 'new', depth: 1 }));
-    expect(onCreateChapterBlock).toHaveBeenCalledWith(expect.objectContaining({ createdAtSort: 20, depth: 1 }));
+    expect(onCreateChapterBlock).toHaveBeenCalledWith(expect.objectContaining({
+      createdAtSort: expect.any(Number),
+      orderKey: expect.any(String),
+      depth: 1,
+    }));
+    const chapterInput = onCreateChapterBlock.mock.calls[0][0];
+    expect(chapterInput.orderKey).toBe(previewPosition);
+    expect(compareBookPositions(legacyOrderKey(10), chapterInput.orderKey)).toBeLessThan(0);
+    expect(compareBookPositions(chapterInput.orderKey, legacyOrderKey(30))).toBeLessThan(0);
     view.unmount();
     renderBookScreen({ ...props, chapterBlocks: [chapterBlocks[0], created, chapterBlocks[1]] });
     const editor = screen.getByRole('textbox', { name: '인용문 입력' }) as HTMLTextAreaElement;
@@ -120,7 +130,10 @@ describe('ArchiveScreen book flow', () => {
     expect(document.activeElement).not.toBe(editor);
     await user.click(screen.getByRole('button', { name: '문장 저장' }));
     await waitFor(() => expect(drafts.get('book-1')?.insertion?.afterId).toBe('quote-new'));
-    expect(onAddCitation).toHaveBeenCalledWith(expect.objectContaining({ createdAtSort: 25 }));
+    expect(onAddCitation).toHaveBeenCalledWith(expect.objectContaining({ orderKey: expect.any(String) }));
+    const quoteInput = onAddCitation.mock.calls[0][0];
+    expect(compareBookPositions(legacyOrderKey(20), quoteInput.orderKey)).toBeLessThan(0);
+    expect(compareBookPositions(quoteInput.orderKey, legacyOrderKey(30))).toBeLessThan(0);
   });
   it('shows the author path, hides sorting, and places the editor after the list', () => {
     renderBookScreen();
