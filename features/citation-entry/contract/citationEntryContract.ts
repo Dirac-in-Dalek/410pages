@@ -29,6 +29,7 @@ export interface CitationEditorProps {
   autoFocusText?: boolean;
   hideSourceFields?: boolean;
   chapterMode?: boolean;
+  bookDepth?: number;
   onChapterModeChange?: (enabled: boolean) => void;
   onHierarchyKey?: (direction: 'in' | 'out') => void;
   insertionLabel?: string;

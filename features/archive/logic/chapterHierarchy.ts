@@ -42,5 +42,5 @@ export function getChapterLevelDirection(event: TitleKeyEvent): 'in' | 'out' | n
 }
 
 export function changeChapterDepth(depth: number, previousDepth: number | undefined, direction: 'in' | 'out') {
-  return direction === 'out' ? Math.max(0, depth - 1) : previousDepth === undefined ? depth : previousDepth + 1;
+  return direction === 'out' ? Math.max(0, depth - 1) : Math.min(depth + 1, (previousDepth ?? -1) + 1);
 }

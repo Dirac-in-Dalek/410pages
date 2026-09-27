@@ -939,7 +939,7 @@
 }
 
 /* Chapter controls and editable titles share one reading row. */
-.chapter-list { --chapter-indent-step: 2rem; --chapter-indent-limit: 6rem; --chapter-text-offset: 3rem; }
+.chapter-list, .book-writing-surface { --chapter-indent-step: 2rem; --chapter-indent-limit: 6rem; --chapter-text-offset: 3rem; }
 .book-row-content { position: relative; padding-block: 0.625rem; }
 .book-row-content::after { content: ''; position: absolute; bottom: 0; left: calc(min(calc(var(--divider-depth, 0) * var(--chapter-indent-step)), var(--chapter-indent-limit)) + 3rem); right: 0; height: 1px; background: var(--border-main); pointer-events: none; }
 .book-row-content[data-divider-editing='true']::after { display: none; }
@@ -987,7 +987,7 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
 .chapter-drop-indicator { margin-inline-start: min(calc(var(--chapter-depth, 0) * var(--chapter-indent-step)), var(--chapter-indent-limit)); }
 .chapter-drop-anchor { position: absolute; left: 0; top: -1.375rem; width: 2.75rem; height: 2.75rem; pointer-events: none; }
 @media (max-width: 639px), (pointer: coarse) {
-  .chapter-list { --chapter-indent-step: 1.5rem; --chapter-indent-limit: 4.5rem; }
+  .chapter-list, .book-writing-surface { --chapter-indent-step: 1.5rem; --chapter-indent-limit: 4.5rem; }
   .book-row-content { padding-block: 1.375rem; }
   .chapter-leading-divider { margin-top: 0.875rem; }
   .chapter-insert-trigger { top: -1.375rem; height: 2.75rem; min-height: 2.75rem; }
@@ -1068,3 +1068,18 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
 
 .book-insertion-preview { margin-block: 0.5rem; grid-template-columns: 2.75rem minmax(0, 1fr); }
 .book-insertion-preview > span:last-child { display: flex; align-items: center; min-height: 2.75rem; padding: 0.5rem 0.75rem; border: 1px dashed var(--accent); border-radius: 0.5rem; background: var(--accent-soft); color: var(--text-main); font-size: 0.8125rem; overflow-wrap: anywhere; }
+
+/* Match the saved citation's text column, including its action gutters. */
+.book-citation-composer {
+  margin-inline-start: min(calc(var(--citation-depth, 0) * var(--chapter-indent-step)), var(--chapter-indent-limit));
+}
+.book-citation-composer .citation-composer-text {
+  padding-inline-start: calc(3rem - 3px);
+  padding-inline-end: calc(2.75rem - 3px);
+}
+.book-citation-composer textarea {
+  padding-inline: 0;
+  font-family: var(--font-display-active);
+  font-size: var(--type-body-size);
+  line-height: 1.72;
+}

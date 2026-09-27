@@ -116,7 +116,7 @@ export const FlatCitationHighlightText: React.FC<FlatCitationHighlightTextProps>
       data-testid={`book-citation-text-${citation.id}`}
       onMouseUp={handleSelection}
       aria-busy={saving}
-      className="block cursor-text select-text whitespace-pre-wrap break-words font-[var(--font-display-active)] text-[length:var(--type-body-size)] leading-[1.72] text-[var(--text-main)]"
+      className="block cursor-text select-text whitespace-pre-wrap break-words font-[family-name:var(--font-display-active)] text-[length:var(--type-body-size)] leading-[1.72] text-[var(--text-main)]"
     >
       {segments}
     </span>

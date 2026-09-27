@@ -16,6 +16,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
   autoFocusText = false,
   hideSourceFields = false,
   chapterMode = false,
+  bookDepth,
   onChapterModeChange,
   onHierarchyKey,
   insertionLabel,
@@ -59,9 +60,11 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
   return (
     <div
       className={`
-        citation-composer relative rounded-xl border p-0.5 transition-[border-color,background-color,box-shadow] duration-200 focus-within:border-[var(--accent-border)] focus-within:ring-2 focus-within:ring-[var(--accent-ring)] motion-reduce:transition-none
+        citation-composer ${bookDepth !== undefined ? 'book-citation-composer' : ''} relative rounded-xl border p-0.5 transition-[border-color,background-color,box-shadow] duration-200 focus-within:border-[var(--accent-border)] focus-within:ring-2 focus-within:ring-[var(--accent-ring)] motion-reduce:transition-none
         ${isDraggingOver ? 'border-[var(--accent-border)] bg-[var(--accent-soft)] ring-4 ring-[var(--accent-ring)]' : 'border-[var(--border-main)] bg-[var(--bg-card)] shadow-[var(--shadow-toolbar)]'}
       `}
+      data-composer-depth={bookDepth}
+      style={bookDepth === undefined ? undefined : { '--citation-depth': bookDepth } as React.CSSProperties}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -79,7 +82,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
         <span role="status">{insertionLabel}</span>
         {onCancelInsertion && <button type="button" disabled={isSubmitting} onClick={onCancelInsertion} className="min-h-8 px-2">위치 취소</button>}
       </div>}
-      <div className="px-2 pt-2 pb-1">
+      <div className="citation-composer-text px-2 pt-2 pb-1">
         <textarea
           ref={textareaRef}
           aria-label={chapterMode ? "챕터 제목 입력" : "인용문 입력"}
