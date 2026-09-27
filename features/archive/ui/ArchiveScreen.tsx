@@ -3,7 +3,7 @@ import { CitationEditDraftStore } from '../logic/citationEditDrafts';
 import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { sortBookViewItems, toBookViewItems } from '../../../lib/bookViewItems';
 import { changeChapterDepth, getChapterDropPlacement } from '../logic/chapterHierarchy';
-import { BookInsertion, changeCitationInsertion, resolveBookInsertion } from '../logic/bookInsertion';
+import { BookInsertion, resolveBookInsertion } from '../logic/bookInsertion';
 import { BulkActionToolbar } from './BulkActionToolbar';
 import type {
   ChapterBlock,
@@ -141,7 +141,6 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
   const setChapterMode = (enabled: boolean) => drafts.patch(scope, { chapterMode: enabled });
   const setInsertionError = (error: string) => drafts.patch(scope, { error });
   const [focusRequest, setFocusRequest] = useState(0);
-  const screenRef = useRef<HTMLDivElement>(null);
   const bookItems = sortBookViewItems(toBookViewItems(allCitations.filter(c => c.bookId === bookId), chapterBlocks.filter(c => c.bookId === bookId)), 'date', 'asc');
   const target = resolveBookInsertion(bookItems, insertion ?? { depth: 0 });
   const requestedDepth = insertion?.depth ?? target?.previousDepth ?? 0;
@@ -149,12 +148,6 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
   const previewDepth = chapterMode ? chapterPlacement?.depth ?? 0 : target?.previousDepth ?? 0;
   const parentLabel = chapterMode ? chapterPlacement?.parent?.label : target?.parent?.label;
   const locationLabel = `${parentLabel ? `${parentLabel} 안` : '최상위'} · ${chapterMode ? '챕터' : '인용문'} 삽입`;
-
-  useEffect(() => {
-    if (!insertion) return;
-    const frame = requestAnimationFrame(() => screenRef.current?.querySelector('[data-testid="book-insertion-preview"]')?.scrollIntoView?.({ block: 'nearest' }));
-    return () => cancelAnimationFrame(frame);
-  }, [insertion, chapterMode]);
 
   const latestCollapsed = useRef(collapsedDividerIds);
   latestCollapsed.current = collapsedDividerIds;
@@ -179,12 +172,11 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
     setInsertion(next); revealTarget(next); setInsertionError(''); setFocusRequest(n => n + 1);
   };
   const changeLevel = (direction: 'in' | 'out') => {
-    if (!target || drafts.get(scope)?.saving) return;
+    if (!chapterMode || !target || drafts.get(scope)?.saving) return;
     const current = insertion ?? { depth: requestedDepth };
-    const next = chapterMode
-      ? { ...current, depth: changeChapterDepth(previewDepth, target.previousDepth, direction) }
-      : changeCitationInsertion(bookItems, current, direction);
-    setInsertion(next); revealTarget(next);
+    const next = { ...current, depth: changeChapterDepth(previewDepth, target.previousDepth, direction) };
+    if (next.afterId === current.afterId && next.depth === current.depth) return;
+    setInsertion(next);
   };
   const submitAtInsertion: ArchiveScreenProps['onAddCitation'] = async data => {
     if (!bookId || !target || chapterActionsDisabled) {
@@ -197,7 +189,11 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
         ? await onCreateChapterBlock?.({ bookId, label: data.text.trim(), createdAtSort: target.position, depth: previewDepth })
         : await onAddCitation({ ...data, bookId, createdAtSort: target.position });
       if ((chapterMode && !onCreateChapterBlock) || result === false || (result && typeof result === 'object' && 'ok' in result && result.ok === false)) throw new Error('Save failed');
-      drafts.patch(scope, { insertion: null, chapterMode: false, revealInsertion: insertion ?? { depth: requestedDepth } });
+      const savedId = result && typeof result === 'object'
+        ? ('citationId' in result ? result.citationId : 'id' in result ? result.id : undefined)
+        : undefined;
+      const nextInsertion = typeof savedId === 'string' ? { afterId: savedId, depth: previewDepth } : null;
+      drafts.patch(scope, { insertion: nextInsertion, chapterMode: false, revealInsertion: nextInsertion ?? insertion ?? { depth: requestedDepth } });
       return { ok: true };
     } catch {
       setInsertionError('저장하지 못했습니다. 내용과 삽입 위치를 유지했습니다. 다시 시도해 주세요.');
@@ -217,7 +213,7 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
   } as React.CSSProperties : undefined;
 
   return (
-    <div ref={screenRef} className="flex h-full min-h-0 flex-col overflow-hidden" style={bookStyle}>
+    <div className="book-writing-surface flex h-full min-h-0 flex-col overflow-hidden" style={bookStyle}>
       <div className="min-h-0 flex-1 overflow-y-auto" data-archive-scroll>
         <div className={inlinePassageNotes ? columnClassName : undefined}>
         <ArchiveHeader
@@ -312,7 +308,7 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
       </div>
       </div>
       {showEditor && isBookView ? (
-        <div className={`shrink-0 bg-[var(--bg-main)] pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 ${inlinePassageNotes ? '' : 'px-3 sm:px-5'}`}>
+        <div className="shrink-0 bg-[var(--bg-main)] pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
           <div className={columnClassName}>
             {insertionError && <p role="alert" className="mb-1 text-sm text-red-600">{insertionError}</p>}
             <CitationEditor
@@ -326,8 +322,9 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
                 setInsertion(current => current ?? { depth: target?.previousDepth ?? 0 });
                 setFocusRequest(n => n + 1);
               }}
-              onHierarchyKey={changeLevel}
-              insertionLabel={insertion ? locationLabel : undefined}
+              onHierarchyKey={chapterMode ? changeLevel : undefined}
+              bookDepth={previewDepth}
+              insertionLabel={locationLabel}
               onCancelInsertion={insertion ? () => { setInsertion(null); setInsertionError(''); } : undefined}
               focusRequest={focusRequest}
               readOnly={Boolean(chapterActionsDisabled) || savingInsertion}

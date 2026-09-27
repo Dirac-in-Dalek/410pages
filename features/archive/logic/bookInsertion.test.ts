@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { changeCitationInsertion, resolveBookInsertion } from './bookInsertion';
+import { resolveBookInsertion } from './bookInsertion';
 import { sortBookViewItems, toBookViewItems } from '../../../lib/bookViewItems';
 import { createOptimisticCitation, createOptimisticCitationEditPatch, createRetryCitationInput } from './optimisticCitation';
 import { readCitationDrafts, storeCitationDraft } from './citationDraftStorage';
@@ -15,18 +15,7 @@ const citations = [20, 40, 60, 80].map(n => ({ id: `c${n}`, kind: 'sentence' as 
 const items = sortBookViewItems(toBookViewItems(citations, chapters), 'date', 'asc');
 
 describe('book insertion', () => {
-  it('moves the citation marker out to actual direct parent content and back into the child', () => {
-    const from = { afterId: 'c60', depth: 2 };
-    const out = changeCitationInsertion(items, from, 'out');
-    expect(out.afterId).toBe('c40');
-    expect(resolveBookInsertion(items, out)).toMatchObject({ position: 45, parent: { id: 'child' } });
-    const back = changeCitationInsertion(items, out, 'in');
-    expect(back.afterId).toBe('c60');
-    expect(resolveBookInsertion(items, back)?.parent?.id).toBe('grandchild');
-    expect(changeCitationInsertion(items, back, 'in')).toEqual(back);
-  });
   it('handles root/unclassified, beginning, default tail and deleted anchors', () => {
-    expect(changeCitationInsertion(items, { afterId: 'c20', depth: 0 }, 'out').afterId).toBeNull();
     expect(resolveBookInsertion(items, { afterId: null, depth: 0 })?.parent).toBeUndefined();
     expect(resolveBookInsertion(items, { depth: 0 })?.position).toBe(90.9);
     expect(resolveBookInsertion(items, { afterId: 'deleted', depth: 0 })).toBeNull();

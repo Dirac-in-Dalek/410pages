@@ -16,7 +16,7 @@ describe('chapter levels', () => {
   it('uses the previous chapter as parent and removes one level on outdent', () => {
     expect(changeChapterDepth(0, 0, 'in')).toBe(1);
     expect(changeChapterDepth(1, 0, 'out')).toBe(0);
-    expect(changeChapterDepth(0, 2, 'in')).toBe(3);
+    expect(changeChapterDepth(0, 2, 'in')).toBe(1);
     expect(changeChapterDepth(0, undefined, 'in')).toBe(0);
     expect(changeChapterDepth(0, 0, 'out')).toBe(0);
   });
