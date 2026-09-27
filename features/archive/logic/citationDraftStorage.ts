@@ -69,6 +69,7 @@ const normalizeDraft = (value: unknown): Citation | null => {
     highlights: normalizeHighlights(candidate.highlights),
     createdAt: candidate.createdAt,
     createdAtSort: optionalNumber(candidate.createdAtSort),
+    orderKey: optionalString(candidate.orderKey),
     saveStatus: 'failed',
   };
 };

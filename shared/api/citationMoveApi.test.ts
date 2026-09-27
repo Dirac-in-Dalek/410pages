@@ -13,6 +13,12 @@ it('moves only the position and requires the user, book and citation to match', 
   for (const [field, value] of [['user_id', 'u'], ['book_id', 'book'], ['id', 'q']]) expect(mocks.eq).toHaveBeenCalledWith(field, value);
   expect(mocks.single).toHaveBeenCalledOnce();
 });
+it('moves with a string key without rewriting the legacy numeric position', async () => {
+  mocks.single.mockResolvedValueOnce({ data: { id: 'q', created_at_sort: 25, order_key: 'a1V' }, error: null });
+
+  expect(await moveCitation('u', 'book', 'q', 'a1V')).toEqual({ createdAtSort: 25, orderKey: 'a1V' });
+  expect(mocks.update).toHaveBeenCalledWith({ order_key: 'a1V' });
+});
 it.each([NaN, Infinity, -Infinity])('rejects invalid position %s without a request', async value => {
   await expect(moveCitation('u', 'book', 'q', value)).rejects.toThrow('Invalid citation position');
   expect(mocks.from).not.toHaveBeenCalled();
@@ -23,9 +29,10 @@ it('propagates a failed scoped update instead of claiming the move succeeded', a
 });
 it('restores manual positions while keeping creation timestamps and legacy rows', async () => {
   const row = { text: 'Original', page: '50', page_sort: 50, created_at: '2026-09-01T00:00:00Z', book: { id: 'book', title: 'Book' }, notes: [] };
-  mocks.order.mockResolvedValue({ data: [{ ...row, id: 'moved', created_at_sort: 25 }, { ...row, id: 'legacy' }], error: null });
+  mocks.order.mockResolvedValue({ data: [{ ...row, id: 'moved', created_at_sort: 25, order_key: 'a1V' }, { ...row, id: 'legacy' }], error: null });
   const result = await fetchCitations();
   expect(result[0].createdAtSort).toBe(25);
+  expect(result[0].orderKey).toBe('a1V');
   expect(result[0].createdAt).toBe(Date.parse(row.created_at));
   expect(result[0].page).toBe('50');
   expect(result[1].createdAtSort).toBeUndefined();

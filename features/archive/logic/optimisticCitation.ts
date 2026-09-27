@@ -42,6 +42,7 @@ export const createOptimisticCitation = (
     highlights: data.highlights,
     createdAt: now,
     ...(data.createdAtSort === undefined ? {} : { createdAtSort: data.createdAtSort }),
+    ...(data.orderKey === undefined ? {} : { orderKey: data.orderKey }),
     saveStatus: 'saving',
   };
 };
@@ -70,10 +71,12 @@ export const createOptimisticCitationEditPatch = (
     patch.authorSortIndex = undefined;
     patch.bookId = undefined;
     patch.createdAtSort = undefined;
+    patch.orderKey = undefined;
     patch.bookSortIndex = undefined;
   } else if (didBookChange) {
     patch.bookId = undefined;
     patch.createdAtSort = undefined;
+    patch.orderKey = undefined;
     patch.bookSortIndex = undefined;
   }
 
@@ -102,6 +105,7 @@ export const reconcilePersistedCitationSource = (
           author: currentOptimistic.author,
           authorSortIndex: currentOptimistic.authorSortIndex,
           isSelf: currentOptimistic.isSelf,
+          orderKey: currentOptimistic.orderKey,
         }
       : {}),
     ...(didBookChange
@@ -109,13 +113,16 @@ export const reconcilePersistedCitationSource = (
           bookId: currentOptimistic.bookId,
           book: currentOptimistic.book,
           bookSortIndex: currentOptimistic.bookSortIndex,
+          orderKey: currentOptimistic.orderKey,
         }
       : {}),
   };
 };
 
 export const createRetryCitationInput = (citation: Citation): AddCitationInput => ({
+  createdAt: citation.createdAt,
   ...(citation.createdAtSort === undefined ? {} : { createdAtSort: citation.createdAtSort }),
+  ...(citation.orderKey === undefined ? {} : { orderKey: citation.orderKey }),
   id: citation.id,
   kind: 'sentence',
   text: citation.text,

@@ -7,6 +7,17 @@ const mockChapterBlocksSelect = vi.fn(() => chapterBlocksQuery);
 const mockChapterBlocksEq = vi.fn(() => chapterBlocksQuery);
 const mockChapterBlocksDeleteEq = vi.fn();
 const mockCitationsSingle = vi.fn();
+const mockCitationsMaybeSingle = vi.fn();
+const mockCitationsBulkEq = vi.fn();
+const mockCitationsReadIn = vi.fn(() => ({ eq: mockCitationsBulkEq }));
+const mockCitationsReadEq = vi.fn(() => citationsReadQuery);
+const mockCitationsReadSelect = vi.fn(() => citationsReadQuery);
+const citationsReadQuery = {
+  select: mockCitationsReadSelect,
+  eq: mockCitationsReadEq,
+  maybeSingle: mockCitationsMaybeSingle,
+  in: mockCitationsReadIn,
+};
 const mockCitationsSelect = vi.fn(() => ({ single: mockCitationsSingle }));
 const mockCitationsInsert = vi.fn(() => ({ select: mockCitationsSelect }));
 const mockCitationsUpsert = vi.fn(() => ({ select: mockCitationsSelect }));
@@ -106,7 +117,7 @@ const mockChapterBlocksFrom = vi.fn((table: string) => {
   }
 
   if (table === 'citations') {
-    return { insert: mockCitationsInsert, upsert: mockCitationsUpsert, delete: mockCitationsDelete };
+    return { ...citationsReadQuery, insert: mockCitationsInsert, upsert: mockCitationsUpsert, delete: mockCitationsDelete };
   }
 
   return {};
@@ -126,6 +137,7 @@ vi.mock('./supabase', () => ({
 }));
 
 import { api, PROFILE_AVATAR_BUCKET } from './api';
+import { legacyOrderKey } from './bookOrder';
 
 beforeEach(() => {
   mockGetSession.mockResolvedValue({
@@ -216,6 +228,7 @@ describe('api.createChapterBlock', () => {
         label: '3장',
         page_sort: 336,
         created_at_sort: 1700.5,
+        order_key: 'a1V',
         created_at: '2026-04-07T10:00:00.000Z',
       },
       error: null,
@@ -228,6 +241,7 @@ describe('api.createChapterBlock', () => {
       label: '3장',
       pageSort: 336,
       createdAtSort: 1700.5,
+      orderKey: 'a1V',
     });
 
     expect(mockChapterBlocksFrom).toHaveBeenCalledWith('chapter_blocks');
@@ -236,6 +250,7 @@ describe('api.createChapterBlock', () => {
       label: '3장',
       page_sort: 336,
       created_at_sort: 1700.5,
+      order_key: 'a1V',
       user_id: 'user-1',
     });
     expect(block).toMatchObject({
@@ -244,6 +259,7 @@ describe('api.createChapterBlock', () => {
       label: '3장',
       pageSort: 336,
       createdAtSort: 1700.5,
+      orderKey: 'a1V',
     });
   });
 });
@@ -277,6 +293,7 @@ describe('api.addCitation', () => {
         text: '고독',
         page: null,
         page_sort: null,
+        order_key: 'a1V',
         highlights: [{ id: 'hl-1', start: 0, end: 1, color: 'yellow' }],
         created_at: '2026-07-18T06:00:00.000Z',
         author: { id: 'author-1', name: 'Author A', sort_index: 1, is_self: false },
@@ -284,6 +301,7 @@ describe('api.addCitation', () => {
       },
       error: null,
     });
+    mockCitationsMaybeSingle.mockResolvedValue({ data: null, error: null });
   });
 
   it('rejects invalid insertion positions before writes', async () => {
@@ -304,12 +322,14 @@ describe('api.addCitation', () => {
       book: 'Book A',
       page: '77',
       tags: [],
+      orderKey: 'a1V',
       highlights: [{ id: 'hl-1', start: 0, end: 1, color: 'yellow' }],
     });
 
     expect(mockCitationsUpsert).toHaveBeenCalledWith({
       id: citationId,
       created_at_sort: null,
+      order_key: 'a1V',
       kind: 'sentence',
       text: '고독',
       book_id: 'book-1',
@@ -337,6 +357,7 @@ describe('api.addCitation', () => {
       page: '12',
       tags: [],
       highlights: [],
+      orderKey: 'a1V',
     });
 
     expect(mockBooksEq).toHaveBeenCalledWith('id', 'book-1');
@@ -345,6 +366,111 @@ describe('api.addCitation', () => {
       author_id: 'author-1',
     }));
     expect(mockProfileSingle).not.toHaveBeenCalled();
+  });
+
+  it('keeps an existing retry key and maps a legacy draft position when needed', async () => {
+    mockCitationsMaybeSingle.mockResolvedValueOnce({
+      data: {
+        book: { id: 'book-1' }, order_key: 'a2V', created_at_sort: 25,
+        created_at: '2026-07-18T06:00:00.000Z',
+      },
+      error: null,
+    });
+    mockCitationsSingle.mockResolvedValueOnce({
+      data: {
+        id: 'retry-1', text: 'Retry', page: null, page_sort: null, created_at_sort: 20,
+        order_key: 'a2V', created_at: '2026-07-18T06:00:00.000Z', highlights: [],
+        author: { id: 'author-1', name: 'Canonical Author', sort_index: 1, is_self: false },
+        book: { id: 'book-1', title: 'Canonical Book', sort_index: 2 },
+      },
+      error: null,
+    });
+
+    await api.addCitation('user-1', {
+      id: 'retry-1', kind: 'sentence', text: 'Retry', author: 'stale', book: 'stale',
+      bookId: 'book-1', tags: [], orderKey: 'a1V',
+    });
+    expect(mockCitationsUpsert).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        id: 'retry-1', order_key: 'a2V', created_at_sort: 25,
+        created_at: '2026-07-18T06:00:00.000Z',
+      }),
+      { onConflict: 'id' },
+    );
+
+    mockCitationsSingle.mockResolvedValueOnce({
+      data: {
+        id: 'legacy-1', text: 'Legacy', page: null, page_sort: null, created_at_sort: 20,
+        order_key: legacyOrderKey(20), created_at: '2026-07-18T06:00:00.000Z', highlights: [],
+        author: { id: 'author-1', name: 'Canonical Author', sort_index: 1, is_self: false },
+        book: { id: 'book-1', title: 'Canonical Book', sort_index: 2 },
+      },
+      error: null,
+    });
+    await api.addCitation('user-1', {
+      kind: 'sentence', text: 'Legacy', author: 'stale', book: 'stale',
+      bookId: 'book-1', createdAtSort: 20, tags: [],
+    });
+    expect(mockCitationsInsert).toHaveBeenLastCalledWith(
+      expect.objectContaining({ order_key: legacyOrderKey(20), created_at_sort: 20 }),
+    );
+  });
+});
+
+describe('api.bulkUpdateCitationSource', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockProfileSingle.mockResolvedValue({ data: { username: 'Me' }, error: null });
+    mockAuthorsMaybeSingle.mockResolvedValue({
+      data: { id: 'author-1', name: 'Author A', sort_index: 1, is_self: false },
+      error: null,
+    });
+    mockBooksMaybeSingle.mockResolvedValue({ data: { id: 'book-1', sort_index: 2 }, error: null });
+    mockCitationsBulkEq.mockResolvedValue({
+      data: [
+        { id: 'second', book_id: 'book-1', order_key: 'a2V', created_at_sort: 20, created_at: '2026-01-02T00:00:00Z' },
+        { id: 'first', book_id: 'book-1', order_key: 'a1V', created_at_sort: 10, created_at: '2026-01-01T00:00:00Z' },
+      ],
+      error: null,
+    });
+  });
+
+  it('updates all selected sources atomically and returns each accepted key', async () => {
+    mockRpc.mockResolvedValue({
+      data: [{ id: 'first', order_key: 'a1V' }, { id: 'second', order_key: 'a2V' }],
+      error: null,
+    });
+
+    const result = await api.bulkUpdateCitationSource('user-1', ['second', 'first'], {
+      author: 'Author A', book: 'Book A',
+    });
+
+    expect(mockRpc).toHaveBeenCalledWith('bulk_update_citation_source', {
+      expected_user_id: 'user-1',
+      citation_ids: ['first', 'second'],
+      destination_author_id: 'author-1',
+      destination_book_id: 'book-1',
+      destination_order_keys: { first: 'a1V', second: 'a2V' },
+      expected_positions: {
+        first: { book_id: 'book-1', order_key: 'a1V' },
+        second: { book_id: 'book-1', order_key: 'a2V' },
+      },
+    });
+    expect(result).toMatchObject({
+      updatedIds: ['first', 'second'],
+      updatedCount: 2,
+      orderKeys: { first: 'a1V', second: 'a2V' },
+    });
+  });
+
+  it('returns no partial result or blind retry when a concurrent move makes the snapshot stale', async () => {
+    const error = { code: '40001', message: 'Citation positions changed; reload' };
+    mockRpc.mockResolvedValue({ data: null, error });
+
+    await expect(api.bulkUpdateCitationSource('user-1', ['second', 'first'], {
+      author: 'Author A', book: 'Book A',
+    })).rejects.toBe(error);
+    expect(mockRpc).toHaveBeenCalledTimes(1);
   });
 });
 

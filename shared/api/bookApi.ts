@@ -16,6 +16,8 @@ export type RenameBookResult = {
     bookTitle: string;
     bookSortIndex: number | null;
     bookMemo: string;
+    citationOrderKeys?: Record<string, string>;
+    chapterOrderKeys?: Record<string, string>;
 };
 
 export async function fetchBooks(userId: string) {

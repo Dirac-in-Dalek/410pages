@@ -6,12 +6,12 @@ import { ChapterBlockInsertButton } from './ChapterBlockInsertButton';
 import { ChapterConnections } from './ChapterConnections';
 import { getChapterDepths, getChapterDropPlacement } from '../logic/chapterHierarchy';
 import {
-    getDescendingMidpoint,
     getInsertionPageSort,
-    getMidpoint,
     sortBookViewItems,
     toBookViewItems,
 } from '../../../lib/bookViewItems';
+import { bookPositionPatch, compareBookPositions, generateBookPosition, getBookPosition } from '../../../lib/bookOrder';
+import type { BookPosition } from '../../../types';
 import { buildCitationRenderRows } from '../logic/citationRenderRows';
 import type { CitationListProps } from '../contract/archiveUiContract';
 import { CitationCard } from './CitationCard';
@@ -57,11 +57,12 @@ export const CitationList: React.FC<CitationListProps> = ({
     onToggleAllPassageNotes,
     onPassageNoteCitationChange,
 }) => {
+    type PositionedItem = { pageSort?: number; createdAtSort: number; orderKey?: string };
     const localEditDrafts = useRef(new CitationEditDraftStore());
     const draftStore = editDrafts ?? localEditDrafts.current;
     const [draggedChapterId, setDraggedChapterId] = useState<string | null>(null);
     const [draggedCitationId, setDraggedCitationId] = useState<string | null>(null);
-    const [dropTarget, setDropTarget] = useState<{ id: string; after: boolean; position: number; depth: number; parentLabel?: string; citationParentId?: string } | null>(null);
+    const [dropTarget, setDropTarget] = useState<{ id: string; after: boolean; position: BookPosition; depth: number; parentLabel?: string; citationParentId?: string } | null>(null);
     const dragOrigin = useRef({ x: 0, depth: 0 });
     const [moveError, setMoveError] = useState(false);
     const movePending = useRef(false);
@@ -228,28 +229,27 @@ export const CitationList: React.FC<CitationListProps> = ({
         });
     }, [visibleSentenceIdsKey]);
 
-    const buildChapterBlockInput = (
-        leftItem?: { pageSort?: number; createdAtSort: number },
-        rightItem?: { pageSort?: number; createdAtSort: number }
-    ) => {
+    const buildChapterBlockInput = (leftItem?: PositionedItem, rightItem?: PositionedItem) => {
         if (!bookId) return null;
 
         const pageSort = getInsertionPageSort(leftItem?.pageSort, rightItem?.pageSort);
-        const createdAtSort =
-            currentSortField === 'date' && direction === 'asc'
-                ? getMidpoint(leftItem?.createdAtSort, rightItem?.createdAtSort)
-                : getDescendingMidpoint(leftItem?.createdAtSort, rightItem?.createdAtSort);
+        const leftPosition = leftItem ? getBookPosition(leftItem) : undefined;
+        const rightPosition = rightItem ? getBookPosition(rightItem) : undefined;
+        const position = currentSortField === 'date' && direction === 'asc'
+            ? generateBookPosition(leftPosition, rightPosition)
+            : generateBookPosition(rightPosition, leftPosition);
 
         return {
             bookId,
             pageSort,
-            createdAtSort: createdAtSort ?? Date.now(),
+            createdAtSort: Date.now(),
+            ...bookPositionPatch(position),
         };
     };
 
     const handleCreateChapterBlock = async (
-        leftItem?: { pageSort?: number; createdAtSort: number },
-        rightItem?: { pageSort?: number; createdAtSort: number },
+        leftItem?: PositionedItem,
+        rightItem?: PositionedItem,
         label?: string,
         depth?: number
     ) => {
@@ -285,16 +285,17 @@ export const CitationList: React.FC<CitationListProps> = ({
         const targetIndex = rows.findIndex(row => row.id === boundaryId);
         if (targetIndex < 0) return null;
         const insertion = targetIndex + (after ? 1 : 0);
-        const left = rows[insertion - 1]?.createdAtSort;
-        const right = rows[insertion]?.createdAtSort;
-        const position = getMidpoint(left, right);
-        // Never reorder citations to make room for a chapter.
-        return position != null && Number.isFinite(position) && (left == null || position > left) && (right == null || position < right) ? position : null;
+        const left = rows[insertion - 1];
+        const right = rows[insertion];
+        return generateBookPosition(
+            left ? getBookPosition(left) : undefined,
+            right ? getBookPosition(right) : undefined,
+        );
     };
 
-    const moveChapter = async (id: string, targetId: string, after: boolean, depth?: number) => {
+    const moveChapter = async (id: string, targetId: string, after: boolean, depth?: number, previewPosition?: BookPosition) => {
         if (!bookId || !onMoveChapterBlock || chapterActionsDisabled || movePending.current) return;
-        const position = getMovePosition(id, targetId, after);
+        const position = previewPosition ?? getMovePosition(id, targetId, after);
         if (position == null) { setMoveError(true); return; }
         movePending.current = true;
         setMoveError(false);
@@ -305,8 +306,8 @@ export const CitationList: React.FC<CitationListProps> = ({
     const citationDropTarget = (citationId: string, targetId: string, after: boolean) => {
         const position = getMovePosition(citationId, targetId, after, 'citation');
         if (position == null) return null;
-        const parent = [...chapterBlocks].filter(c => c.bookId === bookId && c.createdAtSort < position)
-            .sort((a, b) => b.createdAtSort - a.createdAtSort)[0];
+        const parent = [...chapterBlocks].filter(c => c.bookId === bookId && compareBookPositions(getBookPosition(c), position) < 0)
+            .sort((a, b) => compareBookPositions(getBookPosition(b), getBookPosition(a)))[0];
         return { id: targetId, after, position, depth: parent ? chapterDepths.get(parent.id) ?? 0 : 0, parentLabel: parent?.label, citationParentId: parent?.id };
     };
     const startCitationDrag = (event: React.DragEvent, citation: typeof citations[number]) => {
@@ -331,12 +332,10 @@ export const CitationList: React.FC<CitationListProps> = ({
     };
     const moveCitationTo = async (id: string, target: NonNullable<typeof dropTarget>) => {
         if (!bookId || !onMoveCitation || chapterActionsDisabled || movePending.current) return;
-        const position = getMovePosition(id, target.id, target.after, 'citation');
-        if (position == null) { setMoveError(true); return; }
         movePending.current = true;
         setMoveError(false);
         try {
-            if (await onMoveCitation(bookId, id, position) === false) setMoveError(true);
+            if (await onMoveCitation(bookId, id, target.position) === false) setMoveError(true);
             else if (target.citationParentId && latestCollapsedIds.current?.has(target.citationParentId)) onToggleDivider?.(target.citationParentId);
         } catch { setMoveError(true); }
         finally { movePending.current = false; }
@@ -375,11 +374,11 @@ export const CitationList: React.FC<CitationListProps> = ({
     }
     if (insertionPreview?.chapterMode) {
         projectedChapters.push({ id: 'book-insertion-preview', bookId: bookId!, label: '', createdAt: 0,
-            createdAtSort: insertionPreview.position, depth: insertionPreview.depth });
+            createdAtSort: Date.now(), ...bookPositionPatch(insertionPreview.position), depth: insertionPreview.depth });
     }
     const displayChapterDepths = getChapterDepths(projectedChapters);
     const previewChapters = dropTarget && draggedChapterId ? projectedChapters.map(block => block.id === draggedChapterId
-        ? { ...block, createdAtSort: dropTarget.position, depth: dropTarget.depth } : block) : projectedChapters;
+        ? { ...block, ...bookPositionPatch(dropTarget.position), depth: dropTarget.depth } : block) : projectedChapters;
     const previewDepths = getChapterDepths(previewChapters);
     const citationOwners = new Map<string, { id?: string; depth: number }>();
     let owner: { id?: string; depth: number } = { depth: 0 };
@@ -392,7 +391,7 @@ export const CitationList: React.FC<CitationListProps> = ({
         event.preventDefault();
         event.stopPropagation();
         if (draggedCitationId) void moveCitationTo(draggedCitationId, target);
-        else if (draggedChapterId) void moveChapter(draggedChapterId, target.id, target.after, target.depth);
+        else if (draggedChapterId) void moveChapter(draggedChapterId, target.id, target.after, target.depth, target.position);
         setDraggedChapterId(null); setDraggedCitationId(null); setDropTarget(null);
     };
     const insertionMarker = insertionPreview && <div role="status" data-testid="book-insertion-preview"
@@ -404,7 +403,7 @@ export const CitationList: React.FC<CitationListProps> = ({
         <span data-chapter-anchor className="chapter-control chapter-fold" aria-hidden="true" />
         <span>{insertionPreview.label}</span>
     </div>;
-    const markerBeforeId = insertionPreview ? renderRows.find(row => !hiddenRowIds.has(row.id) && row.createdAtSort > insertionPreview.position)?.id : undefined;
+    const markerBeforeId = insertionPreview ? renderRows.find(row => !hiddenRowIds.has(row.id) && compareBookPositions(getBookPosition(row), insertionPreview.position) > 0)?.id : undefined;
 
     const dropIndicator = dropTarget && <div data-chapter-node={draggedCitationId ? undefined : 'chapter-drop-preview'} data-citation-drop={draggedCitationId ? true : undefined} data-chapter-depth={dropTarget.depth}
         style={{ '--chapter-depth': dropTarget.depth } as React.CSSProperties}

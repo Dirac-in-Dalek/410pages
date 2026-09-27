@@ -24,6 +24,8 @@ type BookMergeInfo = {
     toBookTitle: string;
     toBookSortIndex: number | null;
     toBookMemo: string;
+    citationOrderKeys?: Record<string, string>;
+    chapterOrderKeys?: Record<string, string>;
 };
 
 type RenameAuthorResult = {

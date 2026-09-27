@@ -1,5 +1,5 @@
 import { CitationEditDraftStore } from '../logic/citationEditDrafts';
-import type { AddCitationInput, ChapterBlock, Citation, CreateChapterBlockInput, Project } from '../../../types';
+import type { AddCitationInput, BookPosition, ChapterBlock, Citation, CreateChapterBlockInput, Project } from '../../../types';
 
 export interface ArchiveHeaderProps {
     compactBookHeader?: boolean;
@@ -21,7 +21,7 @@ export interface ArchiveHeaderProps {
 
 export interface CitationListProps {
     onSelectInsertion?: (afterId: string | null, depth: number) => void;
-    insertionPreview?: { position: number; depth: number; chapterMode: boolean; label: string };
+    insertionPreview?: { position: BookPosition; depth: number; chapterMode: boolean; label: string };
 
     editDrafts?: CitationEditDraftStore;
     citations: Citation[];
@@ -48,8 +48,8 @@ export interface CitationListProps {
     dateDirection?: 'asc' | 'desc';
     pageDirection?: 'asc' | 'desc';
     onCreateChapterBlock?: (input: CreateChapterBlockInput) => Promise<unknown> | unknown;
-    onMoveCitation?: (bookId: string, id: string, createdAtSort: number) => Promise<boolean> | boolean;
-  onMoveChapterBlock?: (bookId: string, id: string, createdAtSort: number, depth?: number) => Promise<boolean> | boolean;
+    onMoveCitation?: (bookId: string, id: string, position: BookPosition) => Promise<boolean> | boolean;
+    onMoveChapterBlock?: (bookId: string, id: string, position: BookPosition, depth?: number) => Promise<boolean> | boolean;
     onRenameChapterBlock?: (bookId: string, id: string, label: string, depth?: number) => Promise<boolean> | boolean;
     onDeleteChapterBlock?: (bookId: string, blockId: string) => Promise<unknown> | unknown;
     chapterActionsDisabled?: boolean;

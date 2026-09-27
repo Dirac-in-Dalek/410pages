@@ -1,4 +1,5 @@
 import type { BookViewItem, ChapterBlock, Citation } from '../types';
+import { compareBookPositions, getBookPosition } from './bookOrder';
 
 const getEffectiveCitationPages = (citations: Citation[]) => {
   const explicitPages = new Map<string, number | undefined>();
@@ -35,6 +36,7 @@ export const toBookViewItems = (
       citation,
       pageSort: effectivePages.get(citation.id),
       createdAtSort: citation.createdAtSort ?? citation.createdAt,
+      orderKey: citation.orderKey,
     })),
     ...chapterBlocks.map((block) => ({
       type: 'chapter_block' as const,
@@ -42,6 +44,7 @@ export const toBookViewItems = (
       block,
       pageSort: block.pageSort,
       createdAtSort: block.createdAtSort,
+      orderKey: block.orderKey,
     })),
   ];
 };
@@ -52,17 +55,19 @@ export const sortBookViewItems = (
   direction: 'asc' | 'desc',
 ) => {
   const factor = direction === 'asc' ? 1 : -1;
+  const comparePosition = (a: BookViewItem, b: BookViewItem) =>
+    compareBookPositions(getBookPosition(a), getBookPosition(b));
   return [...items].sort((a, b) => {
     if (sortField === 'date') {
-      return (a.createdAtSort - b.createdAtSort) * factor;
+      return comparePosition(a, b) * factor;
     }
     if (a.pageSort == null && b.pageSort == null) {
-      return b.createdAtSort - a.createdAtSort;
+      return comparePosition(b, a);
     }
     if (a.pageSort == null) return 1;
     if (b.pageSort == null) return -1;
     if (a.pageSort !== b.pageSort) return (a.pageSort - b.pageSort) * factor;
-    return b.createdAtSort - a.createdAtSort;
+    return comparePosition(b, a);
   });
 };
 

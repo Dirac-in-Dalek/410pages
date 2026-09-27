@@ -5,12 +5,12 @@ const mocks = vi.hoisted(() => ({ from: vi.fn(), insert: vi.fn(), update: vi.fn(
 vi.mock('../../lib/supabase', () => ({ getSupabaseClient: () => ({ from: mocks.from }) }));
 beforeEach(() => {
   for (const fn of [mocks.from, mocks.insert, mocks.update, mocks.select, mocks.eq]) fn.mockReturnValue(mocks);
-  mocks.single.mockResolvedValue({ data: { id: 'c', book_id: 'b', label: '제목', depth: 1, page_sort: null, created_at_sort: 10, created_at: '2026-09-11T00:00:00Z' }, error: null });
+  mocks.single.mockResolvedValue({ data: { id: 'c', book_id: 'b', label: '제목', depth: 1, page_sort: null, created_at_sort: 10, order_key: 'a1V', created_at: '2026-09-11T00:00:00Z' }, error: null });
 });
 
 it('stores the level with the title and preserves account/book scope', async () => {
-  expect((await createChapterBlock('u', { bookId: 'b', label: '제목', depth: 1, createdAtSort: 10 })).depth).toBe(1);
-  expect(mocks.insert).toHaveBeenCalledWith(expect.objectContaining({ user_id: 'u', book_id: 'b', depth: 1 }));
+  expect((await createChapterBlock('u', { bookId: 'b', label: '제목', depth: 1, createdAtSort: 10, orderKey: 'a1V' })).depth).toBe(1);
+  expect(mocks.insert).toHaveBeenCalledWith(expect.objectContaining({ user_id: 'u', book_id: 'b', depth: 1, order_key: 'a1V' }));
   await renameChapterBlock('u', 'b', 'c', '  제목  ', 0);
   expect(mocks.update).toHaveBeenLastCalledWith({ label: '제목', depth: 0 });
   expect(mocks.eq).toHaveBeenCalledWith('user_id', 'u');
@@ -35,6 +35,13 @@ it('saves drop order and depth together without rewriting the title', async () =
   expect(mocks.update).toHaveBeenLastCalledWith({ created_at_sort: 30, depth: 0 });
   await moveChapterBlock('u', 'b', 'c', 40);
   expect(mocks.update).toHaveBeenLastCalledWith({ created_at_sort: 40 });
+});
+
+it('returns the server accepted string key after a move', async () => {
+  const moved = await moveChapterBlock('u', 'b', 'c', 'a2V', 2);
+
+  expect(mocks.update).toHaveBeenCalledWith({ order_key: 'a2V', depth: 2 });
+  expect(moved.orderKey).toBe('a1V');
 });
 
 it.each([-1, 1.5, NaN, Infinity])('rejects invalid drag depth %s before changing the order', async depth => {

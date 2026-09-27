@@ -1,5 +1,5 @@
 import type { BookViewItem } from '../../../types';
-import { getMidpoint } from '../../../lib/bookViewItems';
+import { compareBookPositions, generateBookPosition, getBookPosition } from '../../../lib/bookOrder';
 import { getChapterDepths } from './chapterHierarchy';
 
 // null is the beginning; undefined means the current end of the full book.
@@ -11,8 +11,16 @@ export function resolveBookInsertion(items: BookViewItem[], insertion: BookInser
   if (insertion.afterId != null && index === 0) return null;
   const left = items[index - 1];
   const right = items[index];
-  const position = getMidpoint(left?.createdAtSort, right?.createdAtSort) ?? Date.now();
-  if (!Number.isFinite(position) || (left && position <= left.createdAtSort) || (right && position >= right.createdAtSort)) return null;
+  const leftPosition = left ? getBookPosition(left) : undefined;
+  const rightPosition = right ? getBookPosition(right) : undefined;
+  if (leftPosition !== undefined && rightPosition !== undefined
+      && compareBookPositions(leftPosition, rightPosition) >= 0) return null;
+  let position: string;
+  try {
+    position = generateBookPosition(leftPosition, rightPosition);
+  } catch {
+    return null;
+  }
   const chapters = items.filter(item => item.type === 'chapter_block').map(item => item.block);
   const depths = getChapterDepths(chapters);
   const preceding = items.slice(0, index).filter(item => item.type === 'chapter_block').map(item => item.block);

@@ -12,6 +12,7 @@ export interface Highlight {
 }
 
 export type CitationKind = 'sentence';
+export type BookPosition = number | string;
 
 export interface Citation {
   id: string;
@@ -32,6 +33,7 @@ export interface Citation {
   createdAt: number;
   /** Manual position in the book body; original creation time is preserved. */
   createdAtSort?: number;
+  orderKey?: string;
   saveStatus?: 'saving' | 'failed';
   /** Runtime-only link used to move UI state from a temporary citation id after persistence. */
   optimisticOriginId?: string;
@@ -40,7 +42,7 @@ export interface Citation {
 export type AddCitationInput = Omit<
   Citation,
   'id' | 'createdAt' | 'notes' | 'saveStatus' | 'optimisticOriginId'
-> & { id?: string };
+> & { id?: string; createdAt?: number };
 export type AddCitationResult = { ok: true; citationId: string } | { ok: false; error: unknown };
 export type BulkSourceUpdateResult = { ok: true; updatedCount: number } | { ok: false; error: unknown };
 
@@ -113,12 +115,13 @@ export interface ChapterBlock {
   depth?: number;
   pageSort?: number;
   createdAtSort: number;
+  orderKey?: string;
   createdAt: number;
 }
 
 export type BookViewItem =
-  | { type: 'citation'; id: string; citation: Citation; pageSort?: number; createdAtSort: number }
-  | { type: 'chapter_block'; id: string; block: ChapterBlock; pageSort?: number; createdAtSort: number };
+  | { type: 'citation'; id: string; citation: Citation; pageSort?: number; createdAtSort: number; orderKey?: string }
+  | { type: 'chapter_block'; id: string; block: ChapterBlock; pageSort?: number; createdAtSort: number; orderKey?: string };
 
 export interface CreateChapterBlockInput {
   bookId: string;
@@ -126,6 +129,7 @@ export interface CreateChapterBlockInput {
   depth?: number;
   pageSort?: number;
   createdAtSort: number;
+  orderKey?: string;
 }
 
 export interface CitationSourceInput {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { changeChapterDepth, getChapterDepths, getChapterDropPlacement, getChapterLevelDirection } from './chapterHierarchy';
+import { generateBookPosition, legacyOrderKey } from '../../../lib/bookOrder';
 
 describe('chapter levels', () => {
   it('derives levels from saved order, including moves that leave missing ancestors', () => {
@@ -43,4 +44,20 @@ it('projects siblings, grandchildren and root drops using the destination order'
   expect(getChapterDropPlacement(chapters, 'moved', 2.5, 100).depth).toBe(1);
   // Removing the old parent changes the available levels before the new position.
   expect(getChapterDropPlacement(chapters, 'two', 3.5, 2)).toEqual({ depth: 2, parent: chapters[2] });
+});
+
+it('keeps deeply nested ownership when chapters mix legacy and string positions', () => {
+  const root = { id: 'root', bookId: 'b', label: 'Root', depth: 0, createdAtSort: 10, createdAt: 0 };
+  const childKey = generateBookPosition(10, 20);
+  const child = { id: 'child', bookId: 'b', label: 'Child', depth: 1, createdAtSort: 999, orderKey: childKey, createdAt: 0 };
+  const grandchildKey = generateBookPosition(childKey, 20);
+  const grandchild = { id: 'grandchild', bookId: 'b', label: 'Grandchild', depth: 2, createdAtSort: -999, orderKey: grandchildKey, createdAt: 0 };
+  const next = { id: 'next', bookId: 'b', label: 'Next', depth: 0, createdAtSort: 20, orderKey: legacyOrderKey(20), createdAt: 0 };
+  const chapters = [next, grandchild, root, child];
+
+  expect([...getChapterDepths(chapters)]).toEqual([
+    ['root', 0], ['child', 1], ['grandchild', 2], ['next', 0],
+  ]);
+  const position = generateBookPosition(grandchildKey, legacyOrderKey(20));
+  expect(getChapterDropPlacement(chapters, 'moving', position, 3)).toEqual({ depth: 3, parent: grandchild });
 });

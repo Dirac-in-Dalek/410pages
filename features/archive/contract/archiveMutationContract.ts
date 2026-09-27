@@ -8,6 +8,7 @@ import type {
   AuthorSource,
   BookDeletePreview,
   BookSource,
+  BookPosition,
   BulkSourceUpdateResult,
   ChapterBlock,
   Citation,
@@ -33,6 +34,8 @@ export type RenameAuthorBookMerge = {
   toBookTitle: string;
   toBookSortIndex: number | null;
   toBookMemo: string;
+  citationOrderKeys?: Record<string, string>;
+  chapterOrderKeys?: Record<string, string>;
 };
 
 export type RenameAuthorMutationResult = {
@@ -53,6 +56,8 @@ export type RenameBookMutationResult = {
   bookTitle: string;
   bookSortIndex: number | null;
   bookMemo: string;
+  citationOrderKeys?: Record<string, string>;
+  chapterOrderKeys?: Record<string, string>;
 };
 
 export type ArchiveQueryController = {
@@ -104,8 +109,8 @@ export type ArchiveMutationController = {
   handleRenameAuthor: (authorId: string, name: string) => Promise<RenameAuthorMutationResult | undefined>;
   handleRenameBook: (bookId: string, name: string) => Promise<RenameBookMutationResult | undefined>;
   handleUpdateBookMemo: (bookId: string, memo: string) => Promise<boolean>;
-  handleMoveCitation: (bookId: string, id: string, createdAtSort: number) => Promise<boolean>;
-  handleMoveChapterBlock: (bookId: string, id: string, createdAtSort: number, depth?: number) => Promise<boolean>;
+  handleMoveCitation: (bookId: string, id: string, position: BookPosition) => Promise<boolean>;
+  handleMoveChapterBlock: (bookId: string, id: string, position: BookPosition, depth?: number) => Promise<boolean>;
   handleRenameChapterBlock: (bookId: string, id: string, label: string, depth?: number) => Promise<boolean>;
   handleCreateChapterBlock: (input: CreateChapterBlockInput) => Promise<ChapterBlock | false>;
   handleDeleteChapterBlock: (bookId: string, blockId: string) => Promise<boolean>;

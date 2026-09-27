@@ -7,6 +7,7 @@ import {
   toBookViewItems,
 } from './bookViewItems';
 import type { Citation, ChapterBlock } from '../types';
+import { generateBookPosition, legacyOrderKey } from './bookOrder';
 
 const citation = (overrides: Partial<Citation> & Pick<Citation, 'id' | 'text' | 'author' | 'book'>): Citation => ({
   kind: 'sentence',
@@ -183,4 +184,27 @@ it('uses a citation book position without changing its original creation time or
   expect(items[1].createdAtSort).toBe(25);
   expect(citation.createdAt).toBe(1000);
   expect(citation.page).toBe('50');
+});
+
+it('propagates string positions and uses them for physical book order', () => {
+  const before = legacyOrderKey(10);
+  const between = generateBookPosition(before, 11);
+  const citations = [
+    citation({ id: 'legacy-right', text: 'Right', author: 'A', book: 'B', createdAt: 11 }),
+    citation({ id: 'keyed-middle', text: 'Middle', author: 'A', book: 'B', createdAt: 100, orderKey: between }),
+    citation({ id: 'legacy-left', text: 'Left', author: 'A', book: 'B', createdAt: 10 }),
+  ];
+  const items = toBookViewItems(citations, []);
+  expect(items.find(item => item.id === 'keyed-middle')?.orderKey).toBe(between);
+  expect(sortBookViewItems(items, 'date', 'asc').map(item => item.id)).toEqual([
+    'legacy-left', 'keyed-middle', 'legacy-right',
+  ]);
+});
+
+it('ignores malformed stored keys instead of disturbing legacy order', () => {
+  const items = toBookViewItems([
+    citation({ id: 'later', text: 'Later', author: 'A', book: 'B', createdAt: 2, orderKey: 'invalid' }),
+    citation({ id: 'earlier', text: 'Earlier', author: 'A', book: 'B', createdAt: 1 }),
+  ], []);
+  expect(sortBookViewItems(items, 'date', 'asc').map(item => item.id)).toEqual(['earlier', 'later']);
 });

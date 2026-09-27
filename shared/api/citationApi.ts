@@ -1,6 +1,8 @@
 import { getSupabaseClient } from '../../lib/supabase';
-import type { AddCitationInput, Citation, CitationSourceInput, Note } from '../../types';
+import { compareBookPositions, generateBookPosition, getBookPosition, legacyOrderKey } from '../../lib/bookOrder';
+import type { AddCitationInput, BookPosition, Citation, CitationSourceInput, Note } from '../../types';
 import { requireActiveUser, getNextSortIndex, BookSourceRow, mapBookSourceRow } from './libraryApiUtils';
+import { createAppendBookOrderKey, isBookOrderConflict, mutateWithBookOrderRetry, validateBookPosition } from './bookOrderApi';
 
 const extractPageSort = (page: string | undefined): number | undefined => {
     if (!page) return undefined;
@@ -16,6 +18,46 @@ type ResolvedCitationSource = {
     bookId: string | null;
     bookTitle: string;
     bookSortIndex: number | null;
+};
+
+const mapStoredCitation = (citation: any, resolvedSource?: ResolvedCitationSource): Citation => ({
+    id: citation.id,
+    kind: 'sentence',
+    text: citation.text,
+    authorId: citation.author?.id || resolvedSource?.authorId,
+    author: citation.author?.name || resolvedSource?.authorName || '',
+    authorSortIndex: citation.author?.sort_index ?? resolvedSource?.authorSortIndex ?? null,
+    isSelf: citation.author?.is_self ?? resolvedSource?.isSelf ?? false,
+    bookId: citation.book?.id || resolvedSource?.bookId || undefined,
+    book: citation.book?.title || resolvedSource?.bookTitle || '',
+    bookSortIndex: citation.book?.sort_index ?? resolvedSource?.bookSortIndex ?? null,
+    page: citation.page || undefined,
+    pageSort: citation.page_sort ?? undefined,
+    createdAt: new Date(citation.created_at).getTime(),
+    ...(citation.created_at_sort == null ? {} : { createdAtSort: citation.created_at_sort }),
+    ...(citation.order_key == null ? {} : { orderKey: citation.order_key }),
+    notes: (citation.notes || []).map((note: any) => ({
+        id: note.id,
+        content: note.content,
+        createdAt: new Date(note.created_at).getTime(),
+    })),
+    tags: [],
+    highlights: citation.highlights || [],
+});
+
+const fetchCitationById = async (userId: string, id: string) => {
+    const { data, error } = await getSupabaseClient().from('citations')
+        .select(`
+            *,
+            book:books!citations_book_id_fkey(id, title, sort_index),
+            author:authors!citations_author_id_fkey(id, name, is_self, sort_index),
+            notes(*)
+        `)
+        .eq('user_id', userId)
+        .eq('id', id)
+        .maybeSingle();
+    if (error) throw error;
+    return data;
 };
 
 const resolveCitationSource = async (
@@ -195,6 +237,7 @@ export async function fetchCitations() {
                 pageSort: c.page_sort || undefined,
                 createdAt: new Date(c.created_at).getTime(),
                 ...(c.created_at_sort == null ? {} : { createdAtSort: c.created_at_sort }),
+                ...(c.order_key == null ? {} : { orderKey: c.order_key }),
                 notes: (c.notes || []).map((n: any) => ({
                     id: n.id,
                     content: n.content,
@@ -208,6 +251,8 @@ export async function fetchCitations() {
 
 export async function addCitation(userId: string, data: AddCitationInput) {
         if (data.createdAtSort !== undefined && (!Number.isFinite(data.createdAtSort) || !data.bookId)) throw new Error('Invalid citation position');
+        if (data.createdAt !== undefined && !Number.isFinite(data.createdAt)) throw new Error('Invalid citation creation time');
+        if (data.orderKey !== undefined) validateBookPosition(data.orderKey, 'Invalid citation position');
         const resolvedSource = data.bookId
             ? await resolveCitationSourceByBookId(userId, data.bookId)
             : await resolveCitationSource(userId, {
@@ -215,12 +260,39 @@ export async function addCitation(userId: string, data: AddCitationInput) {
                 book: data.book || ''
             });
 
-        // 3. Insert Citation
-        // We explicitly provide author_id. Trigger handle_citation_defaults will kick in if we sent nulls,
-        // but we computed them for Book logic anyway.
-        const payload = {
+        let existingOrderKey: string | undefined;
+        let existingCreatedAtSort: number | null | undefined;
+        let existingCreatedAt: string | undefined;
+        if (data.id) {
+            const existing = await fetchCitationById(userId, data.id);
+            if (existing) {
+                existingCreatedAtSort = existing.created_at_sort ?? null;
+                existingCreatedAt = existing.created_at;
+                if (existing.book?.id === resolvedSource.bookId && typeof existing.order_key === 'string') {
+                    validateBookPosition(existing.order_key);
+                    existingOrderKey = existing.order_key;
+                }
+            }
+        }
+
+        if (!resolvedSource.bookId && data.orderKey !== undefined) throw new Error('Invalid citation position');
+        const initialOrderKey = resolvedSource.bookId
+            ? existingOrderKey
+                ?? data.orderKey
+                ?? (data.createdAtSort === undefined
+                    ? await createAppendBookOrderKey(userId, resolvedSource.bookId)
+                    : legacyOrderKey(data.createdAtSort))
+            : undefined;
+
+        const createPayload = (orderKey: string | null) => ({
                 ...(data.id ? { id: data.id } : {}),
-                created_at_sort: data.createdAtSort ?? null,
+                created_at_sort: existingCreatedAtSort !== undefined
+                    ? existingCreatedAtSort
+                    : data.createdAtSort ?? null,
+                ...(existingCreatedAt !== undefined
+                    ? { created_at: existingCreatedAt }
+                    : data.createdAt === undefined ? {} : { created_at: new Date(data.createdAt).toISOString() }),
+                order_key: orderKey,
                 kind: 'sentence',
                 text: data.text,
                 book_id: resolvedSource.bookId,
@@ -229,59 +301,55 @@ export async function addCitation(userId: string, data: AddCitationInput) {
                 page_sort: extractPageSort(data.page),
                 ...(data.highlights !== undefined ? { highlights: data.highlights } : {}),
                 user_id: userId
-            };
-        const citationWrite = getSupabaseClient().from('citations');
-        const { data: citation, error } = await (data.id
-            ? citationWrite.upsert(payload, { onConflict: 'id' })
-            : citationWrite.insert(payload))
-            .select(`
+            });
+        const write = (orderKey: string | null) => {
+            const citationWrite = getSupabaseClient().from('citations');
+            const mutation = data.id
+                ? citationWrite.upsert(createPayload(orderKey), { onConflict: 'id' })
+                : citationWrite.insert(createPayload(orderKey));
+            return mutation.select(`
                 *,
                 book:books!citations_book_id_fkey(id, title, sort_index),
                 author:authors!citations_author_id_fkey(id, name, is_self, sort_index)
             `)
             .single();
-
-        if (error) {
-            console.error('Supabase citation insert error:', error);
-            throw error;
-        }
-
-        const mapped: Citation = {
-            id: citation.id,
-            kind: 'sentence',
-            text: citation.text,
-            authorId: citation.author?.id || resolvedSource.authorId,
-            author: citation.author?.name || resolvedSource.authorName,
-            authorSortIndex: citation.author?.sort_index ?? resolvedSource.authorSortIndex,
-            isSelf: citation.author?.is_self ?? resolvedSource.isSelf,
-            bookId: citation.book?.id || resolvedSource.bookId || undefined,
-            book: citation.book?.title || resolvedSource.bookTitle,
-            bookSortIndex: citation.book?.sort_index ?? resolvedSource.bookSortIndex,
-            page: citation.page || undefined,
-            pageSort: citation.page_sort ?? undefined,
-            createdAt: new Date(citation.created_at).getTime(),
-            ...(citation.created_at_sort == null ? {} : { createdAtSort: citation.created_at_sort }),
-            notes: [],
-            tags: [],
-            highlights: citation.highlights || []
         };
-
-        return mapped;
+        let citation: any;
+        if (resolvedSource.bookId && initialOrderKey) {
+            citation = await mutateWithBookOrderRetry(userId, resolvedSource.bookId, initialOrderKey, write);
+        } else {
+            const { data: stored, error } = await write(null);
+            if (error) throw error;
+            citation = stored;
+        }
+        return mapStoredCitation(citation, resolvedSource);
     }
 
-export async function moveCitation(userId: string, bookId: string, id: string, createdAtSort: number) {
-    if (!Number.isFinite(createdAtSort)) throw new Error('Invalid citation position');
-    const { data, error } = await getSupabaseClient().from('citations')
-        .update({ created_at_sort: createdAtSort })
+export async function moveCitation(userId: string, bookId: string, id: string, position: BookPosition) {
+    validateBookPosition(position, 'Invalid citation position');
+    const mutate = (patch: { created_at_sort: number } | { order_key: string }) => getSupabaseClient().from('citations')
+        .update(patch)
         .eq('user_id', userId).eq('book_id', bookId).eq('id', id)
-        .select('id, created_at_sort').single();
-    if (error) throw error;
-    return { createdAtSort: data.created_at_sort } as Pick<Citation, 'createdAtSort'>;
+        .select('id, created_at_sort, order_key').single();
+    if (typeof position === 'number') {
+        const { data, error } = await mutate({ created_at_sort: position });
+        if (error) throw error;
+        return {
+            ...(data.created_at_sort == null ? {} : { createdAtSort: data.created_at_sort }),
+            ...(data.order_key == null ? {} : { orderKey: data.order_key }),
+        } as Pick<Citation, 'createdAtSort' | 'orderKey'>;
+    }
+    const data = await mutateWithBookOrderRetry(userId, bookId, position, (orderKey) => mutate({ order_key: orderKey }));
+    return {
+        ...(data.created_at_sort == null ? {} : { createdAtSort: data.created_at_sort }),
+        orderKey: data.order_key,
+    } as Pick<Citation, 'createdAtSort' | 'orderKey'>;
 }
 
 export async function updateCitation(userId: string, id: string, data: Partial<Citation>) {
         const localPatch: Partial<Citation> = {};
         const updateData: any = {};
+        let destinationBookId: string | null | undefined;
         if (data.text !== undefined) {
             updateData.text = data.text;
             localPatch.text = data.text;
@@ -302,7 +370,7 @@ export async function updateCitation(userId: string, id: string, data: Partial<C
                 .from('citations')
                 .select(`
                     author:authors!citations_author_id_fkey(name),
-                    book:books!citations_book_id_fkey(title)
+                    book:books!citations_book_id_fkey(id, title)
                 `)
                 .eq('id', id)
                 .eq('user_id', userId)
@@ -329,6 +397,13 @@ export async function updateCitation(userId: string, id: string, data: Partial<C
                 typeof currentBookRecord.title === 'string'
                     ? currentBookRecord.title
                     : '';
+            const currentBookId =
+                currentBookRecord &&
+                typeof currentBookRecord === 'object' &&
+                'id' in currentBookRecord &&
+                typeof currentBookRecord.id === 'string'
+                    ? currentBookRecord.id
+                    : null;
 
             const resolvedSource = await resolveCitationSource(userId, {
                 author: data.author ?? currentAuthorName,
@@ -337,6 +412,11 @@ export async function updateCitation(userId: string, id: string, data: Partial<C
 
             updateData.author_id = resolvedSource.authorId;
             updateData.book_id = resolvedSource.bookId;
+            if (currentBookId !== resolvedSource.bookId) {
+                destinationBookId = resolvedSource.bookId;
+                updateData.order_key = null;
+                localPatch.orderKey = undefined;
+            }
 
             localPatch.authorId = resolvedSource.authorId;
             localPatch.author = resolvedSource.authorName;
@@ -351,13 +431,25 @@ export async function updateCitation(userId: string, id: string, data: Partial<C
             return localPatch;
         }
 
-        const { error } = await getSupabaseClient()
-            .from('citations')
-            .update(updateData)
-            .eq('id', id)
-            .eq('user_id', userId);
-
-        if (error) throw error;
+        if (destinationBookId) {
+            const initialOrderKey = await createAppendBookOrderKey(userId, destinationBookId);
+            const stored = await mutateWithBookOrderRetry(userId, destinationBookId, initialOrderKey, (orderKey) =>
+                getSupabaseClient().from('citations')
+                    .update({ ...updateData, order_key: orderKey })
+                    .eq('id', id)
+                    .eq('user_id', userId)
+                    .select('id, order_key')
+                    .single()
+            );
+            localPatch.orderKey = stored.order_key ?? undefined;
+        } else {
+            const { error } = await getSupabaseClient()
+                .from('citations')
+                .update(updateData)
+                .eq('id', id)
+                .eq('user_id', userId);
+            if (error) throw error;
+        }
         return localPatch;
     }
 
@@ -366,27 +458,93 @@ export async function bulkUpdateCitationSource(userId: string, citationIds: stri
             return {
                 updatedIds: [] as string[],
                 updatedCount: 0,
-                patch: {} as Partial<Citation>
+                patch: {} as Partial<Citation>,
+                orderKeys: {} as Record<string, string | undefined>,
             };
         }
 
         const resolvedSource = await resolveCitationSource(userId, source);
-
-        const { data, error } = await getSupabaseClient()
+        const requestedIds = [...new Set(citationIds)];
+        const { data: currentRows, error: currentRowsError } = await getSupabaseClient()
             .from('citations')
-            .update({
-                author_id: resolvedSource.authorId,
-                book_id: resolvedSource.bookId
-            })
-            .in('id', citationIds)
-            .eq('user_id', userId)
-            .select('id');
-        if (error) throw error;
+            .select('id, book_id, order_key, created_at_sort, created_at')
+            .in('id', requestedIds)
+            .eq('user_id', userId);
+        if (currentRowsError) throw currentRowsError;
+        if ((currentRows || []).length !== requestedIds.length) {
+            throw new Error('Some citations could not be updated');
+        }
+        const orderedRows = [...(currentRows || [])].sort((left, right) => {
+            const leftBook = left.book_id ?? '';
+            const rightBook = right.book_id ?? '';
+            if (leftBook !== rightBook) return leftBook < rightBook ? -1 : 1;
+            const leftPosition = getBookPosition({
+                createdAtSort: left.created_at_sort ?? new Date(left.created_at).getTime(),
+                orderKey: left.order_key ?? undefined,
+            });
+            const rightPosition = getBookPosition({
+                createdAtSort: right.created_at_sort ?? new Date(right.created_at).getTime(),
+                orderKey: right.order_key ?? undefined,
+            });
+            const positionOrder = compareBookPositions(leftPosition, rightPosition);
+            return positionOrder || (left.id < right.id ? -1 : left.id > right.id ? 1 : 0);
+        });
 
-        const updatedIds = (data || []).map((item) => item.id as string);
+        const createOrderKeyMap = async () => {
+            const map: Record<string, string | null> = {};
+            if (!resolvedSource.bookId) {
+                for (const row of orderedRows) map[row.id] = null;
+                return map;
+            }
+            let appended: string | undefined;
+            for (const row of orderedRows) {
+                if (row.book_id === resolvedSource.bookId && typeof row.order_key === 'string') {
+                    try {
+                        validateBookPosition(row.order_key);
+                        map[row.id] = row.order_key;
+                        continue;
+                    } catch {
+                        // A stale invalid key is treated like a move and replaced below.
+                    }
+                }
+                appended = appended === undefined
+                    ? await createAppendBookOrderKey(userId, resolvedSource.bookId)
+                    : generateBookPosition(appended);
+                map[row.id] = appended;
+            }
+            return map;
+        };
+
+        let acceptedRows: Array<{ id: string; order_key: string | null }> | null = null;
+        let orderKeyMap = await createOrderKeyMap();
+        const expectedPositions = Object.fromEntries(orderedRows.map((row) => [row.id, {
+            book_id: row.book_id,
+            order_key: row.order_key,
+        }]));
+        for (let attempt = 0; attempt <= 3; attempt += 1) {
+            const { data, error } = await getSupabaseClient().rpc('bulk_update_citation_source', {
+                expected_user_id: userId,
+                citation_ids: orderedRows.map((row) => row.id),
+                destination_author_id: resolvedSource.authorId,
+                destination_book_id: resolvedSource.bookId,
+                destination_order_keys: orderKeyMap,
+                expected_positions: expectedPositions,
+            });
+            if (!error) {
+                acceptedRows = data || [];
+                break;
+            }
+            if (!isBookOrderConflict(error) || attempt === 3) throw error;
+            orderKeyMap = await createOrderKeyMap();
+        }
+        if (!acceptedRows) throw new Error('Bulk citation source update returned no result');
+
+        const updatedIds = acceptedRows.map((row) => row.id);
+        const orderKeys = Object.fromEntries(acceptedRows.map((row) => [row.id, row.order_key ?? undefined]));
         return {
             updatedIds,
             updatedCount: updatedIds.length,
+            orderKeys,
             patch: {
                 authorId: resolvedSource.authorId,
                 author: resolvedSource.authorName,

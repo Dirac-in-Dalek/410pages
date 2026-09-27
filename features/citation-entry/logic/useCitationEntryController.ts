@@ -70,8 +70,28 @@ export const useCitationEntryController = ({
     const textarea = textareaRef.current;
     if (!textarea) return;
 
-    textarea.style.height = 'auto';
-    textarea.style.height = `${resolveCitationEntryTextareaHeight(textarea.scrollHeight, values.text)}px`;
+    const resize = () => {
+      const scrollTop = textarea.scrollTop;
+      textarea.style.height = 'auto';
+      textarea.style.height = `${resolveCitationEntryTextareaHeight(textarea.scrollHeight, values.text)}px`;
+      textarea.scrollTop = scrollTop;
+    };
+
+    resize();
+
+    if (typeof ResizeObserver === 'undefined') return;
+
+    let width: number | undefined;
+    const observer = new ResizeObserver(([entry]) => {
+      const nextWidth = entry?.contentRect.width ?? textarea.getBoundingClientRect().width;
+      if (nextWidth === width) return;
+
+      width = nextWidth;
+      resize();
+    });
+    observer.observe(textarea);
+
+    return () => observer.disconnect();
   }, [values.text]);
 
   useEffect(() => {

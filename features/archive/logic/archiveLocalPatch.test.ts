@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import type { BookSource, Citation } from '../../../types';
+import type { BookSource, ChapterBlock, Citation } from '../../../types';
 import type { RenameAuthorMutationResult, RenameBookMutationResult } from '../contract/archiveMutationContract';
 import {
   applyRenameAuthorToBooks,
+  applyRenameAuthorToChapterBlocks,
+  applyRenameBookToChapterBlocks,
   applyRenameAuthorToCitations,
   applyRenameBookToBooks,
   applyRenameBookToCitations,
@@ -59,6 +61,7 @@ describe('archive rename patches', () => {
         toBookTitle: 'Shared',
         toBookSortIndex: 4,
         toBookMemo: 'merged memo',
+        citationOrderKeys: { 'shared-citation': 'a1V' },
       }],
     };
 
@@ -70,7 +73,7 @@ describe('archive rename patches', () => {
     expect(nextBooks.find((entry) => entry.id === 'target-shared')?.sortIndex).toBe(4);
     expect(nextBooks.find((entry) => entry.id === 'target-shared')?.memo).toBe('merged memo');
     expect(nextCitations).toMatchObject([
-      { authorId: 'author-new', author: 'New author', bookId: 'target-shared', book: 'Shared' },
+      { authorId: 'author-new', author: 'New author', bookId: 'target-shared', book: 'Shared', orderKey: 'a1V' },
       { authorId: 'author-new', author: 'New author', bookId: 'source-unique', book: 'Unique' },
     ]);
   });
@@ -88,14 +91,45 @@ describe('archive rename patches', () => {
       bookTitle: 'New title',
       bookSortIndex: 3,
       bookMemo: 'target memo',
+      citationOrderKeys: { citation: 'a2V' },
     };
 
     expect(applyRenameBookToBooks(books, result)).toMatchObject([
       { id: 'target', title: 'New title', sortIndex: 3, memo: 'target memo' },
     ]);
     expect(applyRenameBookToCitations(citations, result)).toMatchObject([
-      { bookId: 'target', book: 'New title', bookSortIndex: 3 },
+      { bookId: 'target', book: 'New title', bookSortIndex: 3, orderKey: 'a2V' },
     ]);
+  });
+
+  it('moves cached source chapters, patches accepted keys and deduplicates an already loaded target', () => {
+    const chapter = (id: string, bookId: string, orderKey: string, depth: number): ChapterBlock => ({
+      id, bookId, orderKey, depth, label: id, createdAt: 1, createdAtSort: 2,
+    });
+    const source = chapter('source-chapter', 'source', 'a0', 2);
+    const target = chapter('target-chapter', 'target', 'a0', 0);
+    const unrelated = [chapter('other', 'other-book', 'a0', 1)];
+    const result: RenameBookMutationResult = {
+      merged: true, fromBookId: 'source', bookId: 'target', bookTitle: 'Target',
+      bookSortIndex: null, bookMemo: '', chapterOrderKeys: { 'source-chapter': 'a0V', 'target-chapter': 'a0' },
+    };
+    const patched = applyRenameBookToChapterBlocks({
+      source: [source], target: [target, { ...source, bookId: 'target', orderKey: 'a0V' }], 'other-book': unrelated,
+    }, result);
+    expect(patched.source).toBeUndefined();
+    expect(patched.target).toHaveLength(2);
+    expect(patched.target.find(block => block.id === source.id)).toEqual({ ...source, bookId: 'target', orderKey: 'a0V' });
+    expect(patched.target.find(block => block.id === target.id)).toEqual(target);
+    expect(patched['other-book']).toBe(unrelated);
+    const authorResult: RenameAuthorMutationResult = {
+      merged: true, fromAuthorId: 'old', authorId: 'new', authorName: 'New', authorSortIndex: null,
+      isSelf: false, folderId: null, bookMerges: [{
+        fromBookId: 'source', toBookId: 'target', toBookTitle: 'Target', toBookSortIndex: null,
+        toBookMemo: '', chapterOrderKeys: result.chapterOrderKeys,
+      }],
+    };
+    expect(applyRenameAuthorToChapterBlocks({ source: [source], target: [target] }, authorResult).target)
+      .toEqual([{ ...source, bookId: 'target', orderKey: 'a0V' }, target]);
   });
 
   it('preserves the canonical merged book when the target was not loaded locally', () => {

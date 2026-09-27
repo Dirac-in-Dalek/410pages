@@ -18,6 +18,7 @@ const draft: Citation = {
   notes: [],
   tags: [],
   createdAt: 100,
+  orderKey: 'a1V',
   saveStatus: 'saving',
 };
 
@@ -36,7 +37,7 @@ describe('citation draft storage', () => {
     expect(storeCitationDraft('user-a', draft)).toBe(true);
 
     expect(readCitationDrafts('user-a')).toEqual([
-      expect.objectContaining({ id: draft.id, bookId: 'book-1', saveStatus: 'failed' }),
+      expect.objectContaining({ id: draft.id, bookId: 'book-1', orderKey: 'a1V', saveStatus: 'failed' }),
     ]);
     expect(readCitationDrafts('user-b')).toEqual([]);
     expect(window.localStorage.getItem(getCitationDraftStorageKey('user-b'))).toBeNull();
