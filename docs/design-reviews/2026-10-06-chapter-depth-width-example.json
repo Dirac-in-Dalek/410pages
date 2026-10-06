@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "target": "410pages-book-citation-composer",
+  "scope": "chapter-depth-buttons-and-writing-width",
+  "baselineVersion": "CitationEditor:e3238c7b985cdcf9",
+  "unit": "CSS px",
+  "parameters": {
+    "matched": true,
+    "boundary": "hide-root-out",
+    "hideCopy": true,
+    "arrowMapping": "right-in-left-out",
+    "arrowPosition": "after-kind-control",
+    "arrowScope": "chapter-mode",
+    "showCancelInsertion": false,
+    "arrowShape": "pill",
+    "arrowBackground": "transparent",
+    "arrowOpacity": 1,
+    "resizeDurationMs": 200,
+    "resizeEasing": "ease-out",
+    "respectReducedMotion": true,
+    "arrowVisibility": "chapter-only"
+  },
+  "comparisonEnvironment": {
+    "scenario": "root",
+    "theme": "day",
+    "width": 1024,
+    "guides": true
+  },
+  "baselineViewportWidth": 1024,
+  "implementationApproved": true
+}

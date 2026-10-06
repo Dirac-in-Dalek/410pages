@@ -243,9 +243,9 @@ describe('App settings display-name flow', () => {
     Object.defineProperty(window, 'matchMedia', {
       configurable: true,
       writable: true,
-      value: vi.fn().mockImplementation(() => ({
-        matches: false,
-        media: '(max-width: 1024px)',
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: query === '(min-width: 1024px)',
+        media: query,
         onchange: null,
         addEventListener: vi.fn(),
         removeEventListener: vi.fn(),
@@ -460,9 +460,9 @@ describe('App author flow', () => {
     Object.defineProperty(window, 'matchMedia', {
       configurable: true,
       writable: true,
-      value: vi.fn().mockImplementation(() => ({
-        matches: false,
-        media: '(max-width: 1024px)',
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: query === '(min-width: 1024px)',
+        media: query,
         onchange: null,
         addEventListener: vi.fn(),
         removeEventListener: vi.fn(),
@@ -511,9 +511,9 @@ describe('App book view chapter blocks wiring', () => {
     Object.defineProperty(window, 'matchMedia', {
       configurable: true,
       writable: true,
-      value: vi.fn().mockImplementation(() => ({
-        matches: false,
-        media: '(max-width: 1024px)',
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: query === '(min-width: 1024px)',
+        media: query,
         onchange: null,
         addEventListener: vi.fn(),
         removeEventListener: vi.fn(),

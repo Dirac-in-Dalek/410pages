@@ -1,0 +1,39 @@
+{
+  "stage": "proposal-only",
+  "target": "book citation composer mode and footer",
+  "appImplementationChanged": false,
+  "sourceSha256": "e2bc8773809bd21f85fcda16ac434927f1b49763106b7ab27efce4cb491b549a",
+  "baselineMeasured": {
+    "width": 592,
+    "height": 144.5,
+    "modeHeight": 44,
+    "pageInputHeight": 32,
+    "saveHeight": 32
+  },
+  "workbenchBaselineHeight": 144.6953125,
+  "presetBDefaultHeight": 180,
+  "verified": [
+    "text typing focus retained",
+    "keyboard mode selection",
+    "chapter page hidden",
+    "pending input locks",
+    "failure text retained",
+    "range gap16 saved and restored after reload",
+    "export gap16 and separated environment",
+    "source structure and dimensions restored",
+    "invalid JSON radius rejected without changing settings",
+    "320px controls remain within composer",
+    "Night active save dark text",
+    "375px mini preview visible and slider hit testing passed"
+  ],
+  "unverified": [
+    "native file chooser import",
+    "actual app implementation",
+    "real device usage effects"
+  ],
+  "sourceReferences": [
+    "https://primer.style/product/ui-patterns/saving/",
+    "https://primer.style/product/components/segmented-control/guidelines/",
+    "https://slack.com/help/articles/202288908-Format-your-messages-in-Slack"
+  ]
+}

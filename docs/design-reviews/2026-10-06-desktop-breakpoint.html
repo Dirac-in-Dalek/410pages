@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>410pages · 1024px 데스크톱 전환 수정</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin:0; background:#fff; color:#1f1d1b; font-family:Pretendard,-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR","Apple SD Gothic Neo",sans-serif; }
+    main { max-width:960px; margin:auto; padding:36px 28px 64px; }
+    header { padding-bottom:22px; border-bottom:1px solid #e5ded5; }
+    h1 { margin:0 0 12px; font-size:clamp(26px,4vw,34px); line-height:1.35; letter-spacing:-.02em; text-wrap:balance; }
+    h2 { margin:0 0 14px; font-size:23px; line-height:1.4; }
+    p,li { font-size:15px; line-height:1.85; }
+    p { margin:0 0 14px; max-width:75ch; }
+    li+li { margin-top:8px; }
+    ul { padding-left:22px; }
+    .status { font-size:14px; color:#5f5953; margin:0; }
+    .status strong { color:#1f1d1b; }
+    nav { display:flex; flex-wrap:wrap; gap:10px 18px; margin:24px 0; }
+    a { color:#b10c1f; text-underline-offset:3px; }
+    nav a { font-size:13px; }
+    section { margin-top:36px; scroll-margin-top:20px; }
+    .summary p { font-size:17px; }
+    .table-wrap { overflow:auto; margin:18px 0; }
+    table { width:100%; border-collapse:collapse; font-size:14px; line-height:1.75; }
+    th,td { padding:12px 14px; text-align:left; vertical-align:top; border-bottom:1px solid #e5ded5; min-width:120px; }
+    th { background:#f7f7f7; }
+    code { padding:1px 4px; background:#f4f4f4; border-radius:3px; font-size:.9em; overflow-wrap:anywhere; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+    details { margin-top:32px; padding-top:18px; border-top:1px solid #e5ded5; }
+    summary { cursor:pointer; font-size:17px; font-weight:600; }
+    .details-body { padding-top:14px; }
+    pre { font:12px/1.75 ui-monospace,SFMono-Regular,Menlo,monospace; white-space:pre-wrap; overflow-wrap:anywhere; padding:16px; background:#f4f4f4; border-radius:8px; }
+    footer { border-top:1px solid #e5ded5; padding-top:18px; margin-top:36px; }
+    footer p { font-size:12px; color:#5f5953; }
+    a:focus-visible,summary:focus-visible,.table-wrap:focus-visible { outline:2px solid #b10c1f; outline-offset:4px; }
+    ::selection { background:#f9d7db; color:#4a0b12; }
+    @media(max-width:600px) { main { padding:24px 18px 48px; } h2 { font-size:21px; } section { margin-top:28px; } th,td { padding:10px; } }
+    @media print { nav { display:none; } main { max-width:none; padding:0; } section { break-inside:avoid; } .table-wrap { overflow:visible; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>1024px부터 데스크톱 모드로</h1>
+    <p class="status"><strong>수정 완료 · 로컬 앱 반영</strong> — 2026-10-06</p>
+  </header>
+  <nav aria-label="보고서 바로가기">
+    <a href="#result">적용 결과</a><a href="#cause">원인과 수정</a><a href="#verification">검증 결과</a><a href="#scope">유지한 동작과 검증 범위</a>
+  </nav>
+  <section id="result" class="summary">
+    <p><strong>1024px 이상은 데스크톱, 미만은 모바일로 수정했습니다.</strong> 터치 입력 여부가 넓은 화면을 모바일로 전환하지 않습니다.</p>
+    <p><strong>1024 × 768의 실제 책 화면에서 데스크톱 표시를 확인했습니다.</strong> 1023px·1024px·1025px의 경계 전환과 같은 책 주소 유지도 확인했습니다.</p>
+    <p>관련 테스트 <strong>24개</strong>, 타입 검사, 프로덕션 빌드가 통과했습니다.</p>
+  </section>
+  <section id="cause">
+    <h2>1024px에서 모바일이었던 이유</h2>
+    <p>기존 코드는 <code>max-width: 1024px</code>를 사용해 1024px도 모바일 범위에 포함했습니다. 여기에 터치 입력이 감지되면 화면이 더 넓어도 모바일로 바꾸는 조건이 붙어 있었습니다.</p>
+    <p><code>min-width: 1024px</code>에 맞으면 데스크톱, 맞지 않으면 모바일이 되도록 바꿨습니다. 화면 모드 판정에서 포인터 조건과 관련 구독을 제거했습니다. 1023.5px처럼 소수점 너비도 1024px 미만으로 처리합니다.</p>
+    <p>이 기준은 모니터의 물리적 해상도가 아니라 <strong>브라우저가 페이지를 표시하는 영역의 너비(CSS px)</strong>입니다. 화면 모드는 높이가 아니라 너비로 결정합니다.</p>
+  </section>
+  <section id="verification">
+    <h2>실제 브라우저에서 확인한 경계</h2>
+    <div class="table-wrap" tabindex="0" aria-label="화면 너비별 실제 모드">
+      <table>
+        <thead><tr><th scope="col">표시 영역</th><th scope="col">실제 화면 모드</th><th scope="col">페이지 너비</th></tr></thead>
+        <tbody>
+          <tr><td>1023 × 768</td><td>모바일</td><td>1023px · 가로 넘침 없음</td></tr>
+          <tr><td>1024 × 768</td><td>데스크톱</td><td>1024px · 가로 넘침 없음</td></tr>
+          <tr><td>1025 × 768</td><td>데스크톱</td><td>1025px · 가로 넘침 없음</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>데스크톱의 서재·검색줄 표시와 모바일의 탐색 버튼을 기준으로 렌더된 레이아웃을 확인했습니다. 검사 후 화면은 원래의 1024 × 768로 복원했으며 같은 책 주소를 유지했습니다.</p>
+    <h2>자동 검사</h2>
+    <ul>
+      <li>새 회귀 검사 9개: 375px, 1023px, 1023.5px, 1024px, 1025px와 터치 조건, 경계를 넘는 양방향 크기 변경.</li>
+      <li>수정 전에는 4개가 실패했습니다. 1024px과 넓은 터치 화면의 기존 잘못된 판정을 재현했습니다. 수정 후에는 모두 통과했습니다.</li>
+      <li>관련 4개 파일의 테스트 총 24개 통과. 화면 모드·PDF 모드 제어·모바일 레이아웃·메모 패널 검사를 포함합니다.</li>
+      <li>타입 검사와 프로덕션 빌드 통과.</li>
+    </ul>
+  </section>
+  <section id="scope">
+    <h2>이번 결정과 적용 범위</h2>
+    <ul>
+      <li><strong>사용자 결정:</strong> 1024px 이상에서 데스크톱 모드 사용.</li>
+      <li><strong>Codex 결정:</strong> 최솟값 미디어 쿼리로 경계를 표현하고, 포인터가 화면 모드를 뒤집는 조건을 제거했습니다. 경계·터치 조건의 회귀 검사를 추가하고 제품 운영 Policy에 승인 기준을 기록했습니다.</li>
+      <li><strong>기존 동작 유지:</strong> 화면 크기·방향 변경에 대한 반응, 선택한 책 주소, 테마·컴포넌트 모양·저장 및 인증 로직.</li>
+      <li><strong>검증 범위:</strong> 브라우저의 실제 경계 전환은 확인했습니다. 터치 포인터 모사는 실제 미디어 조건에 적용되지 않아, 터치 조건은 단위 테스트로 확인했습니다. 실제 터치 기기와 다른 브라우저·운영 배포는 이번에 검증하지 않았습니다.</li>
+      <li><strong>남은 사용자 결정:</strong> 이번 수정에는 없습니다. 다음 컴포넌트 코멘트를 이어서 받을 수 있습니다.</li>
+    </ul>
+  </section>
+  <details>
+    <summary>변경 파일과 검증 명령</summary>
+    <div class="details-body">
+      <ul>
+        <li><code>app/useResponsiveMode.ts</code> — 너비 판정 기준 수정, 포인터 조건 제거.</li>
+        <li><code>app/useResponsiveMode.test.ts</code> — 회귀 검사 9개.</li>
+        <li><code>docs/policies/product-operations.md</code> — 사용자 지시 기록.</li>
+      </ul>
+      <pre>npm test -- app/useResponsiveMode.test.ts app/logic/useAppViewMode.test.tsx components/MobileLayout.test.tsx components/MainLayout.right-panel.test.tsx
+Test Files  4 passed (4)
+Tests       24 passed (24)
+exit code: 0
+
+npm exec tsc -- --noEmit
+진단 출력 없음 · exit code: 0
+
+npm run build
+✓ 1894 modules transformed.
+✓ built in 4.95s
+exit code: 0
+
+수정 전 회귀 검사:
+4 failed | 5 passed (9)
+1024px 일반 포인터, 1024px 터치 포인터,
+1280px 터치 포인터, 1024px 양방향 전환의 기존 오류를 확인.</pre>
+      <p><a href="2026-10-06-desktop-breakpoint.json">검사 원본 기록</a></p>
+    </div>
+  </details>
+  <footer>
+    <p>검토: 승인 범위와 일치. 기존 테마 수정은 보존했고, 이번 변경에는 새 의존성이나 데이터 구조 변경이 없습니다.</p>
+    <p>임시 화면 크기·포인터 모사는 해제했습니다. 책 탭·이 보고서·개발 서버는 다음 주석 작업을 위해 유지합니다.</p>
+  </footer>
+</main>
+</body>
+</html>

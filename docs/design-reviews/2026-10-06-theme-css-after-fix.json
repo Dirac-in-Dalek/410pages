@@ -1,0 +1,1650 @@
+{
+  "fixtureSources": [
+    {
+      "id": "auth-error",
+      "source": "features/auth/ui/Auth.tsx:383",
+      "classes": "rounded-lg bg-red-50 p-3 text-sm leading-relaxed text-red-800 dark:bg-red-400/10 dark:text-red-100"
+    },
+    {
+      "id": "auth-success",
+      "source": "features/auth/ui/Auth.tsx:188",
+      "classes": "rounded-full bg-emerald-50 p-3 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-200"
+    },
+    {
+      "id": "settings-error",
+      "source": "features/settings/ui/SettingsPanel.tsx:311",
+      "classes": "text-xs text-red-600 dark:text-red-300"
+    },
+    {
+      "id": "settings-success",
+      "source": "features/settings/ui/SettingsPanel.tsx:310",
+      "classes": "text-xs text-emerald-700 dark:text-emerald-300"
+    },
+    {
+      "id": "recovery-error",
+      "source": "features/archive/ui/ArchiveScreen.tsx:248",
+      "classes": "rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-900 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-100"
+    },
+    {
+      "id": "global-error",
+      "source": "app/AppShell.tsx:247",
+      "classes": "rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-900 dark:border-red-500/30 dark:bg-[#2b2020] dark:text-red-100"
+    },
+    {
+      "id": "delete-text",
+      "source": "features/archive/ui/LibraryHome.tsx:207",
+      "classes": "text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10"
+    },
+    {
+      "id": "chapter-error",
+      "source": "index.css:974",
+      "classes": "chapter-hint"
+    }
+  ],
+  "cases": [
+    {
+      "theme": "auto",
+      "scheme": "dark",
+      "os": "dark",
+      "strategy": "selector",
+      "mismatch": false,
+      "styles": {
+        "auth-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgba(248, 113, 113, 0.1)",
+          "hostBackground": "rgb(36, 33, 31)",
+          "contrast": 11.296
+        },
+        "auth-success": {
+          "color": "rgb(167, 243, 208)",
+          "background": "rgba(52, 211, 153, 0.1)",
+          "hostBackground": "rgb(36, 33, 31)",
+          "contrast": 10.323
+        },
+        "settings-error": {
+          "color": "rgb(252, 165, 165)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(36, 33, 31)",
+          "contrast": 8.431
+        },
+        "settings-success": {
+          "color": "rgb(110, 231, 183)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(36, 33, 31)",
+          "contrast": 10.498
+        },
+        "recovery-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgba(239, 68, 68, 0.1)",
+          "hostBackground": "rgb(36, 33, 31)",
+          "contrast": 11.837
+        },
+        "global-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgb(43, 32, 32)",
+          "hostBackground": "rgb(36, 33, 31)",
+          "contrast": 12.924
+        },
+        "delete-text": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(36, 33, 31)",
+          "contrast": 3.313
+        },
+        "chapter-error": {
+          "color": "rgb(255, 90, 103)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(36, 33, 31)",
+          "contrast": 5.266
+        }
+      }
+    },
+    {
+      "theme": "day",
+      "scheme": "light",
+      "os": "dark",
+      "strategy": "selector",
+      "mismatch": true,
+      "styles": {
+        "auth-error": {
+          "color": "rgb(153, 27, 27)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 7.597
+        },
+        "auth-success": {
+          "color": "rgb(4, 120, 87)",
+          "background": "rgb(236, 253, 245)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 5.206
+        },
+        "settings-error": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 4.829
+        },
+        "settings-success": {
+          "color": "rgb(4, 120, 87)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 5.484
+        },
+        "recovery-error": {
+          "color": "rgb(127, 29, 29)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 9.159
+        },
+        "global-error": {
+          "color": "rgb(127, 29, 29)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 9.159
+        },
+        "delete-text": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 4.829
+        },
+        "chapter-error": {
+          "color": "rgb(209, 15, 37)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 5.517
+        }
+      }
+    },
+    {
+      "theme": "night",
+      "scheme": "dark",
+      "os": "dark",
+      "strategy": "selector",
+      "mismatch": false,
+      "styles": {
+        "auth-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgba(248, 113, 113, 0.1)",
+          "hostBackground": "rgb(36, 33, 31)",
+          "contrast": 11.296
+        },
+        "auth-success": {
+          "color": "rgb(167, 243, 208)",
+          "background": "rgba(52, 211, 153, 0.1)",
+          "hostBackground": "rgb(36, 33, 31)",
+          "contrast": 10.323
+        },
+        "settings-error": {
+          "color": "rgb(252, 165, 165)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(36, 33, 31)",
+          "contrast": 8.431
+        },
+        "settings-success": {
+          "color": "rgb(110, 231, 183)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(36, 33, 31)",
+          "contrast": 10.498
+        },
+        "recovery-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgba(239, 68, 68, 0.1)",
+          "hostBackground": "rgb(36, 33, 31)",
+          "contrast": 11.837
+        },
+        "global-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgb(43, 32, 32)",
+          "hostBackground": "rgb(36, 33, 31)",
+          "contrast": 12.924
+        },
+        "delete-text": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(36, 33, 31)",
+          "contrast": 3.313
+        },
+        "chapter-error": {
+          "color": "rgb(255, 90, 103)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(36, 33, 31)",
+          "contrast": 5.266
+        }
+      }
+    },
+    {
+      "theme": "warm-paper",
+      "scheme": "light",
+      "os": "dark",
+      "strategy": "selector",
+      "mismatch": true,
+      "styles": {
+        "auth-error": {
+          "color": "rgb(153, 27, 27)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 253, 248)",
+          "contrast": 7.597
+        },
+        "auth-success": {
+          "color": "rgb(4, 120, 87)",
+          "background": "rgb(236, 253, 245)",
+          "hostBackground": "rgb(255, 253, 248)",
+          "contrast": 5.206
+        },
+        "settings-error": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 248)",
+          "contrast": 4.751
+        },
+        "settings-success": {
+          "color": "rgb(4, 120, 87)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 248)",
+          "contrast": 5.395
+        },
+        "recovery-error": {
+          "color": "rgb(127, 29, 29)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 253, 248)",
+          "contrast": 9.159
+        },
+        "global-error": {
+          "color": "rgb(127, 29, 29)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 253, 248)",
+          "contrast": 9.159
+        },
+        "delete-text": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 248)",
+          "contrast": 4.751
+        },
+        "chapter-error": {
+          "color": "rgb(159, 38, 52)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 248)",
+          "contrast": 7.375
+        }
+      }
+    },
+    {
+      "theme": "soft-slate",
+      "scheme": "light",
+      "os": "dark",
+      "strategy": "selector",
+      "mismatch": true,
+      "styles": {
+        "auth-error": {
+          "color": "rgb(153, 27, 27)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 7.597
+        },
+        "auth-success": {
+          "color": "rgb(4, 120, 87)",
+          "background": "rgb(236, 253, 245)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 5.206
+        },
+        "settings-error": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 4.829
+        },
+        "settings-success": {
+          "color": "rgb(4, 120, 87)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 5.484
+        },
+        "recovery-error": {
+          "color": "rgb(127, 29, 29)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 9.159
+        },
+        "global-error": {
+          "color": "rgb(127, 29, 29)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 9.159
+        },
+        "delete-text": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 4.829
+        },
+        "chapter-error": {
+          "color": "rgb(191, 36, 53)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 5.968
+        }
+      }
+    },
+    {
+      "theme": "terminal-green",
+      "scheme": "dark",
+      "os": "dark",
+      "strategy": "selector",
+      "mismatch": false,
+      "styles": {
+        "auth-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgba(248, 113, 113, 0.1)",
+          "hostBackground": "rgb(13, 23, 16)",
+          "contrast": 13.243
+        },
+        "auth-success": {
+          "color": "rgb(167, 243, 208)",
+          "background": "rgba(52, 211, 153, 0.1)",
+          "hostBackground": "rgb(13, 23, 16)",
+          "contrast": 11.948
+        },
+        "settings-error": {
+          "color": "rgb(252, 165, 165)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(13, 23, 16)",
+          "contrast": 9.645
+        },
+        "settings-success": {
+          "color": "rgb(110, 231, 183)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(13, 23, 16)",
+          "contrast": 12.01
+        },
+        "recovery-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgba(239, 68, 68, 0.1)",
+          "hostBackground": "rgb(13, 23, 16)",
+          "contrast": 13.797
+        },
+        "global-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgb(43, 32, 32)",
+          "hostBackground": "rgb(13, 23, 16)",
+          "contrast": 12.924
+        },
+        "delete-text": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(13, 23, 16)",
+          "contrast": 3.791
+        },
+        "chapter-error": {
+          "color": "rgb(126, 226, 100)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(13, 23, 16)",
+          "contrast": 11.289
+        }
+      }
+    },
+    {
+      "theme": "airbnb-light",
+      "scheme": "light",
+      "os": "dark",
+      "strategy": "selector",
+      "mismatch": true,
+      "styles": {
+        "auth-error": {
+          "color": "rgb(153, 27, 27)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 7.597
+        },
+        "auth-success": {
+          "color": "rgb(4, 120, 87)",
+          "background": "rgb(236, 253, 245)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 5.206
+        },
+        "settings-error": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 4.829
+        },
+        "settings-success": {
+          "color": "rgb(4, 120, 87)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 5.484
+        },
+        "recovery-error": {
+          "color": "rgb(127, 29, 29)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 9.159
+        },
+        "global-error": {
+          "color": "rgb(127, 29, 29)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 9.159
+        },
+        "delete-text": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 4.829
+        },
+        "chapter-error": {
+          "color": "rgb(255, 56, 92)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 3.516
+        }
+      }
+    },
+    {
+      "theme": "airbnb-dark",
+      "scheme": "dark",
+      "os": "dark",
+      "strategy": "selector",
+      "mismatch": false,
+      "styles": {
+        "auth-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgba(248, 113, 113, 0.1)",
+          "hostBackground": "rgb(38, 26, 30)",
+          "contrast": 11.846
+        },
+        "auth-success": {
+          "color": "rgb(167, 243, 208)",
+          "background": "rgba(52, 211, 153, 0.1)",
+          "hostBackground": "rgb(38, 26, 30)",
+          "contrast": 10.993
+        },
+        "settings-error": {
+          "color": "rgb(252, 165, 165)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(38, 26, 30)",
+          "contrast": 8.859
+        },
+        "settings-success": {
+          "color": "rgb(110, 231, 183)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(38, 26, 30)",
+          "contrast": 11.031
+        },
+        "recovery-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgba(239, 68, 68, 0.1)",
+          "hostBackground": "rgb(38, 26, 30)",
+          "contrast": 12.358
+        },
+        "global-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgb(43, 32, 32)",
+          "hostBackground": "rgb(38, 26, 30)",
+          "contrast": 12.924
+        },
+        "delete-text": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(38, 26, 30)",
+          "contrast": 3.482
+        },
+        "chapter-error": {
+          "color": "rgb(255, 90, 120)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(38, 26, 30)",
+          "contrast": 5.593
+        }
+      }
+    },
+    {
+      "theme": "bach-light",
+      "scheme": "light",
+      "os": "dark",
+      "strategy": "selector",
+      "mismatch": true,
+      "styles": {
+        "auth-error": {
+          "color": "rgb(153, 27, 27)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 253, 247)",
+          "contrast": 7.597
+        },
+        "auth-success": {
+          "color": "rgb(4, 120, 87)",
+          "background": "rgb(236, 253, 245)",
+          "hostBackground": "rgb(255, 253, 247)",
+          "contrast": 5.206
+        },
+        "settings-error": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 247)",
+          "contrast": 4.748
+        },
+        "settings-success": {
+          "color": "rgb(4, 120, 87)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 247)",
+          "contrast": 5.391
+        },
+        "recovery-error": {
+          "color": "rgb(127, 29, 29)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 253, 247)",
+          "contrast": 9.159
+        },
+        "global-error": {
+          "color": "rgb(127, 29, 29)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 253, 247)",
+          "contrast": 9.159
+        },
+        "delete-text": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 247)",
+          "contrast": 4.748
+        },
+        "chapter-error": {
+          "color": "rgb(128, 98, 49)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 247)",
+          "contrast": 5.566
+        }
+      }
+    },
+    {
+      "theme": "bach-dark",
+      "scheme": "dark",
+      "os": "dark",
+      "strategy": "selector",
+      "mismatch": false,
+      "styles": {
+        "auth-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgba(248, 113, 113, 0.1)",
+          "hostBackground": "rgb(35, 26, 16)",
+          "contrast": 12.094
+        },
+        "auth-success": {
+          "color": "rgb(167, 243, 208)",
+          "background": "rgba(52, 211, 153, 0.1)",
+          "hostBackground": "rgb(35, 26, 16)",
+          "contrast": 11.186
+        },
+        "settings-error": {
+          "color": "rgb(252, 165, 165)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(35, 26, 16)",
+          "contrast": 9.02
+        },
+        "settings-success": {
+          "color": "rgb(110, 231, 183)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(35, 26, 16)",
+          "contrast": 11.231
+        },
+        "recovery-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgba(239, 68, 68, 0.1)",
+          "hostBackground": "rgb(35, 26, 16)",
+          "contrast": 12.609
+        },
+        "global-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgb(43, 32, 32)",
+          "hostBackground": "rgb(35, 26, 16)",
+          "contrast": 12.924
+        },
+        "delete-text": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(35, 26, 16)",
+          "contrast": 3.545
+        },
+        "chapter-error": {
+          "color": "rgb(213, 175, 99)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(35, 26, 16)",
+          "contrast": 8.267
+        }
+      }
+    },
+    {
+      "theme": "mahler-light",
+      "scheme": "light",
+      "os": "dark",
+      "strategy": "selector",
+      "mismatch": true,
+      "styles": {
+        "auth-error": {
+          "color": "rgb(153, 27, 27)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 253, 249)",
+          "contrast": 7.597
+        },
+        "auth-success": {
+          "color": "rgb(4, 120, 87)",
+          "background": "rgb(236, 253, 245)",
+          "hostBackground": "rgb(255, 253, 249)",
+          "contrast": 5.206
+        },
+        "settings-error": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 249)",
+          "contrast": 4.754
+        },
+        "settings-success": {
+          "color": "rgb(4, 120, 87)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 249)",
+          "contrast": 5.398
+        },
+        "recovery-error": {
+          "color": "rgb(127, 29, 29)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 253, 249)",
+          "contrast": 9.159
+        },
+        "global-error": {
+          "color": "rgb(127, 29, 29)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 253, 249)",
+          "contrast": 9.159
+        },
+        "delete-text": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 249)",
+          "contrast": 4.754
+        },
+        "chapter-error": {
+          "color": "rgb(138, 38, 56)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 249)",
+          "contrast": 8.559
+        }
+      }
+    },
+    {
+      "theme": "mahler-dark",
+      "scheme": "dark",
+      "os": "dark",
+      "strategy": "selector",
+      "mismatch": false,
+      "styles": {
+        "auth-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgba(248, 113, 113, 0.1)",
+          "hostBackground": "rgb(40, 26, 34)",
+          "contrast": 11.716
+        },
+        "auth-success": {
+          "color": "rgb(167, 243, 208)",
+          "background": "rgba(52, 211, 153, 0.1)",
+          "hostBackground": "rgb(40, 26, 34)",
+          "contrast": 10.9
+        },
+        "settings-error": {
+          "color": "rgb(252, 165, 165)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(40, 26, 34)",
+          "contrast": 8.774
+        },
+        "settings-success": {
+          "color": "rgb(110, 231, 183)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(40, 26, 34)",
+          "contrast": 10.925
+        },
+        "recovery-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgba(239, 68, 68, 0.1)",
+          "hostBackground": "rgb(40, 26, 34)",
+          "contrast": 12.223
+        },
+        "global-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgb(43, 32, 32)",
+          "hostBackground": "rgb(40, 26, 34)",
+          "contrast": 12.924
+        },
+        "delete-text": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(40, 26, 34)",
+          "contrast": 3.448
+        },
+        "chapter-error": {
+          "color": "rgb(216, 162, 79)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(40, 26, 34)",
+          "contrast": 7.296
+        }
+      }
+    },
+    {
+      "theme": "shostakovich-light",
+      "scheme": "light",
+      "os": "dark",
+      "strategy": "selector",
+      "mismatch": true,
+      "styles": {
+        "auth-error": {
+          "color": "rgb(153, 27, 27)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 253, 246)",
+          "contrast": 7.597
+        },
+        "auth-success": {
+          "color": "rgb(4, 120, 87)",
+          "background": "rgb(236, 253, 245)",
+          "hostBackground": "rgb(255, 253, 246)",
+          "contrast": 5.206
+        },
+        "settings-error": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 246)",
+          "contrast": 4.745
+        },
+        "settings-success": {
+          "color": "rgb(4, 120, 87)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 246)",
+          "contrast": 5.388
+        },
+        "recovery-error": {
+          "color": "rgb(127, 29, 29)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 253, 246)",
+          "contrast": 9.159
+        },
+        "global-error": {
+          "color": "rgb(127, 29, 29)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 253, 246)",
+          "contrast": 9.159
+        },
+        "delete-text": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 246)",
+          "contrast": 4.745
+        },
+        "chapter-error": {
+          "color": "rgb(169, 15, 37)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 246)",
+          "contrast": 7.416
+        }
+      }
+    },
+    {
+      "theme": "shostakovich-dark",
+      "scheme": "dark",
+      "os": "dark",
+      "strategy": "selector",
+      "mismatch": false,
+      "styles": {
+        "auth-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgba(248, 113, 113, 0.1)",
+          "hostBackground": "rgb(25, 23, 22)",
+          "contrast": 12.745
+        },
+        "auth-success": {
+          "color": "rgb(167, 243, 208)",
+          "background": "rgba(52, 211, 153, 0.1)",
+          "hostBackground": "rgb(25, 23, 22)",
+          "contrast": 11.685
+        },
+        "settings-error": {
+          "color": "rgb(252, 165, 165)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(25, 23, 22)",
+          "contrast": 9.413
+        },
+        "settings-success": {
+          "color": "rgb(110, 231, 183)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(25, 23, 22)",
+          "contrast": 11.72
+        },
+        "recovery-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgba(239, 68, 68, 0.1)",
+          "hostBackground": "rgb(25, 23, 22)",
+          "contrast": 13.276
+        },
+        "global-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgb(43, 32, 32)",
+          "hostBackground": "rgb(25, 23, 22)",
+          "contrast": 12.924
+        },
+        "delete-text": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(25, 23, 22)",
+          "contrast": 3.699
+        },
+        "chapter-error": {
+          "color": "rgb(200, 16, 46)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(25, 23, 22)",
+          "contrast": 3.037
+        }
+      }
+    },
+    {
+      "theme": "auto",
+      "scheme": "light",
+      "os": "light",
+      "strategy": "selector",
+      "mismatch": false,
+      "styles": {
+        "auth-error": {
+          "color": "rgb(153, 27, 27)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 7.597
+        },
+        "auth-success": {
+          "color": "rgb(4, 120, 87)",
+          "background": "rgb(236, 253, 245)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 5.206
+        },
+        "settings-error": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 4.829
+        },
+        "settings-success": {
+          "color": "rgb(4, 120, 87)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 5.484
+        },
+        "recovery-error": {
+          "color": "rgb(127, 29, 29)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 9.159
+        },
+        "global-error": {
+          "color": "rgb(127, 29, 29)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 9.159
+        },
+        "delete-text": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 4.829
+        },
+        "chapter-error": {
+          "color": "rgb(209, 15, 37)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 5.517
+        }
+      }
+    },
+    {
+      "theme": "day",
+      "scheme": "light",
+      "os": "light",
+      "strategy": "selector",
+      "mismatch": false,
+      "styles": {
+        "auth-error": {
+          "color": "rgb(153, 27, 27)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 7.597
+        },
+        "auth-success": {
+          "color": "rgb(4, 120, 87)",
+          "background": "rgb(236, 253, 245)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 5.206
+        },
+        "settings-error": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 4.829
+        },
+        "settings-success": {
+          "color": "rgb(4, 120, 87)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 5.484
+        },
+        "recovery-error": {
+          "color": "rgb(127, 29, 29)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 9.159
+        },
+        "global-error": {
+          "color": "rgb(127, 29, 29)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 9.159
+        },
+        "delete-text": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 4.829
+        },
+        "chapter-error": {
+          "color": "rgb(209, 15, 37)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 5.517
+        }
+      }
+    },
+    {
+      "theme": "night",
+      "scheme": "dark",
+      "os": "light",
+      "strategy": "selector",
+      "mismatch": true,
+      "styles": {
+        "auth-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgba(248, 113, 113, 0.1)",
+          "hostBackground": "rgb(36, 33, 31)",
+          "contrast": 11.296
+        },
+        "auth-success": {
+          "color": "rgb(167, 243, 208)",
+          "background": "rgba(52, 211, 153, 0.1)",
+          "hostBackground": "rgb(36, 33, 31)",
+          "contrast": 10.323
+        },
+        "settings-error": {
+          "color": "rgb(252, 165, 165)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(36, 33, 31)",
+          "contrast": 8.431
+        },
+        "settings-success": {
+          "color": "rgb(110, 231, 183)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(36, 33, 31)",
+          "contrast": 10.498
+        },
+        "recovery-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgba(239, 68, 68, 0.1)",
+          "hostBackground": "rgb(36, 33, 31)",
+          "contrast": 11.837
+        },
+        "global-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgb(43, 32, 32)",
+          "hostBackground": "rgb(36, 33, 31)",
+          "contrast": 12.924
+        },
+        "delete-text": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(36, 33, 31)",
+          "contrast": 3.313
+        },
+        "chapter-error": {
+          "color": "rgb(255, 90, 103)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(36, 33, 31)",
+          "contrast": 5.266
+        }
+      }
+    },
+    {
+      "theme": "warm-paper",
+      "scheme": "light",
+      "os": "light",
+      "strategy": "selector",
+      "mismatch": false,
+      "styles": {
+        "auth-error": {
+          "color": "rgb(153, 27, 27)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 253, 248)",
+          "contrast": 7.597
+        },
+        "auth-success": {
+          "color": "rgb(4, 120, 87)",
+          "background": "rgb(236, 253, 245)",
+          "hostBackground": "rgb(255, 253, 248)",
+          "contrast": 5.206
+        },
+        "settings-error": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 248)",
+          "contrast": 4.751
+        },
+        "settings-success": {
+          "color": "rgb(4, 120, 87)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 248)",
+          "contrast": 5.395
+        },
+        "recovery-error": {
+          "color": "rgb(127, 29, 29)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 253, 248)",
+          "contrast": 9.159
+        },
+        "global-error": {
+          "color": "rgb(127, 29, 29)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 253, 248)",
+          "contrast": 9.159
+        },
+        "delete-text": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 248)",
+          "contrast": 4.751
+        },
+        "chapter-error": {
+          "color": "rgb(159, 38, 52)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 248)",
+          "contrast": 7.375
+        }
+      }
+    },
+    {
+      "theme": "soft-slate",
+      "scheme": "light",
+      "os": "light",
+      "strategy": "selector",
+      "mismatch": false,
+      "styles": {
+        "auth-error": {
+          "color": "rgb(153, 27, 27)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 7.597
+        },
+        "auth-success": {
+          "color": "rgb(4, 120, 87)",
+          "background": "rgb(236, 253, 245)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 5.206
+        },
+        "settings-error": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 4.829
+        },
+        "settings-success": {
+          "color": "rgb(4, 120, 87)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 5.484
+        },
+        "recovery-error": {
+          "color": "rgb(127, 29, 29)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 9.159
+        },
+        "global-error": {
+          "color": "rgb(127, 29, 29)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 9.159
+        },
+        "delete-text": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 4.829
+        },
+        "chapter-error": {
+          "color": "rgb(191, 36, 53)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 5.968
+        }
+      }
+    },
+    {
+      "theme": "terminal-green",
+      "scheme": "dark",
+      "os": "light",
+      "strategy": "selector",
+      "mismatch": true,
+      "styles": {
+        "auth-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgba(248, 113, 113, 0.1)",
+          "hostBackground": "rgb(13, 23, 16)",
+          "contrast": 13.243
+        },
+        "auth-success": {
+          "color": "rgb(167, 243, 208)",
+          "background": "rgba(52, 211, 153, 0.1)",
+          "hostBackground": "rgb(13, 23, 16)",
+          "contrast": 11.948
+        },
+        "settings-error": {
+          "color": "rgb(252, 165, 165)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(13, 23, 16)",
+          "contrast": 9.645
+        },
+        "settings-success": {
+          "color": "rgb(110, 231, 183)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(13, 23, 16)",
+          "contrast": 12.01
+        },
+        "recovery-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgba(239, 68, 68, 0.1)",
+          "hostBackground": "rgb(13, 23, 16)",
+          "contrast": 13.797
+        },
+        "global-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgb(43, 32, 32)",
+          "hostBackground": "rgb(13, 23, 16)",
+          "contrast": 12.924
+        },
+        "delete-text": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(13, 23, 16)",
+          "contrast": 3.791
+        },
+        "chapter-error": {
+          "color": "rgb(126, 226, 100)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(13, 23, 16)",
+          "contrast": 11.289
+        }
+      }
+    },
+    {
+      "theme": "airbnb-light",
+      "scheme": "light",
+      "os": "light",
+      "strategy": "selector",
+      "mismatch": false,
+      "styles": {
+        "auth-error": {
+          "color": "rgb(153, 27, 27)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 7.597
+        },
+        "auth-success": {
+          "color": "rgb(4, 120, 87)",
+          "background": "rgb(236, 253, 245)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 5.206
+        },
+        "settings-error": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 4.829
+        },
+        "settings-success": {
+          "color": "rgb(4, 120, 87)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 5.484
+        },
+        "recovery-error": {
+          "color": "rgb(127, 29, 29)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 9.159
+        },
+        "global-error": {
+          "color": "rgb(127, 29, 29)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 9.159
+        },
+        "delete-text": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 4.829
+        },
+        "chapter-error": {
+          "color": "rgb(255, 56, 92)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 255, 255)",
+          "contrast": 3.516
+        }
+      }
+    },
+    {
+      "theme": "airbnb-dark",
+      "scheme": "dark",
+      "os": "light",
+      "strategy": "selector",
+      "mismatch": true,
+      "styles": {
+        "auth-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgba(248, 113, 113, 0.1)",
+          "hostBackground": "rgb(38, 26, 30)",
+          "contrast": 11.846
+        },
+        "auth-success": {
+          "color": "rgb(167, 243, 208)",
+          "background": "rgba(52, 211, 153, 0.1)",
+          "hostBackground": "rgb(38, 26, 30)",
+          "contrast": 10.993
+        },
+        "settings-error": {
+          "color": "rgb(252, 165, 165)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(38, 26, 30)",
+          "contrast": 8.859
+        },
+        "settings-success": {
+          "color": "rgb(110, 231, 183)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(38, 26, 30)",
+          "contrast": 11.031
+        },
+        "recovery-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgba(239, 68, 68, 0.1)",
+          "hostBackground": "rgb(38, 26, 30)",
+          "contrast": 12.358
+        },
+        "global-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgb(43, 32, 32)",
+          "hostBackground": "rgb(38, 26, 30)",
+          "contrast": 12.924
+        },
+        "delete-text": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(38, 26, 30)",
+          "contrast": 3.482
+        },
+        "chapter-error": {
+          "color": "rgb(255, 90, 120)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(38, 26, 30)",
+          "contrast": 5.593
+        }
+      }
+    },
+    {
+      "theme": "bach-light",
+      "scheme": "light",
+      "os": "light",
+      "strategy": "selector",
+      "mismatch": false,
+      "styles": {
+        "auth-error": {
+          "color": "rgb(153, 27, 27)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 253, 247)",
+          "contrast": 7.597
+        },
+        "auth-success": {
+          "color": "rgb(4, 120, 87)",
+          "background": "rgb(236, 253, 245)",
+          "hostBackground": "rgb(255, 253, 247)",
+          "contrast": 5.206
+        },
+        "settings-error": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 247)",
+          "contrast": 4.748
+        },
+        "settings-success": {
+          "color": "rgb(4, 120, 87)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 247)",
+          "contrast": 5.391
+        },
+        "recovery-error": {
+          "color": "rgb(127, 29, 29)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 253, 247)",
+          "contrast": 9.159
+        },
+        "global-error": {
+          "color": "rgb(127, 29, 29)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 253, 247)",
+          "contrast": 9.159
+        },
+        "delete-text": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 247)",
+          "contrast": 4.748
+        },
+        "chapter-error": {
+          "color": "rgb(128, 98, 49)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 247)",
+          "contrast": 5.566
+        }
+      }
+    },
+    {
+      "theme": "bach-dark",
+      "scheme": "dark",
+      "os": "light",
+      "strategy": "selector",
+      "mismatch": true,
+      "styles": {
+        "auth-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgba(248, 113, 113, 0.1)",
+          "hostBackground": "rgb(35, 26, 16)",
+          "contrast": 12.094
+        },
+        "auth-success": {
+          "color": "rgb(167, 243, 208)",
+          "background": "rgba(52, 211, 153, 0.1)",
+          "hostBackground": "rgb(35, 26, 16)",
+          "contrast": 11.186
+        },
+        "settings-error": {
+          "color": "rgb(252, 165, 165)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(35, 26, 16)",
+          "contrast": 9.02
+        },
+        "settings-success": {
+          "color": "rgb(110, 231, 183)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(35, 26, 16)",
+          "contrast": 11.231
+        },
+        "recovery-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgba(239, 68, 68, 0.1)",
+          "hostBackground": "rgb(35, 26, 16)",
+          "contrast": 12.609
+        },
+        "global-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgb(43, 32, 32)",
+          "hostBackground": "rgb(35, 26, 16)",
+          "contrast": 12.924
+        },
+        "delete-text": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(35, 26, 16)",
+          "contrast": 3.545
+        },
+        "chapter-error": {
+          "color": "rgb(213, 175, 99)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(35, 26, 16)",
+          "contrast": 8.267
+        }
+      }
+    },
+    {
+      "theme": "mahler-light",
+      "scheme": "light",
+      "os": "light",
+      "strategy": "selector",
+      "mismatch": false,
+      "styles": {
+        "auth-error": {
+          "color": "rgb(153, 27, 27)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 253, 249)",
+          "contrast": 7.597
+        },
+        "auth-success": {
+          "color": "rgb(4, 120, 87)",
+          "background": "rgb(236, 253, 245)",
+          "hostBackground": "rgb(255, 253, 249)",
+          "contrast": 5.206
+        },
+        "settings-error": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 249)",
+          "contrast": 4.754
+        },
+        "settings-success": {
+          "color": "rgb(4, 120, 87)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 249)",
+          "contrast": 5.398
+        },
+        "recovery-error": {
+          "color": "rgb(127, 29, 29)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 253, 249)",
+          "contrast": 9.159
+        },
+        "global-error": {
+          "color": "rgb(127, 29, 29)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 253, 249)",
+          "contrast": 9.159
+        },
+        "delete-text": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 249)",
+          "contrast": 4.754
+        },
+        "chapter-error": {
+          "color": "rgb(138, 38, 56)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 249)",
+          "contrast": 8.559
+        }
+      }
+    },
+    {
+      "theme": "mahler-dark",
+      "scheme": "dark",
+      "os": "light",
+      "strategy": "selector",
+      "mismatch": true,
+      "styles": {
+        "auth-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgba(248, 113, 113, 0.1)",
+          "hostBackground": "rgb(40, 26, 34)",
+          "contrast": 11.716
+        },
+        "auth-success": {
+          "color": "rgb(167, 243, 208)",
+          "background": "rgba(52, 211, 153, 0.1)",
+          "hostBackground": "rgb(40, 26, 34)",
+          "contrast": 10.9
+        },
+        "settings-error": {
+          "color": "rgb(252, 165, 165)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(40, 26, 34)",
+          "contrast": 8.774
+        },
+        "settings-success": {
+          "color": "rgb(110, 231, 183)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(40, 26, 34)",
+          "contrast": 10.925
+        },
+        "recovery-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgba(239, 68, 68, 0.1)",
+          "hostBackground": "rgb(40, 26, 34)",
+          "contrast": 12.223
+        },
+        "global-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgb(43, 32, 32)",
+          "hostBackground": "rgb(40, 26, 34)",
+          "contrast": 12.924
+        },
+        "delete-text": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(40, 26, 34)",
+          "contrast": 3.448
+        },
+        "chapter-error": {
+          "color": "rgb(216, 162, 79)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(40, 26, 34)",
+          "contrast": 7.296
+        }
+      }
+    },
+    {
+      "theme": "shostakovich-light",
+      "scheme": "light",
+      "os": "light",
+      "strategy": "selector",
+      "mismatch": false,
+      "styles": {
+        "auth-error": {
+          "color": "rgb(153, 27, 27)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 253, 246)",
+          "contrast": 7.597
+        },
+        "auth-success": {
+          "color": "rgb(4, 120, 87)",
+          "background": "rgb(236, 253, 245)",
+          "hostBackground": "rgb(255, 253, 246)",
+          "contrast": 5.206
+        },
+        "settings-error": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 246)",
+          "contrast": 4.745
+        },
+        "settings-success": {
+          "color": "rgb(4, 120, 87)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 246)",
+          "contrast": 5.388
+        },
+        "recovery-error": {
+          "color": "rgb(127, 29, 29)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 253, 246)",
+          "contrast": 9.159
+        },
+        "global-error": {
+          "color": "rgb(127, 29, 29)",
+          "background": "rgb(254, 242, 242)",
+          "hostBackground": "rgb(255, 253, 246)",
+          "contrast": 9.159
+        },
+        "delete-text": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 246)",
+          "contrast": 4.745
+        },
+        "chapter-error": {
+          "color": "rgb(169, 15, 37)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(255, 253, 246)",
+          "contrast": 7.416
+        }
+      }
+    },
+    {
+      "theme": "shostakovich-dark",
+      "scheme": "dark",
+      "os": "light",
+      "strategy": "selector",
+      "mismatch": true,
+      "styles": {
+        "auth-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgba(248, 113, 113, 0.1)",
+          "hostBackground": "rgb(25, 23, 22)",
+          "contrast": 12.745
+        },
+        "auth-success": {
+          "color": "rgb(167, 243, 208)",
+          "background": "rgba(52, 211, 153, 0.1)",
+          "hostBackground": "rgb(25, 23, 22)",
+          "contrast": 11.685
+        },
+        "settings-error": {
+          "color": "rgb(252, 165, 165)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(25, 23, 22)",
+          "contrast": 9.413
+        },
+        "settings-success": {
+          "color": "rgb(110, 231, 183)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(25, 23, 22)",
+          "contrast": 11.72
+        },
+        "recovery-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgba(239, 68, 68, 0.1)",
+          "hostBackground": "rgb(25, 23, 22)",
+          "contrast": 13.276
+        },
+        "global-error": {
+          "color": "rgb(254, 226, 226)",
+          "background": "rgb(43, 32, 32)",
+          "hostBackground": "rgb(25, 23, 22)",
+          "contrast": 12.924
+        },
+        "delete-text": {
+          "color": "rgb(220, 38, 38)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(25, 23, 22)",
+          "contrast": 3.699
+        },
+        "chapter-error": {
+          "color": "rgb(200, 16, 46)",
+          "background": "rgba(0, 0, 0, 0)",
+          "hostBackground": "rgb(25, 23, 22)",
+          "contrast": 3.037
+        }
+      }
+    }
+  ],
+  "verification": {
+    "buildCss": "dist/assets/index-3qVjc3WE.css",
+    "buildCssSha256": "77fdd8c49af46f22e44b939a6036731110055f055f0c08b1f5c8b5935e02e9cb",
+    "testCount": 83,
+    "typeCheck": "passed",
+    "build": "passed",
+    "selectedOption": 1
+  }
+}

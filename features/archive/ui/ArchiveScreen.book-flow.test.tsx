@@ -53,11 +53,82 @@ const renderBookScreen = (overrides: Partial<React.ComponentProps<typeof Archive
 );
 
 describe('ArchiveScreen book flow', () => {
+  it.each([0, 2, 3])('uses arrows to add exactly one child beyond saved depth %i, retaining the draft and anchor', async savedDepth => {
+    const drafts = new BookComposerDraftStore();
+    const chapterBlocks = Array.from({ length: savedDepth + 1 }, (_, depth) => ({
+      id: `ch${depth}`, bookId: 'book-1', label: `Chapter ${depth}`, depth, createdAt: depth, createdAtSort: depth + 1,
+    }));
+    const anchor = `ch${savedDepth}`;
+    drafts.patch('book-1', { chapterMode: true, insertion: { afterId: anchor, depth: savedDepth } });
+    renderBookScreen({ composerDrafts: drafts, chapterBlocks });
+    const user = userEvent.setup();
+    const editor = screen.getByRole('textbox', { name: '챕터 제목 입력' }) as HTMLTextAreaElement;
+    await user.type(editor, '새 소제목');
+    editor.setSelectionRange(2, 2);
+    const inward = screen.getByRole('button', { name: '한 단계 하위로' }) as HTMLButtonElement;
+    expect(inward.disabled).toBe(false);
+    if (savedDepth === 0) expect(screen.queryByRole('button', { name: '한 단계 상위로' })).toBeNull();
+    await user.click(inward);
+    expect(drafts.get('book-1')?.insertion).toEqual({ afterId: anchor, depth: savedDepth + 1 });
+    expect(inward.disabled).toBe(true);
+    expect(document.activeElement).toBe(editor);
+    expect(editor.selectionStart).toBe(2);
+    expect(editor.value).toBe('새 소제목');
+    await user.click(inward);
+    expect(drafts.get('book-1')?.insertion?.depth).toBe(savedDepth + 1);
+    await user.click(screen.getByRole('button', { name: '한 단계 상위로' }));
+    expect(drafts.get('book-1')?.insertion).toEqual({ afterId: anchor, depth: savedDepth });
+    await user.click(screen.getByRole('radio', { name: '인용문' }));
+    expect(screen.queryByRole('group', { name: '챕터 단계 변경' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '위치 취소' })).toBeNull();
+    expect((screen.getByRole('textbox', { name: '인용문 입력' }) as HTMLTextAreaElement).value).toBe('새 소제목');
+    expect(drafts.get('book-1')?.insertion).toEqual({ afterId: anchor, depth: savedDepth });
+  });
+  it('keeps the first chapter at root and moves keyboard focus when the outward button disappears', async () => {
+    const drafts = new BookComposerDraftStore();
+    drafts.patch('book-1', { chapterMode: true });
+    const view = renderBookScreen({ composerDrafts: drafts });
+    expect((screen.getByRole('button', { name: '한 단계 하위로' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.queryByRole('button', { name: '한 단계 상위로' })).toBeNull();
+    view.unmount();
+    drafts.patch('book-1', { insertion: { afterId: 'root', depth: 1 } });
+    renderBookScreen({ composerDrafts: drafts, chapterBlocks: [{ id: 'root', bookId: 'book-1', label: 'Root', depth: 0, createdAt: 0, createdAtSort: 10 }] });
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('textbox', { name: '챕터 제목 입력' })));
+    const outward = screen.getByRole('button', { name: '한 단계 상위로' });
+    outward.focus();
+    await userEvent.setup().keyboard('{Enter}');
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('button', { name: '한 단계 하위로' })));
+    expect(screen.queryByRole('button', { name: '한 단계 상위로' })).toBeNull();
+    expect(drafts.get('book-1')?.insertion).toEqual({ afterId: 'root', depth: 0 });
+    await userEvent.setup().keyboard('{Enter}');
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('button', { name: '한 단계 상위로' })));
+    expect((screen.getByRole('button', { name: '한 단계 하위로' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(drafts.get('book-1')?.insertion).toEqual({ afterId: 'root', depth: 1 });
+  });
+  it('locks arrows while saving a chapter and keeps its depth and content after a failure', async () => {
+    const drafts = new BookComposerDraftStore();
+    drafts.patch('book-1', { chapterMode: true, insertion: { afterId: 'root', depth: 1 } });
+    let finish!: (result: false) => void;
+    const onCreateChapterBlock = vi.fn(() => new Promise<false>(resolve => { finish = resolve; }));
+    renderBookScreen({ composerDrafts: drafts, onCreateChapterBlock, chapterBlocks: [{ id: 'root', bookId: 'book-1', label: 'Root', depth: 0, createdAt: 0, createdAtSort: 10 }] });
+    const user = userEvent.setup();
+    await user.type(screen.getByRole('textbox', { name: '챕터 제목 입력' }), '남길 소제목');
+    await user.click(screen.getByRole('button', { name: '챕터 저장' }));
+    for (const button of screen.getAllByRole('button', { name: /한 단계/ })) expect((button as HTMLButtonElement).disabled).toBe(true);
+    await user.click(screen.getByRole('button', { name: '한 단계 상위로' }));
+    expect(drafts.get('book-1')?.insertion).toEqual({ afterId: 'root', depth: 1 });
+    finish(false);
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('저장하지 못했습니다'));
+    expect((screen.getByRole('textbox', { name: '챕터 제목 입력' }) as HTMLTextAreaElement).value).toBe('남길 소제목');
+    expect((screen.getByRole('button', { name: '한 단계 상위로' }) as HTMLButtonElement).disabled).toBe(false);
+    expect(drafts.get('book-1')?.insertion).toEqual({ afterId: 'root', depth: 1 });
+  });
   it.each(['Backspace', 'Delete'])('keeps the top-level draft unchanged on %s without scheduling scrolling', key => {
     const drafts = new BookComposerDraftStore();
     const chapter = { id: 'root', bookId: 'book-1', label: 'Root', depth: 0, createdAt: 0, createdAtSort: 10 };
     renderBookScreen({ composerDrafts: drafts, chapterBlocks: [chapter] });
     const editor = screen.getByRole('textbox', { name: '인용문 입력' }) as HTMLTextAreaElement;
+    expect(screen.queryByRole('group', { name: '챕터 단계 변경' })).toBeNull();
     editor.setSelectionRange(0, 0);
     const before = drafts.get('book-1');
     const frame = vi.spyOn(window, 'requestAnimationFrame');

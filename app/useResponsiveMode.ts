@@ -4,9 +4,8 @@ export const useResponsiveMode = () => {
   const [isMobileApp, setIsMobileApp] = useState(false);
 
   useEffect(() => {
-    const widthQuery = window.matchMedia('(max-width: 1024px)');
-    const coarsePointerQuery = window.matchMedia('(pointer: coarse)');
-    const checkMobileApp = () => setIsMobileApp(widthQuery.matches || coarsePointerQuery.matches);
+    const widthQuery = window.matchMedia('(min-width: 1024px)');
+    const checkMobileApp = () => setIsMobileApp(!widthQuery.matches);
 
     const addQueryListener = (query: MediaQueryList, listener: () => void) => {
       if (query.addEventListener) {
@@ -26,13 +25,11 @@ export const useResponsiveMode = () => {
 
     checkMobileApp();
     addQueryListener(widthQuery, checkMobileApp);
-    addQueryListener(coarsePointerQuery, checkMobileApp);
     window.addEventListener('orientationchange', checkMobileApp);
     window.addEventListener('resize', checkMobileApp);
 
     return () => {
       removeQueryListener(widthQuery, checkMobileApp);
-      removeQueryListener(coarsePointerQuery, checkMobileApp);
       window.removeEventListener('orientationchange', checkMobileApp);
       window.removeEventListener('resize', checkMobileApp);
     };

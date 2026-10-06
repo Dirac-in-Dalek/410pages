@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-06",
+  "productCodeUnchanged": true,
+  "baselineHashes": {
+    "features/citation-entry/ui/CitationEditor.tsx": "e3238c7b985cdcf9b9a55a9c569643bef77024a3fb323d387d76af211ffcb50b",
+    "index.css": "981988b2e611bc44b4ad51aafe29352ce1628e5a649f919f9462dd458199566b"
+  },
+  "verified": [
+    "A/B/C placement, fixed approved footer dimensions",
+    "direct input focus and paired text preservation",
+    "root: no nested cue, screen-reader status retained",
+    "save/load and original restoration",
+    "invalid JSON error display",
+    "pending control lock",
+    "narrow deep hierarchy Night visual",
+    "375x707: controls reachable, no horizontal overflow, footer inside",
+    "export: four display parameters, comparison environment separate, implementationApproved false"
+  ],
+  "unverified": [
+    "actual app implementation",
+    "understanding relationship without explanatory text",
+    "physical touch device"
+  ],
+  "closedTabs": [
+    "14",
+    "15",
+    "17"
+  ],
+  "resultTab": "16",
+  "temporaryViewportOverrideCleared": true
+}
