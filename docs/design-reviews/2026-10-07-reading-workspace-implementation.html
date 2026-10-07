@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>410pages · 세 열 읽기 화면 구현 결과</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#fff;color:#222;font:15px/1.7 system-ui,sans-serif}main{max-width:1240px;margin:auto;padding:28px}h1{font-size:28px;line-height:1.3;margin:0 0 14px}h2{font-size:21px;margin:34px 0 12px}h3{font-size:16px;margin:0 0 8px}p{margin:9px 0}a{color:#a51b30;text-underline-offset:3px}button,select{font:inherit}button,select,a{border-radius:5px}button:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid #a51b30;outline-offset:3px}.lead{font-size:17px;max-width:78ch}.small{font-size:13px;color:#666}.tag{display:inline-block;color:#a51b30;font-size:12px;font-weight:700}.status{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:22px 0}.status div{border-top:3px solid #a51b30;padding:12px;background:#faf8f6}.status strong{display:block}.toolbar{display:flex;flex-wrap:wrap;align-items:end;gap:10px;margin:12px 0}.toolbar label{display:grid;gap:3px;font-size:13px}.toolbar select,.toolbar button{min-height:40px;border:1px solid #bbb;background:#fff;padding:7px 10px}.stage{width:100%;overflow:hidden;border:1px solid #ccc;background:#eee}.stage-inner{position:relative;overflow:hidden}.stage iframe{position:absolute;inset:0 auto auto 0;border:0;background:#fff;transform-origin:top left}.links{display:flex;flex-wrap:wrap;gap:14px;margin:10px 0 18px}.links a{display:inline-block;border:1px solid #bbb;padding:8px 11px;text-decoration:none}.shots{display:grid;grid-template-columns:1fr 1fr;gap:18px}.shots figure{margin:0}.shots img{display:block;width:100%;height:auto;border:1px solid #ccc}.shots figcaption{font-size:13px;color:#666;margin-top:6px}table{width:100%;border-collapse:collapse}th,td{text-align:left;vertical-align:top;padding:11px 9px;border-bottom:1px solid #ddd}th{width:24%}ul{padding-left:22px}li{margin:7px 0}.pending{color:#805700}.verified{color:#176b3a}@media(max-width:760px){main{padding:18px}.status,.shots{grid-template-columns:1fr}h1{font-size:25px}th{width:34%}}
+</style>
+</head>
+<body><main>
+<span class="tag">2026-10-07 · 실제 제품 컴포넌트 결과</span>
+<h1>댓글 — 인용문 — 메모를 하나의 읽기 화면으로 구현</h1>
+<div class="lead"><p>데스크톱 책 화면에서 세 열을 같은 읽기 묶음으로 배치했습니다. 제목과 인용문의 시작선을 맞추고, 메모 열은 책 화면 상단에서 자연스럽게 시작합니다. 메모는 긴 글처럼 독립 스크롤하며 접어도 편집 상태를 유지합니다.</p></div>
+<div class="status"><div><strong>제품 구현</strong>세 열 연결·공간 계산·책별 위치 복원 반영</div><div><strong>실제 화면</strong>375px·1024·1440·1920·4K 확인</div><div><strong>자동 검사</strong><span class="verified">82개 파일·575개 테스트 통과</span></div></div>
+
+<h2>실제 화면과 같은 경로로 직접 확인</h2>
+<p class="small">아래 예제는 제품의 <code>MainLayout</code>·<code>ArchiveScreen</code>·<code>BookMemoPanel</code>을 그대로 사용합니다. 책·인용문·저장은 예제 전용 상태와 로컬 콜백만 사용하며 실제 계정이나 백엔드를 수정하지 않습니다.</p>
+<div class="links"><a href="/?author=a9e9c451-4448-4204-9fb5-13c3282e156f&amp;book=71391929-4792-4c68-ad17-31a9143ea7f1">실제 책 화면 열기</a><a href="2026-10-06-chapter-writing-fixture.html?workspace=1" target="_blank" rel="noreferrer">격리된 제품 fixture 크게 열기</a><a href="2026-10-07-implementation-scope.html">승인한 구현 범위</a></div>
+<div class="toolbar">
+  <label>화면<select id="viewport"><option value="1024">1024 × 768</option><option value="1440">1440 × 900</option><option value="1920">1920 × 1080</option><option value="3840">3840 × 2160 · 4K</option></select></label>
+  <label>예제 책<select id="book"><option value="a">A · 긴 메모</option><option value="b">B · 짧은 메모</option></select></label>
+  <label>테마<select id="theme"><option value="day">Day</option><option value="night">Night</option></select></label>
+  <label>메모 글자<select id="font"><option value="14">14pt</option><option value="18">18pt</option></select></label>
+  <label>저장 예제<select id="failure"><option value="success">성공</option><option value="failure">실패·재시도 확인</option></select></label>
+  <button id="reset" type="button">예제 초기화</button>
+</div>
+<div id="stage" class="stage"><div id="stage-inner" class="stage-inner"><iframe id="scene" title="구현된 세 열 읽기 화면" src="2026-10-06-chapter-writing-fixture.html?workspace=1"></iframe></div></div>
+<p id="scale" class="small" role="status"></p>
+
+<h2>이전 구현 단계 화면 캡처</h2>
+<div class="shots"><figure><img src="assets/2026-10-06-workspace/reading-workspace-implemented-1024.png" alt="1024×768에서 서재를 접고 댓글, 인용문, 메모 세 열을 표시한 이전 구현 화면"><figcaption>최종 1:2:1 적용 전 1024×768 기록입니다. 인용문 글자 영역 337.98px, 양쪽 글자 간격 약 81.5px이었습니다.</figcaption></figure><figure><img src="assets/2026-10-06-workspace/reading-workspace-implemented-4k.png" alt="4K에서 폭을 제한한 읽기 묶음을 가운데 배치한 이전 구현 화면"><figcaption>최종 1:2:1 적용 전 4K 기록입니다. 읽기 묶음 1272px, 인용문 500px, 양쪽 글자 간격 94px이었습니다.</figcaption></figure></div>
+
+<h2>결정과 구현</h2>
+<table><tbody>
+<tr><th>사용자 결정</th><td>데스크톱 책 화면을 왼쪽 댓글, 가운데 인용문, 오른쪽 메모의 세 열로 구성. 보이는 글 영역은 1:2:1로 두고 제목·본문을 화면 전체 중앙에 정렬. 메모 열은 자연스러운 상단에서 시작하며, 접기·펼치기 버튼은 메모 헤더 오른쪽 끝에 유지.</td></tr>
+<tr><th>Codex 구현 판단</th><td>세 열의 보이는 글 영역을 기준으로 1:2:1을 계산하고, 댓글·인용문 사이와 인용문·메모 사이의 글자 간격을 맞춥니다. 메모를 접어도 헤더·버튼과 편집 DOM·스크롤 상태를 유지합니다. 1024px에서는 서재를 자동으로 접어 읽기 공간을 확보합니다.</td></tr>
+<tr><th>기존 동작 유지</th><td>책별 단일 메모, 800ms 자동 저장, 실패 재시도·복구 초안 저장, 계정·책별 초안 복구와 저장 직렬화, 댓글 CRUD·전체 펼치기, 메모 접기 중 편집기 유지, 메모·서재 폭 조절, 챕터/인용문 입력·계층·페이지·저장 후 이어 쓰기, Day/Night, 모바일 하단 시트 구조. 평상시의 `자동 저장` 문구와 `지금 저장` 버튼·빈 푸터는 제거했습니다.</td></tr>
+<tr><th>저장 범위</th><td>저장 모델·DB/API·인증은 변경하지 않았습니다. 실제 계정 화면은 기하·스크롤·접기만 읽기 확인했고 데이터를 수정하지 않았습니다. 아래 fixture의 저장은 로컬 콜백과 예제 전용 브라우저 초안만 사용합니다.</td></tr>
+</tbody></table>
+
+<h2>확인한 사실</h2>
+<ul>
+<li><span class="verified">최종 1024px 비율:</span> 보이는 댓글·본문·메모 폭은 202/404/202px로 25/50/25%입니다. 제목·본문 중심은 화면 중심 512px과 일치하며 양쪽 글자 간격은 78/78px입니다.</li>
+<li><span class="verified">4K 현재 단계:</span> 보이는 댓글·본문·메모 폭은 250/500/250px로 1:2:1입니다. 광폭 화면의 글자·행 길이·여백 통합 확대는 다음 턴 계획으로 분리했습니다.</li>
+<li><span class="verified">독립 스크롤:</span> 빈 메모를 내리면 메모 영역 top=51.3984px까지 올라갔고 인용문 스크롤은 움직이지 않았습니다.</li>
+<li><span class="verified">접기:</span> 메모를 접어도 입력 요소는 mounted 상태이고 인용문 x 좌표는 바뀌지 않았습니다.</li>
+<li><span class="verified">중간 폭:</span> 실제 앱의 1440px·1920px 화면에서 가로 overflow가 없음을 확인했습니다.</li>
+<li><span class="verified">모바일 유지:</span> 375px에서 메모는 폭 375px의 기존 dialog로 열렸고 제목은 `메모`, 읽기 열 변형은 적용되지 않았습니다. 닫기, 인용문 입력 가능 상태, 가로 overflow 없음도 확인했습니다.</li>
+<li><span class="verified">긴 메모:</span> 14pt(18.6667px) 높이 1573px, 18pt(24px) 높이 2518px에서 잘림을 보지 못했습니다. 24px 긴 메모의 실제 끝(caret 791/length 791)에 네이티브 입력으로 12자를 추가한 뒤 caret 803/length 803과 끝 문구를 확인했고, 바깥 메모 scrollTop은 2264로 유지됐습니다.</li>
+<li><span class="verified">책별 위치 복원:</span> 격리 fixture의 24px 긴 메모 A를 scrollTop 1500까지 내린 뒤 짧은 메모 B(31자, scrollTop 0)로 갔다가 A로 돌아오면 scrollTop 1500과 높이 2518px가 복원됐습니다.</li>
+<li><span class="verified">Night·폭 조절:</span> Night에서도 가로 overflow 없이 메모 위치 1500을 유지했습니다. 메모 구분선을 키보드로 360→376→360px 조절한 뒤 원래 폭으로 복원했습니다.</li>
+<li><span class="verified">예제 저장:</span> 로컬 실패 상태에서 내용 보존과 재시도를 확인했습니다. 실제 백엔드 저장 검증은 아닙니다.</li>
+<li>독립 검토에서 메모 글자 크기 수정 뒤 남은 확정 결함은 보고되지 않았습니다.</li>
+</ul>
+
+<h2>검증 수준과 남은 한계</h2>
+<table><tbody>
+<tr><th>자동 검사</th><td>현재 확정된 폭 상한·1:2:1 구현을 포함한 코드에서 82개 파일·575개 테스트가 <code>maxWorkers=2</code>로 71.37초에 통과했습니다. 관련 집중 검사 27개, 타입 검사, production build와 diff 검사도 통과했습니다.</td></tr>
+<tr><th>브라우저</th><td>실제 계정 앱의 375px·1024×768·1440·1920·4K에서는 데이터를 수정하지 않고 모바일 유지, 열 배치, overflow, 시작점, 독립 스크롤과 접기를 확인했습니다. 격리 fixture에서는 긴 메모 끝 입력·스크롤 유지, Day/Night, 14/18pt, 로컬 저장 실패·재시도와 A 긴 메모/B 짧은 메모 전환을 확인할 수 있습니다.</td></tr>
+<tr><th>미검증</th><td class="pending">다른 브라우저·물리 디스플레이, 실제 계정의 메모 쓰기/저장, 장기간 작성 편의, 운영 배포 효과는 확인하지 않았습니다.</td></tr>
+<tr><th>권한 경계</th><td>구현 검토 후 사용자가 현재 작업 브랜치의 커밋·푸시를 승인했습니다. 운영 배포는 이번 범위에 포함하지 않습니다.</td></tr>
+</tbody></table>
+<p class="small">확정 정책은 위 ‘결정과 구현’ 표에 요약했습니다. 과거 고정 오른쪽 패널·공간 부족 시 메모 자동 닫기 규칙은 이력으로 보존하고, 이번 세 열 읽기 묶음·서재 우선 자동 접기 규칙이 대체합니다.</p>
+</main>
+<script>
+const $=id=>document.getElementById(id),scene=$('scene'),sizes={1024:[1024,768],1440:[1440,900],1920:[1920,1080],3840:[3840,2160]};
+function config(){return {matched:true,boundary:'hide-root-out',hideCopy:true,guides:false,theme:$('theme').value,scenario:'root',width:Number($('viewport').value),bookKey:$('book').value,largeFont:$('font').value==='18',failure:$('failure').value==='failure'};}
+function send(reset=false){scene.contentWindow.postMessage({type:'410pages-writing-config',config:config(),reset},location.origin);fit();}
+function fit(){const [w,h]=sizes[$('viewport').value],available=$('stage').clientWidth,scale=Math.min(1,available/w,720/h);scene.style.width=w+'px';scene.style.height=h+'px';scene.style.transform=`scale(${scale})`;scene.style.left=Math.max(0,(available-w*scale)/2)+'px';$('stage-inner').style.height=(h*scale)+'px';$('scale').textContent=`${w}×${h} CSS px · 표시 배율 ${Math.round(scale*100)}%. 직접 조작은 가능하며, 정확한 글자 크기는 fixture 크게 열기에서 확인할 수 있습니다.`;}
+window.addEventListener('message',event=>{if(event.origin!==location.origin||event.source!==scene.contentWindow)return;if(event.data?.type==='410pages-writing-ready')send();if(event.data?.type==='410pages-writing-metrics'&&['a','b'].includes(event.data.metrics?.bookKey))$('book').value=event.data.metrics.bookKey;});
+scene.addEventListener('load',()=>send());window.addEventListener('resize',fit);for(const id of ['viewport','book','theme','font','failure'])$(id).addEventListener('change',()=>send());$('reset').onclick=()=>{$('book').value='a';$('theme').value='day';$('font').value='14';$('failure').value='success';send(true);};fit();
+</script></body></html>

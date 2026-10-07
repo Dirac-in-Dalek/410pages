@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>410pages · 화살표 위치와 메모 문구</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#fff;color:#222;font:15px/1.65 system-ui,sans-serif}main{max-width:1120px;margin:auto;padding:24px}h1{font-size:26px;line-height:1.3}h2{font-size:19px;margin-top:28px}a{color:#a51b30;text-underline-offset:3px}label{display:inline-flex;align-items:center;gap:8px;margin:0 16px 12px 0}select{font:inherit;min-height:40px;border:1px solid #bbb;border-radius:6px;padding:6px;background:white}a:focus-visible,select:focus-visible{outline:2px solid #a51b30;outline-offset:3px}.stage{overflow:hidden;border:1px solid #ddd;border-radius:8px;background:#f8f8f8}.stage iframe{display:block;width:1024px;height:768px;border:0;transform-origin:top left;background:white}.small{font-size:13px;color:#666}img{display:block;max-width:100%;height:auto}table{width:100%;border-collapse:collapse}td,th{text-align:left;vertical-align:top;padding:10px;border-bottom:1px solid #ddd}@media(max-width:600px){main{padding:16px}h1{font-size:23px}}
+</style>
+</head>
+<body><main>
+<h1>화살표는 입력 박스 바깥 왼쪽, 제목은 ‘메모’</h1>
+<p>챕터 모드에서만 ← 상위 / → 하위를 표시합니다. 화살표는 박스 바깥 왼쪽에서 하단 인용문·챕터 선택 버튼과 같은 높이에 놓습니다. 배경 없는 Pill 클릭 영역과 단계에 따른 입력창 폭 변화는 유지합니다. ‘메모’ 문구는 패널 제목과 열기 버튼에 적용했습니다.</p>
+<p class="small">이번 두 수정은 실제 공통 컴포넌트에 적용했습니다. 아래는 실제 ArchiveScreen·CitationEditor를 사용하는 로컬 예제입니다. 저장한 항목은 예제 안에만 남습니다. <a href="2026-10-06-reading-workspace.html#preview">세 열 읽기 작업대</a>의 배치는 별도 선택 단계로 유지합니다.</p>
+<h2>1024 × 768에서 직접 확인</h2>
+<label>시작 상태 <select id="scenario"><option value="root">1장 뒤 · 챕터 작성</option><option value="child-chapter">1.1 뒤 · 하위 챕터 작성</option><option value="child">1.1 아래 · 인용문 작성</option><option value="empty">빈 책</option></select></label>
+<label>테마 <select id="theme"><option value="day">Day</option><option value="night">Night</option></select></label>
+<div class="stage" id="stage"><iframe id="scene" title="1024px 실제 챕터 입력 컴포넌트" src="2026-10-06-chapter-writing-fixture.html?variant=proposed"></iframe></div>
+<p class="small">창이 좁으면 전체 화면을 축소 표시합니다. 단계 화살표를 눌러 입력창이 움직이는 모습과 인용문·챕터 전환을 확인할 수 있습니다.</p>
+<p>추가 정렬 확인: 1024px에서 인용문·챕터 선택 버튼과 두 화살표의 세로 중심이 모두 735px로 일치합니다. 최상위와 하위 모두 확인했습니다.</p>
+<h2>결정과 검증</h2>
+<table><tbody>
+<tr><th>사용자 결정</th><td>화살표를 입력 박스 바깥 왼쪽에 배치. 화면 제목과 열기 버튼은 ‘메모’.</td></tr>
+<tr><th>Codex 판단</th><td>바깥 공간을 사용해 입력창·인용문의 기존 시작선과 폭을 보존. 왼쪽 여백이 부족한 좁은 화면에서는 화살표만 박스 바깥 윗줄로 넘겨 잘림을 방지.</td></tr>
+<tr><th>유지한 기능</th><td>챕터에서만 화살표 표시, 현재 챕터 단계 +1까지 이동, 200ms 폭 전환과 움직임 줄이기 설정, 초안·커서·저장 잠금. 책별 메모·자동 저장·접기·펼치기.</td></tr>
+<tr><th>검증</th><td id="verification">자동 테스트 3개 파일·21개 통과. 타입 검사·제품 빌드 통과. 실제 컴포넌트의 1024px Day/Night에서 외부 화살표·커서 보존·저장 후 정렬 확인. 최상위 글자 폭 500px, 하위 468px로 입력·저장 문장이 일치. 375px에서는 화살표만 윗줄로 이동하고 가로 잘림 없음.</td></tr>
+<tr><th>남은 범위</th><td>세 열 읽기 배치는 아직 시안입니다. 이번 변경은 로컬에 적용했으며 커밋·푸시는 진행하지 않았습니다.</td></tr>
+</tbody></table>
+<p class="small">검토 범위는 이번 UI·문구 수정입니다. 승인된 200ms 실제 폭 애니메이션에 대한 기존 디자인 검사 예외의 설명을 갱신했습니다. 새로운 전역 무시 규칙은 추가하지 않았습니다. 프레임 성능과 운영 서버 저장은 이번에 측정하지 않았습니다. 로컬 서버와 검토 화면은 이어서 사용할 수 있도록 유지합니다.</p>
+<section id="proof"><h2>1024px 확인 화면</h2><img src="assets/2026-10-06-workspace/composer-left-arrows-1024.png" alt="화살표가 챕터 입력 테두리 바깥 왼쪽에 놓인 1024px 확인 화면"></section>
+</main>
+<script>
+const frame=document.getElementById('scene'),stage=document.getElementById('stage');
+function fit(){const scale=Math.min(1,stage.clientWidth/1024);frame.style.transform=`scale(${scale})`;stage.style.height=(768*scale)+'px'}
+function send(reset=false){frame.contentWindow.postMessage({type:'410pages-writing-config',config:{matched:true,boundary:'hide-root-out',hideCopy:true,guides:false,width:1024,theme:document.getElementById('theme').value,scenario:document.getElementById('scenario').value},reset},location.origin)}
+frame.addEventListener('load',()=>send());window.addEventListener('resize',fit);window.addEventListener('message',event=>{if(event.source===frame.contentWindow&&event.origin===location.origin&&event.data?.type==='410pages-writing-ready')send()});document.getElementById('scenario').onchange=()=>send(true);document.getElementById('theme').onchange=()=>send();fit();
+</script></body></html>

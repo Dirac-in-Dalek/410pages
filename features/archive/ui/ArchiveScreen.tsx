@@ -228,8 +228,8 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
     : getArchiveReadingColumnClass({ isBookView, isMobileApp });
   const bookStyle = inlinePassageNotes ? {
     containerType: 'inline-size',
-    '--book-column-size': 'min(var(--citation-column-width), calc(var(--book-reference-width, 100cqw) - 3rem))',
-    '--book-column-left': 'calc(var(--book-left-reference, 0px) - var(--book-main-left, 0px) + (var(--book-reference-width, 100cqw) - var(--book-column-size)) / 2)',
+    '--book-column-size': 'var(--reading-body-width, min(var(--citation-column-width), calc(var(--book-reference-width, 100cqw) - 3rem)))',
+    '--book-column-left': 'var(--reading-body-left, calc(var(--book-left-reference, 0px) - var(--book-main-left, 0px) + (var(--book-reference-width, 100cqw) - var(--book-column-size)) / 2))',
   } as React.CSSProperties : undefined;
 
   return (

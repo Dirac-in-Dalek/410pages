@@ -72,26 +72,34 @@ export const useCitationEntryController = ({
 
     const resize = () => {
       const scrollTop = textarea.scrollTop;
+      const style = getComputedStyle(textarea);
+      const oneLineHeight = Math.ceil((parseFloat(style.lineHeight) || 0)
+        + (parseFloat(style.paddingTop) || 0) + (parseFloat(style.paddingBottom) || 0));
       textarea.style.height = 'auto';
-      textarea.style.height = `${resolveCitationEntryTextareaHeight(textarea.scrollHeight, values.text)}px`;
+      textarea.style.height = `${Math.max(oneLineHeight, resolveCitationEntryTextareaHeight(textarea.scrollHeight, values.text))}px`;
       textarea.scrollTop = scrollTop;
     };
 
     resize();
 
-    if (typeof ResizeObserver === 'undefined') return;
-
     let width: number | undefined;
-    const observer = new ResizeObserver(([entry]) => {
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(([entry]) => {
       const nextWidth = entry?.contentRect.width ?? textarea.getBoundingClientRect().width;
       if (nextWidth === width) return;
 
       width = nextWidth;
       resize();
     });
-    observer.observe(textarea);
+    observer?.observe(textarea);
+    const preferences = new MutationObserver(resize);
+    preferences.observe(document.documentElement, { attributes: true, attributeFilter: ['style', 'data-font'] });
+    document.fonts?.addEventListener('loadingdone', resize);
 
-    return () => observer.disconnect();
+    return () => {
+      observer?.disconnect();
+      preferences.disconnect();
+      document.fonts?.removeEventListener('loadingdone', resize);
+    };
   }, [values.text]);
 
   useEffect(() => {

@@ -1,0 +1,295 @@
+{
+  "date": "2026-10-06",
+  "status": "design-review-ready",
+  "productCodeChanged": false,
+  "implementationApproved": false,
+  "baseline": "3b7f691",
+  "testedWidths": [
+    1024,
+    3840
+  ],
+  "measurements": [
+    {
+      "width": 1024,
+      "preset": "① 묶음 중심 · 추천",
+      "metrics": {
+        "bodyCenter": 459.77734375,
+        "comment": {
+          "left": 30,
+          "right": 211.2578125,
+          "top": 234,
+          "width": 181.2578125
+        },
+        "leftGap": 81.53125,
+        "mainCenter": 512,
+        "memo": {
+          "left": 712.296875,
+          "right": 995.9765625,
+          "top": 148,
+          "width": 283.6796875
+        },
+        "overflow": false,
+        "quote": {
+          "left": 292.7890625,
+          "right": 630.765625,
+          "top": 234,
+          "width": 337.9765625
+        },
+        "rightGap": 81.53125
+      }
+    },
+    {
+      "width": 1024,
+      "preset": "② 인용문 중심 고정",
+      "metrics": {
+        "bodyCenter": 511.98828125,
+        "comment": {
+          "left": 65.4765625,
+          "right": 293.4765625,
+          "top": 234,
+          "width": 228
+        },
+        "leftGap": 77.609375,
+        "mainCenter": 512,
+        "memo": {
+          "left": 734.5,
+          "right": 995.9765625,
+          "top": 148,
+          "width": 261.4765625
+        },
+        "overflow": false,
+        "quote": {
+          "left": 371.0859375,
+          "right": 656.890625,
+          "top": 234,
+          "width": 285.8046875
+        },
+        "rightGap": 77.609375
+      }
+    },
+    {
+      "width": 1024,
+      "preset": "③ 책 메모 넓게",
+      "metrics": {
+        "bodyCenter": 446.5546875,
+        "comment": {
+          "left": 30,
+          "right": 203.0234375,
+          "top": 234,
+          "width": 173.0234375
+        },
+        "leftGap": 80.8671875,
+        "mainCenter": 512,
+        "memo": {
+          "left": 694.0859375,
+          "right": 995.9765625,
+          "top": 148,
+          "width": 301.890625
+        },
+        "overflow": false,
+        "quote": {
+          "left": 283.890625,
+          "right": 613.21875,
+          "top": 234,
+          "width": 329.328125
+        },
+        "rightGap": 80.8671875
+      }
+    },
+    {
+      "width": 3840,
+      "preset": "① 묶음 중심 · 추천",
+      "metrics": {
+        "bodyCenter": 1976,
+        "comment": {
+          "left": 1406,
+          "right": 1634,
+          "top": 234,
+          "width": 228
+        },
+        "leftGap": 94,
+        "mainCenter": 2036,
+        "memo": {
+          "left": 2322,
+          "right": 2668,
+          "top": 148,
+          "width": 346
+        },
+        "overflow": false,
+        "quote": {
+          "left": 1728,
+          "right": 2228,
+          "top": 234,
+          "width": 500
+        },
+        "rightGap": 94
+      }
+    },
+    {
+      "width": 3840,
+      "preset": "② 인용문 중심 고정",
+      "metrics": {
+        "bodyCenter": 2036,
+        "comment": {
+          "left": 1466,
+          "right": 1694,
+          "top": 234,
+          "width": 228
+        },
+        "leftGap": 94,
+        "mainCenter": 2036,
+        "memo": {
+          "left": 2382,
+          "right": 2728,
+          "top": 148,
+          "width": 346
+        },
+        "overflow": false,
+        "quote": {
+          "left": 1788,
+          "right": 2288,
+          "top": 234,
+          "width": 500
+        },
+        "rightGap": 94
+      }
+    },
+    {
+      "width": 3840,
+      "preset": "③ 책 메모 넓게",
+      "metrics": {
+        "bodyCenter": 1900,
+        "comment": {
+          "left": 1362,
+          "right": 1558,
+          "top": 234,
+          "width": 196
+        },
+        "leftGap": 94,
+        "mainCenter": 2036,
+        "memo": {
+          "left": 2246,
+          "right": 2712,
+          "top": 148,
+          "width": 466
+        },
+        "overflow": false,
+        "quote": {
+          "left": 1652,
+          "right": 2152,
+          "top": 234,
+          "width": 500
+        },
+        "rightGap": 94
+      }
+    }
+  ],
+  "browserVerified": [
+    "memo font matches quote font; background transparent and no border",
+    "fold keeps editor mounted and quote left position",
+    "local autosave continues and content remains on reopen",
+    "save failure retains text; retry succeeds with local callback",
+    "manual gap 48 saved, modified to64, restored to48",
+    "JSON parameters and environment separated; invalid import rejected",
+    "Night with24px text has matching text colors and no page overflow",
+    "baseline reproduction keeps memo at far right with14px text",
+    "controls reachable with sticky miniature",
+    "memo fold stays closed while adjusting gap; global toolbar toggle works after document scrolling"
+  ],
+  "unverified": [
+    "product implementation",
+    "real backend persistence through proposed layout",
+    "physical display and other browsers",
+    "human writing comfort"
+  ],
+  "resources": {
+    "developmentServerPid": 47020,
+    "qaTab": "27",
+    "referenceTab": "26",
+    "result": "2026-10-06-reading-workspace.html",
+    "closedQaTabs": [
+      "26",
+      "27",
+      "28"
+    ],
+    "resultTab": "22",
+    "temporaryViewportCleared": true,
+    "browserId": "3"
+  },
+  "freshResultConsoleErrors": 0,
+  "hmrDuplicateRootFixed": true,
+  "capturedViews": [
+    "assets/2026-10-06-workspace/reading-workspace-1024.jpg",
+    "assets/2026-10-06-workspace/reading-workspace-4k-overview.jpg",
+    "assets/2026-10-06-workspace/reading-workspace-4k-detail.jpg",
+    "assets/2026-10-06-workspace/reading-workspace-aligned-start.jpg"
+  ],
+  "userCorrections": [
+    {
+      "request": "제목은 인용문과 정렬되어야 한다",
+      "verified": true,
+      "titleLeft": 293.8125,
+      "quoteLeft": 293.8125,
+      "difference": 0
+    },
+    {
+      "request": "책 전체 메모 본문 시작점을 첫 인용문 상단에 맞추고 위 여백도 스크롤되게 한다",
+      "verified": true,
+      "initialQuoteTop": 234,
+      "initialMemoTop": 234,
+      "longMemoAfterScroll200": {
+        "quoteTop": 234,
+        "memoTop": 34
+      },
+      "emptyMemo4KAfterScroll": {
+        "memoTop": 52,
+        "regionTop": 52,
+        "scrollTop": 182
+      }
+    }
+  ],
+  "approvedDesignAdjustments": {
+    "alignTitleWithQuote": true,
+    "alignMemoBodyWithFirstQuote": true,
+    "initialMemoOffsetScrollsWithDocument": true,
+    "wholeLayoutSelection": "pending",
+    "productImplementationApproved": false
+  },
+  "approvedCorrections20261007": {
+    "scope": [
+      "chapter-arrows-outside-composer-left",
+      "visible-memo-title"
+    ],
+    "appliedToSharedProductComponents": true,
+    "threeColumnProductLayoutImplemented": false,
+    "tests": {
+      "files": 3,
+      "passed": 21,
+      "typecheck": "passed",
+      "build": "passed"
+    },
+    "browser": {
+      "baselineViewport": [
+        1024,
+        768
+      ],
+      "rootTextBounds": [
+        380,
+        880
+      ],
+      "childInputAndSavedTextBounds": [
+        412,
+        880
+      ],
+      "arrowsOutsideLeft": true,
+      "caretAndDraftRetained": true,
+      "citationModeHidesArrows": true,
+      "nightLayoutChecked": true,
+      "narrowViewport": 375,
+      "narrowOverflow": false,
+      "memoVisibleTitleAndToggle": "메모"
+    },
+    "report": "2026-10-07-composer-and-memo.html",
+    "proof": "assets/2026-10-06-workspace/composer-left-arrows-1024.png"
+  }
+}

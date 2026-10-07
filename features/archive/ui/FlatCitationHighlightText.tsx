@@ -113,6 +113,7 @@ export const FlatCitationHighlightText: React.FC<FlatCitationHighlightTextProps>
   return (
     <span
       ref={rootRef}
+      data-book-citation-text
       data-testid={`book-citation-text-${citation.id}`}
       onMouseUp={handleSelection}
       aria-busy={saving}

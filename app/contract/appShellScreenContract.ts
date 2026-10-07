@@ -129,6 +129,7 @@ export interface MobileLayoutFactoryInput {
 }
 
 export interface MainLayoutFactoryInput {
+  bookReadingWorkspace?: boolean;
   onCloseInlinePassageNotes?: () => void;
   onRightPanelOpenChange?: (open: boolean) => void;
   hasInlinePassageNotes?: boolean;

@@ -3,6 +3,8 @@ import { getArchiveSearchLabel } from '../features/archive/logic/archiveSort';
 import { PanelLeftClose, PanelLeftOpen, Search, UserCircle2 } from 'lucide-react';
 import { AuthorDeletePreview, BookSource, Citation, DeleteAuthorCascadeResult, Project, SidebarItem } from '../types';
 import { useSidebarResize } from './main-layout/useSidebarResize';
+import { BookReadingWorkspace } from './main-layout/BookReadingWorkspace';
+import { getReadingBodyWidth } from './main-layout/bookReadingColumns';
 import { ProjectSidebar } from '../features/archive/ui/ProjectSidebar';
 
 interface MainLayoutProps {
@@ -10,6 +12,8 @@ interface MainLayoutProps {
   leftPanel?: React.ReactNode;
   rightPanel?: React.ReactNode;
   rightPanelOpen?: boolean;
+  bookReadingWorkspace?: boolean;
+  resizeStorageKeyPrefix?: string;
   homePanelOpen?: boolean;
   onHomePanelOpenChange?: (open: boolean) => void;
   hasInlinePassageNotes?: boolean;
@@ -58,6 +62,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   leftPanel,
   rightPanel,
   rightPanelOpen = true,
+  bookReadingWorkspace = false,
+  resizeStorageKeyPrefix = '',
   homePanelOpen = true,
   onHomePanelOpenChange,
   hasInlinePassageNotes = false,
@@ -105,14 +111,16 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     isResizingLeft,
     startLeftResize, adjustLeftWidth,
     rightWidth, isResizingRight, startRightResize, adjustRightWidth,
-  } = useSidebarResize();
+  } = useSidebarResize(bookReadingWorkspace, resizeStorageKeyPrefix);
   const homePanelId = React.useId();
   const homeContainerRef = React.useRef<HTMLDivElement>(null);
   const mainRef = React.useRef<HTMLElement>(null);
+  const bookScrollPositions = React.useRef(new Map<string, { primary: number; memo: number }>()).current;
 
   React.useLayoutEffect(() => {
     const main = mainRef.current;
     if (!main) return;
+    if (bookReadingWorkspace) return;
     const fitComments = () => {
       main.style.setProperty('--book-main-left', `${main.getBoundingClientRect().left}px`);
       if (!hasInlinePassageNotes) return;
@@ -132,7 +140,21 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     observer?.observe(main);
     window.addEventListener('resize', fitComments);
     return () => { observer?.disconnect(); window.removeEventListener('resize', fitComments); };
-  }, [hasInlinePassageNotes, homePanelOpen, leftWidth, rightWidth, rightPanel, rightPanelOpen, onHomePanelOpenChange, onRightPanelOpenChange]);
+  }, [bookReadingWorkspace, hasInlinePassageNotes, homePanelOpen, leftWidth, rightWidth, rightPanel, rightPanelOpen, onHomePanelOpenChange, onRightPanelOpenChange]);
+
+  const readingState = React.useRef({ homePanelOpen, leftWidth, rightWidth, onHomePanelOpenChange });
+  readingState.current = { homePanelOpen, leftWidth, rightWidth, onHomePanelOpenChange };
+  React.useLayoutEffect(() => {
+    if (!bookReadingWorkspace) return;
+    const fit = () => {
+      const state = readingState.current;
+      const needed = 240 + 80 + getReadingBodyWidth() + state.rightWidth + 48 + state.leftWidth;
+      if (state.homePanelOpen && window.innerWidth < needed) state.onHomePanelOpenChange?.(false);
+    };
+    fit();
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  }, [bookReadingWorkspace]);
 
   return (
     <div className="font-size-app flex h-screen w-full flex-col overflow-hidden bg-[var(--bg-main)] font-sans text-[var(--text-main)] transition-colors duration-200">
@@ -146,7 +168,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         aria-controls={homePanelId}
         data-passage-note-trigger
         onClick={() => {
-          if (!homePanelOpen && hasInlinePassageNotes) onCloseInlinePassageNotes?.();
+          if (!homePanelOpen && hasInlinePassageNotes && !bookReadingWorkspace) onCloseInlinePassageNotes?.();
           onHomePanelOpenChange?.(!homePanelOpen);
         }}
         className="inline-flex h-9 shrink-0 gap-1.5 px-2 items-center justify-center rounded-lg bg-[var(--bg-input)] text-[var(--text-secondary)] transition-[background-color,color,transform] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)] active:scale-95 motion-reduce:transition-none"
@@ -243,9 +265,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         </div>
 
         <main ref={mainRef} style={{ '--book-reference-width': hasInlinePassageNotes ? `calc(100vw - ${leftWidth}px - ${rightPanel ? rightWidth : 0}px)` : '100cqw', '--book-left-reference': hasInlinePassageNotes ? `${leftWidth}px` : 'var(--book-main-left, 0px)' } as React.CSSProperties} className="flex min-w-0 flex-1 flex-col bg-[var(--bg-main)] transition-colors duration-200">
-          {children}
+          {bookReadingWorkspace && rightPanel && selectedBookId ? <BookReadingWorkspace bookId={selectedBookId} scrollPositions={bookScrollPositions} memo={rightPanel} memoOpen={rightPanelOpen} memoWidth={rightWidth}
+            resizing={isResizingRight} onStartResize={startRightResize} onAdjustWidth={adjustRightWidth}>{children}</BookReadingWorkspace> : children}
         </main>
-        {rightPanel ? (
+        {rightPanel && !bookReadingWorkspace ? (
           <div
             aria-hidden={!rightPanelOpen}
             inert={!rightPanelOpen}

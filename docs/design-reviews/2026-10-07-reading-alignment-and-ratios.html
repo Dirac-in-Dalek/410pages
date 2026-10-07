@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>410pages · 읽기 열 중앙 정렬과 1:2:1 비율</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#fff;color:#222;font:15px/1.7 system-ui,sans-serif}main{max-width:1040px;margin:auto;padding:28px}h1{font-size:28px;line-height:1.3;margin:0 0 12px}h2{font-size:20px;margin:32px 0 10px}p{margin:9px 0}a{color:#a51b30;text-underline-offset:3px}a:focus-visible{outline:2px solid #a51b30;outline-offset:3px}.tag{color:#a51b30;font-size:12px;font-weight:700}.lead{font-size:17px;max-width:76ch}.small{font-size:13px;color:#666}.bar{display:grid;height:54px;margin:14px 0 6px;border:1px solid #bbb}.bar span{display:grid;place-items:center;min-width:0;border-right:1px solid #fff;font-size:13px}.bar span:last-child{border:0}.before{grid-template-columns:22.58fr 42.09fr 35.33fr}.after{grid-template-columns:1fr 2fr 1fr}.comment{background:#eee}.body{background:#e5cfd3}.memo{background:#ddd1bf}table{width:100%;border-collapse:collapse;margin:12px 0}th,td{text-align:left;vertical-align:top;padding:10px 8px;border-bottom:1px solid #ddd}th{width:25%}.pending{color:#805700}.ok{color:#176b3a}.links{display:flex;flex-wrap:wrap;gap:12px;margin:18px 0}.links a{border:1px solid #bbb;border-radius:5px;padding:8px 11px;text-decoration:none}code{font:13px/1.5 ui-monospace,monospace}@media(max-width:620px){main{padding:18px}h1{font-size:24px}th{width:36%}.bar span{font-size:11px}}
+</style>
+</head>
+<body><main>
+<div class="tag">2026-10-07 · 구현 계산 보고</div>
+<h1>보이는 세 열은 1:2:1, 제목과 본문은 화면 중앙</h1>
+<p class="lead">댓글·인용문·메모의 바깥 격자 폭과 실제로 보이는 글 영역을 구분해 계산합니다. 사용자 최종 선택은 <strong>보이는 세 열 1:2:1</strong>, 제목·본문의 화면 전체 중앙 정렬, 스크롤 중에만 스크롤바 표시입니다.</p>
+<div class="links"><a href="/?author=a9e9c451-4448-4204-9fb5-13c3282e156f&amp;book=71391929-4792-4c68-ad17-31a9143ea7f1">실제 책 화면 열기</a><a href="2026-10-07-reading-workspace-implementation.html">이전 세 열 구현 보고</a></div>
+
+<h2>변경 전 · 1024px 실측</h2>
+<div class="bar before" aria-label="변경 전 보이는 열 비율 22.58 대 42.09 대 35.33"><span class="comment">댓글 22.58%</span><span class="body">본문 42.09%</span><span class="memo">메모 35.33%</span></div>
+<table><tbody>
+<tr><th>바깥 격자</th><td>댓글 193.263px · 본문 429.979px · 메모 297.684px · 간격 27.537px씩</td></tr>
+<tr><th>보이는 글 영역</th><td>댓글 181.258px · 본문 337.977px · 메모 283.680px</td></tr>
+<tr><th>보이는 비율 계산</th><td><code>181.258 : 337.977 : 283.680 = 22.58% : 42.09% : 35.33%</code></td></tr>
+<tr><th>중앙 위치</th><td>제목·본문 중심 461.785px, 화면 중심 512px. 화면 중심보다 50.215px 왼쪽이었습니다.</td></tr>
+</tbody></table>
+
+<h2>최종 기준 · 1:2:1</h2>
+<div class="bar after" aria-label="최종 보이는 열 비율 1 대 2 대 1"><span class="comment">댓글 25%</span><span class="body">본문 50%</span><span class="memo">메모 25%</span></div>
+<table><tbody>
+<tr><th>비율 대상</th><td>패딩·간격을 포함한 바깥 칸이 아니라, 사용자가 실제로 읽고 쓰는 세 열의 보이는 영역입니다.</td></tr>
+<tr><th>폐기한 비율</th><td>중간에 선택한 3:4:3은 다시 철회했습니다. 현재 확정 비율은 1:2:1입니다.</td></tr>
+<tr><th>계산식</th><td>실제 보이는 전체 폭을 <code>S</code>라 하면 댓글 <code>0.25S</code>, 본문 <code>0.5S</code>, 메모 <code>0.25S</code>입니다.</td></tr>
+<tr><th>넓은 화면</th><td>이번 단계는 폭이 제한된 읽기 묶음 안에서 1:2:1을 유지합니다. 글자 크기·행 길이·양쪽 열·여백을 함께 조정하는 광폭 확대는 다음 턴의 별도 설계입니다.</td></tr>
+<tr><th>중앙 정렬</th><td>책 제목과 본문 열의 중심을 화면 전체 중심에 맞춥니다. 서재·메모의 열린 상태가 중심 기준을 바꾸지 않게 계산합니다.</td></tr>
+<tr><th>스크롤바</th><td>평상시에는 자리를 차지하는 막대를 숨기고 실제 스크롤 중에만 표시합니다. 스크롤 가능성 자체와 키보드·휠 스크롤은 유지합니다.</td></tr>
+</tbody></table>
+
+<h2>변경 후 실측</h2>
+<table><tbody>
+<tr><th>1024px 바깥 격자</th><td>댓글 214px · 본문 496px · 메모 216px</td></tr>
+<tr><th>1024px 보이는 열</th><td>댓글 202px · 본문 404px · 메모 202px</td></tr>
+<tr><th>실제 비율</th><td class="ok">25% : 50% : 25%</td></tr>
+<tr><th>제목·본문 중심</th><td class="ok">512px로 화면 중심과 일치합니다. 제목 box는 x=310~714, 폭 404px입니다.</td></tr>
+<tr><th>글 영역 사이 거리</th><td class="ok">왼쪽 78px · 오른쪽 78px</td></tr>
+<tr><th>메모 시작과 버튼</th><td>메모 헤더 top=85.3984px이며 자연스러운 열 상단에서 시작합니다. 첫 인용문 top과 맞추는 조건은 없습니다. 헤더 오른쪽 x=954~994에 40×40px 접기 버튼이 있고, 메모 헤더 오른쪽도 x=994입니다.</td></tr>
+<tr><th>접힌 메모</th><td>입력 영역은 <code>aria-hidden</code>·<code>inert</code>·<code>visibility:hidden</code>이지만 textarea DOM과 202px 폭은 유지됩니다. 보이는 <code>메모 펼치기</code> 버튼으로 다시 열었습니다.</td></tr>
+<tr><th>빈 인용문 입력</th><td>빈 상태와 첫 글자 입력 뒤 모두 textarea 45px, 입력 box 107px, 폭 404px를 유지했습니다.</td></tr>
+<tr><th>스크롤바 표시</th><td>사용자 휠 스크롤 중 <code>data-scrolling=true</code>와 thumb <code>rgb(112, 107, 101)</code>를 확인했습니다. 700ms 뒤 속성이 사라지고 thumb가 다시 투명해졌습니다.</td></tr>
+<tr><th>메모 정상 상태</th><td class="ok"><code>자동 저장</code> 문구와 <code>지금 저장</code> 버튼이 표시되지 않음을 확인했습니다.</td></tr>
+<tr><th>4K 현재 단계</th><td>보이는 댓글·본문·메모 폭은 250/500/250px로 1:2:1입니다. 넓은 화면의 남는 공간·글자 크기·행 길이를 함께 개선하는 일은 다음 턴 계획으로 분리했습니다.</td></tr>
+</tbody></table>
+<p class="small">3:4:3 중간 구현에서는 visible 242.3984 / 323.1953 / 242.3984px와 중심 511.9961px를 관찰했지만 현재 기준이 아니므로 최종값으로 사용하지 않습니다. 위 표는 1:2:1 적용 뒤 실제 제품 1024px 화면에서 다시 측정한 값입니다.</p>
+
+<h2>함께 정리한 메모 저장 UI</h2>
+<p>800ms 자동 저장과 계정·책별 초안 복구는 유지합니다. 평상시의 `자동 저장` 문구와 `지금 저장` 버튼·빈 푸터는 제거했습니다. 저장 실패에는 `다시 저장`, 복구한 초안에는 `복구된 초안 저장` 조작을 남겼습니다. 저장 중·저장됨 상태는 사용자가 직접 제거 요청한 범위가 아니므로 유지했습니다.</p>
+</main></body></html>

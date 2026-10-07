@@ -605,9 +605,9 @@ export const CitationList: React.FC<CitationListProps> = ({
                                     </label>
                                     </div>
                                     {inlinePassageNotes && (
-                                        <div hidden={!compareComments} className="order-1 flex w-[calc(100%+3rem)] shrink-0 self-stretch flex-col items-center py-0" style={!compareComments ? { display: 'none' } : undefined}>
+                                        <div hidden={!compareComments} className="book-passage-lane order-1 flex w-[calc(100%+3rem)] shrink-0 self-stretch flex-col items-center py-0" style={!compareComments ? { display: 'none' } : undefined}>
                                             {openedCommentIds.current.has(item.id) && (
-                                                <div hidden={!(showAllPassageNotes && item.citation.notes.length > 0) && passageNoteCitationId !== item.id} data-testid="inline-passage-comments" data-chapter-connection-obstacle className="flex w-64 flex-1 flex-col [&[hidden]]:hidden">
+                                                <div hidden={!(showAllPassageNotes && item.citation.notes.length > 0) && passageNoteCitationId !== item.id} data-testid="inline-passage-comments" data-chapter-connection-obstacle className="book-passage-column flex w-64 flex-1 flex-col [&[hidden]]:hidden">
                                                     <PassageNotesPanel inline citation={item.citation}
                                                         readOnly={passageNoteCitationId !== item.id}
                                                         onActivate={() => onPassageNoteCitationChange?.(item.id)}

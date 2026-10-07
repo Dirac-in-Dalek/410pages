@@ -37,7 +37,7 @@
           "index.css"
         ],
         "createdAt": "2026-10-06T11:57:09.837Z",
-        "reason": "user confirmed: 화살표로 실제 입력창 폭이 늘고 줄어드는 애니메이션을 요청하고 구현을 승인했다(2026-10-06). Codex: book-citation-composer의 margin-inline-start만 200ms ease-out으로 전환해 글자와 caret을 확대하지 않고 줄바꿈을 유지한다. reduced-motion에서는 끈다. 성능 프레임 측정 완료를 의미하지 않는다."
+        "reason": "user confirmed: 실제 입력창 폭이 화살표에 따라 늘고 줄어드는 애니메이션을 요청하고 구현을 승인했다(2026-10-06). Codex: 2026-10-07 화살표를 박스 밖으로 옮기면서 book-composer-frame의 width와 margin-inline-start를 200ms ease-out으로 전환한다. 글자·커서를 확대하지 않고 같은 단계 인용문과 줄바꿈을 맞추며 reduced-motion에서는 전환을 끈다. 성능 프레임 측정은 미검증이다."
       },
       {
         "rule": "repeating-stripes-gradient",

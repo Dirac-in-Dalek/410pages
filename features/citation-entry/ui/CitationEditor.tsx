@@ -65,8 +65,40 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
     }
   }, [focusRequest]);
 
-  return (
+  const depthControls = isBookComposer && chapterMode && onHierarchyKey && (
+    <div role="group" aria-label="챕터 단계 변경" className="book-composer-depth-controls">
+      {(bookDepth ?? 0) > 0 && <button
+        ref={outdentButtonRef}
+        type="button"
+        aria-label="한 단계 상위로"
+        title="한 단계 밖으로 · 상위"
+        disabled={readOnly || isSubmitting}
+        onPointerDown={event => event.preventDefault()}
+        onClick={event => {
+          const restoreFocus = document.activeElement === event.currentTarget && bookDepth === 1;
+          onHierarchyKey('out');
+          if (restoreFocus) window.requestAnimationFrame(() => indentButtonRef.current?.focus({ preventScroll: true }));
+        }}
+      ><ArrowLeft size={16} /></button>}
+      <button
+        ref={indentButtonRef}
+        type="button"
+        aria-label="한 단계 하위로"
+        title={(bookDepth ?? 0) < maxChapterDepth ? '한 단계 안으로 · 하위' : '먼저 현재 단계의 챕터를 저장하세요'}
+        disabled={readOnly || isSubmitting || (bookDepth ?? 0) >= maxChapterDepth}
+        onPointerDown={event => event.preventDefault()}
+        onClick={event => {
+          const restoreFocus = document.activeElement === event.currentTarget && (bookDepth ?? 0) + 1 >= maxChapterDepth;
+          onHierarchyKey('in');
+          if (restoreFocus) window.requestAnimationFrame(() => outdentButtonRef.current?.focus({ preventScroll: true }));
+        }}
+      ><ArrowRight size={16} /></button>
+    </div>
+  );
+
+  const editor = (
     <div
+      key="input"
       className={`
         citation-composer ${bookDepth !== undefined ? 'book-citation-composer' : ''} relative rounded-xl border p-0.5 transition-[border-color,background-color,box-shadow] duration-200 focus-within:border-[var(--accent-border)] focus-within:ring-2 focus-within:ring-[var(--accent-ring)] motion-reduce:transition-none
         ${isDraggingOver ? 'border-[var(--accent-border)] bg-[var(--accent-soft)] ring-4 ring-[var(--accent-ring)]' : 'border-[var(--border-main)] bg-[var(--bg-card)] shadow-[var(--shadow-toolbar)]'}
@@ -90,6 +122,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
       <div className="citation-composer-text px-2 pt-2 pb-1">
         <textarea
           ref={textareaRef}
+          rows={1}
           aria-label={chapterMode ? "챕터 제목 입력" : "인용문 입력"}
           aria-describedby={insertionLabel ? locationId : undefined}
           value={values.text}
@@ -145,36 +178,6 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
             <span className={`h-4 w-4 rounded-full bg-white transition-transform ${chapterMode ? 'translate-x-4' : ''}`} />
           </span>{chapterMode ? '챕터' : '인용문'}
         </button>)}
-        {isBookComposer && chapterMode && onHierarchyKey && (
-          <div role="group" aria-label="챕터 단계 변경" className="book-composer-depth-controls">
-            {(bookDepth ?? 0) > 0 && <button
-              ref={outdentButtonRef}
-              type="button"
-              aria-label="한 단계 상위로"
-              title="한 단계 밖으로 · 상위"
-              disabled={readOnly || isSubmitting}
-              onPointerDown={event => event.preventDefault()}
-              onClick={event => {
-                const restoreFocus = document.activeElement === event.currentTarget && bookDepth === 1;
-                onHierarchyKey('out');
-                if (restoreFocus) window.requestAnimationFrame(() => indentButtonRef.current?.focus({ preventScroll: true }));
-              }}
-            ><ArrowLeft size={16} /></button>}
-            <button
-              ref={indentButtonRef}
-              type="button"
-              aria-label="한 단계 하위로"
-              title={(bookDepth ?? 0) < maxChapterDepth ? '한 단계 안으로 · 하위' : '먼저 현재 단계의 챕터를 저장하세요'}
-              disabled={readOnly || isSubmitting || (bookDepth ?? 0) >= maxChapterDepth}
-              onPointerDown={event => event.preventDefault()}
-              onClick={event => {
-                const restoreFocus = document.activeElement === event.currentTarget && (bookDepth ?? 0) + 1 >= maxChapterDepth;
-                onHierarchyKey('in');
-                if (restoreFocus) window.requestAnimationFrame(() => outdentButtonRef.current?.focus({ preventScroll: true }));
-              }}
-            ><ArrowRight size={16} /></button>
-          </div>
-        )}
         {!hideSourceFields && (
           <>
             <div className="flex min-h-11 min-w-0 basis-[calc(50%_-_0.1875rem)] items-center rounded-md border border-transparent bg-[var(--bg-input)] px-2.5 transition-[border-color,box-shadow] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] sm:min-h-8 sm:flex-[1.15] sm:basis-auto motion-reduce:transition-none">
@@ -268,4 +271,13 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
       </div>
     </div>
   );
+
+  return isBookComposer ? (
+    <div className="book-composer-frame" style={{ '--citation-depth': bookDepth } as React.CSSProperties}>
+      <div className="book-composer-row" data-depth-controls={Boolean(depthControls)}>
+        {depthControls}
+        {editor}
+      </div>
+    </div>
+  ) : editor;
 };

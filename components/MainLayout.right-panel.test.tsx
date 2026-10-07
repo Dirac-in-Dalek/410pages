@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MainLayout } from './MainLayout';
 
@@ -40,6 +40,75 @@ const baseProps = {
 
 describe('MainLayout right panel', () => {
   afterEach(() => { vi.restoreAllMocks(); localStorage.clear(); });
+
+  it('keeps the book memo and reading anchor mounted inside the group when folded', () => {
+    const closeComments = vi.fn();
+    const panel = <textarea aria-label="예제 책 메모" defaultValue="유지할 초안" />;
+    const props = { ...baseProps, bookReadingWorkspace: true, rightPanel: panel, homePanelOpen: false, hasInlinePassageNotes: true, onCloseInlinePassageNotes: closeComments };
+    const view = render(<MainLayout {...props} rightPanelOpen><div data-testid="reading-anchor">본문</div></MainLayout>);
+    const input = screen.getByRole('textbox', { name: '예제 책 메모' });
+    const anchor = screen.getByTestId('reading-anchor');
+    const memoScroll = input.closest<HTMLElement>('[data-reading-memo-scroll]')!;
+    expect(memoScroll.firstElementChild).toBe(input);
+    (input as HTMLTextAreaElement).focus();
+    (input as HTMLTextAreaElement).setSelectionRange(3, 3);
+    memoScroll.scrollTop = 33;
+    fireEvent.scroll(memoScroll);
+    expect(input.closest('[data-book-reading-workspace]')).not.toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: '홈 패널 펼치기' }));
+    expect(closeComments).not.toHaveBeenCalled();
+    view.rerender(<MainLayout {...props} rightPanelOpen={false}><div data-testid="reading-anchor">본문</div></MainLayout>);
+    expect(screen.getByTestId('reading-anchor')).toBe(anchor);
+    expect(document.querySelector('textarea')).toBe(input);
+    expect((input as HTMLTextAreaElement).value).toBe('유지할 초안');
+    expect((input as HTMLTextAreaElement).selectionStart).toBe(3);
+    expect(memoScroll.scrollTop).toBe(33);
+    expect(input.closest('.book-reading-memo')?.getAttribute('data-collapsed')).toBe('true');
+    expect(input.closest('.book-reading-memo')?.hasAttribute('aria-hidden')).toBe(false);
+    view.rerender(<MainLayout {...props} rightPanelOpen><div data-testid="reading-anchor">본문</div></MainLayout>);
+    expect(document.querySelector('textarea')).toBe(input);
+    expect((input as HTMLTextAreaElement).selectionStart).toBe(3);
+    expect(memoScroll.scrollTop).toBe(33);
+  });
+
+  it('retries a clamped memo position after a long book returns and its content grows', async () => {
+    const panel = <textarea aria-label="예제 책 메모" />;
+    const props = { ...baseProps, bookReadingWorkspace: true, rightPanel: panel, homePanelOpen: false };
+    const content = <div data-archive-scroll>본문</div>;
+    const view = render(<MainLayout {...props} selectedBookId="book-1">{content}</MainLayout>);
+    const primary = document.querySelector<HTMLElement>('[data-archive-scroll]')!;
+    const memo = document.querySelector<HTMLElement>('[data-reading-memo-scroll]')!;
+    let memoTop = 0;
+    let memoMax = 3_000;
+    Object.defineProperty(memo, 'scrollTop', {
+      configurable: true,
+      get: () => memoTop,
+      set: value => { memoTop = Math.min(Number(value), memoMax); },
+    });
+    primary.scrollTop = 120;
+    memo.scrollTop = 2_264;
+    fireEvent.scroll(primary);
+    fireEvent.scroll(memo);
+
+    memoMax = 192;
+    view.rerender(<MainLayout {...props} selectedBookId="book-2">{content}</MainLayout>);
+    expect(primary.scrollTop).toBe(0);
+    expect(memo.scrollTop).toBe(0);
+    primary.scrollTop = 45;
+    memo.scrollTop = 55;
+    fireEvent.scroll(primary);
+    fireEvent.scroll(memo);
+
+    view.rerender(<MainLayout {...props} selectedBookId="book-1">{content}</MainLayout>);
+    expect(primary.scrollTop).toBe(120);
+    expect(memo.scrollTop).toBe(192);
+    fireEvent.scroll(memo);
+    memoMax = 3_000;
+    await act(async () => {
+      memo.querySelector('textarea')!.style.height = '2601px';
+    });
+    expect(memo.scrollTop).toBe(2_264);
+  });
 
   it('collapses home before the book memo and does not reopen either when space returns', () => {
     let width = 700;
@@ -96,6 +165,32 @@ describe('MainLayout right panel', () => {
     fireEvent.mouseUp(window);
     expect(localStorage.getItem('leftSidebarWidth')).toBe('232');
     expect(document.body.style.cursor).not.toBe('col-resize');
+  });
+
+  it('isolates fixture resize widths from the real profile storage keys', () => {
+    localStorage.setItem('leftSidebarWidth', '271');
+    localStorage.setItem('rightSidebarWidth', '319');
+    localStorage.setItem('bookReadingMemoWidth', '360');
+    render(
+      <MainLayout
+        {...baseProps}
+        bookReadingWorkspace
+        homePanelOpen={false}
+        resizeStorageKeyPrefix="reading-fixture:"
+        rightPanel={<div>메모</div>}
+      >
+        <div data-archive-scroll>본문</div>
+      </MainLayout>,
+    );
+
+    fireEvent.mouseDown(screen.getByRole('separator', { name: '메모 패널 너비 조절' }), { clientX: 700 });
+    fireEvent.mouseMove(window, { clientX: 684 });
+    fireEvent.mouseUp(window);
+
+    expect(localStorage.getItem('reading-fixture:bookReadingMemoWidth')).toBe('376');
+    expect(localStorage.getItem('leftSidebarWidth')).toBe('271');
+    expect(localStorage.getItem('rightSidebarWidth')).toBe('319');
+    expect(localStorage.getItem('bookReadingMemoWidth')).toBe('360');
   });
 
   it('uses the final available width while home is animating closed', () => {

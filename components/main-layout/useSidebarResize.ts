@@ -39,9 +39,11 @@ const usePanelResize = (key: string, fallback: number, right = false) => {
   return { width, resizing, start: (event?: { clientX: number }) => { dragStart.current = { x: event?.clientX ?? 0, width }; setResizing(true); }, adjust: (delta: number) => setWidth(previous => clamp(previous + delta)) };
 };
 
-export const useSidebarResize = () => {
-  const left = usePanelResize('leftSidebarWidth', 272);
-  const right = usePanelResize('rightSidebarWidth', 320, true);
+export const useSidebarResize = (readingMemo = false, storageKeyPrefix = '') => {
+  const left = usePanelResize(`${storageKeyPrefix}leftSidebarWidth`, 272);
+  const legacyRight = usePanelResize(`${storageKeyPrefix}rightSidebarWidth`, 320, true);
+  const readingRight = usePanelResize(`${storageKeyPrefix}bookReadingMemoWidth`, 360, true);
+  const right = readingMemo ? readingRight : legacyRight;
   return {
     leftWidth: left.width, isResizingLeft: left.resizing, startLeftResize: left.start, adjustLeftWidth: left.adjust,
     rightWidth: right.width, isResizingRight: right.resizing, startRightResize: right.start, adjustRightWidth: right.adjust,
