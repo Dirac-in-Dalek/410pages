@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { Citation } from '../../../types';
 import { PassageNotesPanel } from './PassageNotesPanel';
@@ -19,6 +19,7 @@ describe('PassageNotesPanel', () => {
     const props = { citation, onClose: vi.fn(), onAddNote: vi.fn(), onUpdateNote: vi.fn(), onDeleteNote: vi.fn() };
     const { container, rerender } = render(<PassageNotesPanel {...props} inline />);
     expect(container.querySelector('article')?.parentElement?.className).toBe('space-y-3');
+    expect(container.querySelector('.passage-notes-content')?.className).toContain('px-1.5');
     rerender(<PassageNotesPanel {...props} mobile />);
     expect(container.querySelector('article')?.parentElement?.className).toContain('divide-y');
   });
@@ -53,6 +54,26 @@ describe('PassageNotesPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: '메모 저장' }));
     await waitFor(() => expect(onAddNote).toHaveBeenCalledWith('citation-1', '실패해도 남길 댓글'));
     expect((input as HTMLTextAreaElement).value).toBe('실패해도 남길 댓글');
+  });
+  it('remeasures an inline draft when reading metrics change without losing its editing state', async () => {
+    let contentHeight = 48;
+    vi.spyOn(HTMLTextAreaElement.prototype, 'scrollHeight', 'get').mockImplementation(() => contentHeight);
+    const view = render(<div data-reading-responsive><PassageNotesPanel inline citation={citation} onClose={vi.fn()} onAddNote={vi.fn()} onUpdateNote={vi.fn()} onDeleteNote={vi.fn()} /></div>);
+    const scope = view.container.firstElementChild as HTMLElement;
+    const input = screen.getByPlaceholderText('이 인용문에 메모를 남기세요') as HTMLTextAreaElement;
+    fireEvent.change(input, { target: { value: '폭과 글자가 바뀌어도 남을 초안' } });
+    input.focus();
+    input.setSelectionRange(3, 9);
+    input.scrollTop = 7;
+    contentHeight = 144;
+
+    await act(async () => scope.style.setProperty('--reading-annotation-font-size', '18px'));
+
+    expect(input.style.height).toBe('144px');
+    expect(input.value).toBe('폭과 글자가 바뀌어도 남을 초안');
+    expect(document.activeElement).toBe(input);
+    expect([input.selectionStart, input.selectionEnd]).toEqual([3, 9]);
+    expect(input.scrollTop).toBe(7);
   });
   it('does not add a draft until explicit save succeeds', async () => {
     const onAddNote = vi.fn().mockResolvedValue(true);

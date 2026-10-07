@@ -39,7 +39,7 @@ const baseProps = {
 };
 
 describe('MainLayout right panel', () => {
-  afterEach(() => { vi.restoreAllMocks(); localStorage.clear(); });
+  afterEach(() => { vi.restoreAllMocks(); localStorage.clear(); document.documentElement.style.removeProperty('--font-base-pt'); });
 
   it('keeps the book memo and reading anchor mounted inside the group when folded', () => {
     const closeComments = vi.fn();
@@ -184,10 +184,14 @@ describe('MainLayout right panel', () => {
     );
 
     fireEvent.mouseDown(screen.getByRole('separator', { name: '메모 패널 너비 조절' }), { clientX: 700 });
-    fireEvent.mouseMove(window, { clientX: 684 });
+    expect(screen.getByRole('separator', { name: '메모 패널 너비 조절' }).getAttribute('aria-valuenow')).toBe('360');
+    expect(screen.getByRole('separator', { name: '메모 패널 너비 조절' }).getAttribute('aria-valuetext')).toBe('216픽셀');
+    fireEvent.mouseMove(window, { clientX: 716 });
     fireEvent.mouseUp(window);
 
-    expect(localStorage.getItem('reading-fixture:bookReadingMemoWidth')).toBe('376');
+    expect(screen.getByRole('separator', { name: '메모 패널 너비 조절' }).getAttribute('aria-valuenow')).toBe('362');
+    expect(screen.getByRole('separator', { name: '메모 패널 너비 조절' }).getAttribute('aria-valuetext')).toBe('218픽셀');
+    expect(localStorage.getItem('reading-fixture:bookReadingMemoWidth')).toBe('362');
     expect(localStorage.getItem('leftSidebarWidth')).toBe('271');
     expect(localStorage.getItem('rightSidebarWidth')).toBe('319');
     expect(localStorage.getItem('bookReadingMemoWidth')).toBe('360');
@@ -255,5 +259,123 @@ describe('MainLayout right panel', () => {
     expect(screen.getByRole('main').style.getPropertyValue('--book-reference-width')).toBe(referenceWidth);
     expect(wrapper.getAttribute('aria-hidden')).toBe('false');
     expect(wrapper.style.width).toBe('320px');
+  });
+
+  it('auto-collapses a reading library below the comment floor and uses an overlay for manual reopen', async () => {
+    vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(700);
+    vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(768);
+    const onHomePanelOpenChange = vi.fn();
+    const common = { ...baseProps, bookReadingWorkspace: true, rightPanel: <div>메모</div>, onHomePanelOpenChange };
+    const view = render(<MainLayout {...common} homePanelOpen><div data-archive-scroll>본문</div></MainLayout>);
+    expect(onHomePanelOpenChange).toHaveBeenCalledWith(false);
+
+    onHomePanelOpenChange.mockClear();
+    view.rerender(<MainLayout {...common} homePanelOpen={false}><div data-archive-scroll>본문</div></MainLayout>);
+    fireEvent.click(screen.getByRole('button', { name: '홈 패널 펼치기' }));
+    expect(document.querySelector('[data-library-state="overlay"]')).not.toBeNull();
+    expect(document.querySelector('main')?.hasAttribute('inert')).toBe(true);
+    expect(onHomePanelOpenChange).not.toHaveBeenCalledWith(true);
+    fireEvent.keyDown(document, { key: 'Escape' });
+    await act(async () => undefined);
+    expect(document.querySelector('[data-library-state="overlay"]')).toBeNull();
+    expect(document.querySelector('main')?.hasAttribute('inert')).toBe(false);
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: '홈 패널 펼치기' }));
+  });
+
+  it('reopens only an auto-collapsed reading library after the hysteresis margin returns', async () => {
+    let viewportWidth = 700;
+    vi.spyOn(window, 'innerWidth', 'get').mockImplementation(() => viewportWidth);
+    vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(768);
+    function Host() {
+      const [open, setOpen] = React.useState(true);
+      return <MainLayout {...baseProps} bookReadingWorkspace homePanelOpen={open} onHomePanelOpenChange={setOpen} rightPanel={<div>메모</div>}><div data-archive-scroll>본문</div></MainLayout>;
+    }
+    render(<Host />);
+    expect(await screen.findByRole('button', { name: '홈 패널 펼치기' })).toBeTruthy();
+
+    viewportWidth = 3840;
+    await act(async () => fireEvent(window, new Event('resize')));
+    expect(await screen.findByRole('button', { name: '홈 패널 접기' })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: '홈 패널 접기' }));
+    expect(screen.getByRole('button', { name: '홈 패널 펼치기' })).toBeTruthy();
+    viewportWidth = 1024;
+    await act(async () => fireEvent(window, new Event('resize')));
+    viewportWidth = 3840;
+    await act(async () => fireEvent(window, new Event('resize')));
+    expect(screen.getByRole('button', { name: '홈 패널 펼치기' })).toBeTruthy();
+  });
+
+  it('removes the reading overlay immediately when navigating to a non-reading screen', () => {
+    vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(700);
+    vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(768);
+    const onHomePanelOpenChange = vi.fn();
+    const common = { ...baseProps, rightPanel: <div>메모</div>, homePanelOpen: false, onHomePanelOpenChange };
+    const view = render(<MainLayout {...common} bookReadingWorkspace><div data-archive-scroll>책 본문</div></MainLayout>);
+
+    fireEvent.click(screen.getByRole('button', { name: '홈 패널 펼치기' }));
+    expect(screen.getByRole('button', { name: '서재 닫기' })).toBeTruthy();
+    expect(screen.getByRole('main').hasAttribute('inert')).toBe(true);
+
+    view.rerender(<MainLayout {...common} selectedBookId={null}><div>홈 또는 프로젝트</div></MainLayout>);
+    expect(screen.queryByRole('button', { name: '서재 닫기' })).toBeNull();
+    expect(screen.getByRole('main').hasAttribute('inert')).toBe(false);
+    expect(screen.getByRole('button', { name: '홈 패널 펼치기' }).getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('keeps reading geometry and the open library stable across font size changes', async () => {
+    vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(1024);
+    vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(768);
+    document.documentElement.style.setProperty('--font-base-pt', '7pt');
+    function Host() {
+      const [open, setOpen] = React.useState(true);
+      return <MainLayout {...baseProps} bookReadingWorkspace homePanelOpen={open} onHomePanelOpenChange={setOpen} rightPanel={<div>메모</div>}><div data-archive-scroll>본문</div></MainLayout>;
+    }
+    render(<Host />);
+    const root = document.querySelector<HTMLElement>('[data-reading-responsive]')!;
+    const originalBodyWidth = root.style.getPropertyValue('--reading-body-width');
+    const originalGroupLeft = root.style.getPropertyValue('--reading-group-left');
+    const originalSidebarWidth = screen.getByRole('separator', { name: '홈 패널 너비 조절' }).getAttribute('aria-valuenow');
+
+    for (const size of [20, 12]) {
+      await act(async () => document.documentElement.style.setProperty('--font-base-pt', `${size}pt`));
+      expect(screen.getByRole('button', { name: '홈 패널 접기' })).toBeTruthy();
+      expect(root.style.getPropertyValue('--reading-body-width')).toBe(originalBodyWidth);
+      expect(root.style.getPropertyValue('--reading-group-left')).toBe(originalGroupLeft);
+      expect(screen.getByRole('separator', { name: '홈 패널 너비 조절' }).getAttribute('aria-valuenow')).toBe(originalSidebarWidth);
+    }
+  });
+
+  it('reduces a saturated reading memo on the first keyboard and drag adjustment', () => {
+    vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(1024);
+    vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(768);
+    localStorage.setItem('reading-fixture:bookReadingMemoWidth', '960');
+    render(<MainLayout {...baseProps} bookReadingWorkspace homePanelOpen={false} resizeStorageKeyPrefix="reading-fixture:" rightPanel={<div>메모</div>}><div data-archive-scroll>본문</div></MainLayout>);
+    const separator = screen.getByRole('separator', { name: '메모 패널 너비 조절' });
+    const visibleWidth = () => Number.parseInt(separator.getAttribute('aria-valuetext') || '0', 10);
+    const initialWidth = visibleWidth();
+    expect(separator.getAttribute('aria-valuenow')).toBe(separator.getAttribute('aria-valuemax'));
+
+    fireEvent.keyDown(separator, { key: 'ArrowLeft' });
+    const keyboardWidth = visibleWidth();
+    expect(keyboardWidth).toBeLessThan(initialWidth);
+    expect(Number(separator.getAttribute('aria-valuenow'))).toBeLessThan(Number(separator.getAttribute('aria-valuemax')));
+
+    fireEvent.mouseDown(separator, { clientX: 700 });
+    fireEvent.mouseMove(window, { clientX: 684 });
+    fireEvent.mouseUp(window);
+    expect(visibleWidth()).toBeLessThan(keyboardWidth);
+  });
+
+  it('changes reading library width immediately while preserving the legacy width transition', () => {
+    const reading = render(<MainLayout {...baseProps} bookReadingWorkspace homePanelOpen={false} rightPanel={<div>메모</div>}><div data-archive-scroll>본문</div></MainLayout>);
+    const readingPanel = document.getElementById(screen.getByRole('button', { name: '홈 패널 펼치기' }).getAttribute('aria-controls')!)!;
+    expect(readingPanel.className).toContain('transition-opacity');
+    expect(readingPanel.className).not.toContain('transition-[width,opacity]');
+    reading.unmount();
+
+    render(<MainLayout {...baseProps} homePanelOpen={false}><div>본문</div></MainLayout>);
+    const legacyPanel = document.getElementById(screen.getByRole('button', { name: '홈 패널 펼치기' }).getAttribute('aria-controls')!)!;
+    expect(legacyPanel.className).toContain('transition-[width,opacity]');
   });
 });

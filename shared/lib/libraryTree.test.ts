@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SidebarItem } from '../../types';
-import { isLibraryTreeItemActive } from './libraryTree';
+import { getLibraryTreePaddingLeft, isLibraryTreeItemActive } from './libraryTree';
 
 describe('isLibraryTreeItemActive', () => {
   it('uses ids so duplicate labels do not activate together', () => {
@@ -16,5 +16,13 @@ describe('isLibraryTreeItemActive', () => {
 
     expect(isLibraryTreeItemActive(first, selected)).toBe(true);
     expect(isLibraryTreeItemActive(second, selected)).toBe(false);
+  });
+});
+
+describe('getLibraryTreePaddingLeft', () => {
+  it('keeps tree depth tied to the shared responsive sidebar variables', () => {
+    expect(getLibraryTreePaddingLeft(3)).toBe(
+      'calc(var(--reading-sidebar-padding, 12px) + 3 * var(--reading-sidebar-indent, 12px))'
+    );
   });
 });

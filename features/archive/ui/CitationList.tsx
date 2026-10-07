@@ -567,7 +567,9 @@ export const CitationList: React.FC<CitationListProps> = ({
                                     data-testid={`citation-${item.citation.id}`}
                                     hidden={item.id === detailCitationId}
                                     style={item.id === detailCitationId ? { display: 'none' } : undefined}
+                                    data-compare-comments={compareComments || undefined}
                                     className={[
+                                        'book-citation-row',
                                         compareComments ? 'grid grid-cols-[var(--book-column-left)_2.75rem_minmax(0,1fr)_auto] ml-[calc(-1*var(--book-column-left))]' : 'flex',
                                         'group relative items-start transition-[background-color,color] duration-150',
                                         item.citation.saveStatus === 'failed' ? 'bg-red-50/60 dark:bg-red-500/10' : '',
@@ -686,7 +688,7 @@ export const CitationList: React.FC<CitationListProps> = ({
                                             </div>
                                         ) : null}
                                     </div>
-                                    <div className="order-4 flex shrink-0 items-start">
+                                    <div className="citation-detail-slot order-4 flex shrink-0 items-start justify-center">
 
                                     <button
                                         type="button"
@@ -695,7 +697,7 @@ export const CitationList: React.FC<CitationListProps> = ({
                                         disabled={detailCitationId !== null}
                                         title={detailCitationId ? '열린 편집 영역을 먼저 닫아주세요' : '이 인용문 편집 및 메모'}
                                         onClick={() => setDetailCitationId(item.citation.id)}
-                                        className="order-4 mt-3 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-[var(--text-muted)] opacity-0 transition-[background-color,opacity,transform] hover:bg-[var(--bg-input)] focus-visible:opacity-100 active:scale-95 group-hover:opacity-100"
+                                        className="citation-detail-button order-4 mt-3 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-[var(--text-muted)] opacity-0 transition-[background-color,opacity,transform] hover:bg-[var(--bg-input)] focus-visible:opacity-100 active:scale-95 group-hover:opacity-100"
                                         aria-label="문장 편집 및 삭제 열기"
                                     >
                                         <MoreHorizontal size={17} />

@@ -108,7 +108,7 @@ describe('useUserPreferences server sync', () => {
         expect.objectContaining({
           theme: 'auto',
           fontFamily: 'nanum-myeongjo',
-          baseFontPt: 13,
+          baseFontPt: 12,
           citationWidthRem: 44,
         })
       );
@@ -144,5 +144,46 @@ describe('useUserPreferences server sync', () => {
     });
 
     expect(result.current.preferences.fontFamily).toBe('jetbrains-mono');
+  });
+
+  it('saves only the final value from rapid font size changes', async () => {
+    mockReadServerPreferences.mockResolvedValue(null);
+    const { result } = renderHook(() => useUserPreferences('user-1'));
+
+    await waitFor(() => expect(mockPersistServerPreferences).toHaveBeenCalledTimes(1));
+    mockPersistServerPreferences.mockClear();
+
+    act(() => result.current.setBaseFontPt(15));
+    act(() => result.current.setBaseFontPt(16));
+    act(() => result.current.setBaseFontPt(17));
+
+    expect(mockPersistServerPreferences).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(mockPersistServerPreferences).toHaveBeenCalledTimes(1);
+      expect(mockPersistServerPreferences).toHaveBeenCalledWith(
+        'user-1',
+        expect.objectContaining({ baseFontPt: 17 })
+      );
+    });
+  });
+
+  it('cancels a pending save when the account changes', async () => {
+    mockReadServerPreferences.mockResolvedValue(null);
+    const { result, rerender } = renderHook(
+      ({ userId }) => useUserPreferences(userId),
+      { initialProps: { userId: 'user-1' } }
+    );
+
+    await waitFor(() => expect(mockPersistServerPreferences).toHaveBeenCalledTimes(1));
+    mockPersistServerPreferences.mockClear();
+
+    act(() => result.current.setBaseFontPt(19));
+    rerender({ userId: 'user-2' });
+
+    await waitFor(() => expect(mockPersistServerPreferences).toHaveBeenCalled());
+    expect(mockPersistServerPreferences).not.toHaveBeenCalledWith(
+      'user-1',
+      expect.objectContaining({ baseFontPt: 19 })
+    );
   });
 });

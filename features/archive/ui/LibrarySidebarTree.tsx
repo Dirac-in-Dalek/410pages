@@ -986,7 +986,7 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
 
   return (
     <div
-      className={embedded ? 'px-0 pb-2' : 'flex-1 overflow-y-auto px-4 pb-5 pt-3'}
+      className={`library-sidebar-tree ${embedded ? 'px-0 pb-2' : 'flex-1 overflow-y-auto px-4 pb-5 pt-3'}`}
       onDragOver={(event) => handleTreePanelDragOver(event, authorTreeItems)}
       onDrop={(event) => handleTreePanelDrop(event, authorTreeItems)}
     >

@@ -28,17 +28,17 @@ describe('BookMemoPanel', () => {
     let contentHeight = 360;
     const height = vi.spyOn(HTMLTextAreaElement.prototype, 'scrollHeight', 'get').mockImplementation(() => contentHeight);
     const onSave = vi.fn();
-    const previous = document.documentElement.style.getPropertyValue('--font-base-pt');
-    const view = render(<div data-reading-memo-scroll><BookMemoPanel reading userId="user-1" book={book} onSave={onSave} /></div>);
+    const view = render(<div data-reading-responsive><div data-reading-memo-scroll><BookMemoPanel reading userId="user-1" book={book} onSave={onSave} /></div></div>);
     const input = screen.getByRole('textbox', { name: '책 전체 메모' }) as HTMLTextAreaElement;
     const readingScroll = input.closest<HTMLElement>('[data-reading-memo-scroll]')!;
+    const readingScope = input.closest<HTMLElement>('[data-reading-responsive]')!;
     expect(input.style.height).toBe('360px');
     readingScroll.scrollTop = 91;
     input.scrollTop = 17;
     input.focus();
     input.setSelectionRange(2, 5);
     contentHeight = 720;
-    await act(async () => { document.documentElement.style.setProperty('--font-base-pt', '24pt'); });
+    await act(async () => { readingScope.style.setProperty('--reading-body-font-size', '24px'); });
     expect(input.style.height).toBe('720px');
     expect(input.value).toBe(book.memo);
     expect(readingScroll.scrollTop).toBe(91);
@@ -48,8 +48,6 @@ describe('BookMemoPanel', () => {
     expect(document.querySelector('textarea[aria-hidden="true"]')).toBeNull();
     expect(onSave).not.toHaveBeenCalled();
     view.unmount();
-    if (previous) document.documentElement.style.setProperty('--font-base-pt', previous);
-    else document.documentElement.style.removeProperty('--font-base-pt');
     height.mockRestore();
   });
 

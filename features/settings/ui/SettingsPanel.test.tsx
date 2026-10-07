@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ThemePreference } from '../../../lib/themeRegistry';
@@ -77,27 +77,6 @@ const renderWithFontSizeState = (
         {...props}
         preferences={{ ...props.preferences, baseFontPt }}
         onBaseFontPtChange={setBaseFontPt}
-      />
-    );
-  };
-
-  render(<Harness />);
-  return props;
-};
-
-const renderWithCitationWidthState = (
-  overrides: Partial<typeof baseProps> = {}
-) => {
-  const props = { ...baseProps, ...overrides };
-
-  const Harness: React.FC = () => {
-    const [citationWidthRem, setCitationWidthRem] = useState(props.preferences.citationWidthRem);
-
-    return (
-      <SettingsPanel
-        {...props}
-        preferences={{ ...props.preferences, citationWidthRem }}
-        onCitationWidthRemChange={setCitationWidthRem}
       />
     );
   };
@@ -225,24 +204,20 @@ describe('SettingsPanel', () => {
     expect(baseProps.onClose).not.toHaveBeenCalled();
   });
 
-  it('shows the current font size as a status badge beside +/- controls', () => {
+  it('shows the existing numeric font size without preset controls', () => {
     render(<SettingsPanel {...baseProps} />);
 
-    expect(screen.getByRole('status', { name: '현재 글자 크기' }).textContent).toBe('13pt');
-    expect(screen.getByRole('button', { name: '글자 크기 줄이기' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: '글자 크기 늘리기' })).toBeTruthy();
+    const slider = screen.getByRole('slider', { name: '글자 크기' }) as HTMLInputElement;
+    expect(slider.value).toBe('13');
+    expect(screen.getByText('13pt')).toBeTruthy();
+    expect(screen.queryByRole('group', { name: '글자 크기 기준' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /작게|보통|크게/ })).toBeNull();
   });
 
-  it('orders each numeric control as decrease, value, increase', () => {
+  it('removes the manual citation width control', () => {
     render(<SettingsPanel {...baseProps} />);
 
-    const fontStepper = screen.getByRole('group', { name: '글자 크기 조절' });
-    const controls = within(fontStepper).getAllByRole('button');
-    expect(controls.map((control) => control.getAttribute('aria-label'))).toEqual([
-      '글자 크기 줄이기',
-      '글자 크기 늘리기',
-    ]);
-    expect(fontStepper.textContent).toBe('−13pt+');
+    expect(screen.queryByText('인용구 너비')).toBeNull();
   });
 
   it('shows the selected font as a collapsed trigger until the font picker is opened', async () => {
@@ -286,17 +261,18 @@ describe('SettingsPanel', () => {
     expect(screen.getByText('로그아웃').className).toContain('ui-btn');
   });
 
-  it('changes font size with the shared +/- controls', async () => {
-    const user = userEvent.setup();
+  it('updates the numeric font size with the native range', () => {
     renderWithFontSizeState();
 
-    expect(screen.getByRole('status', { name: '현재 글자 크기' }).textContent).toBe('13pt');
+    fireEvent.change(screen.getByRole('slider', { name: '글자 크기' }), { target: { value: '17' } });
+    const slider = screen.getByRole('slider', { name: '글자 크기' }) as HTMLInputElement;
+    expect(slider.value).toBe('17');
+    expect(screen.getByText('17pt')).toBeTruthy();
+    expect(slider.getAttribute('aria-valuetext')).toBe('17포인트');
 
-    await user.click(screen.getByRole('button', { name: '글자 크기 늘리기' }));
-    expect(screen.getByRole('status', { name: '현재 글자 크기' }).textContent).toBe('14pt');
-
-    await user.click(screen.getByRole('button', { name: '글자 크기 줄이기' }));
-    expect(screen.getByRole('status', { name: '현재 글자 크기' }).textContent).toBe('13pt');
+    slider.focus();
+    expect(document.activeElement).toBe(slider);
+    expect(slider.type).toBe('range');
   });
 
   it('renders a keyboard-focusable avatar change button wired to the file input', async () => {
@@ -540,7 +516,8 @@ describe('SettingsPanel', () => {
 
     const dialog = screen.getByRole('dialog', { name: '설정' });
     expect(dialog.className).toContain('top-16');
-    expect(screen.getByRole('button', { name: '글자 크기 줄이기' }).className).toContain('h-11');
+    expect(screen.getByRole('slider', { name: '글자 크기' }).className).toContain('h-11');
+    expect(screen.getByText('13pt')).toBeTruthy();
     expect(dialog.querySelector('.overscroll-contain')?.className).toContain('safe-area-inset-bottom');
   });
 
@@ -570,50 +547,23 @@ describe('SettingsPanel', () => {
     expect(header?.className).not.toContain('dark:bg-none');
   });
 
-  it('disables the decrease control at the minimum font size', async () => {
+  it('preserves the native range bounds at the minimum font size', () => {
     renderWithFontSizeState({
-      preferences: { ...baseProps.preferences, baseFontPt: 10 },
+      preferences: { ...baseProps.preferences, baseFontPt: 7 },
     });
 
-    expect((screen.getByRole('button', { name: '글자 크기 줄이기' }) as HTMLButtonElement).disabled).toBe(true);
-    expect(screen.getByRole('status', { name: '현재 글자 크기' }).textContent).toBe('10pt');
+    const slider = screen.getByRole('slider', { name: '글자 크기' }) as HTMLInputElement;
+    expect(slider.min).toBe('7');
+    expect(slider.max).toBe('20');
+    expect(slider.step).toBe('1');
+    expect(slider.value).toBe('7');
   });
 
-  it('disables the increase control at the maximum font size', async () => {
+  it('shows the maximum font size without changing the range contract', () => {
     renderWithFontSizeState({
-      preferences: { ...baseProps.preferences, baseFontPt: 40 },
+      preferences: { ...baseProps.preferences, baseFontPt: 20 },
     });
 
-    expect((screen.getByRole('button', { name: '글자 크기 늘리기' }) as HTMLButtonElement).disabled).toBe(true);
-    expect(screen.getByRole('status', { name: '현재 글자 크기' }).textContent).toBe('40pt');
-  });
-
-  it('adjusts citation width from the text settings section', async () => {
-    const user = userEvent.setup();
-    renderWithCitationWidthState();
-
-    await user.click(screen.getByRole('button', { name: '인용구 너비 늘리기' }));
-
-    expect(screen.getByRole('status', { name: '현재 인용구 너비' }).textContent).toBe('45rem');
-  });
-
-  it('disables citation width controls at the configured bounds', () => {
-    const { rerender } = render(
-      <SettingsPanel
-        {...baseProps}
-        preferences={{ ...baseProps.preferences, citationWidthRem: 35 }}
-      />
-    );
-
-    expect((screen.getByRole('button', { name: '인용구 너비 줄이기' }) as HTMLButtonElement).disabled).toBe(true);
-
-    rerender(
-      <SettingsPanel
-        {...baseProps}
-        preferences={{ ...baseProps.preferences, citationWidthRem: 50 }}
-      />
-    );
-
-    expect((screen.getByRole('button', { name: '인용구 너비 늘리기' }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole('slider', { name: '글자 크기' }) as HTMLInputElement).value).toBe('20');
   });
 });

@@ -74,8 +74,35 @@ export const PassageNotesPanel: React.FC<PassageNotesPanelProps> = ({
   React.useLayoutEffect(() => {
     const input = draftRef.current;
     if (!inline || readOnly || !input) return;
-    input.style.height = 'auto';
-    input.style.height = `${input.scrollHeight}px`;
+    const resize = () => {
+      const scrollTop = input.scrollTop;
+      input.style.height = 'auto';
+      const height = `${input.scrollHeight}px`;
+      if (input.style.height !== height) input.style.height = height;
+      input.scrollTop = scrollTop;
+    };
+
+    resize();
+    let width: number | undefined;
+    const sizeObserver = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(([entry]) => {
+      const nextWidth = entry?.contentRect.width ?? input.getBoundingClientRect().width;
+      if (nextWidth === width) return;
+      width = nextWidth;
+      resize();
+    });
+    sizeObserver?.observe(input);
+    const styleObserver = new MutationObserver(resize);
+    styleObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['style', 'data-font'] });
+    const readingScope = input.closest('[data-reading-responsive]');
+    if (readingScope && readingScope !== document.documentElement) {
+      styleObserver.observe(readingScope, { attributes: true, attributeFilter: ['style', 'class'] });
+    }
+    document.fonts?.addEventListener('loadingdone', resize);
+    return () => {
+      sizeObserver?.disconnect();
+      styleObserver.disconnect();
+      document.fonts?.removeEventListener('loadingdone', resize);
+    };
   }, [draft, inline, readOnly]);
 
   const saveNewNote = async () => {
@@ -128,7 +155,7 @@ export const PassageNotesPanel: React.FC<PassageNotesPanelProps> = ({
       {inline && !readOnly && <button type="button" onClick={onClose} aria-label="구절 메모 닫기"
         className="absolute -top-5 right-0 flex h-6 w-6 items-center justify-center rounded-md text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]"><X size={16} /></button>}
 
-      <div className={inline ? 'px-1.5' : 'min-h-0 flex-1 overflow-y-auto'}>
+      <div className={inline ? 'passage-notes-content px-1.5' : 'min-h-0 flex-1 overflow-y-auto'}>
         {!inline && <blockquote className="border-b border-[var(--border-main)] px-4 py-5 font-[var(--font-display-active)] text-[0.9rem] leading-6 text-[var(--text-secondary)]">
           “{citation.text}”
           <footer className="mt-2 text-[0.72rem] not-italic text-[var(--text-muted)]">{citation.page ? `${citation.page}쪽 · ` : ''}{new Date(citation.createdAt).toLocaleDateString('ko-KR')}</footer>

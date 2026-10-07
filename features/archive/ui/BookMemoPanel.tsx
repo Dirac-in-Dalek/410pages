@@ -64,7 +64,8 @@ export const BookMemoPanel: React.FC<BookMemoPanelProps> = ({
         whiteSpace: style.whiteSpace, overflowWrap: style.overflowWrap,
       });
       document.body.append(sizer);
-      const height = `${Math.max(360, sizer.scrollHeight)}px`;
+      const minimumHeight = parseFloat(getComputedStyle(input).minHeight) || 360;
+      const height = `${Math.max(minimumHeight, sizer.scrollHeight)}px`;
       sizer.remove();
       if (input.style.height !== height) input.style.height = height;
       input.scrollTop = top;
@@ -75,6 +76,10 @@ export const BookMemoPanel: React.FC<BookMemoPanelProps> = ({
     if (input.parentElement) observer?.observe(input.parentElement);
     const preferences = new MutationObserver(grow);
     preferences.observe(document.documentElement, { attributes: true });
+    const readingScope = input.closest('[data-reading-responsive]');
+    if (readingScope && readingScope !== document.documentElement) {
+      preferences.observe(readingScope, { attributes: true, attributeFilter: ['style', 'class'] });
+    }
     document.fonts?.addEventListener('loadingdone', grow);
     return () => { observer?.disconnect(); preferences.disconnect(); document.fonts?.removeEventListener('loadingdone', grow); };
   }, [memo, reading]);

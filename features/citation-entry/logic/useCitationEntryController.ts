@@ -93,6 +93,10 @@ export const useCitationEntryController = ({
     observer?.observe(textarea);
     const preferences = new MutationObserver(resize);
     preferences.observe(document.documentElement, { attributes: true, attributeFilter: ['style', 'data-font'] });
+    const readingScope = textarea.closest('[data-reading-responsive]');
+    if (readingScope && readingScope !== document.documentElement) {
+      preferences.observe(readingScope, { attributes: true, attributeFilter: ['style', 'class'] });
+    }
     document.fonts?.addEventListener('loadingdone', resize);
 
     return () => {

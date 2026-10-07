@@ -346,7 +346,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
   return (
     <aside
       style={{ width: `${width}px` }}
-      className="relative z-20 flex flex-shrink-0 flex-col border-r border-[var(--border-main)] bg-[var(--bg-sidebar)] shadow-[var(--shadow-sidebar)] transition-colors duration-200"
+      className="project-sidebar relative z-20 flex flex-shrink-0 flex-col border-r border-[var(--border-main)] bg-[var(--bg-sidebar)] shadow-[var(--shadow-sidebar)] transition-colors duration-200"
     >
       {contextMenu && (
         <div
@@ -385,7 +385,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
       </div>
 
       <div
-        className="flex-1 overflow-y-auto px-3 pb-4 pt-3"
+        className="project-sidebar-content flex-1 overflow-y-auto px-3 pb-4 pt-3"
         onDragOver={(event) => handleProjectsPanelDragOver(event, projects.map((project) => project.id))}
         onDrop={(event) => handleProjectsPanelDrop(event, projects.map((project) => project.id))}
         onDragLeave={(event) => {
@@ -405,7 +405,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
           active={isHomeView}
           onClick={onHomeSelect}
           className={[
-            'mb-2 flex min-h-10 items-center gap-2',
+            'project-sidebar-home mb-2 flex min-h-10 items-center gap-2',
             isHomeView ? '!border-transparent !bg-[var(--accent-soft)] !text-[var(--accent-strong)]' : '',
           ].join(' ')}
         >
@@ -422,7 +422,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
               onClick={() => onBookSelect(book)}
               aria-current={selectedBookId === book.id ? 'page' : undefined}
               className={[
-                'group flex min-h-10 w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left transition-[background-color,color,transform] active:scale-95',
+                'project-sidebar-recent-row group flex min-h-10 w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left transition-[background-color,color,transform] active:scale-95',
                 selectedBookId === book.id
                   ? 'bg-[var(--accent-soft)] text-[var(--accent-strong)]'
                   : 'text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]',
@@ -430,8 +430,8 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
             >
               <Book size={14} className="shrink-0" />
               <span className="min-w-0">
-                <span className="block truncate text-[0.86rem] font-medium">{book.title}</span>
-                <span className="block truncate text-[0.72rem] text-[var(--text-muted)]">{book.author}</span>
+                <span className="project-sidebar-recent-title block truncate text-[0.86rem] font-medium">{book.title}</span>
+                <span className="project-sidebar-recent-meta block truncate text-[0.72rem] text-[var(--text-muted)]">{book.author}</span>
               </span>
             </button>
           )) : (
@@ -439,7 +439,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
           )}
         </div>
 
-        <p className="px-1 pt-3 text-[0.68rem] text-[var(--text-muted)]">서재 정리</p>
+        <p className="project-sidebar-section px-1 pt-3 text-[0.68rem] text-[var(--text-muted)]">서재 정리</p>
         <div className="flex items-center gap-1" aria-busy={authorFolderLoading}>
           <button type="button" onClick={() => setIsAllBooksOpen((value) => !value)} aria-expanded={isAllBooksOpen} className="flex min-h-10 min-w-0 flex-1 items-center gap-2 rounded-lg px-1 text-left text-[0.78rem] font-semibold uppercase tracking-[0.09em] text-[var(--text-muted)] transition-[color,transform] active:scale-95">
             {isAllBooksOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
@@ -483,7 +483,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
           />
         ) : null}
 
-        <p className="px-1 pt-4 pb-1 text-[0.68rem] text-[var(--text-muted)]">인용문 모아보기</p>
+        <p className="project-sidebar-section px-1 pt-4 pb-1 text-[0.68rem] text-[var(--text-muted)]">인용문 모아보기</p>
         <ProjectSidebarProjectsSection
           projects={projects}
           selectedProjectId={selectedProjectId}

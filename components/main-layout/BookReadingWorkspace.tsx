@@ -1,20 +1,26 @@
 import React from 'react';
-import { getBookReadingColumns, getReadingBodyWidth } from './bookReadingColumns';
 import { attachReadingScrollVisibility } from './readingScrollVisibility';
+import type { ReadingWorkspaceMetrics } from './getReadingWorkspaceMetrics';
+
+export type ReadingScrollPosition = {
+  primary: number;
+  memo: number;
+  anchor?: { id: string; offset: number };
+};
 
 type Props = {
   bookId: string;
   children: React.ReactNode;
   memo: React.ReactNode;
   memoOpen: boolean;
-  memoWidth: number;
+  metrics: ReadingWorkspaceMetrics;
   resizing: boolean;
   onStartResize: (event: { clientX: number }) => void;
   onAdjustWidth: (delta: number) => void;
-  scrollPositions: Map<string, { primary: number; memo: number }>;
+  scrollPositions: Map<string, ReadingScrollPosition>;
 };
 
-export function BookReadingWorkspace({ bookId, children, memo, memoOpen, memoWidth, resizing, onStartResize, onAdjustWidth, scrollPositions }: Props) {
+export function BookReadingWorkspace({ bookId, children, memo, memoOpen, metrics, resizing, onStartResize, onAdjustWidth, scrollPositions }: Props) {
   const hostRef = React.useRef<HTMLDivElement>(null);
   const groupRef = React.useRef<HTMLDivElement>(null);
 
@@ -25,25 +31,19 @@ export function BookReadingWorkspace({ bookId, children, memo, memoOpen, memoWid
     const measure = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
-        const rect = host.getBoundingClientRect();
-        const contentLeft = rect.left + 24;
-        const memoScroll = group.querySelector<HTMLElement>('[data-reading-memo-scroll]');
-        const memoChrome = 10 + Math.max(0, (memoScroll?.offsetWidth ?? 0) - (memoScroll?.clientWidth ?? 0));
-        const columns = getBookReadingColumns({ left: contentLeft, right: rect.right - 24, center: window.innerWidth / 2 }, memoWidth, getReadingBodyWidth(), memoChrome);
-        for (const [key, value] of Object.entries(columns)) group.style.setProperty(`--reading-${key}-width`, `${value}px`);
-        group.style.setProperty('--reading-group-left', `${columns.groupLeft - contentLeft}px`);
-        group.style.setProperty('--reading-body-left', `${columns.bodyLeft}px`);
         const scroll = group.querySelector<HTMLElement>('[data-archive-scroll]');
         if (scroll) group.style.setProperty('--reading-scrollbar-width', `${Math.max(0, scroll.offsetWidth - scroll.clientWidth)}px`);
       });
     };
     const sizes = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure);
     sizes?.observe(host);
+    const primary = group.querySelector<HTMLElement>('[data-archive-scroll]');
+    if (primary) sizes?.observe(primary);
     const preferences = new MutationObserver(measure);
     preferences.observe(document.documentElement, { attributes: true });
     measure();
     return () => { cancelAnimationFrame(frame); sizes?.disconnect(); preferences.disconnect(); };
-  }, [memoWidth]);
+  }, []);
 
   React.useLayoutEffect(() => {
     const group = groupRef.current;
@@ -65,26 +65,67 @@ export function BookReadingWorkspace({ bookId, children, memo, memoOpen, memoWid
     const primary = group?.querySelector<HTMLElement>('[data-archive-scroll]');
     const memoScroll = group?.querySelector<HTMLElement>('[data-reading-memo-scroll]');
     if (!primary || !memoScroll) return;
-    const desired = scrollPositions.get(bookId) ?? { primary: 0, memo: 0 };
-    const last = { ...desired };
+    const stored = scrollPositions.get(bookId) ?? { primary: 0, memo: 0 };
+    const desired: ReadingScrollPosition = stored.primary <= 1 ? { ...stored, anchor: undefined } : stored;
+    const last: ReadingScrollPosition = { ...desired };
     const pending = { primary: true, memo: true };
+    const anchorBox = (row: HTMLElement) => row.querySelector<HTMLElement>('[data-row-content]') ?? row;
+    const captureAnchor = () => {
+      if (primary.scrollTop <= 1) return undefined;
+      const viewport = primary.getBoundingClientRect();
+      const rows = (Array.from(primary.querySelectorAll('[data-book-row]')) as HTMLElement[])
+        .filter(row => !row.hidden && anchorBox(row).getClientRects().length > 0);
+      const row = rows.find(candidate => anchorBox(candidate).getBoundingClientRect().bottom > viewport.top + 1) ?? rows.at(-1);
+      if (!row?.dataset.bookRow) return undefined;
+      return { id: row.dataset.bookRow, offset: anchorBox(row).getBoundingClientRect().top - viewport.top };
+    };
+    const restorePrimary = () => {
+      if (!desired.anchor) {
+        primary.scrollTop = desired.primary;
+        return Math.abs(primary.scrollTop - desired.primary) < 1;
+      }
+      const row = (Array.from(primary.querySelectorAll('[data-book-row]')) as HTMLElement[])
+        .find(candidate => candidate.dataset.bookRow === desired.anchor?.id && anchorBox(candidate).getClientRects().length > 0);
+      if (!row) return false;
+      const viewport = primary.getBoundingClientRect();
+      const delta = anchorBox(row).getBoundingClientRect().top - viewport.top - desired.anchor.offset;
+      primary.scrollTop += delta;
+      return Math.abs(delta) < 1;
+    };
     const persist = () => scrollPositions.set(bookId, { ...last });
+    const stabilizePrimaryAnchor = () => {
+      if (!last.anchor) return;
+      const row = (Array.from(primary.querySelectorAll('[data-book-row]')) as HTMLElement[])
+        .find(candidate => candidate.dataset.bookRow === last.anchor?.id && anchorBox(candidate).getClientRects().length > 0);
+      if (!row) return;
+      const viewport = primary.getBoundingClientRect();
+      const delta = anchorBox(row).getBoundingClientRect().top - viewport.top - last.anchor.offset;
+      if (Math.abs(delta) < 1) return;
+      primary.scrollTop += delta;
+      last.primary = primary.scrollTop;
+      persist();
+    };
     const restore = () => {
       for (const [key, element] of [['primary', primary], ['memo', memoScroll]] as const) {
         if (!pending[key]) continue;
         const memoPanel = key === 'memo' ? memoScroll.querySelector<HTMLElement>('[data-book-memo-panel]') : null;
         if (memoPanel && memoPanel.dataset.bookMemoId !== bookId) continue;
-        element.scrollTop = desired[key];
-        if (Math.abs(element.scrollTop - desired[key]) < 1) {
+        const restored = key === 'primary'
+          ? restorePrimary()
+          : (element.scrollTop = desired[key], Math.abs(element.scrollTop - desired[key]) < 1);
+        if (restored) {
           pending[key] = false;
           last[key] = element.scrollTop;
+          if (key === 'primary') last.anchor = captureAnchor();
           persist();
         }
       }
+      if (!pending.primary) stabilizePrimaryAnchor();
     };
     const rememberPrimary = () => {
       if (pending.primary) return;
       last.primary = primary.scrollTop;
+      last.anchor = captureAnchor();
       persist();
     };
     const rememberMemo = () => {
@@ -102,6 +143,9 @@ export function BookReadingWorkspace({ bookId, children, memo, memoOpen, memoWid
     }
     const changes = new MutationObserver(restore);
     changes.observe(group, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'data-book-memo-id'] });
+    const responsiveScope = group.closest<HTMLElement>('[data-reading-responsive]');
+    const responsiveChanges = new MutationObserver(restore);
+    if (responsiveScope) responsiveChanges.observe(responsiveScope, { attributes: true, attributeFilter: ['style'] });
     const sizes = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(restore);
     sizes?.observe(primary);
     sizes?.observe(memoScroll);
@@ -118,6 +162,7 @@ export function BookReadingWorkspace({ bookId, children, memo, memoOpen, memoWid
         memoScroll.removeEventListener(event, cancelMemoRestore);
       }
       changes.disconnect();
+      responsiveChanges.disconnect();
       sizes?.disconnect();
       window.removeEventListener('resize', restore);
       document.fonts?.removeEventListener('loadingdone', restore);
@@ -132,10 +177,10 @@ export function BookReadingWorkspace({ bookId, children, memo, memoOpen, memoWid
         <div data-reading-memo-scroll data-passage-note-trigger className="book-reading-memo-scroll">
           {memo}
         </div>
-        <div role="separator" aria-label="메모 패널 너비 조절" aria-orientation="vertical" aria-valuemin={232} aria-valuemax={960} aria-valuenow={memoWidth} tabIndex={memoOpen ? 0 : -1}
+        <div role="separator" aria-label="메모 패널 너비 조절" aria-orientation="vertical" aria-valuemin={metrics.memoPreferenceMinimum} aria-valuemax={metrics.memoPreferenceMaximum} aria-valuenow={Math.min(metrics.memoPreferenceMaximum, Math.max(metrics.memoPreferenceMinimum, metrics.memoWidthPreference))} aria-valuetext={`${Math.round(metrics.memo)}픽셀`} tabIndex={memoOpen ? 0 : -1}
           data-passage-note-trigger data-resizing={resizing}
           onMouseDown={onStartResize}
-          onKeyDown={event => { if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); onAdjustWidth(event.key === 'ArrowLeft' ? 16 : -16); } }}
+          onKeyDown={event => { if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); onAdjustWidth(event.key === 'ArrowRight' ? 16 : -16); } }}
           className="book-reading-memo-resize" />
       </div>
     </div>

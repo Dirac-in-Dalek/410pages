@@ -2,26 +2,28 @@ import { useEffect, useRef, useState } from 'react';
 
 export const PANEL_MIN = 232;
 export const PANEL_MAX = 960;
-const clamp = (width: number) => Math.min(PANEL_MAX, Math.max(PANEL_MIN, width));
+type WidthBounds = { min: number; max: number };
+const DEFAULT_BOUNDS: WidthBounds = { min: PANEL_MIN, max: PANEL_MAX };
+const clamp = (width: number, bounds = DEFAULT_BOUNDS) => Math.min(bounds.max, Math.max(bounds.min, width));
 
 const usePanelResize = (key: string, fallback: number, right = false) => {
-  const [width, setWidth] = useState(() => {
+  const [sourceWidth, setSourceWidth] = useState(() => {
     try {
       const saved = Number(localStorage.getItem(key) || fallback);
       return Number.isFinite(saved) ? clamp(saved) : fallback;
     } catch { return fallback; }
   });
-  const dragStart = useRef({ x: 0, width: fallback });
+  const dragStart = useRef({ x: 0, width: fallback, scale: 1, bounds: DEFAULT_BOUNDS });
   const [resizing, setResizing] = useState(false);
   useEffect(() => {
     if (resizing) return;
-    try { localStorage.setItem(key, String(width)); } catch { /* Resizing still works when browser storage is unavailable. */ }
-  }, [key, resizing, width]);
+    try { localStorage.setItem(key, String(sourceWidth)); } catch { /* Resizing still works when browser storage is unavailable. */ }
+  }, [key, resizing, sourceWidth]);
   useEffect(() => {
     if (!resizing) return;
     const oldCursor = document.body.style.cursor;
     const oldSelect = document.body.style.userSelect;
-    const move = (event: MouseEvent) => setWidth(clamp(dragStart.current.width + (event.clientX - dragStart.current.x) * (right ? -1 : 1)));
+    const move = (event: MouseEvent) => setSourceWidth(clamp(dragStart.current.width + (event.clientX - dragStart.current.x) * (right ? -1 : 1) / dragStart.current.scale, dragStart.current.bounds));
     const end = () => setResizing(false);
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
@@ -36,16 +38,24 @@ const usePanelResize = (key: string, fallback: number, right = false) => {
       document.body.style.userSelect = oldSelect;
     };
   }, [resizing, right]);
-  return { width, resizing, start: (event?: { clientX: number }) => { dragStart.current = { x: event?.clientX ?? 0, width }; setResizing(true); }, adjust: (delta: number) => setWidth(previous => clamp(previous + delta)) };
+  return {
+    sourceWidth,
+    resizing,
+    start: (event?: { clientX: number }, displayScale = 1, bounds = DEFAULT_BOUNDS) => {
+      dragStart.current = { x: event?.clientX ?? 0, width: clamp(sourceWidth, bounds), scale: Math.max(displayScale, 0.01), bounds };
+      setResizing(true);
+    },
+    adjust: (displayDelta: number, displayScale = 1, bounds = DEFAULT_BOUNDS) => setSourceWidth(previous => clamp(clamp(previous, bounds) + displayDelta / Math.max(displayScale, 0.01), bounds)),
+  };
 };
 
 export const useSidebarResize = (readingMemo = false, storageKeyPrefix = '') => {
   const left = usePanelResize(`${storageKeyPrefix}leftSidebarWidth`, 272);
   const legacyRight = usePanelResize(`${storageKeyPrefix}rightSidebarWidth`, 320, true);
-  const readingRight = usePanelResize(`${storageKeyPrefix}bookReadingMemoWidth`, 360, true);
+  const readingRight = usePanelResize(`${storageKeyPrefix}bookReadingMemoWidth`, 360);
   const right = readingMemo ? readingRight : legacyRight;
   return {
-    leftWidth: left.width, isResizingLeft: left.resizing, startLeftResize: left.start, adjustLeftWidth: left.adjust,
-    rightWidth: right.width, isResizingRight: right.resizing, startRightResize: right.start, adjustRightWidth: right.adjust,
+    leftWidth: left.sourceWidth, leftWidthPreference: left.sourceWidth, isResizingLeft: left.resizing, startLeftResize: left.start, adjustLeftWidth: left.adjust,
+    rightWidth: right.sourceWidth, rightWidthPreference: right.sourceWidth, isResizingRight: right.resizing, startRightResize: right.start, adjustRightWidth: right.adjust,
   };
 };
