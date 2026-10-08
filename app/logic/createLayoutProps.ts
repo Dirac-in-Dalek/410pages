@@ -8,7 +8,7 @@ import type {
 
 export const createMobileLayoutProps = (
   input: MobileLayoutFactoryInput
-): ComponentProps<typeof MobileLayout> => ({
+): Omit<ComponentProps<typeof MobileLayout>, 'children'> => ({
   title: input.title,
   projects: input.projects,
   selectedProjectId: input.selectedProjectId,
@@ -46,7 +46,7 @@ export const createMobileLayoutProps = (
 
 export const createMainLayoutProps = (
   input: MainLayoutFactoryInput
-): ComponentProps<typeof MainLayout> => ({
+): Omit<ComponentProps<typeof MainLayout>, 'children'> => ({
   bookReadingWorkspace: input.bookReadingWorkspace,
   onCloseInlinePassageNotes: input.onCloseInlinePassageNotes,
   onRightPanelOpenChange: input.onRightPanelOpenChange,

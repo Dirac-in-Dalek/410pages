@@ -537,11 +537,7 @@ describe('api.fetchBooks', () => {
 
     expect(mockChapterBlocksFrom).toHaveBeenCalledWith('books');
     expect(mockBooksSelect).toHaveBeenCalledWith(`
-        id,
-        title,
-        memo,
-        sort_index,
-        created_at,
+        *,
         author:authors(id, name, sort_index, is_self)
       `);
     expect(mockBooksEq).toHaveBeenCalledWith('user_id', 'user-1');
@@ -556,6 +552,7 @@ describe('api.fetchBooks', () => {
       {
         id: 'book-1',
         title: 'Book A',
+        memoFormats: [],
         memo: '책 전체 메모',
         sortIndex: 2,
         createdAt: new Date('2026-04-07T10:00:00.000Z').getTime(),

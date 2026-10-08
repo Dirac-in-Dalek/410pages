@@ -1,3 +1,4 @@
+import type { TextFormatRange } from '../../../types';
 import { BookComposerDraftStore } from '../../citation-entry/logic/bookComposerDrafts';
 import { CitationEditDraftStore } from '../logic/citationEditDrafts';
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
@@ -48,7 +49,7 @@ type ArchiveScreenProps = {
   selectedIds: Set<string>;
   selectedFilter?: { type: 'author' | 'book'; authorId?: string; bookId?: string; value: string; author?: string } | null;
   isCopying: boolean;
-  onSelectAll: () => void;
+  onSelectAll: (select: boolean) => void;
   onCopy: () => void | Promise<unknown>;
   onDeleteRequest: () => void;
   onCancelSelection: () => void;
@@ -62,10 +63,10 @@ type ArchiveScreenProps = {
   chapterActionsDisabled?: boolean;
   onToggleSelect: (id: string, selected: boolean) => void;
   onAddNote: (citationId: string, content: string) => void | Promise<unknown>;
-  onUpdateNote: (citationId: string, noteId: string, content: string) => void;
+  onUpdateNote: (citationId: string, noteId: string, content: string, formats?: TextFormatRange[], expectedText?: string) => void;
   onDeleteNote: (citationId: string, noteId: string) => void;
   onDeleteCitation: (id: string) => void;
-  onUpdateCitation: (id: string, data: Partial<Citation>) => void | Promise<unknown>;
+  onUpdateCitation: (id: string, data: Partial<Citation>, expectedText?: string) => void | Promise<unknown>;
   showAllPassageNotes?: boolean;
   onToggleAllPassageNotes?: () => void;
   collapsedDividerIds?: ReadonlySet<string>;
@@ -279,7 +280,7 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
             projects={projects}
             isCopying={isCopying}
             onSelectAll={onSelectAll}
-            onCopy={onCopy}
+            onCopy={async () => { await onCopy(); }}
             onDeleteRequest={onDeleteRequest}
             onCancel={onCancelSelection}
             onAddToProject={onAddToProject}

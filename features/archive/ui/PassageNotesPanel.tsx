@@ -1,3 +1,5 @@
+import { FormattedText } from '../../../shared/ui/FormattedText';
+import type { TextFormatRange } from '../../../types';
 import React from 'react';
 import { Check, Pencil, Send, SendHorizontal, Trash2, X } from 'lucide-react';
 import type { Citation } from '../../../types';
@@ -7,7 +9,7 @@ type PassageNotesPanelProps = {
   citation: Citation;
   onClose: () => void;
   onAddNote: (citationId: string, content: string) => boolean | void | Promise<boolean | void>;
-  onUpdateNote: (citationId: string, noteId: string, content: string) => boolean | void | Promise<boolean | void>;
+  onUpdateNote: (citationId: string, noteId: string, content: string, formats?: TextFormatRange[], expectedText?: string) => boolean | void | Promise<boolean | void>;
   onDeleteNote: (citationId: string, noteId: string) => boolean | void | Promise<boolean | void>;
   readOnly?: boolean;
   onActivate?: () => void;
@@ -185,7 +187,8 @@ export const PassageNotesPanel: React.FC<PassageNotesPanelProps> = ({
                 </div>
               ) : (
                 <>
-                  <p className={`whitespace-pre-wrap break-words text-sm leading-6 ${inline ? 'text-left' : ''}`}>{note.content}</p>
+                  <p className={`whitespace-pre-wrap break-words text-sm leading-6 ${inline ? 'text-left' : ''}`}><FormattedText text={note.content} formats={note.textFormats} onSelect={onActivate}
+                    onSave={readOnly && !onActivate ? undefined : formats => onUpdateNote(citation.id, note.id, note.content, formats, note.content)} /></p>
                   <div className={`${inline ? 'mt-0.5 justify-end' : 'mt-2 justify-between'} flex items-center text-[0.7rem] text-[var(--text-muted)]`}>
                     {!inline && <time>{new Date(note.createdAt).toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</time>}
                     <div className="flex opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">

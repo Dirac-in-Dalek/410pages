@@ -40,6 +40,7 @@ npm run build
 ## 코드와 문서 찾기
 
 - [기능별 Policy 인덱스](docs/policies/README.md): 사용자가 확정한 동작과 남은 결정.
+- [선택 서식 도구창과 DB 배포 순서](docs/ui/selection-formatting.md): 인용문·댓글·책 메모의 서식, 중앙 설정 대비 글자 크기.
 - [디자인 기준](DESIGN.md): 화면 표현 원칙. 기능 동작은 해당 Policy를 따른다.
 - `app/`: 화면 조합, 앱 전체 상태와 반응형 전환.
 - `features/`: archive, citation-entry, reader, auth, profile, settings의 전용 코드와 테스트.

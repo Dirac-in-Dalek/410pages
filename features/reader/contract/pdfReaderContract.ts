@@ -1,3 +1,4 @@
+import type { TextFormatRange } from '../../../types';
 import type {
   AddCitationInput,
   AddCitationResult,
@@ -96,10 +97,10 @@ export interface PdfReaderPageProps {
   onAddCitation: (citation: AddCitationInput) => Promise<AddCitationResult>;
   onRetryCitationSave: (citationId: string) => void | Promise<unknown>;
   onAddNote: (citationId: string, content: string) => void;
-  onUpdateNote: (citationId: string, noteId: string, content: string) => void;
+  onUpdateNote: (citationId: string, noteId: string, content: string, formats?: TextFormatRange[], expectedText?: string) => void;
   onDeleteNote: (citationId: string, noteId: string) => void;
   onDeleteCitation: (id: string) => void;
-  onUpdateCitation: (id: string, data: Partial<Citation>) => void;
+  onUpdateCitation: (id: string, data: Partial<Citation>, expectedText?: string) => void;
   onBulkUpdateCitationSource: (
     citationIds: string[],
     source: CitationSourceInput

@@ -92,7 +92,9 @@ const handleRenameAuthor = useCallback(
             merge.fromBookId,
             merge.toBookId,
             targetMemo,
-            sourceMemo
+            sourceMemo,
+            books.find(book => book.id === merge.toBookId)?.memoFormats,
+            books.find(book => book.id === merge.fromBookId)?.memoFormats
           ) && didPersist;
         }, true);
         invalidateDataLoad();
@@ -156,7 +158,9 @@ const handleRenameBook = useCallback(
           result.fromBookId,
           result.bookId,
           targetMemo,
-          sourceMemo
+          sourceMemo,
+          books.find(book => book.id === result.bookId)?.memoFormats,
+          books.find(book => book.id === result.fromBookId)?.memoFormats
         );
         invalidateDataLoad();
         setCitations((current) => applyRenameBookToCitations(current, result));

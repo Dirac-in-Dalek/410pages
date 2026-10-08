@@ -1,4 +1,5 @@
 import type { AddCitationInput, Citation } from '../../../types';
+import { rebaseTextFormats, formatsWithLegacyHighlights, legacyHighlightsFromFormats } from '../../../shared/logic/textFormats';
 
 export const CITATION_SAVE_FAILED_MESSAGE = '저장에 실패했습니다. 다시 시도해주세요.';
 
@@ -40,6 +41,7 @@ export const createOptimisticCitation = (
     notes: [],
     tags: data.tags || [],
     highlights: data.highlights,
+    ...(data.textFormats === undefined ? {} : { textFormats: data.textFormats }),
     createdAt: now,
     ...(data.createdAtSort === undefined ? {} : { createdAtSort: data.createdAtSort }),
     ...(data.orderKey === undefined ? {} : { orderKey: data.orderKey }),
@@ -54,6 +56,13 @@ export const createOptimisticCitationEditPatch = (
   data: Partial<Citation>
 ): Partial<Citation> => {
   const patch: Partial<Citation> = { ...data };
+  if (data.text !== undefined && data.text !== citation.text && data.textFormats === undefined) {
+    const formats = formatsWithLegacyHighlights(citation.text, citation.textFormats, citation.highlights);
+    if (formats.length) {
+      patch.textFormats = rebaseTextFormats(citation.text, data.text, formats);
+      patch.highlights = legacyHighlightsFromFormats(patch.textFormats);
+    }
+  }
   if (data.page !== undefined) {
     patch.pageSort = extractCitationPageSort(data.page);
   }
@@ -137,4 +146,5 @@ export const createRetryCitationInput = (citation: Citation): AddCitationInput =
   pageSort: citation.pageSort,
   tags: citation.tags,
   highlights: citation.highlights,
+  ...(citation.textFormats === undefined ? {} : { textFormats: citation.textFormats }),
 });

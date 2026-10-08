@@ -29,6 +29,12 @@ describe('Constrained typography', () => {
     const user = userEvent.setup();
     render(
       <ProjectSidebar
+        books={[]} citations={[]} treeData={treeData} selectedBookId={null} selectedFilter={null}
+        isHomeView={false} onHomeSelect={vi.fn()} onBookSelect={vi.fn()} onTreeItemClick={vi.fn()}
+        authorFolderLoading={false} authorFolderLoadError={null} onRetryAuthorFolders={vi.fn()}
+        onCreateAuthorFolder={vi.fn()} onRenameAuthorFolder={vi.fn()} onDeleteAuthorFolder={vi.fn()}
+        onMoveAuthorToFolder={vi.fn()} onRemoveAuthorFromFolder={vi.fn()}
+        onDeleteAuthor={vi.fn()} onPreviewAuthorDelete={vi.fn()}
         projects={projects}
         selectedProjectId={null}
         onProjectSelect={vi.fn()}
@@ -37,10 +43,6 @@ describe('Constrained typography', () => {
         onRenameProject={vi.fn()}
         onDeleteProject={vi.fn()}
         onReorderProjects={vi.fn()}
-        username="Researcher"
-        onSignOut={vi.fn()}
-        onOpenPdfReader={vi.fn()}
-        onOpenSettings={vi.fn()}
         width={280}
         isResizing={false}
         onStartResize={vi.fn()}
@@ -64,6 +66,11 @@ describe('Constrained typography', () => {
     const user = userEvent.setup();
     render(
       <MobileLayout
+        books={[]} citations={[]} isHomeView={false} selectedBookId={null} onHomeSelect={vi.fn()} onBookSelect={vi.fn()}
+        authorFolderLoading={false} authorFolderLoadError={null} onRetryAuthorFolders={vi.fn()}
+        onCreateAuthorFolder={vi.fn()} onRenameAuthorFolder={vi.fn()} onDeleteAuthorFolder={vi.fn()}
+        onMoveAuthorToFolder={vi.fn()} onRemoveAuthorFromFolder={vi.fn()} onRenameAuthor={vi.fn()}
+        onDeleteAuthor={vi.fn()} onPreviewAuthorDelete={vi.fn()}
         title="Archive"
         projects={projects}
         selectedProjectId={null}

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useSyncExternalStore } from 'react';
 import { AlertCircle, Copy, MessageSquare, ChevronDown, ChevronUp, User, X, Check, Folder, RefreshCw, Pencil, Trash2 } from 'lucide-react';
-import { Highlight } from '../../../types';
+import { FormattedText } from '../../../shared/ui/FormattedText';
+import { formatsWithLegacyHighlights, legacyHighlightsFromFormats } from '../../../shared/logic/textFormats';
 import { formatCitationRecoveryText, writeTextToClipboard } from '../../../lib/citationCopy';
 import { CITATION_SAVE_FAILED_MESSAGE } from '../logic/optimisticCitation';
 import type { CitationCardProps, CitationEditDraft } from '../contract/citationCardContract';
@@ -53,9 +54,9 @@ export const CitationCard: React.FC<CitationCardProps> = ({
     updateDraft('saving', value);
   };
 
-  const [localHighlights, setLocalHighlights] = useState<Highlight[]>(citation.highlights || []);
+
   const cardRef = useRef<HTMLDivElement>(null);
-  const quoteRef = useRef<HTMLElement>(null);
+  const quoteRef = useRef<HTMLQuoteElement>(null);
   const lastMeasuredQuoteWidthRef = useRef<number | null>(null);
   const overflowStateRef = useRef(false);
   const collapsedTextEndRef = useRef<number | null>(null);
@@ -109,9 +110,6 @@ export const CitationCard: React.FC<CitationCardProps> = ({
     if (isNotesExpanded) adjustHeight(newNoteTextareaRef);
   }, [isNotesExpanded, newNote]);
 
-  useEffect(() => {
-    setLocalHighlights(citation.highlights || []);
-  }, [citation.highlights]);
 
   useEffect(() => {
     if (isTextExpanded !== undefined) return;
@@ -251,7 +249,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
       window.removeEventListener('resize', handleResize);
       resizeObserver?.disconnect();
     };
-  }, [citation.id, citation.text, effectiveIsExpanded, isEditing, localHighlights, onTextOverflowChange]);
+  }, [citation.id, citation.text, effectiveIsExpanded, isEditing, citation.highlights, citation.textFormats, onTextOverflowChange]);
 
   const activeNote = editingNoteId ? citation.notes.find((note) => note.id === editingNoteId) : null;
   const isEditSessionPristine =
@@ -380,7 +378,8 @@ export const CitationCard: React.FC<CitationCardProps> = ({
     if (isSavingCitation) return;
 
     const target = event.target as HTMLElement;
-    if (target.closest('button, input, textarea, select, option, label, a')) {
+    const selection = window.getSelection();
+    if (target.closest('button, input, textarea, select, option, label, a') || (target.closest('[data-format-text]') && selection?.rangeCount && !selection.isCollapsed)) {
       return;
     }
 
@@ -396,97 +395,6 @@ export const CitationCard: React.FC<CitationCardProps> = ({
     } catch (error) {
       console.error('Failed to copy failed citation:', error);
     }
-  };
-
-  const handleTextSelection = (event: React.MouseEvent<HTMLElement>) => {
-    if (isSavingCitation) return;
-    if (event.detail > 1) return;
-
-    const selection = window.getSelection();
-    if (!selection || selection.isCollapsed || !cardRef.current) return;
-
-    const range = selection.getRangeAt(0);
-    const blockquote = cardRef.current.querySelector('blockquote');
-
-    if (!blockquote || !blockquote.contains(range.commonAncestorContainer)) return;
-
-    const selectedText = selection.toString();
-    if (!selectedText.trim()) return;
-
-    const preSelectionRange = range.cloneRange();
-    preSelectionRange.selectNodeContents(blockquote);
-    preSelectionRange.setEnd(range.startContainer, range.startOffset);
-
-    const start = preSelectionRange.toString().length;
-    const end = start + selectedText.length;
-
-    const isOverlapping = localHighlights.some((highlight) => start < highlight.end && end > highlight.start);
-    if (isOverlapping) {
-      selection.removeAllRanges();
-      return;
-    }
-
-    const newHighlight: Highlight = {
-      id: `hl-${Date.now()}`,
-      start,
-      end,
-      color: 'yellow'
-    };
-
-    const updatedHighlights = [...localHighlights, newHighlight];
-    setLocalHighlights(updatedHighlights);
-    onUpdate(citation.id, { highlights: updatedHighlights });
-
-    selection.removeAllRanges();
-  };
-
-  const handleRemoveHighlight = (highlightId: string) => {
-    if (isSavingCitation) return;
-    const updatedHighlights = localHighlights.filter((highlight) => highlight.id !== highlightId);
-    setLocalHighlights(updatedHighlights);
-    onUpdate(citation.id, { highlights: updatedHighlights });
-  };
-
-  const renderHighlightedText = (endIndex = citation.text.length) => {
-    const boundedEndIndex = Math.max(0, Math.min(endIndex, citation.text.length));
-
-    if (!localHighlights || localHighlights.length === 0) {
-      return citation.text.slice(0, boundedEndIndex);
-    }
-
-    const sorted = [...localHighlights].sort((a, b) => a.start - b.start);
-    const segments: React.ReactNode[] = [];
-    let lastIndex = 0;
-
-    sorted.forEach((hl) => {
-      if (hl.start >= boundedEndIndex) return;
-
-      if (hl.start > lastIndex) {
-        segments.push(citation.text.slice(lastIndex, Math.min(hl.start, boundedEndIndex)));
-      }
-      const highlightEnd = Math.min(hl.end, boundedEndIndex);
-      segments.push(
-        <mark
-          key={hl.id}
-          className="cursor-pointer relative group/hl rounded px-0.5 transition-colors"
-          style={{ backgroundColor: 'var(--highlight-bg)' }}
-          onClick={(event) => {
-            event.stopPropagation();
-            handleRemoveHighlight(hl.id);
-          }}
-          title="눌러서 강조 제거"
-        >
-          {citation.text.slice(hl.start, highlightEnd)}
-        </mark>
-      );
-      lastIndex = highlightEnd;
-    });
-
-    if (lastIndex < boundedEndIndex) {
-      segments.push(citation.text.slice(lastIndex, boundedEndIndex));
-    }
-
-    return segments;
   };
 
   const metadataChips = [
@@ -641,9 +549,10 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                   'citation-copy type-body relative z-10 select-text whitespace-pre-wrap text-pretty text-[var(--text-main)] leading-[1.6]',
                   effectiveIsExpanded || shouldShowInlineMore ? 'mb-0' : 'mb-0 line-clamp-2 lg:line-clamp-3'
                 ].join(' ')}
-                onMouseUp={handleTextSelection}
               >
-                {renderHighlightedText(shouldShowInlineMore ? collapsedTextEnd : undefined)}
+                <FormattedText text={citation.text} formats={formatsWithLegacyHighlights(citation.text, citation.textFormats, citation.highlights)}
+                  visibleEnd={shouldShowInlineMore ? collapsedTextEnd : undefined}
+                  onSave={isUnsaved ? undefined : formats => onUpdate(citation.id, { textFormats: formats, highlights: legacyHighlightsFromFormats(formats) }, citation.text)} />
                 {shouldShowInlineMore ? (
                   <button
                     type="button"
@@ -754,7 +663,8 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                           </div>
                         </div>
                       ) : (
-                        <div className="whitespace-pre-wrap">{note.content}</div>
+                        <FormattedText className="block select-text whitespace-pre-wrap" text={note.content} formats={note.textFormats}
+                          onSave={formats => onUpdateNote(citation.id, note.id, note.content, formats, note.content)} />
                       )}
                     </div>
                   ))}

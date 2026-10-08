@@ -1,3 +1,4 @@
+import type { TextFormatRange } from '../../types';
 import { getSupabaseClient } from '../../lib/supabase';
 import type { AuthorSource } from '../../types';
 import { requireActiveUser, GetOrCreateAuthorResult } from './libraryApiUtils';
@@ -24,6 +25,7 @@ type BookMergeInfo = {
     toBookTitle: string;
     toBookSortIndex: number | null;
     toBookMemo: string;
+  toBookMemoFormats?: TextFormatRange[];
     citationOrderKeys?: Record<string, string>;
     chapterOrderKeys?: Record<string, string>;
 };

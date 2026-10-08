@@ -42,5 +42,5 @@ export interface ProjectSidebarProps {
   libraryOrderSaving?: boolean;
   width: number;
   isResizing: boolean;
-  onStartResize: () => void;
+  onStartResize: (event: React.MouseEvent) => void;
 }

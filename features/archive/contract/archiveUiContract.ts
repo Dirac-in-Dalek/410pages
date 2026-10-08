@@ -1,3 +1,4 @@
+import type { TextFormatRange } from '../../../types';
 import { CitationEditDraftStore } from '../logic/citationEditDrafts';
 import type { AddCitationInput, BookPosition, ChapterBlock, Citation, CreateChapterBlockInput, Project } from '../../../types';
 
@@ -34,10 +35,10 @@ export interface CitationListProps {
     selectedFilter?: { type: 'author' | 'book'; authorId?: string; bookId?: string; value: string; author?: string } | null;
     onToggleSelect: (id: string, selected: boolean) => void;
     onAddNote: (citationId: string, content: string) => void;
-    onUpdateNote: (citationId: string, noteId: string, content: string) => void;
+    onUpdateNote: (citationId: string, noteId: string, content: string, formats?: TextFormatRange[], expectedText?: string) => void;
     onDeleteNote: (citationId: string, noteId: string) => void;
     onDeleteCitation: (id: string) => void;
-    onUpdateCitation: (id: string, data: Partial<Citation>) => void;
+    onUpdateCitation: (id: string, data: Partial<Citation>, expectedText?: string) => void;
     onRetryCitationSave: (citationId: string) => void | Promise<unknown>;
     chapterBlocks?: ChapterBlock[];
     isBookView?: boolean;

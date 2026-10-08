@@ -1,3 +1,4 @@
+import { normalizeTextFormats } from '../logic/textFormats';
 import { getSupabaseClient } from '../../lib/supabase';
 import type { BookSource } from '../../types';
 
@@ -5,6 +6,7 @@ export type BookSourceRow = {
     id: string;
     title: string;
     memo: string | null;
+    memo_formats?: unknown;
     sort_index: number | null;
     created_at: string;
     author?: {
@@ -34,6 +36,7 @@ export const mapBookSourceRow = (row: BookSourceRow): BookSource => {
         id: row.id,
         title: row.title,
         memo: row.memo || '',
+        memoFormats: normalizeTextFormats(row.memo_formats, (row.memo || '').length),
         sortIndex: row.sort_index ?? null,
         createdAt: new Date(row.created_at).getTime(),
         authorId: author?.id || '',

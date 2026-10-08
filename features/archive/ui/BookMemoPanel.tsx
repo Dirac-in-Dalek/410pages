@@ -1,9 +1,10 @@
+import { RichTextEditor } from '../../../shared/ui/RichTextEditor';
 import React from 'react';
 import { CloudOff, PanelRightClose, X } from 'lucide-react';
-import type { BookSource } from '../../../types';
+import type { BookSource, TextFormatRange } from '../../../types';
 import {
   BOOK_MEMO_DRAFT_MERGED_EVENT,
-  readBookMemoDraft,
+  readBookMemoDraftContent,
   removeBookMemoDraft,
   storeBookMemoDraft,
 } from '../logic/bookMemoDraftStorage';
@@ -14,7 +15,7 @@ type SaveStatus = 'idle' | 'saving' | 'saved' | 'failed' | 'recovered';
 type BookMemoPanelProps = {
   userId: string;
   book: BookSource;
-  onSave: (bookId: string, memo: string) => Promise<boolean>;
+  onSave: (bookId: string, memo: string, formats?: TextFormatRange[], expectedText?: string) => Promise<boolean>;
   onClose?: () => void;
   mobile?: boolean;
   reading?: boolean;
@@ -28,73 +29,36 @@ export const BookMemoPanel: React.FC<BookMemoPanelProps> = ({
   mobile = false,
   reading = false,
 }) => {
-  const [memo, setMemo] = React.useState(() => readBookMemoDraft(userId, book.id) ?? book.memo ?? '');
+  const initial = () => readBookMemoDraftContent(userId, book.id) ?? { text: book.memo ?? '', formats: book.memoFormats ?? [] };
+  const [content, setContent] = React.useState(initial);
+  const { text: memo, formats } = content;
+  const savedMemosRef = React.useRef(new Map([[`${userId}:${book.id}`, book.memo ?? '']]));
   const [memoBookId, setMemoBookId] = React.useState(book.id);
   const [status, setStatus] = React.useState<SaveStatus>('idle');
   const [draftStorageFailed, setDraftStorageFailed] = React.useState(false);
   const timerRef = React.useRef<number | null>(null);
   const requestRef = React.useRef(0);
   const saveChainRef = React.useRef<Promise<void>>(Promise.resolve());
-  const memoRef = React.useRef(memo);
-  memoRef.current = memo;
+  const memoRef = React.useRef(content);
+  memoRef.current = content;
   const dialogRef = useModalFocus<HTMLElement>(mobile, () => onClose?.());
-  const inputRef = React.useRef<HTMLTextAreaElement>(null);
-  React.useLayoutEffect(() => {
-    const input = inputRef.current;
-    if (!reading || !input) return;
-    const grow = () => {
-      const top = input.scrollTop;
-      const readingScroll = input.closest<HTMLElement>('[data-reading-memo-scroll]');
-      const readingTop = readingScroll?.scrollTop ?? 0;
-      // Measure separately so the focused field never collapses during typing.
-      const style = getComputedStyle(input);
-      const sizer = document.createElement('textarea');
-      sizer.value = input.value;
-      sizer.tabIndex = -1;
-      sizer.setAttribute('aria-hidden', 'true');
-      Object.assign(sizer.style, {
-        position: 'absolute', visibility: 'hidden', pointerEvents: 'none', overflow: 'hidden',
-        height: '0px', minHeight: '0px', width: `${input.clientWidth}px`,
-        font: style.font, lineHeight: style.lineHeight, letterSpacing: style.letterSpacing,
-        padding: style.padding, border: '0', boxSizing: style.boxSizing,
-        whiteSpace: style.whiteSpace, overflowWrap: style.overflowWrap,
-      });
-      document.body.append(sizer);
-      const minimumHeight = parseFloat(getComputedStyle(input).minHeight) || 360;
-      const height = `${Math.max(minimumHeight, sizer.scrollHeight)}px`;
-      sizer.remove();
-      if (input.style.height !== height) input.style.height = height;
-      input.scrollTop = top;
-      if (readingScroll) readingScroll.scrollTop = readingTop;
-    };
-    grow();
-    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(grow);
-    if (input.parentElement) observer?.observe(input.parentElement);
-    const preferences = new MutationObserver(grow);
-    preferences.observe(document.documentElement, { attributes: true });
-    const readingScope = input.closest('[data-reading-responsive]');
-    if (readingScope && readingScope !== document.documentElement) {
-      preferences.observe(readingScope, { attributes: true, attributeFilter: ['style', 'class'] });
-    }
-    document.fonts?.addEventListener('loadingdone', grow);
-    return () => { observer?.disconnect(); preferences.disconnect(); document.fonts?.removeEventListener('loadingdone', grow); };
-  }, [memo, reading]);
-
   const syncExternalDraft = React.useCallback(() => {
-    const recoveredDraft = readBookMemoDraft(userId, book.id);
-    const nextMemo = recoveredDraft ?? book.memo ?? '';
-    if (memoRef.current === nextMemo) return;
+    const recoveredDraft = readBookMemoDraftContent(userId, book.id);
+    const nextMemo = recoveredDraft ?? { text: book.memo ?? '', formats: book.memoFormats ?? [] };
+    savedMemosRef.current.set(`${userId}:${book.id}`, book.memo ?? '');
+    if (JSON.stringify(memoRef.current) === JSON.stringify(nextMemo)) return;
     if (timerRef.current !== null) window.clearTimeout(timerRef.current);
     requestRef.current += 1;
-    setMemo(nextMemo);
+    setContent(nextMemo);
     setStatus(recoveredDraft === null ? 'idle' : 'recovered');
-  }, [book.id, book.memo, userId]);
+  }, [book.id, book.memo, book.memoFormats, userId]);
 
   React.useEffect(() => {
     if (timerRef.current !== null) window.clearTimeout(timerRef.current);
     requestRef.current += 1;
-    const recoveredDraft = readBookMemoDraft(userId, book.id);
-    setMemo(recoveredDraft ?? book.memo ?? '');
+    const recoveredDraft = readBookMemoDraftContent(userId, book.id);
+    setContent(recoveredDraft ?? { text: book.memo ?? '', formats: book.memoFormats ?? [] });
+    savedMemosRef.current.set(`${userId}:${book.id}`, book.memo ?? '');
     setMemoBookId(book.id);
     setStatus(recoveredDraft === null ? 'idle' : 'recovered');
     setDraftStorageFailed(false);
@@ -116,11 +80,15 @@ export const BookMemoPanel: React.FC<BookMemoPanelProps> = ({
     return () => window.removeEventListener(BOOK_MEMO_DRAFT_MERGED_EVENT, handleMergedDraft);
   }, [book.id, syncExternalDraft, userId]);
 
-  const persistMemo = async (nextMemo: string, request: number) => {
+  const persistMemo = async (next: { text: string; formats: TextFormatRange[] }, request: number) => {
     if (timerRef.current !== null) window.clearTimeout(timerRef.current);
     setStatus('saving');
     let didSave = false;
-    const save = saveChainRef.current.then(() => onSave(book.id, nextMemo));
+    const save = saveChainRef.current.then(async () => {
+      const ok = await onSave(book.id, next.text, next.formats, savedMemosRef.current.get(`${userId}:${book.id}`) ?? book.memo ?? '');
+      if (ok) savedMemosRef.current.set(`${userId}:${book.id}`, next.text);
+      return ok;
+    });
     saveChainRef.current = save.then(() => undefined, () => undefined);
     try {
       didSave = await save;
@@ -128,7 +96,7 @@ export const BookMemoPanel: React.FC<BookMemoPanelProps> = ({
       didSave = false;
     }
     if (didSave) {
-      if (readBookMemoDraft(userId, book.id) === nextMemo) {
+      if (JSON.stringify(readBookMemoDraftContent(userId, book.id)) === JSON.stringify(next)) {
         removeBookMemoDraft(userId, book.id);
       }
     }
@@ -141,18 +109,19 @@ export const BookMemoPanel: React.FC<BookMemoPanelProps> = ({
     }
   };
 
-  const scheduleSave = (nextMemo: string) => {
-    setMemo(nextMemo);
-    setDraftStorageFailed(!storeBookMemoDraft(userId, book.id, nextMemo));
+  const scheduleSave = (text: string, formats: TextFormatRange[]) => {
+    const next = { text, formats };
+    setContent(next);
+    setDraftStorageFailed(!storeBookMemoDraft(userId, book.id, text, formats));
     setStatus('saving');
     if (timerRef.current !== null) window.clearTimeout(timerRef.current);
     const request = ++requestRef.current;
-    timerRef.current = window.setTimeout(() => void persistMemo(nextMemo, request), 800);
+    timerRef.current = window.setTimeout(() => void persistMemo(next, request), 800);
   };
 
   const saveNow = () => {
-    setDraftStorageFailed(!storeBookMemoDraft(userId, book.id, memo));
-    void persistMemo(memo, ++requestRef.current);
+    setDraftStorageFailed(!storeBookMemoDraft(userId, book.id, memo, formats));
+    void persistMemo(content, ++requestRef.current);
   };
   const showFooter = draftStorageFailed || status === 'failed' || status === 'recovered';
 
@@ -187,17 +156,9 @@ export const BookMemoPanel: React.FC<BookMemoPanelProps> = ({
           </button>
         ) : null}
       </header>
-      <label className="flex min-h-0 flex-1 flex-col px-3 py-3">
-        <span className="sr-only">책 전체 메모</span>
-        <textarea
-          ref={inputRef}
-          aria-label="책 전체 메모"
-          value={memo}
-          onChange={(event) => scheduleSave(event.target.value)}
-          placeholder="책 전체를 관통하는 생각, 질문, 다음에 볼 내용을 적어두세요."
-          className="min-h-[12rem] flex-1 resize-none border-0 bg-transparent p-0 font-sans text-sm leading-6 text-[var(--text-main)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-0 focus:caret-[var(--text-main)]"
-        />
-      </label>
+      <RichTextEditor key={`${userId}:${book.id}`} text={memo} formats={formats} onChange={scheduleSave}
+        label="책 전체 메모" placeholder="책 전체를 관통하는 생각, 질문, 다음에 볼 내용을 적어두세요."
+        className={`book-memo-rich flex-1 px-3 py-3 font-sans text-sm leading-6 ${reading ? '' : 'min-h-0 overflow-y-auto'}`} />
       {showFooter ? <footer className="flex min-h-11 items-center gap-2 px-3 py-1.5">
         <p className="min-w-0 flex-1 text-[0.72rem] leading-5 text-[var(--text-muted)]">
           {draftStorageFailed

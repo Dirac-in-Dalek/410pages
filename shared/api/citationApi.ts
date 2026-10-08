@@ -1,3 +1,6 @@
+import { normalizeTextFormats } from '../logic/textFormats';
+import { saveTextFormatting } from './textFormattingApi';
+import type { TextFormatRange } from '../../types';
 import { getSupabaseClient } from '../../lib/supabase';
 import { compareBookPositions, generateBookPosition, getBookPosition, legacyOrderKey } from '../../lib/bookOrder';
 import type { AddCitationInput, BookPosition, Citation, CitationSourceInput, Note } from '../../types';
@@ -39,10 +42,12 @@ const mapStoredCitation = (citation: any, resolvedSource?: ResolvedCitationSourc
     notes: (citation.notes || []).map((note: any) => ({
         id: note.id,
         content: note.content,
+        textFormats: normalizeTextFormats(note.text_formats, note.content.length),
         createdAt: new Date(note.created_at).getTime(),
     })),
     tags: [],
     highlights: citation.highlights || [],
+    textFormats: normalizeTextFormats(citation.text_formats, citation.text.length),
 });
 
 const fetchCitationById = async (userId: string, id: string) => {
@@ -241,9 +246,11 @@ export async function fetchCitations() {
                 notes: (c.notes || []).map((n: any) => ({
                     id: n.id,
                     content: n.content,
+                    textFormats: normalizeTextFormats(n.text_formats, n.content.length),
                     createdAt: new Date(n.created_at).getTime()
                 })),
                 highlights: c.highlights || [],
+                textFormats: normalizeTextFormats(c.text_formats, c.text.length),
                 tags: []
             } as Citation;
         });
@@ -300,6 +307,7 @@ export async function addCitation(userId: string, data: AddCitationInput) {
                 page: data.page,
                 page_sort: extractPageSort(data.page),
                 ...(data.highlights !== undefined ? { highlights: data.highlights } : {}),
+                ...(data.textFormats !== undefined ? { text_formats: data.textFormats } : {}),
                 user_id: userId
             });
         const write = (orderKey: string | null) => {
@@ -346,7 +354,11 @@ export async function moveCitation(userId: string, bookId: string, id: string, p
     } as Pick<Citation, 'createdAtSort' | 'orderKey'>;
 }
 
-export async function updateCitation(userId: string, id: string, data: Partial<Citation>) {
+export async function updateCitation(userId: string, id: string, data: Partial<Citation>, expectedText?: string) {
+        if (expectedText !== undefined && data.textFormats !== undefined) {
+            await saveTextFormatting(userId, 'citation', id, expectedText, data.text ?? expectedText, data.textFormats);
+            return data;
+        }
         const localPatch: Partial<Citation> = {};
         const updateData: any = {};
         let destinationBookId: string | null | undefined;
@@ -359,6 +371,10 @@ export async function updateCitation(userId: string, id: string, data: Partial<C
             updateData.page_sort = extractPageSort(data.page);
             localPatch.page = data.page;
             localPatch.pageSort = extractPageSort(data.page);
+        }
+        if (data.textFormats !== undefined) {
+            updateData.text_formats = data.textFormats;
+            localPatch.textFormats = data.textFormats;
         }
         if (data.highlights !== undefined) {
             updateData.highlights = data.highlights;
@@ -583,10 +599,14 @@ export async function addNote(userId: string, citationId: string, content: strin
         } as Note;
     }
 
-export async function updateNote(userId: string, noteId: string, content: string) {
+export async function updateNote(userId: string, noteId: string, content: string, formats?: TextFormatRange[], expectedText?: string) {
+        if (formats !== undefined && expectedText !== undefined) {
+            await saveTextFormatting(userId, 'note', noteId, expectedText, content, formats);
+            return;
+        }
         const { error } = await getSupabaseClient()
             .from('notes')
-            .update({ content })
+            .update({ content, ...(formats === undefined ? {} : { text_formats: formats }) })
             .eq('id', noteId)
             .eq('user_id', userId);
         if (error) throw error;

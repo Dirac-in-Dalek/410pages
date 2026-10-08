@@ -41,6 +41,8 @@ export const useModalFocus = <T extends HTMLElement>(isOpen: boolean, onEscape: 
       if (event.key === 'Escape') {
         event.preventDefault();
         event.stopImmediatePropagation();
+        const closeFormatting = containerRef.current?.querySelector<HTMLButtonElement>('[data-text-format-close]');
+        if (closeFormatting) { closeFormatting.click(); return; }
         onEscapeRef.current();
         return;
       }
