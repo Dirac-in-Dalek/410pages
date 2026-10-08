@@ -1,6 +1,6 @@
 import React from 'react';
 import { getArchiveSearchLabel } from '../features/archive/logic/archiveSort';
-import { PanelLeftClose, PanelLeftOpen, Search, UserCircle2 } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Search, UserCircle2 } from 'lucide-react';
 import { AuthorDeletePreview, BookSource, Citation, DeleteAuthorCascadeResult, Project, SidebarItem } from '../types';
 import { useSidebarResize } from './main-layout/useSidebarResize';
 import { BookReadingWorkspace, type ReadingScrollPosition } from './main-layout/BookReadingWorkspace';
@@ -112,10 +112,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     leftWidthPreference,
     isResizingLeft,
     startLeftResize, adjustLeftWidth,
-    rightWidth, rightWidthPreference, isResizingRight, startRightResize, adjustRightWidth,
-  } = useSidebarResize(bookReadingWorkspace, resizeStorageKeyPrefix);
+    rightWidth, isResizingRight, startRightResize, adjustRightWidth,
+  } = useSidebarResize(resizeStorageKeyPrefix);
   const homePanelId = React.useId();
+  const memoPanelId = React.useId();
   const homeToggleRef = React.useRef<HTMLButtonElement>(null);
+  const memoToggleRef = React.useRef<HTMLButtonElement>(null);
   const homeContainerRef = React.useRef<HTMLDivElement>(null);
   const mainRef = React.useRef<HTMLElement>(null);
   const [libraryOverlayOpen, setLibraryOverlayOpen] = React.useState(false);
@@ -150,25 +152,19 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     ...readingEnvironment,
     sidebarWidthPreference: leftWidthPreference,
     sidebarOpen: homePanelOpen,
-    memoWidthPreference: rightWidthPreference,
     memoChrome: 14,
-  }), [readingEnvironment, leftWidthPreference, homePanelOpen, rightWidthPreference]);
+  }), [readingEnvironment, leftWidthPreference, homePanelOpen]);
   const openReadingMetrics = React.useMemo(() => getReadingWorkspaceMetrics({
     ...readingEnvironment,
     sidebarWidthPreference: leftWidthPreference,
     sidebarOpen: true,
-    memoWidthPreference: rightWidthPreference,
     memoChrome: 14,
-  }), [readingEnvironment, leftWidthPreference, rightWidthPreference]);
+  }), [readingEnvironment, leftWidthPreference]);
   const displayedLeftWidth = bookReadingWorkspace ? readingMetrics.sidebarWidth : leftWidth;
   const displayedRightWidth = bookReadingWorkspace ? readingMetrics.memo : rightWidth;
   const readingSidebarBounds = bookReadingWorkspace ? {
     min: readingMetrics.sidebarPreferenceMinimum,
     max: readingMetrics.sidebarPreferenceMaximum,
-  } : undefined;
-  const readingMemoBounds = bookReadingWorkspace ? {
-    min: readingMetrics.memoPreferenceMinimum,
-    max: readingMetrics.memoPreferenceMaximum,
   } : undefined;
 
   React.useLayoutEffect(() => {
@@ -277,7 +273,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
   return (
     <div data-reading-responsive={bookReadingWorkspace || undefined}
-      data-reading-resizing={bookReadingWorkspace && (isResizingLeft || isResizingRight) || undefined}
+      data-reading-resizing={bookReadingWorkspace && isResizingLeft || undefined}
       style={bookReadingWorkspace ? readingMetrics.cssVariables as React.CSSProperties : undefined}
       className={`${bookReadingWorkspace ? 'reading-responsive ' : ''}font-size-app isolate flex h-screen w-full flex-col overflow-hidden bg-[var(--bg-main)] font-sans text-[var(--text-main)] transition-colors duration-200`}>
       <header className="border-b border-[var(--border-main)] bg-[var(--bg-card)]">
@@ -323,6 +319,15 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       </header>
 
       {bookReadingWorkspace ? libraryToggle : null}
+      {bookReadingWorkspace && rightPanel && selectedBookId ? (
+        <button id="book-memo-open-button" ref={memoToggleRef} type="button" data-passage-note-trigger
+          aria-label={rightPanelOpen ? '메모 접기' : '메모 펼치기'} title={rightPanelOpen ? '메모 접기' : '메모 펼치기'}
+          aria-expanded={rightPanelOpen} aria-controls={memoPanelId}
+          onClick={() => { memoToggleRef.current?.focus({ preventScroll: true }); onRightPanelOpenChange?.(!rightPanelOpen); }}
+          className="book-memo-toggle fixed z-50 flex items-center justify-center rounded-lg bg-[var(--bg-main)] text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)]">
+          {rightPanelOpen ? <PanelRightClose size={18} /> : <PanelRightOpen size={18} />}
+        </button>
+      ) : null}
 
       <div className="flex min-h-0 flex-1">
         {activeLibraryOverlay ? <button type="button" aria-label="서재 닫기" onClick={closeLibraryOverlay}
@@ -379,8 +384,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         </div>
 
         <main ref={mainRef} inert={activeLibraryOverlay} style={{ '--book-reference-width': hasInlinePassageNotes ? `calc(100vw - ${displayedLeftWidth}px - ${bookReadingWorkspace ? 0 : rightPanel ? displayedRightWidth : 0}px)` : '100cqw', '--book-left-reference': hasInlinePassageNotes ? `${displayedLeftWidth}px` : 'var(--book-main-left, 0px)' } as React.CSSProperties} className="flex min-w-0 flex-1 flex-col bg-[var(--bg-main)] transition-colors duration-200">
-          {bookReadingWorkspace && rightPanel && selectedBookId ? <BookReadingWorkspace bookId={selectedBookId} scrollPositions={bookScrollPositions} memo={rightPanel} memoOpen={rightPanelOpen} metrics={readingMetrics}
-            resizing={isResizingRight} onStartResize={event => startRightResize(event, readingMetrics.memoPreferenceScale, readingMemoBounds)} onAdjustWidth={delta => adjustRightWidth(delta, readingMetrics.memoPreferenceScale, readingMemoBounds)}>{children}</BookReadingWorkspace> : children}
+          {bookReadingWorkspace && rightPanel && selectedBookId ? <BookReadingWorkspace bookId={selectedBookId} scrollPositions={bookScrollPositions} memo={rightPanel} memoOpen={rightPanelOpen} memoPanelId={memoPanelId}>{children}</BookReadingWorkspace> : children}
         </main>
         {rightPanel && !bookReadingWorkspace ? (
           <div

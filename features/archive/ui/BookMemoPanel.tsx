@@ -1,5 +1,5 @@
 import React from 'react';
-import { CloudOff, PanelRightClose, PanelRightOpen, X } from 'lucide-react';
+import { CloudOff, PanelRightClose, X } from 'lucide-react';
 import type { BookSource } from '../../../types';
 import {
   BOOK_MEMO_DRAFT_MERGED_EVENT,
@@ -18,8 +18,6 @@ type BookMemoPanelProps = {
   onClose?: () => void;
   mobile?: boolean;
   reading?: boolean;
-  readingCollapsed?: boolean;
-  onToggleReading?: () => void;
 };
 
 export const BookMemoPanel: React.FC<BookMemoPanelProps> = ({
@@ -29,8 +27,6 @@ export const BookMemoPanel: React.FC<BookMemoPanelProps> = ({
   onClose,
   mobile = false,
   reading = false,
-  readingCollapsed = false,
-  onToggleReading,
 }) => {
   const [memo, setMemo] = React.useState(() => readBookMemoDraft(userId, book.id) ?? book.memo ?? '');
   const [memoBookId, setMemoBookId] = React.useState(book.id);
@@ -165,7 +161,6 @@ export const BookMemoPanel: React.FC<BookMemoPanelProps> = ({
       data-book-memo-panel
       data-book-memo-id={memoBookId}
       data-reading-memo={reading || undefined}
-      data-reading-collapsed={reading && readingCollapsed || undefined}
       ref={dialogRef}
       tabIndex={-1}
       role={mobile ? 'dialog' : 'complementary'}
@@ -186,22 +181,13 @@ export const BookMemoPanel: React.FC<BookMemoPanelProps> = ({
           {status === 'failed' ? <><CloudOff size={13} /> 실패</> : null}
           {status === 'recovered' ? <><CloudOff size={13} /> 복구됨</> : null}
         </div>
-        {reading && onToggleReading ? (
-          <button id="book-memo-open-button" type="button" data-passage-note-trigger onClick={onToggleReading}
-            aria-label={readingCollapsed ? '메모 펼치기' : '메모 접기'} aria-expanded={!readingCollapsed}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]">
-            {readingCollapsed ? <PanelRightOpen size={18} /> : <PanelRightClose size={18} />}
-          </button>
-        ) : null}
         {onClose && !reading ? (
           <button type="button" onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-lg text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]" aria-label={mobile ? '책 전체 메모 닫기' : '책 전체 메모 접기'}>
             {mobile ? <X size={18} /> : <PanelRightClose size={18} />}
           </button>
         ) : null}
       </header>
-      <label aria-hidden={readingCollapsed || undefined} inert={readingCollapsed || undefined}
-        style={{ visibility: readingCollapsed ? 'hidden' : 'visible' }}
-        className="flex min-h-0 flex-1 flex-col px-3 py-3">
+      <label className="flex min-h-0 flex-1 flex-col px-3 py-3">
         <span className="sr-only">책 전체 메모</span>
         <textarea
           ref={inputRef}
@@ -212,9 +198,7 @@ export const BookMemoPanel: React.FC<BookMemoPanelProps> = ({
           className="min-h-[12rem] flex-1 resize-none border-0 bg-transparent p-0 font-sans text-sm leading-6 text-[var(--text-main)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-0 focus:caret-[var(--text-main)]"
         />
       </label>
-      {showFooter ? <footer aria-hidden={readingCollapsed || undefined} inert={readingCollapsed || undefined}
-        style={{ visibility: readingCollapsed ? 'hidden' : 'visible' }}
-        className="flex min-h-11 items-center gap-2 px-3 py-1.5">
+      {showFooter ? <footer className="flex min-h-11 items-center gap-2 px-3 py-1.5">
         <p className="min-w-0 flex-1 text-[0.72rem] leading-5 text-[var(--text-muted)]">
           {draftStorageFailed
             ? '브라우저 임시 보관에 실패했습니다. 저장 실패 시 내용을 복사해 두세요.'

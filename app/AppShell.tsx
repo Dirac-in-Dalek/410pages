@@ -568,8 +568,6 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
     rightPanel: isBookView && selectedBook ? (
       <BookMemoPanel
         reading
-        readingCollapsed={!isDesktopBookMemoOpen}
-        onToggleReading={isDesktopBookMemoOpen ? closeDesktopBookMemo : openDesktopBookMemo}
         userId={session.user.id}
         book={selectedBook}
         onSave={handleUpdateBookMemo}

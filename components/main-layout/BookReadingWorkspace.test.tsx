@@ -2,16 +2,6 @@ import React from 'react';
 import { act, fireEvent, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BookReadingWorkspace, type ReadingScrollPosition } from './BookReadingWorkspace';
-import { getReadingWorkspaceMetrics } from './getReadingWorkspaceMetrics';
-
-const metrics = getReadingWorkspaceMetrics({
-  viewportWidth: 1024,
-  viewportHeight: 768,
-  userFontPt: 14,
-  sidebarWidthPreference: 272,
-  sidebarOpen: false,
-  memoWidthPreference: 360,
-});
 
 describe('BookReadingWorkspace', () => {
   afterEach(() => vi.restoreAllMocks());
@@ -32,7 +22,7 @@ describe('BookReadingWorkspace', () => {
     });
     const positions = new Map<string, ReadingScrollPosition>();
     const children = <div data-archive-scroll><div data-book-row="quote-1" style={{ display: 'contents' }}><div data-row-content>인용문</div></div></div>;
-    const common = { metrics, memo: <textarea />, memoOpen: true, resizing: false, onStartResize: vi.fn(), onAdjustWidth: vi.fn(), scrollPositions: positions };
+    const common = { memo: <textarea />, memoOpen: true, memoPanelId: 'memo-panel', scrollPositions: positions };
     const view = render(<BookReadingWorkspace {...common} bookId="book-1">{children}</BookReadingWorkspace>);
     const primary = document.querySelector<HTMLElement>('[data-archive-scroll]')!;
     primary.scrollTop = 100;
@@ -68,7 +58,7 @@ describe('BookReadingWorkspace', () => {
     });
     const positions = new Map<string, ReadingScrollPosition>();
     const children = <div data-archive-scroll><div data-book-row="quote-1" style={{ display: 'contents' }}><div data-row-content>인용문</div></div></div>;
-    render(<BookReadingWorkspace metrics={metrics} memo={<textarea />} memoOpen resizing={false} onStartResize={vi.fn()} onAdjustWidth={vi.fn()} scrollPositions={positions} bookId="book-1">{children}</BookReadingWorkspace>);
+    render(<BookReadingWorkspace memo={<textarea />} memoOpen memoPanelId="memo-panel" scrollPositions={positions} bookId="book-1">{children}</BookReadingWorkspace>);
     const primary = document.querySelector<HTMLElement>('[data-archive-scroll]')!;
     expect(primary.scrollTop).toBe(0);
     expect(positions.get('book-1')?.anchor).toBeUndefined();

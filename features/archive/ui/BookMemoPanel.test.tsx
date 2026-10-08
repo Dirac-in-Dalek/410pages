@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { BookSource } from '../../../types';
 import { moveBookMemoDraftAfterMerge, readBookMemoDraft, storeBookMemoDraft } from '../logic/bookMemoDraftStorage';
 import { BookMemoPanel } from './BookMemoPanel';
+import { BookReadingWorkspace } from '../../../components/main-layout/BookReadingWorkspace';
 
 const book: BookSource = {
   id: 'book-1',
@@ -102,23 +103,22 @@ describe('BookMemoPanel', () => {
     expect(onSave).not.toHaveBeenCalled();
   });
 
-  it('keeps the reading header and editor mounted while collapsed', () => {
-    const onToggleReading = vi.fn();
-    const { rerender } = render(<BookMemoPanel reading readingCollapsed onToggleReading={onToggleReading} userId="user-1" book={book} onSave={vi.fn()} />);
-    const toggle = screen.getByRole('button', { name: '메모 펼치기' });
-    const textbox = document.querySelector<HTMLTextAreaElement>('textarea[aria-label="책 전체 메모"]')!;
-    const body = textbox.closest('label')!;
-    expect(screen.getByRole('heading', { name: '메모' })).toBeTruthy();
-    expect(toggle.getAttribute('aria-expanded')).toBe('false');
-    expect(body.getAttribute('aria-hidden')).toBe('true');
-    expect(body.hasAttribute('inert')).toBe(true);
-    expect((body as HTMLElement).style.visibility).toBe('hidden');
-    fireEvent.click(toggle);
-    expect(onToggleReading).toHaveBeenCalledTimes(1);
-
-    rerender(<BookMemoPanel reading readingCollapsed={false} onToggleReading={onToggleReading} userId="user-1" book={book} onSave={vi.fn()} />);
-    expect(screen.getByRole('button', { name: '메모 접기' }).getAttribute('aria-expanded')).toBe('true');
-    expect((screen.getByRole('textbox', { name: '책 전체 메모' }).closest('label') as HTMLElement).style.visibility).toBe('visible');
+  it('keeps a pending reading memo save running while the panel is folded', async () => {
+    const onSave = vi.fn().mockResolvedValue(true);
+    const common = { bookId: book.id, memoPanelId: 'memo-panel', scrollPositions: new Map(),
+      memo: <BookMemoPanel reading userId="user-1" book={book} onSave={onSave} /> };
+    const { rerender } = render(<BookReadingWorkspace {...common} memoOpen><div data-archive-scroll>본문</div></BookReadingWorkspace>);
+    const input = screen.getByRole('textbox', { name: '책 전체 메모' }) as HTMLTextAreaElement;
+    fireEvent.change(input, { target: { value: '접기 전에 작성한 메모' } });
+    rerender(<BookReadingWorkspace {...common} memoOpen={false}><div data-archive-scroll>본문</div></BookReadingWorkspace>);
+    expect(screen.queryByRole('textbox', { name: '책 전체 메모' })).toBeNull();
+    expect(document.querySelector('textarea')).toBe(input);
+    expect(input.value).toBe('접기 전에 작성한 메모');
+    await act(async () => vi.advanceTimersByTime(800));
+    expect(onSave).toHaveBeenCalledWith(book.id, '접기 전에 작성한 메모');
+    rerender(<BookReadingWorkspace {...common} memoOpen><div data-archive-scroll>본문</div></BookReadingWorkspace>);
+    expect(screen.getByRole('textbox', { name: '책 전체 메모' })).toBe(input);
+    expect(input.value).toBe('접기 전에 작성한 메모');
   });
 
   it('serializes overlapping saves so the newest memo reaches the server last', async () => {

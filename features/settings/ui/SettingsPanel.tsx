@@ -72,7 +72,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     }
 
     previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
-    const focusFrame = window.requestAnimationFrame(() => closeButtonRef.current?.focus());
+    const focusFrame = window.requestAnimationFrame(() => {
+      if (panelRef.current && !panelRef.current.contains(document.activeElement)) {
+        closeButtonRef.current?.focus();
+      }
+    });
 
     return () => {
       window.cancelAnimationFrame(focusFrame);

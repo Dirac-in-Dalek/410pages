@@ -1,6 +1,5 @@
 import React from 'react';
 import { attachReadingScrollVisibility } from './readingScrollVisibility';
-import type { ReadingWorkspaceMetrics } from './getReadingWorkspaceMetrics';
 
 export type ReadingScrollPosition = {
   primary: number;
@@ -13,14 +12,11 @@ type Props = {
   children: React.ReactNode;
   memo: React.ReactNode;
   memoOpen: boolean;
-  metrics: ReadingWorkspaceMetrics;
-  resizing: boolean;
-  onStartResize: (event: { clientX: number }) => void;
-  onAdjustWidth: (delta: number) => void;
+  memoPanelId: string;
   scrollPositions: Map<string, ReadingScrollPosition>;
 };
 
-export function BookReadingWorkspace({ bookId, children, memo, memoOpen, metrics, resizing, onStartResize, onAdjustWidth, scrollPositions }: Props) {
+export function BookReadingWorkspace({ bookId, children, memo, memoOpen, memoPanelId, scrollPositions }: Props) {
   const hostRef = React.useRef<HTMLDivElement>(null);
   const groupRef = React.useRef<HTMLDivElement>(null);
 
@@ -174,14 +170,11 @@ export function BookReadingWorkspace({ bookId, children, memo, memoOpen, metrics
     <div ref={groupRef} data-book-reading-workspace className="book-reading-workspace">
       <div className="book-reading-primary">{children}</div>
       <div className="book-reading-memo" data-collapsed={!memoOpen || undefined}>
-        <div data-reading-memo-scroll data-passage-note-trigger className="book-reading-memo-scroll">
-          {memo}
+        <div id={memoPanelId} data-reading-memo-slide aria-hidden={!memoOpen} inert={!memoOpen} className="book-reading-memo-slide">
+          <div data-reading-memo-scroll data-passage-note-trigger className="book-reading-memo-scroll">
+            {memo}
+          </div>
         </div>
-        <div role="separator" aria-label="메모 패널 너비 조절" aria-orientation="vertical" aria-valuemin={metrics.memoPreferenceMinimum} aria-valuemax={metrics.memoPreferenceMaximum} aria-valuenow={Math.min(metrics.memoPreferenceMaximum, Math.max(metrics.memoPreferenceMinimum, metrics.memoWidthPreference))} aria-valuetext={`${Math.round(metrics.memo)}픽셀`} tabIndex={memoOpen ? 0 : -1}
-          data-passage-note-trigger data-resizing={resizing}
-          onMouseDown={onStartResize}
-          onKeyDown={event => { if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); onAdjustWidth(event.key === 'ArrowRight' ? 16 : -16); } }}
-          className="book-reading-memo-resize" />
       </div>
     </div>
   </div>;
