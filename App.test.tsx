@@ -3,6 +3,7 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
+import { useUserPreferences } from './features/settings/logic/useUserPreferences';
 
 const mockHandleUpdateUsername = vi.fn();
 const mockSetBaseFontPt = vi.fn();
@@ -19,9 +20,10 @@ const createDeferred = <T,>() => {
 };
 
 const authState = {
-  session: { user: { id: 'user-1' } },
+  session: { user: { id: 'user-1' } } as { user: { id: string } } | null,
   username: 'Committed Name',
   loading: false,
+  isPasswordRecovery: false,
   authorFolderLoading: false,
   authorFolderLoadError: null,
   retryAuthorFolders: vi.fn(),
@@ -121,7 +123,7 @@ const bulkSelectionState = {
 };
 
 vi.mock('./features/settings/logic/useUserPreferences', () => ({
-  useUserPreferences: () => ({
+  useUserPreferences: vi.fn(() => ({
     preferences: {
       theme: 'auto',
       fontFamily: 'pretendard',
@@ -132,7 +134,7 @@ vi.mock('./features/settings/logic/useUserPreferences', () => ({
     setFontFamily: vi.fn(),
     setBaseFontPt: mockSetBaseFontPt,
     setCitationWidthRem: mockSetCitationWidthRem,
-  }),
+  })),
 }));
 
 vi.mock('./features/auth/logic/useAuthStatus', () => ({
@@ -235,6 +237,11 @@ describe('App settings display-name flow', () => {
     mockSetBaseFontPt.mockReset();
     mockSetCitationWidthRem.mockReset();
     authState.username = 'Committed Name';
+    authState.session = { user: { id: 'user-1' } };
+    authState.loading = false;
+    authState.isPasswordRecovery = false;
+    document.documentElement.classList.remove('dark');
+    document.documentElement.removeAttribute('data-theme');
     Object.defineProperty(navigator, 'onLine', {
       configurable: true,
       value: true,
@@ -254,6 +261,49 @@ describe('App settings display-name flow', () => {
         dispatchEvent: vi.fn(),
       })),
     });
+  });
+
+  it.each(['login', 'session-check', 'password-recovery'])(
+    'uses Day for %s with a saved dark theme without loading user preferences', (screenType) => {
+      const savedPreferences = JSON.stringify({ theme: 'terminal-green', fontFamily: 'pretendard', baseFontPt: 12 });
+      window.localStorage.setItem('user-preferences', savedPreferences);
+      document.head.innerHTML = '<meta name="theme-color" content="#07100a" />';
+      document.documentElement.dataset.theme = 'terminal-green';
+      document.documentElement.classList.add('dark');
+      document.documentElement.style.colorScheme = 'dark';
+      authState.session = screenType === 'password-recovery' ? { user: { id: 'user-1' } } : null;
+      authState.loading = screenType === 'session-check';
+      authState.isPasswordRecovery = screenType === 'password-recovery';
+
+      render(<App />);
+
+      expect(screenType === 'session-check' ? screen.getByRole('status').textContent : screen.getByText('auth-screen').textContent)
+        .toBe(screenType === 'session-check' ? '세션 확인 중…' : 'auth-screen');
+      expect(document.documentElement.dataset.theme).toBe('day');
+      expect(document.documentElement.classList.contains('dark')).toBe(false);
+      expect(document.documentElement.style.colorScheme).toBe('light');
+      expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#f8f7f5');
+      expect(window.localStorage.getItem('user-preferences')).toBe(savedPreferences);
+      expect(useUserPreferences).not.toHaveBeenCalled();
+    }
+  );
+
+  it('switches back to Day on logout without overwriting the saved user theme', () => {
+    window.localStorage.setItem('user-preferences', JSON.stringify({ theme: 'night' }));
+    document.documentElement.dataset.theme = 'night';
+    document.documentElement.classList.add('dark');
+    const { rerender } = render(<App />);
+
+    expect(document.documentElement.dataset.theme).toBe('night');
+    expect(useUserPreferences).toHaveBeenCalledWith('user-1');
+
+    authState.session = null;
+    rerender(<App />);
+
+    expect(screen.getByText('auth-screen')).toBeTruthy();
+    expect(document.documentElement.dataset.theme).toBe('day');
+    expect(document.documentElement.classList.contains('dark')).toBe(false);
+    expect(JSON.parse(window.localStorage.getItem('user-preferences') || '{}').theme).toBe('night');
   });
 
   it('shows and clears the online-first offline notice', () => {

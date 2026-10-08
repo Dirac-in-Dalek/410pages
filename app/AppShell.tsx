@@ -11,6 +11,7 @@ import { LibraryHome } from '../features/archive/ui/LibraryHome';
 import { AuthorBooks } from '../features/archive/ui/AuthorBooks';
 import { useArchiveDataController as useArchiveData } from '../features/archive/logic/useArchiveDataController';
 import { useUserPreferences } from '../features/settings/logic/useUserPreferences';
+import { applyThemeToDocument } from '../features/settings/logic/preferencesDocument';
 import { useSettingsPanelController } from '../features/settings/logic/useSettingsPanelController';
 import { SettingsPanel } from '../features/settings/ui/SettingsPanel';
 import { createArchiveScreenProps } from './logic/createArchiveScreenProps';
@@ -54,7 +55,7 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
     handleUpdateUsername, handleUpdateAvatar, handleSignOut
   } = authStatus;
   const { preferences, setTheme, setFontFamily, setBaseFontPt, setCitationWidthRem } =
-    useUserPreferences(session?.user?.id ?? null, { documentThemeOverride: session ? null : 'day' });
+    useUserPreferences(session?.user?.id ?? null);
 
   const {
     projects: canonicalProjects, citations: canonicalCitations, authors, authorFolders, authorFolderMemberships, books, chapterBlocksByBook, loading: dataLoading, hasLoaded, loadError, authorFolderLoading, authorFolderLoadError, chapterLoadError, chapterLoadingBookId,
@@ -686,6 +687,12 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
 
 const AppShell: React.FC = () => {
   const authStatus = useAuthStatus();
+
+  React.useLayoutEffect(() => {
+    if (!authStatus.session || authStatus.isPasswordRecovery) {
+      applyThemeToDocument('day');
+    }
+  }, [authStatus.session, authStatus.isPasswordRecovery]);
 
   if (authStatus.isPasswordRecovery) {
     return (
