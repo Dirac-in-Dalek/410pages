@@ -442,7 +442,7 @@ describe('SettingsPanel', () => {
   it('renders the avatar change action in the profile header', () => {
     render(<SettingsPanel {...baseProps} />);
 
-    expect(screen.getByText('사진 변경')).toBeTruthy();
+    expect(screen.getByRole('button', { name: '사진 변경' })).toBeTruthy();
     expect(screen.getByLabelText('프로필 사진 업로드')).toBeTruthy();
   });
 

@@ -162,7 +162,7 @@
       <div><span class="control-label" id="theme-label">테마</span><div class="segmented" role="group" aria-labelledby="theme-label"><button type="button" data-theme-choice="day" aria-pressed="true">Day · 밝게</button><button type="button" data-theme-choice="night" aria-pressed="false">Night · 어둡게</button></div></div>
       <div><span class="control-label" id="device-label">패널 폭</span><div class="segmented" role="group" aria-labelledby="device-label"><button type="button" data-device-choice="desktop" aria-pressed="true">데스크톱 420</button><button type="button" data-device-choice="mobile" aria-pressed="false">모바일 360</button></div></div>
       <div><span class="control-label" id="photo-label">프로필 상태</span><div class="segmented" role="group" aria-labelledby="photo-label"><button type="button" data-avatar-choice="initials" aria-pressed="true">사진 없음</button><button type="button" data-avatar-choice="sample" aria-pressed="false">사진 있음</button></div></div>
-      <button type="button" class="quiet-button comparison-toggle" id="compare-current" aria-pressed="false">현재 모습과 비교</button>
+      <button type="button" class="quiet-button comparison-toggle" id="compare-current" aria-pressed="false">기존 모습과 비교</button>
     </div>
     <div class="guide"><span id="comparison-status" role="status">시안 A–D를 보고 있습니다.</span><span>사진 <strong>64px</strong> · 터치 영역 <strong>44px 이상</strong> · 이름 <strong>우측 정렬</strong></span></div>
     <section class="grid" id="options" aria-label="사진 변경 시안 네 가지"></section>
@@ -223,9 +223,9 @@
       const button = event.currentTarget;
       const enabled = button.getAttribute('aria-pressed') !== 'true';
       button.setAttribute('aria-pressed', String(enabled));
-      button.textContent = enabled ? '시안으로 돌아가기' : '현재 모습과 비교';
+      button.textContent = enabled ? '시안으로 돌아가기' : '기존 모습과 비교';
       document.querySelectorAll('.profile').forEach(profile => profile.classList.toggle('current', enabled));
-      document.getElementById('comparison-status').textContent = enabled ? '모든 패널에 현재의 투명 버튼을 표시합니다.' : '시안 A–D를 보고 있습니다.';
+      document.getElementById('comparison-status').textContent = enabled ? '모든 패널에 이전의 투명 버튼을 표시합니다.' : '시안 A–D를 보고 있습니다.';
     });
     document.querySelectorAll('[data-choice]').forEach(button => button.addEventListener('click', () => {
       if (document.getElementById('compare-current').getAttribute('aria-pressed') === 'true') document.getElementById('compare-current').click();
@@ -260,6 +260,7 @@
     document.getElementById('copy-choice').addEventListener('click', async () => {
       if (!selected) return;
       const sentence = `${selected.id}안(${selected.title})으로 사진 변경 영역을 적용해주세요.`;
+      document.getElementById('copy-status').textContent = '복사 중…';
       try {
         if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(sentence);
         else {
