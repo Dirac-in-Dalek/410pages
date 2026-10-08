@@ -405,7 +405,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
           active={isHomeView}
           onClick={onHomeSelect}
           className={[
-            'project-sidebar-home mb-2 flex min-h-10 items-center gap-2',
+            'project-sidebar-home mb-2 flex min-h-10 items-center justify-center gap-2',
             isHomeView ? '!border-transparent !bg-[var(--accent-soft)] !text-[var(--accent-strong)]' : '',
           ].join(' ')}
         >

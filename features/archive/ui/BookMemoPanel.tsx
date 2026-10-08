@@ -179,9 +179,9 @@ export const BookMemoPanel: React.FC<BookMemoPanelProps> = ({
       <header className={['flex min-h-14 items-center gap-3 border-b border-[var(--border-main)] px-4', reading ? 'sticky top-0 z-10 bg-[var(--bg-card)]' : ''].join(' ')}>
         <div className="min-w-0 flex-1">
           <p className="truncate text-[0.72rem] text-[var(--text-muted)]">{book.title}</p>
-          <h2 id="book-memo-title" className="text-base font-semibold">메모</h2>
+          <h2 id="book-memo-title" className="truncate text-base font-semibold">메모</h2>
         </div>
-        <div aria-live="polite" className="flex items-center justify-end gap-1 text-[0.74rem] text-[var(--text-muted)] empty:hidden">
+        <div aria-live="polite" className="flex items-center justify-end gap-1 whitespace-nowrap text-[0.74rem] text-[var(--text-muted)] empty:hidden">
           {status === 'saving' ? '저장 중…' : status === 'saved' ? '저장됨' : null}
           {status === 'failed' ? <><CloudOff size={13} /> 실패</> : null}
           {status === 'recovered' ? <><CloudOff size={13} /> 복구됨</> : null}

@@ -275,6 +275,15 @@ describe('MainLayout right panel', () => {
     expect(document.querySelector('[data-library-state="overlay"]')).not.toBeNull();
     expect(document.querySelector('main')?.hasAttribute('inert')).toBe(true);
     expect(onHomePanelOpenChange).not.toHaveBeenCalledWith(true);
+    const toggle = screen.getByRole('button', { name: '홈 패널 접기' });
+    expect(document.querySelector('main')?.contains(toggle)).toBe(false);
+    expect(document.querySelector('[data-library-state="overlay"]')?.contains(toggle)).toBe(false);
+    fireEvent.click(toggle);
+    expect(document.querySelector('[data-library-state="overlay"]')).toBeNull();
+    expect(document.querySelector('main')?.hasAttribute('inert')).toBe(false);
+    expect(document.activeElement).toBe(toggle);
+    fireEvent.click(toggle);
+    expect(document.querySelector('[data-library-state="overlay"]')).not.toBeNull();
     fireEvent.keyDown(document, { key: 'Escape' });
     await act(async () => undefined);
     expect(document.querySelector('[data-library-state="overlay"]')).toBeNull();

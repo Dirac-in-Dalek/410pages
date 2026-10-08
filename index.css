@@ -1161,6 +1161,15 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
 }
 
 /* The desktop book is one bounded reading group, rather than two sidebars. */
+.reading-responsive {
+  --reading-panel-header-height: max(var(--reading-control-size, 32px), calc(var(--reading-ui-font-size, 1rem) * 1.5));
+}
+.book-library-toggle {
+  top: calc(var(--reading-header-height, 50.4px) + 1px + (var(--reading-panel-header-height) - var(--reading-control-size, 32px)) / 2);
+  width: var(--reading-control-size, 32px);
+  height: var(--reading-control-size, 32px);
+}
+.book-library-toggle svg { width: calc(var(--reading-icon-size, 16px) * 1.125); height: calc(var(--reading-icon-size, 16px) * 1.125); }
 .book-reading-host { flex: 1; min-height: 0; min-width: 0; padding-inline: var(--reading-host-padding, 24px); }
 .book-reading-workspace {
   display: grid;
@@ -1176,7 +1185,7 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
 .book-reading-workspace .book-passage-column { width: var(--reading-comment-width, 262px); }
 .book-reading-workspace [data-archive-scroll] { overflow-x: hidden; }
 .book-reading-memo { grid-column: 5; min-height: 0; position: relative; }
-.book-reading-memo-scroll { height: 100%; overflow-y: auto; padding: 34px 0 24px 10px; }
+.book-reading-memo-scroll { height: 100%; overflow-y: auto; padding: 0 0 24px 10px; }
 .book-reading-memo[data-collapsed="true"] .book-reading-memo-scroll { overflow-y: hidden; }
 .book-reading-workspace [data-reading-scrollbar] { scrollbar-gutter: stable; }
 .book-reading-workspace [data-reading-scrollbar]::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -1436,11 +1445,10 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
   }
 
   .reading-responsive .book-reading-memo-scroll {
-    padding-block-start: calc(var(--reading-row-gap, 40px) * 0.85);
     padding-inline-start: var(--reading-memo-pad, 10px);
   }
   .reading-responsive .book-reading-memo [data-reading-memo] > header {
-    min-height: var(--reading-control-size, 32px);
+    min-height: var(--reading-panel-header-height);
     gap: calc(var(--reading-editor-gap, 12px) / 2);
   }
   .reading-responsive .book-reading-memo [data-reading-memo] > header h2 {
