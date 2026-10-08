@@ -15,6 +15,9 @@ const AUTH_CARD_CLASS =
     'w-full max-w-md rounded-2xl bg-[var(--bg-card)] p-6 shadow-[var(--shadow-card)] sm:p-8';
 const AUTH_INPUT_CLASS =
     'min-h-11 w-full rounded-lg border border-[var(--border-main)] bg-[var(--bg-card)] px-3 text-[var(--text-main)] outline-none transition-[border-color,box-shadow] placeholder:text-[var(--text-muted)] focus-visible:border-[var(--accent-border)] focus-visible:ring-2 focus-visible:ring-[var(--accent-ring)]';
+const AUTH_IN_FIELD_INPUT_CLASS = `${AUTH_INPUT_CLASS} h-16 pb-2 pt-7 text-base leading-6`;
+const AUTH_IN_FIELD_LABEL_CLASS =
+    'absolute left-[13px] top-2.5 cursor-text text-xs font-semibold leading-4 text-[var(--text-muted)]';
 const AUTH_PRIMARY_BUTTON_CLASS =
     'inline-flex min-h-11 w-full touch-manipulation items-center justify-center rounded-lg bg-[var(--accent)] px-4 text-sm font-semibold text-white transition-[background-color,transform] hover:bg-[var(--accent-strong)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none';
 
@@ -288,7 +291,7 @@ export const Auth: React.FC<AuthProps> = ({
                             ) : null}
 
                             <div>
-                                <EmailField email={email} onChange={setEmail} />
+                                <EmailField email={email} onChange={setEmail} inFieldLabel={mode === 'login'} />
                             </div>
 
                             <PasswordField
@@ -299,6 +302,7 @@ export const Auth: React.FC<AuthProps> = ({
                                 onShowPasswordChange={setShowPassword}
                                 onChange={setPassword}
                                 autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                                inFieldLabel={mode === 'login'}
                             />
 
                             {mode === 'login' ? (
@@ -344,10 +348,14 @@ export const Auth: React.FC<AuthProps> = ({
     );
 };
 
-const EmailField: React.FC<{ email: string; onChange: (value: string) => void }> = ({ email, onChange }) => (
-    <div>
-        <label htmlFor="email" className="mb-1.5 block text-xs font-semibold text-[var(--text-main)]">이메일</label>
-        <input id="email" type="email" value={email} onChange={(event) => onChange(event.target.value)} required autoComplete="username" className={AUTH_INPUT_CLASS} placeholder="name@example.com" />
+const EmailField: React.FC<{
+    email: string;
+    onChange: (value: string) => void;
+    inFieldLabel?: boolean;
+}> = ({ email, onChange, inFieldLabel = false }) => (
+    <div className="relative">
+        <label htmlFor="email" className={inFieldLabel ? AUTH_IN_FIELD_LABEL_CLASS : 'mb-1.5 block text-xs font-semibold text-[var(--text-main)]'}>이메일</label>
+        <input id="email" type="email" value={email} onChange={(event) => onChange(event.target.value)} required autoComplete="username" className={inFieldLabel ? AUTH_IN_FIELD_INPUT_CLASS : AUTH_INPUT_CLASS} placeholder={inFieldLabel ? undefined : 'name@example.com'} />
     </div>
 );
 
@@ -359,13 +367,15 @@ const PasswordField: React.FC<{
     onShowPasswordChange: (value: boolean) => void;
     onChange: (value: string) => void;
     autoComplete: string;
-}> = ({ id, label, value, showPassword, onShowPasswordChange, onChange, autoComplete }) => (
+    inFieldLabel?: boolean;
+}> = ({ id, label, value, showPassword, onShowPasswordChange, onChange, autoComplete, inFieldLabel = false }) => (
     <div>
-        <label htmlFor={id} className="mb-1.5 block text-xs font-semibold text-[var(--text-main)]">{label}</label>
+        {!inFieldLabel ? <label htmlFor={id} className="mb-1.5 block text-xs font-semibold text-[var(--text-main)]">{label}</label> : null}
         <div className="relative">
-            <input id={id} type={showPassword ? 'text' : 'password'} value={value} onChange={(event) => onChange(event.target.value)} required autoComplete={autoComplete} className={`${AUTH_INPUT_CLASS} pr-12`} placeholder="비밀번호를 입력하세요" />
-            <button type="button" onClick={() => onShowPasswordChange(!showPassword)} className="absolute inset-y-0 right-0 inline-flex min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-lg text-[var(--text-muted)] transition-[color,transform] hover:text-[var(--text-main)] active:scale-95 motion-reduce:transition-none" aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 표시'} aria-pressed={showPassword}>
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            {inFieldLabel ? <label htmlFor={id} className={AUTH_IN_FIELD_LABEL_CLASS}>{label}</label> : null}
+            <input id={id} type={showPassword ? 'text' : 'password'} value={value} onChange={(event) => onChange(event.target.value)} required autoComplete={autoComplete} className={`${inFieldLabel ? AUTH_IN_FIELD_INPUT_CLASS : AUTH_INPUT_CLASS} pr-12`} placeholder={inFieldLabel ? undefined : '비밀번호를 입력하세요'} />
+            <button type="button" onClick={() => onShowPasswordChange(!showPassword)} className="absolute inset-y-0 right-0 inline-flex min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-lg text-[var(--text-muted)] transition-[color,transform] hover:text-[var(--text-main)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-ring)] active:scale-95 motion-reduce:transition-none" aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 표시'} aria-pressed={showPassword} aria-controls={id}>
+                {showPassword ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
             </button>
         </div>
     </div>
