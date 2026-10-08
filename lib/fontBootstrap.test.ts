@@ -49,6 +49,8 @@ const resetDom = () => {
   document.head.innerHTML = '<meta name="theme-color" content="#ffffff" />';
   document.documentElement.className = '';
   document.documentElement.removeAttribute('data-font');
+  document.documentElement.removeAttribute('data-theme');
+  document.documentElement.style.removeProperty('color-scheme');
   document.documentElement.style.removeProperty('--font-base-pt');
   document.documentElement.style.removeProperty('--citation-column-width');
   installStorageStub();
@@ -191,18 +193,36 @@ describe('index bootstrap', () => {
     expect(document.documentElement.style.getPropertyValue('--citation-column-width')).toBe('50rem');
   });
 
-  it('supports the new theme ids during classic first paint', () => {
-    window.localStorage.setItem(
-      'user-preferences',
-      JSON.stringify({ theme: 'shostakovich-dark', fontFamily: 'pretendard', baseFontPt: 18 })
-    );
+  it.each(['night', 'terminal-green', 'shostakovich-dark', 'warm-paper', 'auto'])(
+    'starts with Day while preserving a stored %s theme for authentication', (theme) => {
+      window.localStorage.setItem(
+        'user-preferences',
+        JSON.stringify({ theme, fontFamily: 'pretendard', baseFontPt: 18 })
+      );
+      window.matchMedia = createMatchMediaStub(true);
 
-    runBootstrapScript();
+      runBootstrapScript();
 
-    expect(document.documentElement.dataset.theme).toBe('shostakovich-dark');
-    expect(document.documentElement.classList.contains('dark')).toBe(true);
-    expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#090909');
-  });
+      expect(document.documentElement.dataset.theme).toBe('day');
+      expect(document.documentElement.classList.contains('dark')).toBe(false);
+      expect(document.documentElement.style.colorScheme).toBe('light');
+      expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#f8f7f5');
+      expect(JSON.parse(window.localStorage.getItem('user-preferences') || '{}').theme).toBe(theme);
+    }
+  );
+
+  it.each([['theme-preference', 'dark'], ['dark-mode', 'true']])(
+    'uses Day before authentication without losing the legacy %s theme', (key, value) => {
+      window.localStorage.setItem(key, value);
+      window.matchMedia = createMatchMediaStub(true);
+
+      runBootstrapScript();
+
+      expect(document.documentElement.dataset.theme).toBe('day');
+      expect(document.documentElement.classList.contains('dark')).toBe(false);
+      expect(JSON.parse(window.localStorage.getItem('user-preferences') || '{}').theme).toBe('night');
+    }
+  );
 
   it('falls back to the registry default font during classic first paint', () => {
     window.localStorage.setItem(

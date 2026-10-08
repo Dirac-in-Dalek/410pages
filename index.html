@@ -45,7 +45,6 @@
       const minCitationWidthRem = 35;
       const maxCitationWidthRem = 50;
       const root = document.documentElement;
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       const defaultPreferences = {
         theme: 'auto',
         fontFamily: 'nanum-myeongjo',
@@ -74,29 +73,6 @@
         dark: 'night',
       };
       const legacyTextScaleMap = { sm: 14, md: 16, lg: 18 };
-      const themeColorByResolvedTheme = {
-        day: '#f8f7f5',
-        night: '#181614',
-        'warm-paper': '#f7f1e8',
-        'soft-slate': '#f4f7f8',
-        'terminal-green': '#07100a',
-        'airbnb-light': '#fff7f6',
-        'airbnb-dark': '#171012',
-        'bach-light': '#f3ead8',
-        'bach-dark': '#100d09',
-        'mahler-light': '#f1ece7',
-        'mahler-dark': '#110c11',
-        'shostakovich-light': '#eeece6',
-        'shostakovich-dark': '#090909',
-      };
-      const darkThemes = new Set([
-        'night',
-        'terminal-green',
-        'airbnb-dark',
-        'bach-dark',
-        'mahler-dark',
-        'shostakovich-dark',
-      ]);
 
       const clampBaseFontPt = (value) => {
         const parsedValue = Number(value);
@@ -137,8 +113,6 @@
           citationWidthRem: clampCitationWidthRem(candidate.citationWidthRem),
         };
       };
-
-      const resolveTheme = (theme) => (theme === 'auto' ? (prefersDark ? 'night' : 'day') : theme);
 
       let preferences = defaultPreferences;
 
@@ -185,17 +159,16 @@
       } catch (_) {
       }
 
-      const resolvedTheme = resolveTheme(preferences.theme);
-      const isDark = darkThemes.has(resolvedTheme);
-      root.classList.toggle('dark', isDark);
-      root.dataset.theme = resolvedTheme;
+      // Use the brand's Day theme until authentication restores user preferences.
+      root.classList.remove('dark');
+      root.dataset.theme = 'day';
       root.dataset.font = preferences.fontFamily;
       root.style.setProperty('--font-base-pt', `${preferences.baseFontPt}pt`);
       root.style.setProperty('--citation-column-width', `${preferences.citationWidthRem}rem`);
-      root.style.colorScheme = isDark ? 'dark' : 'light';
+      root.style.colorScheme = 'light';
       const themeMeta = document.querySelector('meta[name="theme-color"]');
       if (themeMeta) {
-        themeMeta.setAttribute('content', themeColorByResolvedTheme[resolvedTheme] || themeColorByResolvedTheme.day);
+        themeMeta.setAttribute('content', '#f8f7f5');
       }
     })();
   </script>

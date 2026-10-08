@@ -54,7 +54,7 @@
 - All saved text uses the citation row regardless of length. There is no separate word object or word-specific UI; see `docs/policies/citation-saving.md`.
 - Header: centered search on desktop and one account action; mobile exposes one navigation action and settings as 44px targets.
 - Editor: fixed to the bottom in book view, Korean placeholder and labels, hidden source fields, and a clear send action.
-- Auth: Korean login, signup, reset request, and recovery screens with password visibility controls and actionable error copy.
+- Auth: Korean login, signup, reset request, and recovery screens with password visibility controls and actionable error copy. Session checks and auth screens always use the red-and-white Day theme, starting at first paint; saved user themes apply only after authentication and remain preserved on logout.
 
 ## 8. Interaction and Accessibility
 
