@@ -3,7 +3,7 @@ import type { FontPreference, UserPreferences, ThemePreference } from '../contra
 import { AvatarCropModal } from './AvatarCropModal';
 import { AppearanceSettingsSection } from './AppearanceSettingsSection';
 import { TextSettingsSection } from './TextSettingsSection';
-import { LogOut, X } from 'lucide-react';
+import { Camera, LogOut, X } from 'lucide-react';
 
 const MAX_AVATAR_SOURCE_BYTES = 5 * 1024 * 1024;
 
@@ -241,7 +241,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
               <div className="rounded-xl bg-[var(--bg-main)] p-4">
                 <div className="flex items-start gap-3">
-                  <div className="flex shrink-0 flex-col items-center gap-1">
+                  <div className="relative h-16 w-16 shrink-0">
                     <div className="ui-action flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-[var(--accent-soft)] text-[var(--accent)]">
                       {avatarUrl ? (
                         <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
@@ -252,13 +252,17 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     <button
                       ref={avatarChangeButtonRef}
                       type="button"
+                      aria-label="사진 변경"
+                      title="사진 변경"
                       disabled={isSavingAvatar}
                       onClick={() => avatarInputRef.current?.click()}
-                      className={`ui-btn ui-btn--ghost min-h-11 whitespace-nowrap px-2.5 text-[0.85rem] ${
+                      className={`ui-btn ui-btn-icon ui-btn--ghost settings-avatar-action ${
                         isSavingAvatar ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
                       }`}
                     >
-                      사진 변경
+                      <span className="settings-avatar-action__badge" aria-hidden="true">
+                        <Camera size={16} />
+                      </span>
                     </button>
                   </div>
 

@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="ko" data-theme="day">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23d10f25'/%3E%3Cpath d='M9 8h11v17H11a2 2 0 0 1-2-2V8Zm0 13h11M13 12h4M13 16h4' fill='none' stroke='white' stroke-width='1.7'/%3E%3C/svg%3E">
+  <title>410pages · 사진 변경 시안 비교</title>
+  <style>
+    :root {
+      --canvas: #f8f7f5; --surface: #fff; --input: #f0ede9;
+      --ink: #1f1d1b; --secondary: #5f5953; --muted: #706b65; --border: #e5ded5;
+      --hover: #f3efea; --accent: #d10f25; --soft: rgba(209,15,37,.08);
+      --accent-border: rgba(209,15,37,.2); --ring: rgba(209,15,37,.14);
+      color-scheme: light;
+      font-family: Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
+      font-synthesis: none;
+    }
+    :root[data-theme="night"] {
+      --canvas: #181614; --surface: #24211f; --input: #2b2724;
+      --ink: #f1ece7; --secondary: #c3b8ae; --muted: #978d83; --border: #3a342f;
+      --hover: #2a2522; --accent: #ff5a67; --soft: rgba(255,90,103,.13);
+      --accent-border: rgba(255,90,103,.32); --ring: rgba(255,90,103,.22);
+      color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--canvas); color: var(--ink); font-size: 15px; line-height: 1.6; }
+    button, input { font: inherit; }
+    button { cursor: pointer; color: inherit; }
+    button:disabled { cursor: default; opacity: .5; }
+    button, input { -webkit-tap-highlight-color: transparent; }
+    button:focus-visible, input:focus-visible, summary:focus-visible {
+      outline: 2px solid var(--accent); outline-offset: 3px;
+    }
+    svg { display: block; flex-shrink: 0; }
+    h1, h2, h3, p { margin: 0; }
+    .page { max-width: 1120px; margin: auto; padding: 40px 24px 144px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: var(--secondary); }
+    .brand-mark { color: var(--accent); }
+    .intro { margin-top: 24px; }
+    h1 { font-size: clamp(25px, 3vw, 36px); line-height: 1.3; font-weight: 650; letter-spacing: -.04em; }
+    .lead { margin-top: 12px; color: var(--secondary); font-size: 16px; }
+    .controls { display: flex; flex-wrap: wrap; gap: 20px 28px; padding: 24px 0; margin-top: 12px; border-bottom: 1px solid var(--border); }
+    .control-label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 13px; font-weight: 550; }
+    .segmented { display: inline-flex; padding: 3px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+    .segmented button { min-height: 44px; padding: 8px 14px; border: 0; border-radius: 8px; background: transparent; color: var(--secondary); font-size: 14px; white-space: nowrap; }
+    .segmented button[aria-pressed="true"] { background: var(--hover); color: var(--ink); font-weight: 600; }
+    .comparison-toggle { margin-left: auto; align-self: flex-end; }
+    .quiet-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border: 1px solid var(--border); border-radius: 10px; padding: 8px 14px; background: var(--surface); font-size: 14px; }
+    .quiet-button:hover { background: var(--hover); }
+    .comparison-toggle[aria-pressed="true"] { border-color: var(--accent-border); background: var(--soft); color: var(--accent); }
+    .guide { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin: 18px 0 26px; color: var(--muted); font-size: 13px; }
+    .guide strong { color: var(--secondary); font-weight: 550; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 32px 28px; }
+    .option { min-width: 0; padding: 20px; border: 1px solid var(--border); border-radius: 18px; transition: border-color .15s, box-shadow .15s; }
+    .option.chosen { border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring); }
+    .option-heading { display: flex; align-items: center; gap: 10px; min-height: 28px; }
+    .option-letter { display: grid; place-items: center; width: 28px; height: 28px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-weight: 650; }
+    .option h2 { font-size: 17px; font-weight: 600; letter-spacing: -.025em; }
+    .badge { padding: 2px 8px; margin-left: auto; background: var(--soft); color: var(--accent); border-radius: 6px; font-size: 12px; white-space: nowrap; }
+    .option-description { min-height: 46px; margin: 8px 0 16px; color: var(--secondary); font-size: 14px; }
+    .preview-stage { display: flex; justify-content: center; align-items: flex-start; min-height: 414px; }
+    .mock-frame { width: 420px; max-width: 100%; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); overflow: hidden; }
+    body[data-device="mobile"] .mock-frame { width: 360px; border-radius: 20px 20px 14px 14px; }
+    .mock-header { display: flex; align-items: center; justify-content: space-between; min-height: 68px; padding: 10px 24px; border-bottom: 1px solid var(--border); }
+    .mock-header h3 { font-size: 20px; font-weight: 600; }
+    .mock-close { display: grid; place-items: center; width: 44px; height: 44px; color: var(--muted); }
+    .mock-content { padding: 20px 24px 24px; }
+    body[data-device="mobile"] .mock-header { padding-inline: 20px; }
+    body[data-device="mobile"] .mock-content { padding-inline: 20px; }
+    .section-label { color: var(--muted); font-size: 14px; font-weight: 600; padding-inline: 4px; margin-bottom: 8px; }
+    .profile { display: flex; align-items: flex-start; gap: 12px; border-radius: 12px; padding: 16px; background: var(--canvas); }
+    .photo-column { width: 96px; flex: 0 0 96px; }
+    .photo-group { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; width: 96px; }
+    .avatar { display: grid; place-items: center; flex: 0 0 auto; width: 64px; height: 64px; overflow: hidden; border-radius: 50%; background: var(--soft); color: var(--accent); font-size: 22px; font-weight: 550; }
+    .avatar img, .avatar svg { width: 100%; height: 100%; object-fit: cover; }
+    .photo-change { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; width: 88px; padding: 8px 8px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); font-size: 13.5px; font-weight: 500; white-space: nowrap; transition: background .15s, border-color .15s; }
+    .photo-change:hover { background: var(--hover); }
+    .photo-change .camera { width: 16px; height: 16px; }
+    .variant-a .photo-change .camera { display: none; }
+    .variant-b .photo-change { width: 96px; border-color: transparent; background: var(--soft); color: var(--accent); }
+    .variant-b .photo-change:hover { border-color: var(--accent-border); }
+    .variant-c .photo-group { gap: 8px; padding-top: 12px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); overflow: hidden; }
+    .variant-c .photo-change { width: 100%; border: 0; border-top: 1px solid var(--border); border-radius: 0; }
+    .variant-c .photo-change .camera { display: none; }
+    .person { min-width: 0; flex: 1; padding-top: 10px; }
+    .variant-c .person { padding-top: 22px; }
+    .name-row { display: flex; align-items: center; justify-content: flex-end; gap: 4px; min-height: 44px; }
+    .person-name { min-width: 0; flex: 1; text-align: right; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 14px; font-weight: 500; }
+    .edit-name { flex: 0 0 auto; min-height: 44px; min-width: 44px; padding: 8px; background: transparent; color: var(--secondary); border: 0; border-radius: 10px; font-size: 14px; }
+    .edit-name:hover { background: var(--hover); }
+    .variant-d .photo-group { gap: 0; }
+    .variant-d .photo-change { position: absolute; right: 0; bottom: -8px; width: 44px; height: 44px; min-height: 44px; padding: 0; border: 0; background: transparent; border-radius: 50%; }
+    .variant-d .photo-change::before { content: ''; position: absolute; width: 32px; height: 32px; border: 1px solid var(--border); border-radius: 50%; background: var(--surface); }
+    .variant-d .photo-change:hover::before { background: var(--hover); border-color: var(--accent-border); }
+    .variant-d .photo-change .camera { position: relative; width: 16px; height: 16px; }
+    .variant-d .photo-change .button-label { display: none; }
+    .profile.current .photo-group { gap: 4px; border: 0; border-radius: 0; padding: 0; background: transparent; overflow: visible; }
+    .profile.current .person { padding-top: 10px; }
+    .profile.current .photo-change { position: static; width: 88px; min-height: 44px; height: auto; padding: 8px; border: 1px solid transparent; border-radius: 12px; background: transparent; color: var(--ink); }
+    .profile.current .photo-change:hover { background: var(--hover); }
+    .profile.current .photo-change::before, .profile.current .photo-change .camera { display: none; }
+    .profile.current .photo-change .button-label { display: inline; }
+    .reading-heading { margin-top: 20px; }
+    .reading-box { padding: 14px 16px; background: var(--canvas); border-radius: 12px; }
+    .reading-row { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; }
+    .reading-row span:last-child { color: var(--secondary); font-variant-numeric: tabular-nums; }
+    .slider-example { position: relative; height: 4px; margin: 16px 8px 10px; background: var(--border); border-radius: 9px; }
+    .slider-example::before { content: ''; display: block; width: 38.46%; height: 4px; border-radius: 9px; background: var(--accent); }
+    .slider-example::after { content: ''; position: absolute; left: 38.46%; top: -6px; width: 16px; height: 16px; background: var(--accent); border: 2px solid var(--surface); border-radius: 50%; transform: translateX(-50%); }
+    .range-labels { display: flex; justify-content: space-between; color: var(--muted); font-size: 11px; }
+    .option-note { min-height: 44px; margin: 14px 0 12px; color: var(--muted); font-size: 13px; }
+    .choose { width: 100%; min-height: 44px; padding: 9px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; font-size: 14px; }
+    .choose:hover { background: var(--hover); }
+    .choose[aria-pressed="true"] { background: var(--soft); border-color: var(--accent-border); color: var(--accent); font-weight: 600; }
+    .details { margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--secondary); font-size: 14px; }
+    .details summary { min-height: 44px; display: list-item; padding: 10px 0; cursor: pointer; font-weight: 550; }
+    .details p { margin: 8px 0; }
+    .decision-bar { position: fixed; bottom: 0; left: 0; right: 0; padding: 14px max(24px,env(safe-area-inset-left)) calc(14px + env(safe-area-inset-bottom)); background: var(--surface); border-top: 1px solid var(--border); z-index: 10; }
+    .decision-inner { max-width: 1072px; margin: auto; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+    .decision-title { font-size: 15px; font-weight: 600; }
+    .decision-caption { color: var(--muted); font-size: 12px; }
+    .decision-actions { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+    .copy-button { min-height: 44px; padding: 10px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--canvas); font-size: 14px; white-space: nowrap; }
+    .copy-button:hover:not(:disabled) { background: var(--hover); }
+    .copy-status { color: var(--secondary); font-size: 13px; }
+    .toast { position: fixed; bottom: 105px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 32px); width: max-content; padding: 10px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--ink); box-shadow: 0 8px 24px rgba(0,0,0,.12); font-size: 14px; z-index: 20; }
+    .toast:empty { display: none; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    @media (max-width: 790px) {
+      .page { max-width: 590px; padding: 24px 16px 166px; }
+      .grid { grid-template-columns: minmax(0,1fr); gap: 24px; }
+      .comparison-toggle { margin-left: 0; }
+      .preview-stage { min-height: 0; }
+      .option-note { min-height: 0; }
+      .option-description { min-height: 0; }
+      .decision-bar { padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); }
+      .decision-inner { align-items: flex-start; flex-direction: column; gap: 8px; }
+      .decision-actions { width: 100%; justify-content: space-between; }
+      .copy-button { flex-shrink: 0; }
+      .toast { bottom: 148px; }
+    }
+    @media (max-width: 420px) {
+      .page { padding-inline: 12px; }
+      .option { padding: 12px; border-radius: 14px; }
+      .controls { gap: 14px 16px; }
+      .mock-content, body[data-device="mobile"] .mock-content { padding-inline: 12px; }
+      .mock-header, body[data-device="mobile"] .mock-header { padding-inline: 16px; }
+      .profile { gap: 8px; padding: 12px; }
+      .badge { font-size: 11px; padding-inline: 6px; }
+      .option h2 { font-size: 16px; }
+      .decision-caption { max-width: 100%; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+  </style>
+</head>
+<body data-device="desktop">
+  <main class="page">
+    <div class="brand"><svg class="brand-mark" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 4h10a3 3 0 0 1 3 3v14H7a3 3 0 0 1-3-3V4Z"/><path d="M4 17h13M8 8h5M8 11h5M20 6v15"/></svg><span>410pages / 설정 디자인</span></div>
+    <header class="intro"><h1>사진 변경, 어떻게 묶을까요?</h1><p class="lead">같은 프로필에서 네 가지 형태를 비교해보세요.</p></header>
+    <div class="controls">
+      <div><span class="control-label" id="theme-label">테마</span><div class="segmented" role="group" aria-labelledby="theme-label"><button type="button" data-theme-choice="day" aria-pressed="true">Day · 밝게</button><button type="button" data-theme-choice="night" aria-pressed="false">Night · 어둡게</button></div></div>
+      <div><span class="control-label" id="device-label">패널 폭</span><div class="segmented" role="group" aria-labelledby="device-label"><button type="button" data-device-choice="desktop" aria-pressed="true">데스크톱 420</button><button type="button" data-device-choice="mobile" aria-pressed="false">모바일 360</button></div></div>
+      <div><span class="control-label" id="photo-label">프로필 상태</span><div class="segmented" role="group" aria-labelledby="photo-label"><button type="button" data-avatar-choice="initials" aria-pressed="true">사진 없음</button><button type="button" data-avatar-choice="sample" aria-pressed="false">사진 있음</button></div></div>
+      <button type="button" class="quiet-button comparison-toggle" id="compare-current" aria-pressed="false">기존 모습과 비교</button>
+    </div>
+    <div class="guide"><span id="comparison-status" role="status">시안 A–D를 보고 있습니다.</span><span>사진 <strong>64px</strong> · 터치 영역 <strong>44px 이상</strong> · 이름 <strong>우측 정렬</strong></span></div>
+    <section class="grid" id="options" aria-label="사진 변경 시안 네 가지"></section>
+    <details class="details"><summary>비교할 때 볼 부분</summary><p>A는 기존 버튼 스타일에 가장 가깝습니다. B는 색 면으로 조작 영역을 강조하고, C는 사진과 버튼을 한 컨테이너 안에 묶습니다. D는 사진 가장자리에 동작을 붙여 공간을 줄입니다.</p><p>각 시안의 ‘사진 변경’을 누르면 내 이미지로도 비교할 수 있습니다. 선택한 이미지는 이 화면의 미리보기에만 표시됩니다.</p><p>마음에 드는 시안을 선택하고 아래 문장을 복사해 채팅에 보내주세요.</p></details>
+    <noscript>시안을 비교하려면 브라우저에서 JavaScript를 활성화해주세요.</noscript>
+  </main>
+  <footer class="decision-bar"><div class="decision-inner"><div><p class="decision-title" id="decision-title" aria-live="polite">아직 선택하지 않았어요</p><p class="decision-caption">시안을 고른 뒤 번호를 채팅으로 알려주세요.</p></div><div class="decision-actions"><span class="copy-status" id="copy-status" role="status"></span><button class="copy-button" id="copy-choice" type="button" disabled>선택 문장 복사</button></div></div></footer>
+  <input id="photo-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+  <div class="toast" id="toast" role="status"></div>
+  <script>
+    const options = [
+      {id:'A', className:'variant-a', title:'테두리 버튼', description:'사진 아래에 얇은 테두리로 버튼 영역을 잡습니다.', note:'기존 배치에 가장 자연스럽습니다. 이름의 ‘수정’보다 사진 동작이 조금 더 또렷해집니다.', recommended:true},
+      {id:'B', className:'variant-b', title:'옅은 배경 버튼', description:'옅은 강조색과 카메라 아이콘으로 버튼을 구분합니다.', note:'누를 곳이 쉽게 보입니다. A보다 사진 변경 동작에 시선이 더 모입니다.'},
+      {id:'C', className:'variant-c', title:'사진 + 버튼 컨테이너', description:'사진과 변경 버튼을 하나의 작은 표면에 묶습니다.', note:'사진과 동작의 관계가 가장 분명합니다. 컨테이너만큼 세로 공간을 더 씁니다.'},
+      {id:'D', className:'variant-d', title:'사진 위 카메라 버튼', description:'사진 가장자리에 작은 카메라 버튼을 붙입니다.', note:'가장 간결합니다. 글자 대신 아이콘으로 사진 변경 기능을 표현합니다.'}
+    ];
+    const camera = '<svg class="camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3Z"/><circle cx="12" cy="13" r="4"/></svg>';
+    const portrait = '<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" fill="#e6d5c6"/><path d="M9 64c0-17 8-27 23-27s23 10 23 27" fill="#95635c"/><path d="M17 29c-3-16 6-23 15-23s20 8 16 24l-4 12H20Z" fill="#493b34"/><ellipse cx="32" cy="29" rx="13" ry="16" fill="#d9ad91"/><path d="M18 25c1-15 24-20 29 0-9-2-13-8-16-10-3 5-7 8-13 10" fill="#493b34"/><path d="M29 34c2 2 4 2 6 0" fill="none" stroke="#a56959" stroke-width="1.5" stroke-linecap="round"/></svg>';
+    const close = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg>';
+    const grid = document.getElementById('options');
+    grid.innerHTML = options.map(o => `<article class="option" id="option-${o.id}">
+      <div class="option-heading"><span class="option-letter">${o.id}</span><h2>${o.title}</h2>${o.recommended?'<span class="badge">추천</span>':''}</div>
+      <p class="option-description">${o.description}</p>
+      <div class="preview-stage"><section class="mock-frame" aria-label="${o.id}안 설정 미리보기">
+        <header class="mock-header"><h3>설정</h3><span class="mock-close" aria-hidden="true">${close}</span></header>
+        <div class="mock-content"><p class="section-label">프로필</p>
+          <div class="profile ${o.className}"><div class="photo-column"><div class="photo-group"><div class="avatar" aria-label="미리보기 프로필 사진">서</div><button type="button" class="photo-change" aria-label="${o.id}안 사진 변경" title="사진 변경">${camera}<span class="button-label">사진 변경</span></button></div></div>
+            <div class="person"><div class="name-row"><span class="person-name">서연</span><button class="edit-name" type="button" aria-label="${o.id}안 이름 수정 미리보기">수정</button></div></div>
+          </div>
+          <p class="section-label reading-heading">읽기</p><div class="reading-box"><div class="reading-row"><span>글자 크기</span><span>12pt</span></div><div class="slider-example" aria-hidden="true"></div><div class="range-labels"><span>7pt</span><span>20pt</span></div></div>
+        </div>
+      </section></div>
+      <p class="option-note">${o.note}</p><button type="button" class="choose" data-choice="${o.id}" aria-pressed="false">${o.id}안 선택</button>
+    </article>`).join('');
+    let selected = null;
+    let objectUrl = null;
+    let toastTimer;
+    const toast = message => {
+      clearTimeout(toastTimer);
+      document.getElementById('toast').textContent = message;
+      toastTimer = setTimeout(() => { document.getElementById('toast').textContent = ''; }, 3800);
+    };
+    const setPressed = (attribute, value) => document.querySelectorAll(`[${attribute}]`).forEach(button => button.setAttribute('aria-pressed', String(button.getAttribute(attribute) === value)));
+    document.querySelectorAll('[data-theme-choice]').forEach(button => button.addEventListener('click', () => {
+      document.documentElement.dataset.theme = button.dataset.themeChoice;
+      setPressed('data-theme-choice', button.dataset.themeChoice);
+    }));
+    document.querySelectorAll('[data-device-choice]').forEach(button => button.addEventListener('click', () => {
+      document.body.dataset.device = button.dataset.deviceChoice;
+      setPressed('data-device-choice', button.dataset.deviceChoice);
+    }));
+    document.querySelectorAll('[data-avatar-choice]').forEach(button => button.addEventListener('click', () => {
+      if (objectUrl) { URL.revokeObjectURL(objectUrl); objectUrl = null; }
+      document.querySelectorAll('.avatar').forEach(avatar => { avatar.innerHTML = button.dataset.avatarChoice === 'sample' ? portrait : '서'; });
+      setPressed('data-avatar-choice', button.dataset.avatarChoice);
+    }));
+    document.getElementById('compare-current').addEventListener('click', event => {
+      const button = event.currentTarget;
+      const enabled = button.getAttribute('aria-pressed') !== 'true';
+      button.setAttribute('aria-pressed', String(enabled));
+      button.textContent = enabled ? '시안으로 돌아가기' : '기존 모습과 비교';
+      document.querySelectorAll('.profile').forEach(profile => profile.classList.toggle('current', enabled));
+      document.getElementById('comparison-status').textContent = enabled ? '모든 패널에 이전의 투명 버튼을 표시합니다.' : '시안 A–D를 보고 있습니다.';
+    });
+    document.querySelectorAll('[data-choice]').forEach(button => button.addEventListener('click', () => {
+      if (document.getElementById('compare-current').getAttribute('aria-pressed') === 'true') document.getElementById('compare-current').click();
+      selected = options.find(o => o.id === button.dataset.choice);
+      document.querySelectorAll('[data-choice]').forEach(b => {
+        const active = b.dataset.choice === selected.id;
+        b.setAttribute('aria-pressed', String(active));
+        b.textContent = `${b.dataset.choice}안 ${active?'선택됨':'선택'}`;
+        b.closest('.option').classList.toggle('chosen', active);
+      });
+      document.getElementById('decision-title').textContent = `${selected.id} · ${selected.title} 선택`;
+      document.getElementById('copy-choice').disabled = false;
+      document.getElementById('copy-status').textContent = '';
+    }));
+    const input = document.getElementById('photo-input');
+    document.querySelectorAll('.photo-change').forEach(button => button.addEventListener('click', () => input.click()));
+    input.addEventListener('change', () => {
+      const file = input.files[0]; input.value = '';
+      if (!file) return;
+      if (!['image/jpeg','image/png','image/webp','image/gif'].includes(file.type)) { toast('JPG, PNG, WebP, GIF 이미지를 선택해주세요.'); return; }
+      if (file.size > 5 * 1024 * 1024) { toast('5MB 이하 이미지를 선택해주세요.'); return; }
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      objectUrl = URL.createObjectURL(file);
+      document.querySelectorAll('.avatar').forEach(avatar => {
+        const image = document.createElement('img'); image.src = objectUrl; image.alt = '선택한 프로필 사진';
+        avatar.replaceChildren(image);
+      });
+      document.querySelectorAll('[data-avatar-choice]').forEach(button => button.setAttribute('aria-pressed', 'false'));
+      toast('모든 시안에 같은 사진을 표시했습니다.');
+    });
+    document.querySelectorAll('.edit-name').forEach(button => button.addEventListener('click', () => toast('이름 수정 버튼의 위치를 비교하는 미리보기입니다.')));
+    document.getElementById('copy-choice').addEventListener('click', async () => {
+      if (!selected) return;
+      const sentence = `${selected.id}안(${selected.title})으로 사진 변경 영역을 적용해주세요.`;
+      document.getElementById('copy-status').textContent = '복사 중…';
+      try {
+        if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(sentence);
+        else {
+          const area = document.createElement('textarea'); area.value = sentence; area.className = 'sr-only';
+          document.body.appendChild(area); area.select(); const copied = document.execCommand('copy'); area.remove();
+          if (!copied) throw new Error('Clipboard unavailable');
+        }
+        document.getElementById('copy-status').textContent = '복사했어요';
+      } catch { document.getElementById('copy-status').textContent = `${selected.id}안으로 적용해달라고 알려주세요.`; }
+    });
+    window.addEventListener('pagehide', () => { if (objectUrl) URL.revokeObjectURL(objectUrl); });
+  </script>
+</body>
+</html>
