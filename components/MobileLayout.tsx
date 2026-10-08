@@ -171,7 +171,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
             <EditorialToolbarButton active={isNavigationOpen} onClick={() => setIsNavigationOpen(true)} ariaLabel="탐색 열기">
               <Menu size={18} />
             </EditorialToolbarButton>
-            <EditorialToolbarButton onClick={onOpenSettings} ariaLabel="설정 열기">
+            <EditorialToolbarButton id="settings-trigger" onClick={onOpenSettings} ariaLabel="설정 열기">
               <Settings size={17} />
             </EditorialToolbarButton>
           </div>

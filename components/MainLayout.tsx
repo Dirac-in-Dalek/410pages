@@ -298,6 +298,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             <button
               type="button"
               onClick={onOpenSettings}
+              id="settings-trigger"
               className="flex h-10 w-10 touch-manipulation items-center justify-center overflow-hidden rounded-full bg-[var(--bg-input)] text-[var(--text-secondary)] transition-[background-color,color,transform] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)] active:scale-95 motion-reduce:transition-none"
               aria-label="계정 및 설정 열기"
             >

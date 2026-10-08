@@ -3,6 +3,7 @@ import type { FontPreference, UserPreferences, ThemePreference } from '../contra
 import { AvatarCropModal } from './AvatarCropModal';
 import { AppearanceSettingsSection } from './AppearanceSettingsSection';
 import { TextSettingsSection } from './TextSettingsSection';
+import { LogOut, X } from 'lucide-react';
 
 const MAX_AVATAR_SOURCE_BYTES = 5 * 1024 * 1024;
 
@@ -75,7 +76,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
     return () => {
       window.cancelAnimationFrame(focusFrame);
-      previouslyFocusedRef.current?.focus();
+      const previousTarget = previouslyFocusedRef.current;
+      if (previousTarget?.isConnected && previousTarget !== document.body) {
+        previousTarget.focus();
+        if (document.activeElement === previousTarget) return;
+      }
+      document.getElementById('settings-trigger')?.focus();
     };
   }, [isOpen]);
 
@@ -99,7 +105,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
       const focusableElements = Array.from(
         panelRef.current?.querySelectorAll<HTMLElement>(
-          'button:not([disabled]), input:not([disabled]):not([type="hidden"]):not(.hidden), [tabindex]:not([tabindex="-1"])'
+          'button:not([disabled]):not([tabindex="-1"]), input:not([disabled]):not([type="hidden"]):not(.hidden), [tabindex]:not([tabindex="-1"])'
         ) ?? []
       ) as HTMLElement[];
 
@@ -197,7 +203,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       <div
         aria-hidden="true"
         data-testid="settings-backdrop"
-        className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px]"
+        className="fixed inset-0 z-40 bg-black/30"
         onClick={onClose}
       />
 
@@ -207,31 +213,29 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         aria-hidden={pendingAvatarFile ? true : undefined}
         aria-modal="true"
         role="dialog"
-        className={`fixed z-50 bg-[var(--bg-card)] border-[var(--border-main)] shadow-[var(--shadow-panel)] ${panelClasses}`}
+        className={`settings-panel font-size-static fixed z-50 bg-[var(--bg-card)] border-[var(--border-main)] font-sans text-[var(--text-main)] shadow-[var(--shadow-panel)] [--font-ui-active:var(--font-ui)] ${panelClasses}`}
       >
         <div className="flex h-full flex-col overflow-hidden">
-          <header className="border-b border-[var(--border-main)] bg-[var(--bg-card)] px-5 py-4">
+          <header className="shrink-0 border-b border-[var(--border-main)] bg-[var(--bg-card)] px-5 py-4 sm:px-6">
             <div className="flex items-center justify-between gap-4">
-              <h2 id={titleId} className="ui-title">설정</h2>
+              <h2 id={titleId} className="ui-title text-xl">설정</h2>
               <button
                 ref={closeButtonRef}
                 type="button"
                 aria-label="닫기"
                 onClick={onClose}
-                className="ui-btn ui-btn-icon ui-btn--ghost text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                className="ui-btn ui-btn-icon ui-btn--ghost min-h-11 w-11 text-[var(--text-muted)] hover:text-[var(--text-main)]"
               >
-                <span aria-hidden="true" className="block text-lg leading-none">
-                  ×
-                </span>
+                <X size={20} aria-hidden="true" />
               </button>
             </div>
           </header>
 
-          <div className="flex-1 space-y-6 overflow-y-auto overscroll-contain px-5 py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:px-6">
+          <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain px-5 py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:px-6">
             <section aria-labelledby={`${titleId}-profile`}>
               <h3 id={`${titleId}-profile`} className="ui-label mb-2 px-1 font-semibold text-[var(--text-muted)]">프로필</h3>
 
-              <div className="rounded-xl bg-[var(--bg-sidebar)] p-3">
+              <div className="rounded-xl bg-[var(--bg-main)] p-4">
                 <div className="flex items-start gap-3">
                   <div className="ui-action flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--accent-soft)] text-[var(--accent)]">
                     {avatarUrl ? (
@@ -265,12 +269,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                             }
                           }}
                           aria-label="이름"
-                          className="ui-body w-full rounded-lg border border-[var(--border-main)] bg-[var(--bg-input)] px-3 py-2 outline-none transition-[border-color,box-shadow] focus-visible:border-[var(--accent-border)] focus-visible:ring-2 focus-visible:ring-[var(--accent-ring)]"
+                          className="ui-body min-h-11 w-full rounded-lg border border-[var(--border-main)] bg-[var(--bg-input)] px-3 py-2 outline-none transition-[border-color,box-shadow] focus-visible:border-[var(--accent-border)] focus-visible:ring-2 focus-visible:ring-[var(--accent-ring)]"
                         />
                         <div className="mt-2 flex justify-end gap-2">
                           <button
                             type="button"
-                            className="ui-btn ui-btn--ghost min-h-11 px-3 sm:min-h-10"
+                            className="ui-btn ui-btn--ghost min-h-11 px-3"
                             disabled={isSavingDisplayName}
                             onClick={cancelDisplayNameEdit}
                           >
@@ -278,7 +282,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                           </button>
                           <button
                             type="button"
-                            className="ui-btn ui-btn--solid min-h-11 px-3 sm:min-h-10"
+                            className="ui-btn ui-btn--solid min-h-11 px-3"
                             disabled={isSavingDisplayName || !hasPendingDisplayNameChange}
                             onClick={commitDisplayName}
                           >
@@ -292,7 +296,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                         <button
                           ref={editDisplayNameButtonRef}
                           type="button"
-                          className="ui-btn ui-btn--ghost min-h-11 shrink-0 px-3 text-[var(--text-secondary)] sm:min-h-10"
+                          className="ui-btn ui-btn--ghost min-h-11 shrink-0 px-3 text-[var(--text-secondary)]"
                           disabled={isSavingDisplayName}
                           onClick={() => {
                             onDisplayNameChange(savedDisplayName);
@@ -304,7 +308,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                       </div>
                     )}
 
-                    <div className="mt-1 min-h-5" aria-live="polite">
+                    <div aria-live="polite">
                       {isSavingDisplayName ? <p role="status" className="text-xs text-[var(--text-muted)]">이름 저장 중…</p> : null}
                       {!isSavingDisplayName && isDisplayNameSaved ? <p role="status" className="text-xs text-emerald-700 dark:text-emerald-300">이름 저장됨</p> : null}
                       {displayNameError ? <p role="alert" className="text-xs text-red-600 dark:text-red-300">{displayNameError}</p> : null}
@@ -316,7 +320,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                         type="button"
                         disabled={isSavingAvatar}
                         onClick={() => avatarInputRef.current?.click()}
-                        className={`ui-btn ui-btn--ghost min-h-11 px-2.5 text-[0.85rem] sm:min-h-10 ${
+                        className={`ui-btn ui-btn--ghost min-h-11 px-2.5 text-[0.85rem] ${
                           isSavingAvatar ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
                         }`}
                       >
@@ -373,8 +377,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 <button
                   type="button"
                   onClick={onSignOut}
-                  className="ui-btn ui-btn--ghost min-h-11 w-full justify-start px-3 text-[var(--text-secondary)] focus-visible:text-red-500 sm:min-h-10 [@media(hover:hover)]:hover:text-red-500"
+                  className="settings-sign-out ui-btn ui-btn--ghost min-h-11 w-full justify-start gap-2 px-3 text-[var(--text-secondary)]"
                 >
+                  <LogOut size={16} aria-hidden="true" />
                   로그아웃
                 </button>
               </section>

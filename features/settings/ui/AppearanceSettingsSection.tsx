@@ -1,136 +1,53 @@
-import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import React, { useId } from 'react';
+import { Monitor } from 'lucide-react';
 import { getThemeOption, THEME_OPTIONS } from '../../../lib/themeRegistry';
-import type { ThemeOption, ThemeScheme } from '../../../lib/themeRegistry';
+import type { ThemeScheme } from '../../../lib/themeRegistry';
 import type { ThemePreference } from '../contract/userPreferences';
+import { SettingsSelection } from './SettingsSelection';
 
 type AppearanceSettingsSectionProps = {
   theme: ThemePreference;
   onThemeChange: (value: ThemePreference) => void;
 };
 
-const themeOptionClass = () => 'ui-btn ui-btn-row ui-choice px-3 py-2';
-
 const THEME_GROUPS: Array<{ scheme: ThemeScheme; label: string }> = [
   { scheme: 'auto', label: '자동' },
   { scheme: 'light', label: '라이트' },
   { scheme: 'dark', label: '다크' },
 ];
+const GROUPED_THEME_OPTIONS = THEME_GROUPS.map(group => ({
+  label: group.label,
+  options: THEME_OPTIONS.filter(option => option.scheme === group.scheme),
+}));
 
-const GROUPED_THEME_OPTIONS = THEME_GROUPS.map((group) => ({
-  ...group,
-  options: THEME_OPTIONS.filter((option) => option.scheme === group.scheme),
-})).filter((group) => group.options.length > 0) as Array<
-  { scheme: ThemeScheme; label: string; options: readonly ThemeOption[] }
->;
-
-export const AppearanceSettingsSection: React.FC<AppearanceSettingsSectionProps> = ({
-  theme,
-  onThemeChange,
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const listboxId = useId();
-  const selectedOption = useMemo(() => getThemeOption(theme) ?? THEME_OPTIONS[0], [theme]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      return undefined;
-    }
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (wrapperRef.current?.contains(event.target as Node)) {
-        return;
-      }
-
-      setIsOpen(false);
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsOpen(false);
-        window.requestAnimationFrame(() => triggerRef.current?.focus());
-      }
-    };
-
-    document.addEventListener('pointerdown', handlePointerDown);
-    document.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen]);
-
+export const AppearanceSettingsSection: React.FC<AppearanceSettingsSectionProps> = ({ theme, onThemeChange }) => {
+  const titleId = useId();
   return (
-    <section>
-      <h3 className="ui-label mb-2 px-1 font-semibold text-[var(--text-muted)]">화면</h3>
-
-      <div className="rounded-xl bg-[var(--bg-sidebar)] px-1">
-        <div className="flex min-h-14 items-center justify-between gap-4 px-3">
-          <p className="ui-label shrink-0 whitespace-nowrap">테마</p>
-
-          <div ref={wrapperRef} className="relative min-w-0 w-full max-w-[15rem]">
-            <button
-              ref={triggerRef}
-              type="button"
-              aria-expanded={isOpen}
-              aria-controls={listboxId}
-              aria-label={`현재 테마: ${selectedOption.label}`}
-              className="ui-btn ui-btn--ghost ui-btn-row min-h-11 px-2 sm:min-h-10"
-              onClick={() => setIsOpen((value) => !value)}
-            >
-              <span className="block min-w-0 truncate">{selectedOption.label}</span>
-              <ChevronDown
-                size={16}
-                aria-hidden="true"
-                className={`shrink-0 text-[var(--text-muted)] transition-transform ${isOpen ? 'rotate-180' : ''}`}
-              />
-            </button>
-
-            {isOpen ? (
-              <div
-                id={listboxId}
-                role="group"
-                aria-label="테마 선택"
-                className="absolute right-0 top-[calc(100%+0.5rem)] z-20 w-[min(18rem,calc(100vw-2.5rem))] rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] p-1 shadow-[var(--shadow-panel)]"
-              >
-                {GROUPED_THEME_OPTIONS.map((group) => (
-                  <div key={group.scheme} role="presentation" className="py-1 first:pt-0 last:pb-0">
-                    <div className="px-3 py-1 text-[0.72rem] font-semibold text-[var(--text-muted)]">
-                      {group.label}
-                    </div>
-                    {group.options.map((option) => {
-                      const isActive = option.id === theme;
-
-                      return (
-                        <button
-                          key={option.id}
-                          type="button"
-                          aria-pressed={isActive}
-                          className={themeOptionClass()}
-                          onClick={() => {
-                            onThemeChange(option.id);
-                            setIsOpen(false);
-                            window.requestAnimationFrame(() => triggerRef.current?.focus());
-                          }}
-                        >
-                          <span className="truncate">{option.label}</span>
-                          {isActive ? (
-                            <span aria-hidden="true" className="text-[var(--accent)]">
-                              ✓
-                            </span>
-                          ) : null}
-                        </button>
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
-            ) : null}
-          </div>
-        </div>
+    <section aria-labelledby={titleId}>
+      <h3 id={titleId} className="ui-label mb-2 px-1 font-semibold text-[var(--text-muted)]">화면</h3>
+      <div className="rounded-xl bg-[var(--bg-main)] p-1">
+        <SettingsSelection
+          label="테마"
+          value={theme}
+          groups={GROUPED_THEME_OPTIONS}
+          onChange={onThemeChange}
+          renderOption={option => {
+            const themeOption = getThemeOption(option.id)!;
+            return (
+              <>
+                {themeOption.scheme === 'auto' ? (
+                  <Monitor size={18} aria-hidden="true" className="shrink-0" />
+                ) : (
+                  <span aria-hidden="true" className="flex h-6 w-8 shrink-0 items-end overflow-hidden rounded-md border" style={{ backgroundColor: themeOption.preview.background, borderColor: themeOption.preview.border }}>
+                    <span className="h-2 w-full" style={{ backgroundColor: themeOption.preview.accent }} />
+                  </span>
+                )}
+                <span className="min-w-0 truncate">{option.label}</span>
+              </>
+            );
+          }}
+        />
+        {theme === 'auto' ? <p className="px-3 pb-3 text-xs text-[var(--text-muted)]">기기의 밝은 화면·어두운 화면 설정을 따릅니다.</p> : null}
       </div>
     </section>
   );
