@@ -237,15 +237,28 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
               <div className="rounded-xl bg-[var(--bg-main)] p-4">
                 <div className="flex items-start gap-3">
-                  <div className="ui-action flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--accent-soft)] text-[var(--accent)]">
-                    {avatarUrl ? (
-                      <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
-                    ) : (
-                      initials
-                    )}
+                  <div className="flex shrink-0 flex-col items-center gap-1">
+                    <div className="ui-action flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-[var(--accent-soft)] text-[var(--accent)]">
+                      {avatarUrl ? (
+                        <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        initials
+                      )}
+                    </div>
+                    <button
+                      ref={avatarChangeButtonRef}
+                      type="button"
+                      disabled={isSavingAvatar}
+                      onClick={() => avatarInputRef.current?.click()}
+                      className={`ui-btn ui-btn--ghost min-h-11 whitespace-nowrap px-2.5 text-[0.85rem] ${
+                        isSavingAvatar ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
+                      }`}
+                    >
+                      사진 변경
+                    </button>
                   </div>
 
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 pt-2.5">
                     {isEditingDisplayName ? (
                       <div>
                         <label htmlFor={`${titleId}-display-name`} className="sr-only">이름</label>
@@ -269,7 +282,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                             }
                           }}
                           aria-label="이름"
-                          className="ui-body min-h-11 w-full rounded-lg border border-[var(--border-main)] bg-[var(--bg-input)] px-3 py-2 outline-none transition-[border-color,box-shadow] focus-visible:border-[var(--accent-border)] focus-visible:ring-2 focus-visible:ring-[var(--accent-ring)]"
+                          className="ui-body min-h-11 w-full rounded-lg border border-[var(--border-main)] bg-[var(--bg-input)] px-3 py-2 text-right outline-none transition-[border-color,box-shadow] focus-visible:border-[var(--accent-border)] focus-visible:ring-2 focus-visible:ring-[var(--accent-ring)]"
                         />
                         <div className="mt-2 flex justify-end gap-2">
                           <button
@@ -291,8 +304,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                         </div>
                       </div>
                     ) : (
-                      <div className="flex min-h-11 items-center justify-between gap-2">
-                        <p className="ui-action min-w-0 truncate">{savedDisplayName || displayName}</p>
+                      <div className="flex min-h-11 items-center justify-end gap-2">
+                        <p className="ui-action min-w-0 flex-1 truncate text-right">{savedDisplayName || displayName}</p>
                         <button
                           ref={editDisplayNameButtonRef}
                           type="button"
@@ -308,56 +321,42 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                       </div>
                     )}
 
-                    <div aria-live="polite">
+                    <div className="text-right" aria-live="polite">
                       {isSavingDisplayName ? <p role="status" className="text-xs text-[var(--text-muted)]">이름 저장 중…</p> : null}
                       {!isSavingDisplayName && isDisplayNameSaved ? <p role="status" className="text-xs text-emerald-700 dark:text-emerald-300">이름 저장됨</p> : null}
                       {displayNameError ? <p role="alert" className="text-xs text-red-600 dark:text-red-300">{displayNameError}</p> : null}
                     </div>
-
-                    <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                      <button
-                        ref={avatarChangeButtonRef}
-                        type="button"
-                        disabled={isSavingAvatar}
-                        onClick={() => avatarInputRef.current?.click()}
-                        className={`ui-btn ui-btn--ghost min-h-11 px-2.5 text-[0.85rem] ${
-                          isSavingAvatar ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
-                        }`}
-                      >
-                        사진 변경
-                      </button>
-                      <input
-                        ref={avatarInputRef}
-                        type="file"
-                        accept="image/*"
-                        aria-label="프로필 사진 업로드"
-                        className="hidden"
-                        disabled={isSavingAvatar}
-                        onChange={(event) => {
-                          const file = event.target.files?.[0];
-                          event.currentTarget.value = '';
-                          if (!file) {
-                            return;
-                          }
-                          if (!file.type.startsWith('image/')) {
-                            setAvatarSelectionError('이미지 파일만 업로드할 수 있습니다.');
-                            return;
-                          }
-                          if (file.size > MAX_AVATAR_SOURCE_BYTES) {
-                            setAvatarSelectionError('프로필 사진은 5MB 이하만 업로드할 수 있습니다.');
-                            return;
-                          }
-                          setAvatarSelectionError(null);
-                          setPendingAvatarFile(file);
-                        }}
-                      />
-                      <div className="min-w-0 text-xs" aria-live="polite">
-                        {isSavingAvatar ? <p role="status" className="text-[var(--text-muted)]">사진 저장 중…</p> : null}
-                        {!isSavingAvatar && isAvatarSaved && !avatarSelectionError && !avatarError ? <p role="status" className="text-emerald-700 dark:text-emerald-300">사진 저장됨</p> : null}
-                        {avatarSelectionError || avatarError ? <p role="alert" className="text-red-600 dark:text-red-300">{avatarSelectionError || avatarError}</p> : null}
-                      </div>
-                    </div>
                   </div>
+                </div>
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/*"
+                  aria-label="프로필 사진 업로드"
+                  className="hidden"
+                  disabled={isSavingAvatar}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    event.currentTarget.value = '';
+                    if (!file) {
+                      return;
+                    }
+                    if (!file.type.startsWith('image/')) {
+                      setAvatarSelectionError('이미지 파일만 업로드할 수 있습니다.');
+                      return;
+                    }
+                    if (file.size > MAX_AVATAR_SOURCE_BYTES) {
+                      setAvatarSelectionError('프로필 사진은 5MB 이하만 업로드할 수 있습니다.');
+                      return;
+                    }
+                    setAvatarSelectionError(null);
+                    setPendingAvatarFile(file);
+                  }}
+                />
+                <div className="min-w-0 text-xs [&>p]:mt-1" aria-live="polite">
+                  {isSavingAvatar ? <p role="status" className="text-[var(--text-muted)]">사진 저장 중…</p> : null}
+                  {!isSavingAvatar && isAvatarSaved && !avatarSelectionError && !avatarError ? <p role="status" className="text-emerald-700 dark:text-emerald-300">사진 저장됨</p> : null}
+                  {avatarSelectionError || avatarError ? <p role="alert" className="text-red-600 dark:text-red-300">{avatarSelectionError || avatarError}</p> : null}
                 </div>
               </div>
             </section>
