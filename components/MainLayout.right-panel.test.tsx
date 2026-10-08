@@ -376,15 +376,23 @@ describe('MainLayout right panel', () => {
     expect(visibleWidth()).toBeLessThan(keyboardWidth);
   });
 
-  it('changes reading library width immediately while preserving the legacy width transition', () => {
-    const reading = render(<MainLayout {...baseProps} bookReadingWorkspace homePanelOpen={false} rightPanel={<div>메모</div>}><div data-archive-scroll>본문</div></MainLayout>);
-    const readingPanel = document.getElementById(screen.getByRole('button', { name: '홈 패널 펼치기' }).getAttribute('aria-controls')!)!;
-    expect(readingPanel.className).toContain('transition-opacity');
-    expect(readingPanel.className).not.toContain('transition-[width,opacity]');
-    reading.unmount();
-
-    render(<MainLayout {...baseProps} homePanelOpen={false}><div>본문</div></MainLayout>);
-    const legacyPanel = document.getElementById(screen.getByRole('button', { name: '홈 패널 펼치기' }).getAttribute('aria-controls')!)!;
-    expect(legacyPanel.className).toContain('transition-[width,opacity]');
+  it('updates library access immediately on rapid reversals without remounting its content', () => {
+    vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(1440);
+    function Host() {
+      const [open, setOpen] = React.useState(false);
+      return <MainLayout {...baseProps} bookReadingWorkspace homePanelOpen={open} onHomePanelOpenChange={setOpen}
+        leftPanel={<button>서재 항목</button>} rightPanel={<div>메모</div>}><div data-archive-scroll>본문</div></MainLayout>;
+    }
+    render(<Host />);
+    const toggle = screen.getByRole('button', { name: '홈 패널 펼치기' });
+    const panel = document.getElementById(toggle.getAttribute('aria-controls')!)!;
+    const item = panel.querySelector('button');
+    for (const open of [true, false, true]) {
+      fireEvent.click(toggle);
+      expect(toggle.getAttribute('aria-expanded')).toBe(String(open));
+      expect(panel.getAttribute('aria-hidden')).toBe(String(!open));
+      expect(panel.hasAttribute('inert')).toBe(!open);
+      expect(panel.querySelector('button')).toBe(item);
+    }
   });
 });

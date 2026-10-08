@@ -277,6 +277,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
   return (
     <div data-reading-responsive={bookReadingWorkspace || undefined}
+      data-reading-resizing={bookReadingWorkspace && (isResizingLeft || isResizingRight) || undefined}
       style={bookReadingWorkspace ? readingMetrics.cssVariables as React.CSSProperties : undefined}
       className={`${bookReadingWorkspace ? 'reading-responsive ' : ''}font-size-app isolate flex h-screen w-full flex-col overflow-hidden bg-[var(--bg-main)] font-sans text-[var(--text-main)] transition-colors duration-200`}>
       <header className="border-b border-[var(--border-main)] bg-[var(--bg-card)]">
@@ -329,7 +330,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         <div ref={homeContainerRef} id={homePanelId} aria-hidden={!libraryVisible} inert={!libraryVisible}
           data-library-state={activeLibraryOverlay ? 'overlay' : homePanelOpen ? 'inline' : bookReadingWorkspace ? libraryState.current : 'user-closed'}
           style={{ width: libraryVisible ? displayedLeftWidth : 0, ...(activeLibraryOverlay ? { top: 'var(--reading-header-height, 50.4px)' } : {}) }}
-          className={`${activeLibraryOverlay ? 'fixed bottom-0 left-0 z-50 h-auto shadow-[var(--shadow-panel)]' : 'relative h-full'} shrink-0 overflow-hidden ${isResizingLeft ? 'transition-none' : bookReadingWorkspace ? 'transition-opacity duration-200' : 'transition-[width,opacity] duration-200'} motion-reduce:transition-none [&>aside]:h-full ${libraryVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+          className={`${activeLibraryOverlay ? 'fixed bottom-0 left-0 z-50 h-auto shadow-[var(--shadow-panel)]' : 'relative h-full'} shrink-0 overflow-hidden ${isResizingLeft ? 'transition-none' : bookReadingWorkspace ? 'reading-library-panel' : 'transition-[width,opacity] duration-200'} motion-reduce:transition-none [&>aside]:h-full ${libraryVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         {leftPanel ? (
           <div className="relative h-full shrink-0" style={{ width: `${displayedLeftWidth}px` }}>
             {leftPanel}
