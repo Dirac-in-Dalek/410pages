@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ThemePreference } from '../../../lib/themeRegistry';
@@ -213,6 +213,30 @@ describe('SettingsPanel', () => {
 
     expect(baseProps.onThemeChange).toHaveBeenCalledWith('night');
     expect(screen.queryByRole('group', { name: '테마 선택' })).toBeNull();
+  });
+
+  it('preserves an early theme interaction when the initial focus frame runs later', async () => {
+    const frames: FrameRequestCallback[] = [];
+    const animationFrame = vi.spyOn(window, 'requestAnimationFrame').mockImplementation(callback => {
+      frames.push(callback);
+      return frames.length;
+    });
+    try {
+      const user = userEvent.setup();
+      render(<SettingsPanel {...baseProps} />);
+      const trigger = screen.getByRole('button', { name: '현재 테마: Auto' });
+      await user.click(trigger);
+      const option = screen.getByRole('button', { name: /^Auto$/ });
+      expect(document.activeElement).toBe(option);
+      act(() => frames[0](0));
+      expect(document.activeElement).toBe(option);
+      await user.keyboard('{Escape}');
+      expect(document.activeElement).toBe(trigger);
+      expect(screen.queryByRole('group', { name: '테마 선택' })).toBeNull();
+      expect(baseProps.onClose).not.toHaveBeenCalled();
+    } finally {
+      animationFrame.mockRestore();
+    }
   });
 
   it('closes an open theme picker before closing the settings dialog', async () => {
