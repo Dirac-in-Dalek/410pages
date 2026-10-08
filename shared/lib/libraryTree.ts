@@ -32,7 +32,8 @@ export const ensureExpandedLibraryNode = (expandedNodes: Set<string>, id: string
   return next;
 };
 
-export const getLibraryTreePaddingLeft = (depth: number) => depth * 12 + 12;
+export const getLibraryTreePaddingLeft = (depth: number) =>
+  `calc(var(--reading-sidebar-padding, 12px) + ${depth} * var(--reading-sidebar-indent, 12px))`;
 
 export const isLibraryTreeItemActive = (
   item: SidebarItem,

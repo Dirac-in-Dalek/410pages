@@ -3,13 +3,18 @@ import { getArchiveSearchLabel } from '../features/archive/logic/archiveSort';
 import { PanelLeftClose, PanelLeftOpen, Search, UserCircle2 } from 'lucide-react';
 import { AuthorDeletePreview, BookSource, Citation, DeleteAuthorCascadeResult, Project, SidebarItem } from '../types';
 import { useSidebarResize } from './main-layout/useSidebarResize';
+import { BookReadingWorkspace, type ReadingScrollPosition } from './main-layout/BookReadingWorkspace';
+import { getReadingWorkspaceMetrics } from './main-layout/getReadingWorkspaceMetrics';
 import { ProjectSidebar } from '../features/archive/ui/ProjectSidebar';
+import { DEFAULT_BASE_FONT_PT } from '../features/settings/policy/userPreferences';
 
 interface MainLayoutProps {
   children: React.ReactNode;
   leftPanel?: React.ReactNode;
   rightPanel?: React.ReactNode;
   rightPanelOpen?: boolean;
+  bookReadingWorkspace?: boolean;
+  resizeStorageKeyPrefix?: string;
   homePanelOpen?: boolean;
   onHomePanelOpenChange?: (open: boolean) => void;
   hasInlinePassageNotes?: boolean;
@@ -58,6 +63,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   leftPanel,
   rightPanel,
   rightPanelOpen = true,
+  bookReadingWorkspace = false,
+  resizeStorageKeyPrefix = '',
   homePanelOpen = true,
   onHomePanelOpenChange,
   hasInlinePassageNotes = false,
@@ -102,17 +109,72 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 }) => {
   const {
     leftWidth,
+    leftWidthPreference,
     isResizingLeft,
     startLeftResize, adjustLeftWidth,
-    rightWidth, isResizingRight, startRightResize, adjustRightWidth,
-  } = useSidebarResize();
+    rightWidth, rightWidthPreference, isResizingRight, startRightResize, adjustRightWidth,
+  } = useSidebarResize(bookReadingWorkspace, resizeStorageKeyPrefix);
   const homePanelId = React.useId();
+  const homeToggleRef = React.useRef<HTMLButtonElement>(null);
   const homeContainerRef = React.useRef<HTMLDivElement>(null);
   const mainRef = React.useRef<HTMLElement>(null);
+  const [libraryOverlayOpen, setLibraryOverlayOpen] = React.useState(false);
+  const libraryState = React.useRef<'inline' | 'auto-closed' | 'user-closed' | 'overlay'>(homePanelOpen ? 'inline' : 'user-closed');
+  const bookScrollPositions = React.useRef(new Map<string, ReadingScrollPosition>()).current;
+  const [readingEnvironment, setReadingEnvironment] = React.useState(() => ({
+    viewportWidth: typeof window === 'undefined' ? 1024 : window.innerWidth,
+    viewportHeight: typeof window === 'undefined' ? 768 : window.innerHeight,
+    userFontPt: DEFAULT_BASE_FONT_PT,
+  }));
+  React.useLayoutEffect(() => {
+    if (!bookReadingWorkspace) return;
+    const root = document.documentElement;
+    const read = () => {
+      const style = getComputedStyle(root);
+      const preview = style.getPropertyValue('--reading-font-preview-pt').trim();
+      const base = style.getPropertyValue('--font-base-pt').trim();
+      const next = {
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
+        userFontPt: parseFloat(preview || base) || DEFAULT_BASE_FONT_PT,
+      };
+      setReadingEnvironment(current => current.viewportWidth === next.viewportWidth && current.viewportHeight === next.viewportHeight && current.userFontPt === next.userFontPt ? current : next);
+    };
+    const observer = new MutationObserver(read);
+    observer.observe(root, { attributes: true, attributeFilter: ['style', 'data-font'] });
+    window.addEventListener('resize', read);
+    read();
+    return () => { observer.disconnect(); window.removeEventListener('resize', read); };
+  }, [bookReadingWorkspace]);
+  const readingMetrics = React.useMemo(() => getReadingWorkspaceMetrics({
+    ...readingEnvironment,
+    sidebarWidthPreference: leftWidthPreference,
+    sidebarOpen: homePanelOpen,
+    memoWidthPreference: rightWidthPreference,
+    memoChrome: 14,
+  }), [readingEnvironment, leftWidthPreference, homePanelOpen, rightWidthPreference]);
+  const openReadingMetrics = React.useMemo(() => getReadingWorkspaceMetrics({
+    ...readingEnvironment,
+    sidebarWidthPreference: leftWidthPreference,
+    sidebarOpen: true,
+    memoWidthPreference: rightWidthPreference,
+    memoChrome: 14,
+  }), [readingEnvironment, leftWidthPreference, rightWidthPreference]);
+  const displayedLeftWidth = bookReadingWorkspace ? readingMetrics.sidebarWidth : leftWidth;
+  const displayedRightWidth = bookReadingWorkspace ? readingMetrics.memo : rightWidth;
+  const readingSidebarBounds = bookReadingWorkspace ? {
+    min: readingMetrics.sidebarPreferenceMinimum,
+    max: readingMetrics.sidebarPreferenceMaximum,
+  } : undefined;
+  const readingMemoBounds = bookReadingWorkspace ? {
+    min: readingMetrics.memoPreferenceMinimum,
+    max: readingMetrics.memoPreferenceMaximum,
+  } : undefined;
 
   React.useLayoutEffect(() => {
     const main = mainRef.current;
     if (!main) return;
+    if (bookReadingWorkspace) return;
     const fitComments = () => {
       main.style.setProperty('--book-main-left', `${main.getBoundingClientRect().left}px`);
       if (!hasInlinePassageNotes) return;
@@ -132,26 +194,84 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     observer?.observe(main);
     window.addEventListener('resize', fitComments);
     return () => { observer?.disconnect(); window.removeEventListener('resize', fitComments); };
-  }, [hasInlinePassageNotes, homePanelOpen, leftWidth, rightWidth, rightPanel, rightPanelOpen, onHomePanelOpenChange, onRightPanelOpenChange]);
+  }, [bookReadingWorkspace, hasInlinePassageNotes, homePanelOpen, leftWidth, rightWidth, rightPanel, rightPanelOpen, onHomePanelOpenChange, onRightPanelOpenChange]);
+
+  React.useLayoutEffect(() => {
+    if (!bookReadingWorkspace) return;
+    if (homePanelOpen && readingMetrics.belowSuggestedCommentMinimum) {
+      libraryState.current = 'auto-closed';
+      onHomePanelOpenChange?.(false);
+      return;
+    }
+    if (!homePanelOpen && libraryState.current === 'auto-closed' && openReadingMetrics.commentText >= openReadingMetrics.minimumCommentSuggestion * 1.15) {
+      libraryState.current = 'inline';
+      onHomePanelOpenChange?.(true);
+    }
+  }, [bookReadingWorkspace, homePanelOpen, onHomePanelOpenChange, openReadingMetrics.commentText, openReadingMetrics.minimumCommentSuggestion, readingMetrics.belowSuggestedCommentMinimum]);
+  React.useEffect(() => {
+    if (homePanelOpen && libraryOverlayOpen) setLibraryOverlayOpen(false);
+  }, [homePanelOpen, libraryOverlayOpen]);
+  React.useEffect(() => {
+    if (bookReadingWorkspace || !libraryOverlayOpen) return;
+    libraryState.current = 'user-closed';
+    setLibraryOverlayOpen(false);
+  }, [bookReadingWorkspace, libraryOverlayOpen]);
+  const closeLibraryOverlay = React.useCallback(() => {
+    setLibraryOverlayOpen(false);
+    libraryState.current = 'user-closed';
+    homeToggleRef.current?.focus({ preventScroll: true });
+  }, []);
+  const toggleLibrary = () => {
+    if (!bookReadingWorkspace) {
+      if (!homePanelOpen && hasInlinePassageNotes) onCloseInlinePassageNotes?.();
+      onHomePanelOpenChange?.(!homePanelOpen);
+      return;
+    }
+    if (bookReadingWorkspace && libraryOverlayOpen) {
+      closeLibraryOverlay();
+      return;
+    }
+    if (homePanelOpen) {
+      libraryState.current = 'user-closed';
+      onHomePanelOpenChange?.(false);
+      return;
+    }
+    const canOpenInline = openReadingMetrics.commentText >= openReadingMetrics.minimumCommentSuggestion * 1.15;
+    if (canOpenInline) {
+      libraryState.current = 'inline';
+      onHomePanelOpenChange?.(true);
+    } else {
+      libraryState.current = 'overlay';
+      setLibraryOverlayOpen(true);
+    }
+  };
+  const activeLibraryOverlay = bookReadingWorkspace && libraryOverlayOpen;
+  const libraryVisible = homePanelOpen || activeLibraryOverlay;
+  React.useEffect(() => {
+    if (!activeLibraryOverlay) return;
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') closeLibraryOverlay(); };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [activeLibraryOverlay, closeLibraryOverlay]);
 
   return (
-    <div className="font-size-app flex h-screen w-full flex-col overflow-hidden bg-[var(--bg-main)] font-sans text-[var(--text-main)] transition-colors duration-200">
+    <div data-reading-responsive={bookReadingWorkspace || undefined}
+      style={bookReadingWorkspace ? readingMetrics.cssVariables as React.CSSProperties : undefined}
+      className={`${bookReadingWorkspace ? 'reading-responsive ' : ''}font-size-app flex h-screen w-full flex-col overflow-hidden bg-[var(--bg-main)] font-sans text-[var(--text-main)] transition-colors duration-200`}>
       <header className="border-b border-[var(--border-main)] bg-[var(--bg-card)]">
         <div className="flex h-[3.15rem] items-center gap-3 px-4">
       <button
+        ref={homeToggleRef}
         type="button"
-        aria-label={homePanelOpen ? '홈 패널 접기' : '홈 패널 펼치기'}
-        title={homePanelOpen ? '홈 패널 접기' : '홈 패널 펼치기'}
-        aria-expanded={homePanelOpen}
+        aria-label={libraryVisible ? '홈 패널 접기' : '홈 패널 펼치기'}
+        title={libraryVisible ? '홈 패널 접기' : '홈 패널 펼치기'}
+        aria-expanded={libraryVisible}
         aria-controls={homePanelId}
         data-passage-note-trigger
-        onClick={() => {
-          if (!homePanelOpen && hasInlinePassageNotes) onCloseInlinePassageNotes?.();
-          onHomePanelOpenChange?.(!homePanelOpen);
-        }}
+        onClick={toggleLibrary}
         className="inline-flex h-9 shrink-0 gap-1.5 px-2 items-center justify-center rounded-lg bg-[var(--bg-input)] text-[var(--text-secondary)] transition-[background-color,color,transform] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)] active:scale-95 motion-reduce:transition-none"
       >
-        {homePanelOpen ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}<span className="text-sm">서재</span>
+        {libraryVisible ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}<span className="text-sm">서재</span>
       </button>
 
           <div className="brand-wordmark shrink-0 text-[1.25rem] text-[var(--accent)]" style={{ width: 112 }}>
@@ -192,11 +312,14 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       </header>
 
       <div className="flex min-h-0 flex-1">
-        <div ref={homeContainerRef} id={homePanelId} aria-hidden={!homePanelOpen} inert={!homePanelOpen}
-          style={{ width: homePanelOpen ? leftWidth : 0 }}
-          className={`relative h-full shrink-0 overflow-hidden ${isResizingLeft ? 'transition-none' : 'transition-[width,opacity] duration-200'} motion-reduce:transition-none [&>aside]:h-full ${homePanelOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        {activeLibraryOverlay ? <button type="button" aria-label="서재 닫기" onClick={closeLibraryOverlay}
+          style={{ top: 'var(--reading-header-height, 50.4px)' }} className="fixed inset-x-0 bottom-0 z-40 bg-black/20" /> : null}
+        <div ref={homeContainerRef} id={homePanelId} aria-hidden={!libraryVisible} inert={!libraryVisible}
+          data-library-state={activeLibraryOverlay ? 'overlay' : homePanelOpen ? 'inline' : bookReadingWorkspace ? libraryState.current : 'user-closed'}
+          style={{ width: libraryVisible ? displayedLeftWidth : 0, ...(activeLibraryOverlay ? { top: 'var(--reading-header-height, 50.4px)' } : {}) }}
+          className={`${activeLibraryOverlay ? 'fixed bottom-0 left-0 z-50 h-auto shadow-[var(--shadow-panel)]' : 'relative h-full'} shrink-0 overflow-hidden ${isResizingLeft ? 'transition-none' : bookReadingWorkspace ? 'transition-opacity duration-200' : 'transition-[width,opacity] duration-200'} motion-reduce:transition-none [&>aside]:h-full ${libraryVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         {leftPanel ? (
-          <div className="relative h-full shrink-0" style={{ width: `${leftWidth}px` }}>
+          <div className="relative h-full shrink-0" style={{ width: `${displayedLeftWidth}px` }}>
             {leftPanel}
           </div>
         ) : <ProjectSidebar
@@ -232,24 +355,25 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           onReorderBookAt={onReorderBookAt}
           onReorderAuthorAt={onReorderAuthorAt}
           libraryOrderSaving={libraryOrderSaving}
-          width={leftWidth}
+          width={displayedLeftWidth}
           isResizing={isResizingLeft}
-          onStartResize={startLeftResize}
+          onStartResize={event => startLeftResize(event, bookReadingWorkspace ? readingMetrics.sidebarScale : 1, readingSidebarBounds)}
         />}
-          <div role="separator" aria-label="홈 패널 너비 조절" aria-orientation="vertical" aria-valuemin={232} aria-valuemax={960} aria-valuenow={leftWidth} tabIndex={homePanelOpen ? 0 : -1}
-            data-passage-note-trigger onMouseDown={startLeftResize}
-            onKeyDown={event => { if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); adjustLeftWidth(event.key === 'ArrowRight' ? 16 : -16); } }}
+          <div role="separator" aria-label="홈 패널 너비 조절" aria-orientation="vertical" aria-valuemin={bookReadingWorkspace ? readingMetrics.sidebarMinimumWidth : 232} aria-valuemax={bookReadingWorkspace ? readingMetrics.sidebarMaximumWidth : 960} aria-valuenow={displayedLeftWidth} tabIndex={libraryVisible ? 0 : -1}
+            data-passage-note-trigger onMouseDown={event => startLeftResize(event, bookReadingWorkspace ? readingMetrics.sidebarScale : 1, readingSidebarBounds)}
+            onKeyDown={event => { if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); adjustLeftWidth(event.key === 'ArrowRight' ? 16 : -16, bookReadingWorkspace ? readingMetrics.sidebarScale : 1, readingSidebarBounds); } }}
             className="absolute inset-y-0 right-0 z-40 w-2 cursor-col-resize hover:bg-[var(--accent-border)] focus-visible:bg-[var(--accent-border)]" />
         </div>
 
-        <main ref={mainRef} style={{ '--book-reference-width': hasInlinePassageNotes ? `calc(100vw - ${leftWidth}px - ${rightPanel ? rightWidth : 0}px)` : '100cqw', '--book-left-reference': hasInlinePassageNotes ? `${leftWidth}px` : 'var(--book-main-left, 0px)' } as React.CSSProperties} className="flex min-w-0 flex-1 flex-col bg-[var(--bg-main)] transition-colors duration-200">
-          {children}
+        <main ref={mainRef} inert={activeLibraryOverlay} style={{ '--book-reference-width': hasInlinePassageNotes ? `calc(100vw - ${displayedLeftWidth}px - ${bookReadingWorkspace ? 0 : rightPanel ? displayedRightWidth : 0}px)` : '100cqw', '--book-left-reference': hasInlinePassageNotes ? `${displayedLeftWidth}px` : 'var(--book-main-left, 0px)' } as React.CSSProperties} className="flex min-w-0 flex-1 flex-col bg-[var(--bg-main)] transition-colors duration-200">
+          {bookReadingWorkspace && rightPanel && selectedBookId ? <BookReadingWorkspace bookId={selectedBookId} scrollPositions={bookScrollPositions} memo={rightPanel} memoOpen={rightPanelOpen} metrics={readingMetrics}
+            resizing={isResizingRight} onStartResize={event => startRightResize(event, readingMetrics.memoPreferenceScale, readingMemoBounds)} onAdjustWidth={delta => adjustRightWidth(delta, readingMetrics.memoPreferenceScale, readingMemoBounds)}>{children}</BookReadingWorkspace> : children}
         </main>
-        {rightPanel ? (
+        {rightPanel && !bookReadingWorkspace ? (
           <div
             aria-hidden={!rightPanelOpen}
             inert={!rightPanelOpen}
-            style={{ width: rightPanelOpen ? rightWidth : 0 }}
+            style={{ width: rightPanelOpen ? displayedRightWidth : 0 }}
             className={[
               'relative h-full shrink-0 overflow-hidden motion-reduce:transition-none',
               isResizingRight ? 'transition-none' : 'transition-[width,opacity] duration-200',
@@ -257,7 +381,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             ].join(' ')}
           >
             {rightPanel}
-            <div role="separator" aria-label="메모 패널 너비 조절" aria-orientation="vertical" aria-valuemin={232} aria-valuemax={960} aria-valuenow={rightWidth} tabIndex={rightPanelOpen ? 0 : -1}
+            <div role="separator" aria-label="메모 패널 너비 조절" aria-orientation="vertical" aria-valuemin={232} aria-valuemax={960} aria-valuenow={displayedRightWidth} tabIndex={rightPanelOpen ? 0 : -1}
               data-passage-note-trigger onMouseDown={startRightResize}
               onKeyDown={event => { if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); adjustRightWidth(event.key === 'ArrowLeft' ? 16 : -16); } }}
               className="absolute inset-y-0 left-0 z-40 w-2 cursor-col-resize hover:bg-[var(--accent-border)] focus-visible:bg-[var(--accent-border)]" />

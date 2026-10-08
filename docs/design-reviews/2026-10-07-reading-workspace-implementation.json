@@ -1,0 +1,131 @@
+{
+  "date": "2026-10-07",
+  "artifact": "2026-10-07-reading-workspace-implementation.html",
+  "status": "implemented-browser-reviewed",
+  "scope": "desktop book detail three-column reading workspace",
+  "productionComponentsInFixture": [
+    "MainLayout",
+    "ArchiveScreen",
+    "BookMemoPanel"
+  ],
+  "fixtureDataBoundary": {
+    "backendMutations": false,
+    "persistence": "local fake callback and example browser draft only",
+    "bookScopes": ["local-writing-review", "local-writing-review-short"],
+    "reset": "clears only the two example draft scopes",
+    "resizeStorageKeyPrefix": "410pages.reading-fixture."
+  },
+  "screenshots": [
+    "assets/2026-10-06-workspace/reading-workspace-implemented-1024.png",
+    "assets/2026-10-06-workspace/reading-workspace-implemented-4k.png"
+  ],
+  "observedGeometry": {
+    "1024": {
+      "outerColumns": { "comment": 214, "body": 496, "memo": 216 },
+      "visibleColumns": { "comment": 202, "body": 404, "memo": 202 },
+      "visibleRatio": [1, 2, 1],
+      "bodyAndTitleCenter": 512,
+      "titleBoxX": [310, 714],
+      "titleBoxWidth": 404,
+      "leftTextGap": 78,
+      "rightTextGap": 78,
+      "memoHeaderTop": 85.3984,
+      "memoToggle": { "right": 994, "top": 85.3984, "width": 40, "height": 40 }
+    },
+    "historical3840BeforeFinalRatio": {
+      "groupX": [1284, 2556],
+      "groupWidth": 1272,
+      "quoteX": [1612, 2112],
+      "quoteWidth": 500,
+      "leftTextGap": 94,
+      "rightTextGap": 94,
+      "status": "superseded-fixed-body-max"
+    },
+    "3840CurrentPhase": {
+      "visibleColumns": { "comment": 250, "body": 500, "memo": 250 },
+      "visibleRatio": [1, 2, 1],
+      "wideScreenScaling": "deferred-to-next-design-turn"
+    }
+  },
+  "browserVerified": {
+    "historicalEmptyMemoScrollBeforeNaturalStart": {
+      "memoRegionTop": 51.3984,
+      "quoteScrollUnchanged": true
+    },
+    "longMemo": {
+      "14pt": { "computedPx": 18.6667, "height": 1573, "clipObserved": false },
+      "18pt": { "computedPx": 24, "height": 2518, "clipObserved": false },
+      "nativeEndAppend": {
+        "before": { "caret": 791, "length": 791, "outerScrollTop": 2264 },
+        "after": { "caret": 803, "length": 803, "outerScrollTop": 2264 },
+        "suffixVerified": true
+      }
+    },
+    "fakeFailureRetry": true,
+    "responsive": {
+      "1440NoHorizontalOverflow": true,
+      "1920NoHorizontalOverflow": true
+    },
+    "mobile375": {
+      "dialogWidth": 375,
+      "title": "메모",
+      "readingVariant": false,
+      "closeControl": true,
+      "citationInputReadOnly": false,
+      "horizontalOverflow": false
+    },
+    "fixtureBookScrollRestore": {
+      "fontPx": 24,
+      "longBook": { "bookId": "local-writing-review", "before": 1500, "restored": 1500, "textareaHeight": 2518 },
+      "shortBook": { "bookId": "local-writing-review-short", "memoLength": 31, "scrollTop": 0 }
+    },
+    "night": {
+      "horizontalOverflow": false,
+      "restoredMemoScrollTop": 1500
+    },
+    "fixtureMemoKeyboardResize": {
+      "sequence": [360, 376, 360],
+      "restored": true
+    },
+    "memoNormalUi": {
+      "autoSaveLabelVisible": false,
+      "saveNowButtonVisible": false
+    },
+    "collapsedMemo": {
+      "headerAndToggleVisible": true,
+      "bodyAriaHidden": true,
+      "bodyInert": true,
+      "bodyVisibility": "hidden",
+      "textareaMounted": true,
+      "textareaWidth": 202,
+      "reopenVerified": true
+    },
+    "citationEmptyInput": {
+      "empty": { "textareaHeight": 45, "boxHeight": 107, "width": 404 },
+      "firstCharacter": { "textareaHeight": 45, "boxHeight": 107, "width": 404 }
+    },
+    "scrollbarVisibility": {
+      "duringUserWheel": { "dataScrolling": true, "thumb": "rgb(112, 107, 101)" },
+      "afterMs": 700,
+      "idleDataScrolling": null,
+      "idleThumb": "transparent"
+    }
+  },
+  "automatedTests": {
+    "finalFullRun": { "files": 82, "tests": 575, "maxWorkers": 2, "durationSeconds": 71.37, "result": "passed" },
+    "latestFocusedRun": { "tests": 27, "typecheck": "passed", "productionBuild": "passed", "diffCheck": "passed" },
+    "focusedRun": { "files": 3, "tests": 23, "result": "passed" },
+    "afterFixtureResizeKeyIsolation": { "mainLayoutTests": 11, "typecheck": "passed", "build": "passed" },
+    "diffCheck": "passed"
+  },
+  "independentCritic": {
+    "confirmedFindingsFinal": 0
+  },
+  "remaining": [
+    "other browsers and physical displays",
+    "real-account memo write and backend persistence",
+    "long-term writing comfort and production effect"
+  ],
+  "gitActionsApprovedByUser": ["commit", "push"],
+  "unauthorizedAndNotPerformed": ["deploy"]
+}

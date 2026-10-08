@@ -142,7 +142,7 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
     });
   };
   const [isMobileBookMemoOpen, setIsMobileBookMemoOpen] = React.useState(false);
-  const [isDesktopBookMemoOpen, setIsDesktopBookMemoOpen] = React.useState(false);
+  const [isDesktopBookMemoOpen, setIsDesktopBookMemoOpen] = React.useState(true);
   const [isDesktopHomeOpen, setIsDesktopHomeOpen] = React.useState(true);
   React.useEffect(() => setIsDesktopHomeOpen(true), [session?.user?.id]);
   const selectedBook = selectedBookId ? books.find((book) => book.id === selectedBookId) ?? null : null;
@@ -153,8 +153,8 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
   React.useEffect(() => {
     setPassageNoteCitationId(null);
     setIsMobileBookMemoOpen(false);
-    setShowAllPassageNotes(false);
-  }, [isBookView, selectedBookId, session?.user?.id]);
+    setShowAllPassageNotes(isBookView && !isMobileApp);
+  }, [isBookView, selectedBookId, session?.user?.id, isMobileApp]);
 
   React.useEffect(() => {
     if (passageNoteCitationId && !passageNoteCitation) setPassageNoteCitationId(null);
@@ -168,14 +168,14 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
   const openDesktopBookMemo = React.useCallback(() => {
     setIsDesktopBookMemoOpen(true);
     window.requestAnimationFrame(() => {
-      document.querySelector<HTMLTextAreaElement>('textarea[aria-label="책 전체 메모"]')?.focus();
+      document.querySelector<HTMLTextAreaElement>('textarea[aria-label="책 전체 메모"]')?.focus({ preventScroll: true });
     });
   }, []);
 
   const closeDesktopBookMemo = React.useCallback(() => {
     setIsDesktopBookMemoOpen(false);
     window.requestAnimationFrame(() => {
-      document.getElementById('book-memo-open-button')?.focus();
+      document.getElementById('book-memo-open-button')?.focus({ preventScroll: true });
     });
   }, []);
 
@@ -556,7 +556,8 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
   });
   const mainLayoutProps = createMainLayoutProps({
     onCloseInlinePassageNotes: () => { setPassageNoteCitationId(null); setShowAllPassageNotes(false); },
-    onRightPanelOpenChange: setIsDesktopBookMemoOpen,
+    bookReadingWorkspace: isBookView && Boolean(selectedBook),
+    onRightPanelOpenChange: open => open ? openDesktopBookMemo() : closeDesktopBookMemo(),
     hasInlinePassageNotes: isBookView && (showAllPassageNotes || Boolean(passageNoteCitation)),
     homePanelOpen: isDesktopHomeOpen,
     onHomePanelOpenChange: (open) => {
@@ -565,6 +566,9 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
     },
     rightPanel: isBookView && selectedBook ? (
       <BookMemoPanel
+        reading
+        readingCollapsed={!isDesktopBookMemoOpen}
+        onToggleReading={isDesktopBookMemoOpen ? closeDesktopBookMemo : openDesktopBookMemo}
         userId={session.user.id}
         book={selectedBook}
         onSave={handleUpdateBookMemo}
@@ -672,19 +676,6 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
           <button type="button" onClick={cancelReaderLoad} className="ui-btn">{readerLoading ? '취소' : '닫기'}</button>
         </div>
       )}
-      {isBookView && selectedBook && !isDesktopBookMemoOpen ? (
-        <button
-          id="book-memo-open-button"
-          type="button"
-          data-passage-note-trigger
-          onClick={openDesktopBookMemo}
-          className="fixed right-4 top-[calc(3.15rem+0.5rem+0.5px)] z-30 inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[var(--bg-input)] px-3 text-sm text-[var(--text-secondary)] transition-[background-color,color,transform] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)] active:scale-95 motion-reduce:transition-none"
-          aria-label="책 전체 메모 열기"
-          title="책 전체 메모 열기"
-        >
-          <NotebookPen size={18} /><span>책 메모</span>
-        </button>
-      ) : null}
       {settingsPanel}
       {networkNotice}
       {mutationAlerts}

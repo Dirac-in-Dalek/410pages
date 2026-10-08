@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="ko" data-theme="mahler-light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>410pages · 로그인 오류 표시 비교</title>
+  <link rel="stylesheet" href="/index.css">
+  <style>
+    body { margin:0; font-family:var(--font-ui); color:var(--text-main); background:var(--bg-main); }
+    .workbench { max-width:1000px; margin:auto; padding:24px 20px 48px; }
+    .eyebrow { font-size:12px; color:var(--text-muted); margin-bottom:6px; }
+    h1 { margin:0; font-size:22px; font-weight:650; line-height:1.4; }
+    .intro { margin:8px 0 18px; font-size:14px; line-height:1.65; color:var(--text-secondary); }
+    .controls { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; padding:0; border:0; }
+    .controls legend { font-size:12px; font-weight:600; margin-bottom:7px; color:var(--text-secondary); }
+    .controls label { display:flex; gap:6px; align-items:center; padding:8px 10px; border:1px solid var(--border-main); border-radius:8px; font-size:13px; cursor:pointer; }
+    .controls label:has(input:checked) { background:var(--accent-soft); border-color:var(--accent); }
+    .controls input { accent-color:var(--accent); width:15px; height:15px; }
+    .controls input:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+    .conditions { display:flex; flex-wrap:wrap; gap:12px; }
+    .conditions .controls { margin-bottom:4px; }
+    .comparison { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:18px 0; }
+    .sample { background:var(--bg-card); padding:14px; border-radius:12px; }
+    .sample-label { margin:0 0 9px; font-size:12px; color:var(--text-muted); }
+    .alert { border-radius:8px; padding:12px; font-size:14px; line-height:1.625; min-height:47px; }
+    .alert-current { color:#991b1b; background:#fef2f2; }
+    html[data-os="dark"] .alert-current { color:#fee2e2; background:rgba(248,113,113,.1); }
+    .alert-a { color:#991b1b; background:#fef2f2; }
+    html.dark .alert-a { color:#fee2e2; background:rgba(248,113,113,.1); }
+    .alert-b { display:flex; gap:8px; align-items:flex-start; color:var(--text-main); background:#fef2f2; border-left:3px solid #ca3535; padding-left:9px; }
+    html.dark .alert-b { background:rgba(248,113,113,.1); border-left-color:#ff7a84; }
+    .alert-b svg { flex:none; margin-top:2px; width:18px; height:18px; color:#ca3535; }
+    html.dark .alert-b svg { color:#ff7a84; }
+    .alert-c { color:#991b1b; background:transparent; padding-left:0; padding-right:0; }
+    html.dark .alert-c { color:#fee2e2; }
+    .measure { margin:8px 0 0; font-size:12px; color:var(--text-muted); }
+    .decision { background:var(--bg-card); border-radius:12px; padding:15px 16px; font-size:14px; line-height:1.65; }
+    .decision strong { font-weight:650; }
+    .context { margin:22px auto 0; max-width:448px; background:var(--bg-card); padding:24px 32px; border-radius:16px; box-shadow:var(--shadow-card); }
+    .context-header { text-align:center; margin-bottom:24px; }
+    .context-header svg { width:42px; height:42px; margin:0 auto 12px; }
+    .wordmark { font-size:28px; font-weight:650; letter-spacing:-.6px; margin-bottom:18px; }
+    .context-title { font-size:20px; font-weight:650; margin-bottom:5px; }
+    .context-subtitle { font-size:14px; line-height:1.6; color:var(--text-muted); }
+    .field-label { font-size:12px; font-weight:600; margin-bottom:6px; display:block; }
+    .field { min-height:44px; width:100%; padding:10px 12px; border:1px solid var(--border-main); border-radius:8px; background:var(--bg-card); color:var(--text-main); font-size:16px; margin-bottom:16px; }
+    .checks { display:flex; flex-wrap:wrap; justify-content:center; gap:18px; font-size:12px; color:var(--text-muted); margin:0 0 16px; }
+    .checks span { display:flex; align-items:center; gap:7px; }
+    .checked { display:inline-grid; place-items:center; width:16px; height:16px; border-radius:2px; background:#1677ff; color:#fff; }
+    .login { width:100%; min-height:44px; border-radius:8px; background:var(--accent); color:white; font-size:14px; font-weight:600; margin-top:16px; display:grid; place-items:center; }
+    .links { display:flex; justify-content:center; gap:10px; font-size:14px; color:var(--text-muted); margin-top:13px; }
+    .links .signup { color:var(--accent); font-weight:600; }
+    .caption { font-size:12px; line-height:1.6; color:var(--text-muted); margin:9px auto 0; max-width:448px; }
+    details { margin-top:26px; }
+    summary { font-size:14px; cursor:pointer; font-weight:600; }
+    .references { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:12px; }
+    .reference { padding:14px; border:1px solid var(--border-main); border-radius:12px; font-size:13px; line-height:1.65; }
+    .reference a { color:var(--accent); text-decoration:underline; text-underline-offset:3px; }
+    .reference iframe { width:100%; height:330px; background:white; border:0; margin:12px 0; border-radius:5px; }
+    .reference img { width:100%; margin:12px 0; background:white; border-radius:5px; }
+    .reference p { margin:7px 0; }
+    .technical { font-size:13px; line-height:1.7; color:var(--text-secondary); margin-top:12px; }
+    .technical code { font-size:12px; overflow-wrap:anywhere; }
+    @media(max-width:700px) {
+      .comparison,.references { grid-template-columns:1fr; }
+      .workbench { padding:20px 16px 36px; }
+      .context { padding:24px; }
+    }
+  </style>
+</head>
+<body>
+<main class="workbench">
+  <div class="eyebrow">410pages · 브라우저 코멘트 1</div>
+  <h1>로그인 오류 문구, 읽히는 색으로</h1>
+  <p class="intro">밝은 앱 화면에 시스템 다크 모드용 글씨색이 적용된 것이 원인입니다.<br>문구·위치·글자 크기는 유지하고, 오류 표현만 비교합니다.</p>
+  <fieldset class="controls" id="variant-controls">
+    <legend>화면에서 비교할 후보</legend>
+    <label><input type="radio" name="variant" value="a" checked> A · 현재 상자 유지 (추천)</label>
+    <label><input type="radio" name="variant" value="b"> B · 일반 글씨 + 빨간 표시</label>
+    <label><input type="radio" name="variant" value="c"> C · 배경 없는 오류 문구</label>
+  </fieldset>
+  <div class="conditions">
+    <fieldset class="controls">
+      <legend>앱 테마</legend>
+      <label><input type="radio" name="scheme" value="light" checked> 밝게</label>
+      <label><input type="radio" name="scheme" value="dark"> 어둡게</label>
+    </fieldset>
+    <fieldset class="controls">
+      <legend>시스템 모드 · 문제 재현</legend>
+      <label><input type="radio" name="os" value="dark" checked> 다크</label>
+      <label><input type="radio" name="os" value="light"> 라이트</label>
+    </fieldset>
+  </div>
+  <div class="comparison">
+    <section class="sample">
+      <p class="sample-label">수정 전 · 시스템 모드에 따라 변함</p>
+      <div class="alert alert-current" id="current-alert">이메일 또는 비밀번호가 올바르지 않습니다.</div>
+      <p class="measure" id="current-contrast"></p>
+    </section>
+    <section class="sample">
+      <p class="sample-label" id="candidate-label">후보 A · 앱 테마에 따라 변함</p>
+      <div class="alert alert-a" id="candidate-alert">이메일 또는 비밀번호가 올바르지 않습니다.</div>
+      <p class="measure" id="candidate-contrast"></p>
+    </section>
+  </div>
+  <p class="decision" id="decision"></p>
+  <section class="context font-size-static" aria-label="로그인 폼 안의 후보 미리보기">
+    <div class="context-header">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 6 L12 3 H18 V18 L13 21 H7 V6"/></svg>
+      <div class="wordmark">410pages</div>
+      <div class="context-title">La Biblioteca de Babel</div>
+      <div class="context-subtitle">이런 방식으로 당신은 스물세 글자의 변형체들을 볼 수 있을 것이다.</div>
+    </div>
+    <span class="field-label">이메일</span>
+    <div class="field">reader@example.com</div>
+    <span class="field-label">비밀번호</span>
+    <div class="field" aria-label="가려진 예시 비밀번호">••••••••••</div>
+    <div class="checks"><span><i class="checked" aria-hidden="true">✓</i>아이디 기억</span><span><i class="checked" aria-hidden="true">✓</i>자동 로그인</span></div>
+    <div class="alert alert-a" id="context-alert">이메일 또는 비밀번호가 올바르지 않습니다.</div>
+    <div class="login">로그인</div>
+    <div class="links"><span>비밀번호 찾기</span><span aria-hidden="true">·</span><span class="signup">가입하기</span></div>
+  </section>
+  <p class="caption">비교용 화면입니다. 후보 전환은 앱에 저장되지 않습니다. 미리보기 기본값 A는 추천안 표시이며 적용 결정은 아닙니다.</p>
+  <details>
+    <summary>표현 후보의 레퍼런스와 취사선택</summary>
+    <div class="references">
+      <article class="reference">
+        <a href="https://design-system.service.gov.uk/components/error-message/" target="_blank" rel="noreferrer">GOV.UK · Error message</a>
+        <iframe src="https://design-system.service.gov.uk/components/error-message/default/" title="GOV.UK 공식 오류 표시 예제 원본" loading="lazy" referrerpolicy="no-referrer"></iframe>
+        <p>관찰: 흰 바탕 위 진한 빨간 글씨와 굵은 글자. 공식 컴포넌트 예제입니다.</p>
+        <p>가져올 것: 읽히는 오류색, 입력 가까운 배치. 가져오지 않을 것: 전체 폼을 두르는 굵은 선과 여러 필드의 오류 요약.</p>
+        <p>C의 근거입니다. 410pages에서는 글자 크기·굵기를 기존과 같게 유지했습니다.</p>
+      </article>
+      <article class="reference">
+        <a href="https://www.carbondesignsystem.com/building-blocks/core/components/notification/guidelines" target="_blank" rel="noreferrer">IBM Carbon · Notification</a>
+        <img src="https://s3.us-south.cloud-object-storage.appdomain.cloud/cxp-prod-payload-cms/notification-usage-contrast.png" alt="Carbon 공식 예시: 어두운 알림은 밝은 본문, 밝은 알림은 어두운 본문" loading="lazy" referrerpolicy="no-referrer">
+        <p>관찰: 어두운 알림은 밝은 본문, 밝은 알림은 어두운 본문. 원본 이미지는 성공 알림의 색상 대비 예시입니다.</p>
+        <p>가져올 것: 바탕과 글씨의 명암을 짝지어 선택하는 원리. 가져오지 않을 것: 성공색인 초록, 중복 제목·닫기 버튼.</p>
+        <p>A의 배경·글씨 대비, B의 본문색과 상태 표시 분리에 참고했습니다. 오류색 적용은 410pages용 제안입니다.</p>
+      </article>
+    </div>
+    <p class="caption">2026-10-06 원본 확인. 출시된 로그인 화면의 사용성 검증과 공식 컴포넌트 예제 관찰은 구분합니다.</p>
+  </details>
+  <details>
+    <summary>확인한 원인과 적용한 공통 기준과 표현 후보의 범위</summary>
+    <p class="technical">실제 탭에서 <code>data-theme="day"</code>, 앱 <code>color-scheme: light</code>, 시스템 다크 모드가 동시에 확인됐습니다. <code>Auth.tsx</code>의 <code>dark:text-red-100</code>은 앱의 <code>.dark</code> 클래스 대신 <code>prefers-color-scheme</code>에 반응하고 있습니다.</p>
+    <p class="technical">앱은 이미 <code>preferencesDocument.ts</code>에서 선택 테마에 맞춰 <code>.dark</code>를 관리합니다. 사용자 선택 ①로 적용한 수정은 <code>tailwind.config.js</code>의 <code>darkMode: 'selector'</code>입니다. 인증 동작·문구를 유지하면서 같은 방식의 오류·성공 문구도 앱 테마를 따르게 합니다. 다른 화면의 <code>dark:</code> 사용처를 함께 확인해야 합니다.</p>
+  </details>
+</main>
+<script>
+  const message = '이메일 또는 비밀번호가 올바르지 않습니다.';
+  const alertIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>';
+  const descriptions = {
+    a:'<strong>A 추천 · 현재 오류 상자 유지</strong><br>배경과 글씨색을 앱 테마에 맞춰 함께 전환합니다. 현재 배치를 그대로 쓸 수 있습니다. 빨간 배경의 강조는 유지됩니다.',
+    b:'<strong>B · 본문은 일반 글씨색, 오류 표시는 빨강</strong><br>문장은 주변 글씨처럼 편하게 읽힙니다. 아이콘과 왼쪽 선이 더해져 현재보다 표시 요소가 많아집니다.',
+    c:'<strong>C · 오류 문구만 표시</strong><br>상자 없이 간결합니다. 주변 입력·버튼과 구별되는 영역의 강조는 줄어듭니다.'
+  };
+  function rgb(css) { const n=css.match(/[\d.]+/g)?.map(Number)||[0,0,0]; return [n[0],n[1],n[2],n[3]??1]; }
+  function composite(top,bottom) { return top.slice(0,3).map((n,i)=>n*top[3]+bottom[i]*(1-top[3])); }
+  function luminance(c) { return c.map(n=>n/255).map(n=>n<=.04045?n/12.92:((n+.055)/1.055)**2.4).reduce((s,n,i)=>s+n*[.2126,.7152,.0722][i],0); }
+  function contrast(element) {
+    const style=getComputedStyle(element);
+    const card=rgb(getComputedStyle(element.parentElement).backgroundColor);
+    const background=composite(rgb(style.backgroundColor),card);
+    const foreground=composite(rgb(style.color),background);
+    const a=luminance(foreground),b=luminance(background);
+    return ((Math.max(a,b)+.05)/(Math.min(a,b)+.05)).toFixed(2);
+  }
+  function render() {
+    const variant=document.querySelector('[name="variant"]:checked').value;
+    const scheme=document.querySelector('[name="scheme"]:checked').value;
+    const os=document.querySelector('[name="os"]:checked').value;
+    document.documentElement.classList.toggle('dark',scheme==='dark');
+    document.documentElement.dataset.theme=scheme==='dark'?'mahler-dark':'mahler-light';
+    document.documentElement.dataset.os=os;
+    for(const id of ['candidate-alert','context-alert']) {
+      const element=document.getElementById(id);
+      element.className='alert alert-'+variant;
+      element.innerHTML=variant==='b'?alertIcon+'<span>'+message+'</span>':message;
+    }
+    document.getElementById('candidate-label').textContent='후보'+' '+variant.toUpperCase()+' · 앱 테마에 따라 변함';
+    document.getElementById('decision').innerHTML=descriptions[variant];
+    requestAnimationFrame(()=> {
+      document.getElementById('current-contrast').textContent='글씨 / 바탕 대비 '+contrast(document.getElementById('current-alert'))+':1';
+      document.getElementById('candidate-contrast').textContent='글씨 / 바탕 대비 '+contrast(document.getElementById('candidate-alert'))+':1';
+    });
+  }
+  document.querySelectorAll('.controls input').forEach(input=>input.addEventListener('change',render));
+  render();
+</script>
+</body>
+</html>

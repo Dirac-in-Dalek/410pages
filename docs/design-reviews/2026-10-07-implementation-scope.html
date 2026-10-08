@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>410pages · 구현 범위</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#fff;color:#222;font:15px/1.7 system-ui,sans-serif}main{max-width:1000px;margin:auto;padding:28px}h1{font-size:28px;line-height:1.3;margin:0 0 20px}h2{font-size:21px;margin:30px 0 12px}p{margin:10px 0}a{color:#a51b30;text-underline-offset:3px}a:focus-visible{outline:2px solid #a51b30;outline-offset:3px}.lead{font-size:17px;max-width:70ch}.small,figcaption{font-size:13px;color:#666}table{width:100%;border-collapse:collapse}td,th{padding:12px 10px;text-align:left;vertical-align:top;border-bottom:1px solid #ddd}th{font-weight:600}td:first-child{width:24%}.columns{display:grid;grid-template-columns:1fr 1.6fr 1.2fr;gap:20px;margin:22px 0;padding:20px 0;border-block:1px solid #ddd}.columns strong{display:block;margin-bottom:8px}.columns p{font-size:14px}.columns .quote{font-size:17px}.tag{display:inline-block;font-size:12px;font-weight:600;color:#a51b30;margin-bottom:5px}figure{margin:18px 0}img{display:block;width:100%;height:auto;border:1px solid #ddd}ul,ol{padding-left:22px}li{margin:8px 0}code{font:13px/1.5 ui-monospace,monospace;overflow-wrap:anywhere}@media(max-width:600px){main{padding:18px}h1{font-size:25px}.columns{gap:12px;padding:12px 0}.columns p{font-size:12px}.columns .quote{font-size:14px}td,th{padding:10px 6px}}
+</style>
+</head>
+<body><main>
+<span class="tag">2026-10-07 · 구현 범위 확인</span>
+<h1>책 화면을 ‘댓글 — 인용문 — 메모’ 세 열로 구현</h1>
+<div class="lead"><p>① 데스크톱 책 화면에 선택한 세 열 읽기 구성을 적용합니다.</p><p>② 제목·메모 시작점·하단 입력창은 지금까지 정한 정렬을 유지합니다.</p><p>③ 기존 저장·초안·댓글·접기 기능을 보존하고 1024px과 4K에서 검증합니다.</p></div>
+<p class="small">앞선 “이제 다 구현하자”는 이 구성의 구현 승인으로 이해했습니다. 지금 요청에 따라 먼저 범위를 정리했습니다. 세 열 제품 구현은 아직 착수 전이며, 화살표 위치와 ‘메모’ 문구는 앞선 작업에서 로컬에 반영된 상태입니다.</p>
+
+<div class="columns" aria-label="구현할 세 열의 역할"><div><strong>왼쪽 · 문장별 댓글</strong><p>해당 인용문과 나란히 표시하고 함께 스크롤합니다.</p></div><div><strong>가운데 · 책 제목과 인용문</strong><p class="quote">책 제목의 왼쪽 시작선은 인용문 글자 시작선과 같습니다.</p><p>하단 입력창도 저장될 문장의 단계·폭을 따릅니다.</p></div><div><strong>오른쪽 · 메모</strong><p>카드 대신 긴 글이 이어집니다. 메모 본문의 첫 줄은 첫 인용문 상단에서 시작합니다.</p></div></div>
+
+<h2>1. 화면에서 바뀌는 것</h2>
+<table><thead><tr><th>항목</th><th>구현 내용</th></tr></thead><tbody>
+<tr><td>적용 화면</td><td>1024px 이상 데스크톱의 책 상세 화면. 1024×768 노트북도 데스크톱 구성을 사용합니다.</td></tr>
+<tr><td>세 열 배치</td><td>왼쪽 댓글, 가운데 인용문, 오른쪽 메모를 하나의 읽기 묶음으로 배치합니다. 4K에서도 메모가 화면 오른쪽 끝으로 멀어지지 않도록 묶음의 최대 폭을 제한합니다.</td></tr>
+<tr><td>양쪽 거리</td><td>인용문 글자 영역에서 왼쪽 댓글과 오른쪽 메모까지의 거리를 맞춥니다. 세 열의 폭을 똑같이 만들지는 않습니다.</td></tr>
+<tr><td>책 제목</td><td>제목·저자·목록 조작을 가운데 인용문의 글자 시작선에 맞춥니다.</td></tr>
+<tr><td>메모 표현</td><td>오른쪽 사이드바 카드의 배경·테두리·고정 푸터를 제거하고, 인용문과 어울리는 글자 크기·서체·행간으로 긴 글을 표시합니다. 저장 안내와 재시도 조작은 유지합니다.</td></tr>
+<tr><td>메모 시작점</td><td><strong>메모 제목이 아니라 메모 본문 첫 줄</strong>을 첫 인용문 본문 상단에 맞춥니다. 이 초기 여백도 메모와 함께 스크롤되어, 아래로 스크롤하면 글이 메모 열 최상단까지 올라옵니다.</td></tr>
+<tr><td>스크롤</td><td>댓글과 인용문은 같은 행에서 함께 스크롤합니다. 메모는 오른쪽 열에서 독립적으로 스크롤합니다.</td></tr>
+<tr><td>접기·펼치기</td><td>상단 ‘메모’ 버튼으로 접고 다시 엽니다. 메모를 접거나 펼쳐도 인용문 위치·입력 내용·메모 초안을 유지합니다. 세 열이 함께 열릴 공간이 부족하면 서재를 자동으로 접는 작업대 방향을 적용하며 수동 서재 조작을 유지합니다.</td></tr>
+<tr><td>화면 문구</td><td>패널 제목과 상단 버튼은 ‘메모’. 책별 저장 범위는 유지하며 접근성 설명에는 범위를 남깁니다.</td></tr>
+<tr><td>하단 입력창</td><td>인용문/챕터 선택, 페이지, 원형 체크 저장을 유지합니다. 챕터에서만 배경 없는 화살표를 박스 바깥 왼쪽에 두고, 인용문·챕터 선택 버튼과 같은 높이에 정렬합니다.</td></tr>
+<tr><td>계층 작성</td><td>→ 하위 / ← 상위, 최상위에서 ← 숨김, 현재 챕터 단계 +1까지 이동을 유지합니다. 저장 후 인용문 모드로 돌아와 같은 소제목 아래에 이어 쓰며, 입력창은 저장될 인용문과 같은 시작선·폭을 사용합니다.</td></tr>
+</tbody></table>
+
+<h2>2. 구현에 사용할 기준값</h2>
+<p>작업대의 <strong>① 묶음 중심안</strong>을 기준으로 잡겠습니다. 아래 숫자는 현재 추천 기본값이며, 사용자가 숫자 하나하나를 별도로 지정한 것으로 기록하지 않습니다.</p>
+<table><thead><tr><th>기준</th><th>값과 적용 방식</th></tr></thead><tbody>
+<tr><td>열의 초기 최대 폭</td><td>댓글 240px / 인용문 592px / 메모 360px</td></tr>
+<tr><td>열 사이 간격</td><td>양쪽 40px. 가용 공간이 부족하면 열 폭과 간격을 함께 조정합니다.</td></tr>
+<tr><td>1024px</td><td>서재를 접고 세 열을 가용 폭에 맞춥니다. 작업대 기본값 실측은 댓글 약 193px / 인용문 430px / 메모 298px입니다. 실제 앱의 스크롤바·서재 너비를 반영해 같은 관계를 맞춥니다.</td></tr>
+<tr><td>넓은 화면</td><td>설정한 읽기 폭을 유지하고 남는 공간은 묶음 바깥의 여백으로 둡니다.</td></tr>
+<tr><td>기존 폭 조절</td><td>서재와 메모의 드래그 폭 조절 기능을 보존하되 새 읽기 열의 실제 가용 공간 안에서 계산합니다. 예전 사이드바의 저장된 폭 때문에 인용문이 과도하게 좁아지지 않도록 제한합니다.</td></tr>
+<tr><td>단계 전환</td><td>입력창의 실제 폭 변화는 200ms ease-out. 움직임 줄이기 설정에서는 전환을 끕니다.</td></tr>
+</tbody></table>
+
+<h2>3. 반드시 보존할 기능</h2>
+<ul>
+<li>책마다 하나인 메모, 800ms 자동 저장, 지금 저장·재시도, 저장 중 잠금과 계정·책별 초안 복구.</li>
+<li>메모를 접은 동안 진행 중인 자동 저장과 초안 보존.</li>
+<li>댓글 추가·수정·삭제, 전체 펼치기·접기, 선택한 문장의 댓글 입력, 메모 영역을 눌러도 댓글 초안이 사라지지 않는 동작.</li>
+<li>챕터·인용문 삽입 위치, 저장 후 이어 쓰기, 페이지 입력, 커서·한글 조합·키보드 조작.</li>
+<li>모바일의 기존 댓글·메모 하단 시트. 데스크톱 재설계를 모바일에도 강제로 적용하지 않습니다.</li>
+<li>Day/Night 및 기존 테마·글자 크기 설정, 책 이동·검색·저장 실패 상태.</li>
+</ul>
+
+<h2>4. 코드 변경 범위와 현재 상태</h2>
+<table><thead><tr><th>영역</th><th>역할</th></tr></thead><tbody>
+<tr><td>화면 연결·공간 계산</td><td><code>app/AppShell.tsx</code>, <code>components/MainLayout.tsx</code>와 필요한 레이아웃 로직. 책 화면의 메모를 세 열 읽기 공간에 연결합니다.</td></tr>
+<tr><td>책 화면·댓글 배치</td><td><code>features/archive/ui/ArchiveScreen.tsx</code>, 책 제목·인용문 목록 관련 컴포넌트. 제목 정렬, 댓글과 본문 공통 열, 입력창과 본문 폭을 맞춥니다.</td></tr>
+<tr><td>메모 표현</td><td><code>features/archive/ui/BookMemoPanel.tsx</code>, <code>index.css</code>. 기존 저장 로직을 재사용하고 긴 글 표현·시작 여백·독립 스크롤을 구현합니다.</td></tr>
+<tr><td>이미 로컬 반영</td><td>화살표 바깥 왼쪽 배치·하단 버튼 높이 정렬, ‘메모’ 문구. 세 열 구현 후 같은 화면에서 함께 재확인합니다.</td></tr>
+<tr><td>문서·검증</td><td>관련 Policy를 승인한 새 배치에 맞게 갱신하고 테스트·실제 화면 비교·HTML 결과 보고를 남깁니다.</td></tr>
+</tbody></table>
+<p class="small">저장 모델·DB/API·인증 변경, YouTube 기능, 홈·프로젝트·PDF 화면 재설계, 테마 전면 교체는 이번 범위에 포함하지 않습니다. 커밋·푸시·배포는 구현 범위와 별도이며, 이번 요청만으로 새로 실행하지 않습니다.</p>
+
+<h2>5. 완료를 판단할 확인 항목</h2>
+<ol>
+<li><strong>1024×768 / 1440 / 1920 / 4K:</strong> 댓글·인용문·메모의 거리, 제목 시작선, 글자 잘림·겹침, 전체 여백 확인.</li>
+<li><strong>첫 화면과 스크롤:</strong> 첫 인용문과 메모 본문 시작 높이 일치, 메모 여백이 함께 스크롤되어 최상단까지 올라오는 동작 확인.</li>
+<li><strong>접기와 화면 전환:</strong> 메모·서재·댓글 접기, 책 이동 후 복귀, 저장 중·실패·복구에서 입력·초안·읽기 위치 확인.</li>
+<li><strong>계층 작성:</strong> 챕터·인용문 전환, 하위·상위 이동, 소제목 저장 후 연속 인용문 저장, 같은 단계의 입력·등록 문장 폭 확인.</li>
+<li><strong>표시 환경:</strong> Day/Night, 큰 글자, 빈 책·긴 메모·여러 댓글, 모바일 기존 시트 확인.</li>
+<li><strong>회귀 검사:</strong> 관련 저장·초안·레이아웃 테스트, 타입 검사·빌드, 시안과 실제 앱 비교. 예제 저장과 실제 서버 저장의 검증 수준을 구분합니다.</li>
+</ol>
+<p>구현 결과는 <strong>선택한 시안과 실제 앱의 차이, 통과한 검증, 미검증 사항</strong>을 포함한 HTML로 보고하겠습니다.</p>
+<p><a href="2026-10-06-reading-workspace.html#preview">세 열 작업대 다시 보기</a> · <a href="2026-10-07-composer-and-memo.html#stage">확정한 화살표 위치 보기</a></p>
+</main></body></html>

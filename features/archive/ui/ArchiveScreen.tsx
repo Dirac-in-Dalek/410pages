@@ -1,6 +1,6 @@
 import { BookComposerDraftStore } from '../../citation-entry/logic/bookComposerDrafts';
 import { CitationEditDraftStore } from '../logic/citationEditDrafts';
-import React, { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { sortBookViewItems, toBookViewItems } from '../../../lib/bookViewItems';
 import { bookPositionPatch, compareBookPositions, getBookPosition } from '../../../lib/bookOrder';
 import { changeChapterDepth, getChapterDropPlacement } from '../logic/chapterHierarchy';
@@ -143,6 +143,21 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
   const setChapterMode = (enabled: boolean) => drafts.patch(scope, { chapterMode: enabled });
   const setInsertionError = (error: string) => drafts.patch(scope, { error });
   const [focusRequest, setFocusRequest] = useState(0);
+  const bookScrollRef = useRef<HTMLDivElement>(null);
+  const [bookScrollbarWidth, setBookScrollbarWidth] = useState(0);
+  useLayoutEffect(() => {
+    const scroll = bookScrollRef.current;
+    if (!isBookView || !isMobileApp || !scroll) {
+      setBookScrollbarWidth(0);
+      return;
+    }
+    const syncWidth = () => setBookScrollbarWidth(Math.max(0, scroll.offsetWidth - scroll.clientWidth));
+    syncWidth();
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(syncWidth);
+    observer?.observe(scroll);
+    window.addEventListener('resize', syncWidth);
+    return () => { observer?.disconnect(); window.removeEventListener('resize', syncWidth); };
+  }, [isBookView, isMobileApp]);
   const bookItems = useMemo(
     () => sortBookViewItems(toBookViewItems(allCitations.filter(c => c.bookId === bookId), chapterBlocks.filter(c => c.bookId === bookId)), 'date', 'asc'),
     [allCitations, bookId, chapterBlocks],
@@ -213,13 +228,13 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
     : getArchiveReadingColumnClass({ isBookView, isMobileApp });
   const bookStyle = inlinePassageNotes ? {
     containerType: 'inline-size',
-    '--book-column-size': 'min(var(--citation-column-width), calc(var(--book-reference-width, 100cqw) - 3rem))',
-    '--book-column-left': 'calc(var(--book-left-reference, 0px) - var(--book-main-left, 0px) + (var(--book-reference-width, 100cqw) - var(--book-column-size)) / 2)',
+    '--book-column-size': 'var(--reading-body-width, min(var(--citation-column-width), calc(var(--book-reference-width, 100cqw) - 3rem)))',
+    '--book-column-left': 'var(--reading-body-left, calc(var(--book-left-reference, 0px) - var(--book-main-left, 0px) + (var(--book-reference-width, 100cqw) - var(--book-column-size)) / 2))',
   } as React.CSSProperties : undefined;
 
   return (
     <div className="book-writing-surface flex h-full min-h-0 flex-col overflow-hidden" style={bookStyle}>
-      <div className="min-h-0 flex-1 overflow-y-auto" data-archive-scroll>
+      <div ref={bookScrollRef} className="min-h-0 flex-1 overflow-y-auto" data-archive-scroll>
         <div className={inlinePassageNotes ? columnClassName : undefined}>
         <ArchiveHeader
           title={title}
@@ -313,7 +328,7 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
       </div>
       </div>
       {showEditor && isBookView ? (
-        <div className="shrink-0 bg-[var(--bg-main)] pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
+        <div className="shrink-0 bg-[var(--bg-main)] pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2" style={isMobileApp ? { paddingInlineEnd: bookScrollbarWidth } : undefined}>
           <div className={columnClassName}>
             {insertionError && <p role="alert" className="mb-1 text-sm text-red-600">{insertionError}</p>}
             <CitationEditor
@@ -329,8 +344,8 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
               }}
               onHierarchyKey={chapterMode ? changeLevel : undefined}
               bookDepth={previewDepth}
+              maxChapterDepth={target ? (target.previousDepth ?? -1) + 1 : 0}
               insertionLabel={locationLabel}
-              onCancelInsertion={insertion ? () => { setInsertion(null); setInsertionError(''); } : undefined}
               focusRequest={focusRequest}
               readOnly={Boolean(chapterActionsDisabled) || savingInsertion}
               prefillData={editorPrefill}

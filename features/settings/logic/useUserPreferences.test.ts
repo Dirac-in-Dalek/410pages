@@ -95,6 +95,7 @@ describe('useUserPreferences', () => {
 
   it('returns defaults when storage is empty', () => {
     expect(readStoredPreferences()).toEqual(DEFAULT_PREFERENCES);
+    expect(readStoredPreferences().baseFontPt).toBe(12);
   });
 
   it('falls back to defaults when storage access throws', () => {
@@ -181,14 +182,14 @@ describe('useUserPreferences', () => {
     act(() => {
       result.current.setTheme('day');
       result.current.setFontFamily('serif');
-      result.current.setBaseFontPt(23.7);
+      result.current.setBaseFontPt(13.7);
       result.current.setCitationWidthRem(48.3);
     });
 
     expect(JSON.parse(window.localStorage.getItem(PREFERENCES_STORAGE_KEY) || '{}')).toMatchObject({
       theme: 'day',
       fontFamily: 'serif',
-      baseFontPt: 24,
+      baseFontPt: 14,
       citationWidthRem: 48,
     });
   });
@@ -237,8 +238,13 @@ describe('useUserPreferences', () => {
     });
 
     expect(JSON.parse(window.localStorage.getItem(PREFERENCES_STORAGE_KEY) || '{}')).toMatchObject({
-      baseFontPt: 10,
+      baseFontPt: 7,
     });
+  });
+
+  it('preserves the new small size after loading stored preferences', () => {
+    window.localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify({ ...DEFAULT_PREFERENCES, baseFontPt: 7 }));
+    expect(readStoredPreferences().baseFontPt).toBe(7);
   });
 
   it('applies preference updates even when storage writes throw', () => {
@@ -256,7 +262,7 @@ describe('useUserPreferences', () => {
     expect(document.documentElement.classList.contains('dark')).toBe(true);
     expect(document.documentElement.dataset.theme).toBe('night');
     expect(document.documentElement.dataset.font).toBe('serif');
-    expect(document.documentElement.style.getPropertyValue('--font-base-pt')).toBe('40pt');
+    expect(document.documentElement.style.getPropertyValue('--font-base-pt')).toBe('20pt');
     expect(document.documentElement.style.getPropertyValue('--citation-column-width')).toBe('36rem');
   });
 

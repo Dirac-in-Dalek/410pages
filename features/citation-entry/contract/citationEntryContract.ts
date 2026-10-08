@@ -30,10 +30,10 @@ export interface CitationEditorProps {
   hideSourceFields?: boolean;
   chapterMode?: boolean;
   bookDepth?: number;
+  maxChapterDepth?: number;
   onChapterModeChange?: (enabled: boolean) => void;
   onHierarchyKey?: (direction: 'in' | 'out') => void;
   insertionLabel?: string;
-  onCancelInsertion?: () => void;
   focusRequest?: number;
   draftScope?: string;
   draftStore?: BookComposerDraftStore;

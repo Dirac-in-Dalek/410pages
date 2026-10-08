@@ -1,0 +1,131 @@
+{
+  "date": "2026-10-06",
+  "scope": [
+    "current chapter/quote continuation investigation",
+    "interactive depth arrows before kind control",
+    "equal writing text width"
+  ],
+  "productCodeUnchanged": true,
+  "confirmedDirection": "right=in/child; left=out/parent",
+  "currentActualViewport": [
+    1024,
+    768
+  ],
+  "currentMeasurements": {
+    "composerOuter": 592,
+    "citationRowOuter": 592,
+    "textareaWidth": 500,
+    "citationTextWidth": 500,
+    "textLeft": 380,
+    "textareaRight": 880,
+    "citationTextRight": 880,
+    "scrollbarWidth": 4
+  },
+  "existingTests": {
+    "files": 4,
+    "passed": 19
+  },
+  "browserVerified": [
+    "root has only right button; lower level has out button",
+    "right arrow then chapter save changes to citation at depth 1",
+    "two sequential quotes owned by saved chapter at depth 1",
+    "anchor progresses to last quote, keeping chapter owner",
+    "657px fixture: 505px text widths, left/right difference 0",
+    "375px fixture: 231px text widths, no footer overflow",
+    "depth 2 fixture: 473px text widths, left/right difference 0",
+    "keyboard out to level 0 moves focus to right button",
+    "save/load and JSON design/environment separation",
+    "375x707 workbench: control reachable below sticky miniature, no horizontal overflow",
+    "1024px fixture uses desktop ArchiveScreen, 232px sidebar budget and 592px reading column",
+    "1024px: root text 500px, child 468px, deeper child 436px; current and proposed match",
+    "1024px: arrow creates child, then two quotes remain owned by child at depth 1",
+    "transparent pill arrows: rgba(0,0,0,0), opacity 1, radius 999px",
+    "1.1 existing at level 2 permits 1.1.1 creation at level 3",
+    "saved level 3 permits preparation at level 4: no fixed maximum of 3",
+    "inward/outward CSS transition events elapsed 0.2 seconds; text and caret preserved",
+    "prefers-reduced-motion reduce makes transition duration 0s; override cleared"
+  ],
+  "unverified": [
+    "production application implementation",
+    "real server persistence of proposed UI",
+    "physical touch device",
+    "human comprehension and usability outcome"
+  ],
+  "baselineHashes": {
+    "features/citation-entry/ui/CitationEditor.tsx": "e3238c7b985cdcf9b9a55a9c569643bef77024a3fb323d387d76af211ffcb50b",
+    "index.css": "981988b2e611bc44b4ad51aafe29352ce1628e5a649f919f9462dd458199566b"
+  },
+  "status": "historical-prototype-review",
+  "resumeBaselineViewportWidth": 1024,
+  "closedQaTab": "18",
+  "remainingWork": [
+    "User review of functional HTML",
+    "Product application awaits design approval"
+  ],
+  "resumeResources": {
+    "baselineViewportWidth": 1024,
+    "resultTab": "20",
+    "closedTabs": [
+      "19",
+      "21"
+    ],
+    "temporaryViewportOverrideCleared": true,
+    "developmentServerKeptForReview": 47020
+  },
+  "arrowAppearance": {
+    "hitShape": "pill",
+    "background": "transparent",
+    "opacity": 1
+  },
+  "resizeAnimation": {
+    "durationMs": 200,
+    "easing": "ease-out",
+    "reducedMotionChecked": true,
+    "textAndCaretPreserved": true,
+    "scope": "proposed fixture only"
+  },
+  "closedStyleQaTab": "23",
+  "closedStyleQaTabs": [
+    "23",
+    "24"
+  ],
+  "resultTabs": [
+    "20",
+    "22"
+  ],
+  "resultTabNote": "20 is the browser-use result; 22 is the native Codex panel result attached by the queued open operation. Both retained during user review.",
+  "cancelInsertionUi": {
+    "visible": false,
+    "headerHeight": 0,
+    "composerHeightBefore": 142,
+    "composerHeightAfter": 102,
+    "composerWidth": 592,
+    "insertionAnchorPreserved": "q-root-4",
+    "screenReaderStatusRetained": true,
+    "scope": "proposed fixture only"
+  },
+  "arrowPosition": "after-kind-control",
+  "userConfirmedArrowScope": "chapter-mode",
+  "arrowDomOrderVerified": [
+    "book-composer-kinds",
+    "depth-controls",
+    "book-composer-actions"
+  ],
+  "slimSizePreserved": {
+    "width": 592,
+    "height": 102
+  },
+  "arrowVisibility": "chapter-only",
+  "modeVisibilityVerified": {
+    "citation": {
+      "display": "none",
+      "width": 0
+    },
+    "chapter": {
+      "display": "flex",
+      "inwardEnabled": true
+    },
+    "composerHeight": 102
+  },
+  "supersededBy": "2026-10-06-ui-implementation-verification.json"
+}

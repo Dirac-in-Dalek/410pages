@@ -122,6 +122,21 @@ describe('index bootstrap', () => {
     expect(getDeclaredDefaultFontId(script)).toBe(DEFAULT_FONT_ID);
   });
 
+  it('starts at the new normal size and preserves the smaller size on reload', () => {
+    runBootstrapScript();
+    expect(document.documentElement.style.getPropertyValue('--font-base-pt')).toBe('12pt');
+    window.localStorage.setItem('user-preferences', JSON.stringify({ theme: 'auto', fontFamily: 'pretendard', baseFontPt: 7 }));
+    runBootstrapScript();
+    expect(document.documentElement.style.getPropertyValue('--font-base-pt')).toBe('7pt');
+  });
+
+  it.each([[3, 7], [40, 20]])('limits a stored size of %s to %s before the app starts', (stored, expected) => {
+    window.localStorage.setItem('user-preferences', JSON.stringify({ theme: 'auto', fontFamily: 'pretendard', baseFontPt: stored }));
+    runBootstrapScript();
+    expect(document.documentElement.style.getPropertyValue('--font-base-pt')).toBe(`${expected}pt`);
+    expect(JSON.parse(window.localStorage.getItem('user-preferences') || '{}').baseFontPt).toBe(expected);
+  });
+
   it('applies Pretendard to citation copy when Pretendard is selected', () => {
     const css = readFileSync(INDEX_CSS_PATH, 'utf8');
     const pretendardRule = css.match(/:root\[data-font='pretendard'\]\s*\{([\s\S]*?)\}/)?.[1];

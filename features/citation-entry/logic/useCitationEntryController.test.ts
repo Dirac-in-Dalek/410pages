@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react';
+import { act, render, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BookComposerDraftStore } from './bookComposerDrafts';
 import { createCitationInput, useCitationEntryController } from './useCitationEntryController';
@@ -67,7 +67,8 @@ describe('citation entry textarea height', () => {
         draftStore: drafts,
         onAddCitation: vi.fn(),
       });
-      return React.createElement('textarea', { ref: textareaRef, value: values.text, readOnly: true });
+      return React.createElement('div', { 'data-reading-responsive': true },
+        React.createElement('textarea', { ref: textareaRef, value: values.text, readOnly: true }));
     };
 
     const rendered = render(React.createElement(Editor));
@@ -125,5 +126,25 @@ describe('citation entry textarea height', () => {
     vi.spyOn(HTMLTextAreaElement.prototype, 'scrollHeight', 'get').mockReturnValue(180);
 
     expect(renderTextarea().textarea.style.height).toBe('180px');
+  });
+
+  it('remeasures after shared reading variables change without remounting the draft', async () => {
+    vi.stubGlobal('ResizeObserver', undefined);
+    let scrollHeight = 120;
+    vi.spyOn(HTMLTextAreaElement.prototype, 'scrollHeight', 'get').mockImplementation(() => scrollHeight);
+    const { textarea } = renderTextarea();
+    const scope = textarea.closest<HTMLElement>('[data-reading-responsive]')!;
+    textarea.focus();
+    textarea.setSelectionRange(2, 8);
+    textarea.scrollTop = 11;
+    scrollHeight = 260;
+
+    await act(async () => scope.style.setProperty('--reading-body-font-size', '22px'));
+
+    await waitFor(() => expect(textarea.style.height).toBe('260px'));
+    expect(textarea.value).toBe('The same chapter text');
+    expect(document.activeElement).toBe(textarea);
+    expect([textarea.selectionStart, textarea.selectionEnd]).toEqual([2, 8]);
+    expect(textarea.scrollTop).toBe(11);
   });
 });

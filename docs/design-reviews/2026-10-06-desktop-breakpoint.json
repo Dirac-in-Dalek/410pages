@@ -1,0 +1,15 @@
+{
+  "userRequirement": "Viewport width >=1024 CSS px uses desktop mode; width <1024 uses mobile mode regardless of pointer",
+  "browserCases": [
+    {"width": 1023, "height": 768, "pointer": "fine", "layout": "mobile", "pageWidth": 1023},
+    {"width": 1024, "height": 768, "pointer": "fine", "layout": "desktop", "pageWidth": 1024},
+    {"width": 1025, "height": 768, "pointer": "fine", "layout": "desktop", "pageWidth": 1025}
+  ],
+  "sameBookUrl": true,
+  "restoredViewport": {"width": 1024, "height": 768},
+  "unitTests": {"focused": 9, "beforeFailed": 4, "relatedPassed": 24, "relatedFiles": 4},
+  "typeCheck": "passed",
+  "productionBuild": "passed",
+  "coarsePointerBrowserEmulation": {"requested": true, "actuallyMatched": false, "coverage": "unit test only"},
+  "deployment": "not performed"
+}

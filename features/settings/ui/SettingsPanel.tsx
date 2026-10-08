@@ -50,7 +50,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onThemeChange,
   onFontFamilyChange,
   onBaseFontPtChange,
-  onCitationWidthRemChange,
   onSignOut,
 }) => {
   const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
@@ -362,10 +361,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             <TextSettingsSection
               fontFamily={preferences.fontFamily}
               baseFontPt={preferences.baseFontPt}
-              citationWidthRem={preferences.citationWidthRem}
               onFontFamilyChange={onFontFamilyChange}
               onBaseFontPtChange={onBaseFontPtChange}
-              onCitationWidthRemChange={onCitationWidthRemChange}
             />
 
             <AppearanceSettingsSection theme={preferences.theme} onThemeChange={onThemeChange} />

@@ -75,12 +75,16 @@ export const useUserPreferences = (
 
   useEffect(() => {
     if (!userId || serverReadyUserId !== userId) {
-      return;
+      return undefined;
     }
 
-    persistServerPreferences(userId, preferences).catch((error) => {
-      console.error('Error saving user preferences:', error);
-    });
+    const saveTimer = window.setTimeout(() => {
+      persistServerPreferences(userId, preferences).catch((error) => {
+        console.error('Error saving user preferences:', error);
+      });
+    }, 300);
+
+    return () => window.clearTimeout(saveTimer);
   }, [preferences, serverReadyUserId, userId]);
 
   useEffect(() => {

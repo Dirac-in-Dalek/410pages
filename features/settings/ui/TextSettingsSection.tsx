@@ -3,22 +3,16 @@ import { ChevronDown } from 'lucide-react';
 import { FONT_OPTIONS, getFontOption } from '../../../lib/fontRegistry';
 import type { FontCategory, FontOption } from '../../../lib/fontRegistry';
 import type { FontPreference } from '../contract/userPreferences';
+import { MAX_BASE_FONT_PT, MIN_BASE_FONT_PT } from '../policy/userPreferences';
 
 type TextSettingsSectionProps = {
   fontFamily: FontPreference;
   baseFontPt: number;
-  citationWidthRem: number;
   onFontFamilyChange: (value: FontPreference) => void;
   onBaseFontPtChange: (value: number) => void;
-  onCitationWidthRemChange: (value: number) => void;
 };
 
-const MIN_FONT_PT = 10;
-const MAX_FONT_PT = 40;
 const FONT_PT_STEP = 1;
-const MIN_CITATION_WIDTH_REM = 35;
-const MAX_CITATION_WIDTH_REM = 50;
-const CITATION_WIDTH_STEP_REM = 1;
 
 const optionButtonClass = (isActive: boolean) =>
   `ui-btn ui-btn-row ui-choice px-3 py-2 ${
@@ -145,77 +139,13 @@ export const FontSelectionList: React.FC<FontSelectionListProps> = ({
   );
 };
 
-type SettingsStepperProps = {
-  label: string;
-  value: string;
-  decreaseDisabled: boolean;
-  increaseDisabled: boolean;
-  onDecrease: () => void;
-  onIncrease: () => void;
-};
-
-const SettingsStepper: React.FC<SettingsStepperProps> = ({
-  label,
-  value,
-  decreaseDisabled,
-  increaseDisabled,
-  onDecrease,
-  onIncrease,
-}) => (
-  <div role="group" aria-label={`${label} 조절`} className="inline-flex shrink-0 items-center rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)]">
-    <button
-      type="button"
-      aria-label={`${label} 줄이기`}
-      className="ui-btn ui-btn--ghost h-11 min-h-11 w-11 rounded-lg border-0 p-0 sm:h-10 sm:min-h-10 sm:w-10"
-      disabled={decreaseDisabled}
-      onClick={onDecrease}
-    >
-      <span aria-hidden="true">−</span>
-    </button>
-    <span
-      role="status"
-      aria-label={`현재 ${label}`}
-      aria-live="polite"
-      className="ui-label min-w-[3.75rem] text-center tabular-nums text-[var(--text-main)]"
-    >
-      {value}
-    </span>
-    <button
-      type="button"
-      aria-label={`${label} 늘리기`}
-      className="ui-btn ui-btn--ghost h-11 min-h-11 w-11 rounded-lg border-0 p-0 sm:h-10 sm:min-h-10 sm:w-10"
-      disabled={increaseDisabled}
-      onClick={onIncrease}
-    >
-      <span aria-hidden="true">+</span>
-    </button>
-  </div>
-);
-
 export const TextSettingsSection: React.FC<TextSettingsSectionProps> = ({
   fontFamily,
   baseFontPt,
-  citationWidthRem,
   onFontFamilyChange,
   onBaseFontPtChange,
-  onCitationWidthRemChange,
 }) => {
-  const updateFontSize = (delta: number) => {
-    const nextValue = Math.min(MAX_FONT_PT, Math.max(MIN_FONT_PT, baseFontPt + delta));
-    if (nextValue !== baseFontPt) {
-      onBaseFontPtChange(nextValue);
-    }
-  };
-
-  const updateCitationWidth = (delta: number) => {
-    const nextValue = Math.min(
-      MAX_CITATION_WIDTH_REM,
-      Math.max(MIN_CITATION_WIDTH_REM, citationWidthRem + delta)
-    );
-    if (nextValue !== citationWidthRem) {
-      onCitationWidthRemChange(nextValue);
-    }
-  };
+  const fontSizeId = useId();
 
   return (
     <section>
@@ -227,27 +157,30 @@ export const TextSettingsSection: React.FC<TextSettingsSectionProps> = ({
           <FontSelectionList selectedFontFamily={fontFamily} onFontFamilyChange={onFontFamilyChange} />
         </div>
 
-        <div className="flex min-h-14 items-center justify-between gap-3 px-3">
-          <span className="ui-label shrink-0 whitespace-nowrap">글자 크기</span>
-          <SettingsStepper
-            label="글자 크기"
-            value={`${baseFontPt}pt`}
-            decreaseDisabled={baseFontPt <= MIN_FONT_PT}
-            increaseDisabled={baseFontPt >= MAX_FONT_PT}
-            onDecrease={() => updateFontSize(-FONT_PT_STEP)}
-            onIncrease={() => updateFontSize(FONT_PT_STEP)}
-          />
-        </div>
+        <div className="px-3 py-3">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <label htmlFor={fontSizeId} className="ui-label shrink-0 whitespace-nowrap">
+              글자 크기
+            </label>
+            <output
+              htmlFor={fontSizeId}
+              aria-live="polite"
+              className="ui-label tabular-nums text-[var(--text-muted)]"
+            >
+              {baseFontPt}pt
+            </output>
+          </div>
 
-        <div className="flex min-h-14 items-center justify-between gap-3 px-3">
-          <span className="ui-label shrink-0 whitespace-nowrap">인용구 너비</span>
-          <SettingsStepper
-            label="인용구 너비"
-            value={`${citationWidthRem}rem`}
-            decreaseDisabled={citationWidthRem <= MIN_CITATION_WIDTH_REM}
-            increaseDisabled={citationWidthRem >= MAX_CITATION_WIDTH_REM}
-            onDecrease={() => updateCitationWidth(-CITATION_WIDTH_STEP_REM)}
-            onIncrease={() => updateCitationWidth(CITATION_WIDTH_STEP_REM)}
+          <input
+            id={fontSizeId}
+            type="range"
+            min={MIN_BASE_FONT_PT}
+            max={MAX_BASE_FONT_PT}
+            step={FONT_PT_STEP}
+            value={baseFontPt}
+            aria-valuetext={`${baseFontPt}포인트`}
+            className="mt-1 h-11 w-full cursor-pointer accent-[var(--accent)] sm:h-10"
+            onChange={(event) => onBaseFontPtChange(Number(event.currentTarget.value))}
           />
         </div>
       </div>

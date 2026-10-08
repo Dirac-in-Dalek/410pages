@@ -47,6 +47,7 @@ export const createMobileLayoutProps = (
 export const createMainLayoutProps = (
   input: MainLayoutFactoryInput
 ): ComponentProps<typeof MainLayout> => ({
+  bookReadingWorkspace: input.bookReadingWorkspace,
   onCloseInlinePassageNotes: input.onCloseInlinePassageNotes,
   onRightPanelOpenChange: input.onRightPanelOpenChange,
   hasInlinePassageNotes: input.hasInlinePassageNotes,

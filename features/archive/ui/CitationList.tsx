@@ -567,7 +567,9 @@ export const CitationList: React.FC<CitationListProps> = ({
                                     data-testid={`citation-${item.citation.id}`}
                                     hidden={item.id === detailCitationId}
                                     style={item.id === detailCitationId ? { display: 'none' } : undefined}
+                                    data-compare-comments={compareComments || undefined}
                                     className={[
+                                        'book-citation-row',
                                         compareComments ? 'grid grid-cols-[var(--book-column-left)_2.75rem_minmax(0,1fr)_auto] ml-[calc(-1*var(--book-column-left))]' : 'flex',
                                         'group relative items-start transition-[background-color,color] duration-150',
                                         item.citation.saveStatus === 'failed' ? 'bg-red-50/60 dark:bg-red-500/10' : '',
@@ -605,9 +607,9 @@ export const CitationList: React.FC<CitationListProps> = ({
                                     </label>
                                     </div>
                                     {inlinePassageNotes && (
-                                        <div hidden={!compareComments} className="order-1 flex w-[calc(100%+3rem)] shrink-0 self-stretch flex-col items-center py-0" style={!compareComments ? { display: 'none' } : undefined}>
+                                        <div hidden={!compareComments} className="book-passage-lane order-1 flex w-[calc(100%+3rem)] shrink-0 self-stretch flex-col items-center py-0" style={!compareComments ? { display: 'none' } : undefined}>
                                             {openedCommentIds.current.has(item.id) && (
-                                                <div hidden={!(showAllPassageNotes && item.citation.notes.length > 0) && passageNoteCitationId !== item.id} data-testid="inline-passage-comments" data-chapter-connection-obstacle className="flex w-64 flex-1 flex-col [&[hidden]]:hidden">
+                                                <div hidden={!(showAllPassageNotes && item.citation.notes.length > 0) && passageNoteCitationId !== item.id} data-testid="inline-passage-comments" data-chapter-connection-obstacle className="book-passage-column flex w-64 flex-1 flex-col [&[hidden]]:hidden">
                                                     <PassageNotesPanel inline citation={item.citation}
                                                         readOnly={passageNoteCitationId !== item.id}
                                                         onActivate={() => onPassageNoteCitationChange?.(item.id)}
@@ -686,7 +688,7 @@ export const CitationList: React.FC<CitationListProps> = ({
                                             </div>
                                         ) : null}
                                     </div>
-                                    <div className="order-4 flex shrink-0 items-start">
+                                    <div className="citation-detail-slot order-4 flex shrink-0 items-start justify-center">
 
                                     <button
                                         type="button"
@@ -695,7 +697,7 @@ export const CitationList: React.FC<CitationListProps> = ({
                                         disabled={detailCitationId !== null}
                                         title={detailCitationId ? '열린 편집 영역을 먼저 닫아주세요' : '이 인용문 편집 및 메모'}
                                         onClick={() => setDetailCitationId(item.citation.id)}
-                                        className="order-4 mt-3 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-[var(--text-muted)] opacity-0 transition-[background-color,opacity,transform] hover:bg-[var(--bg-input)] focus-visible:opacity-100 active:scale-95 group-hover:opacity-100"
+                                        className="citation-detail-button order-4 mt-3 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-[var(--text-muted)] opacity-0 transition-[background-color,opacity,transform] hover:bg-[var(--bg-input)] focus-visible:opacity-100 active:scale-95 group-hover:opacity-100"
                                         aria-label="문장 편집 및 삭제 열기"
                                     >
                                         <MoreHorizontal size={17} />

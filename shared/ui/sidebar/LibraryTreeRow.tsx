@@ -56,14 +56,14 @@ export const LibraryTreeRow: React.FC<LibraryTreeRowProps> = ({
 }) => {
   const paddingLeft = getLibraryTreePaddingLeft(depth);
   const hasChildren = item.type === 'author_folder' || Boolean(item.children?.length);
-  const guideOffset = Math.max(paddingLeft - 12, 10);
+  const guideOffset = `max(calc(${paddingLeft} - var(--reading-sidebar-indent, 12px)), 10px)`;
 
   return (
     <div className="relative">
       {showBefore && (
         <div
           className="mb-1 h-px rounded-full bg-[var(--accent-border)]"
-          style={{ marginLeft: `${paddingLeft + indicatorOffset}px` }}
+          style={{ marginLeft: `calc(${paddingLeft} + ${indicatorOffset}px)` }}
         />
       )}
 
@@ -71,7 +71,7 @@ export const LibraryTreeRow: React.FC<LibraryTreeRowProps> = ({
         <div
           aria-hidden="true"
           className="pointer-events-none absolute bottom-1 top-1 w-px bg-[var(--border-main)]"
-          style={{ left: `${guideOffset}px` }}
+          style={{ left: guideOffset }}
         />
       ) : null}
 
@@ -79,11 +79,11 @@ export const LibraryTreeRow: React.FC<LibraryTreeRowProps> = ({
         role={item.type === 'book' ? 'group' : 'button'}
         tabIndex={0}
         className={[
-          'group my-0.5 flex cursor-pointer select-none items-center rounded-[0.8rem] px-2.5 py-1.5 text-[14px] transition-[background-color,color,box-shadow,transform] duration-150 active:scale-[0.985]',
+          'library-tree-row group my-0.5 flex cursor-pointer select-none items-center rounded-[0.8rem] px-2.5 py-1.5 text-[14px] transition-[background-color,color,box-shadow,transform] duration-150 active:scale-[0.985]',
           isActive ? activeClassName : inactiveClassName,
           baseClassName,
         ].join(' ')}
-        style={{ paddingLeft: `${paddingLeft}px` }}
+        style={{ paddingLeft }}
         title={title}
         aria-label={title}
         aria-keyshortcuts={onReorderByKeyboard ? 'Alt+ArrowUp Alt+ArrowDown' : undefined}
@@ -112,12 +112,12 @@ export const LibraryTreeRow: React.FC<LibraryTreeRowProps> = ({
         {hasChildren ? (
           <button
             type="button"
-            className="mr-1.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[var(--text-muted)] transition-colors hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]"
+            className="library-tree-toggle mr-1.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[var(--text-muted)] transition-colors hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]"
             onClick={(event) => onToggle?.(event)}
             aria-label={`${title} ${isExpanded ? '접기' : '펼치기'}`}
             aria-expanded={isExpanded}
           >
-            {isExpanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+            {isExpanded ? <ChevronDown className="reading-sidebar-icon" size={13} /> : <ChevronRight className="reading-sidebar-icon" size={13} />}
           </button>
         ) : (
           <span className="mr-1.5 inline-block w-7 shrink-0" />
@@ -130,7 +130,7 @@ export const LibraryTreeRow: React.FC<LibraryTreeRowProps> = ({
             aria-label={`${item.label} 책 열기`}
             onClick={event => { event.stopPropagation(); onClick(); }}
             onDoubleClick={event => event.stopPropagation()}
-            className="ml-1 inline-flex min-h-11 shrink-0 items-center rounded-md px-2 text-xs text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)] sm:min-h-8 [@media(pointer:coarse)]:min-h-11"
+            className="library-tree-open ml-1 inline-flex min-h-11 shrink-0 items-center rounded-md px-2 text-xs text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)] sm:min-h-8 [@media(pointer:coarse)]:min-h-11"
           >열기</button>
         )}
       </div>
@@ -138,7 +138,7 @@ export const LibraryTreeRow: React.FC<LibraryTreeRowProps> = ({
       {showAfter && (
         <div
           className="mt-1 h-px rounded-full bg-[var(--accent-border)]"
-          style={{ marginLeft: `${paddingLeft + indicatorOffset}px` }}
+          style={{ marginLeft: `calc(${paddingLeft} + ${indicatorOffset}px)` }}
         />
       )}
     </div>

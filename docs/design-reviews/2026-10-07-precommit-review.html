@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>410pages · 커밋 전 리뷰</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#fff;color:#222;font:16px/1.7 system-ui,sans-serif}main{max-width:960px;margin:auto;padding:32px 24px}h1{font-size:28px;line-height:1.3}h2{font-size:21px;margin-top:32px}h3{font-size:18px;margin-top:24px}p{margin:10px 0}a{color:#a51b30;text-underline-offset:3px}a:focus-visible{outline:2px solid currentColor;outline-offset:3px}code{font-size:14px;overflow-wrap:anywhere}.small{color:#666;font-size:14px}table{width:100%;border-collapse:collapse;margin:16px 0}th,td{text-align:left;padding:10px 8px;border-bottom:1px solid #ddd;vertical-align:top}ol{padding-left:24px}li{margin:6px 0}@media(max-width:600px){main{padding:20px 16px}}
+  </style>
+</head>
+<body><main>
+  <h1>커밋 전 리뷰 · 동작 문제 3건 수정 완료</h1>
+  <p>현재 미커밋 변경사항을 마지막 커밋 <code>92a39c5</code>와 비교했습니다. 반응형·서재·메모와 글자 설정을 두 명이 독립 검토하고, 주 담당자가 세 문제를 임시 재현 시험으로 확인했습니다.</p>
+  <p>사용자가 승인한 세 수정안을 구현했습니다. 전체 84개 파일·603개 테스트, 타입 검사와 프로덕션 빌드가 통과했습니다. 독립 검토에서도 승인한 수정의 남은 차단 결함을 발견하지 않았습니다. 이 문서는 커밋 전 검토와 수정의 기록입니다.</p>
+  <p><a href="/?author=a9e9c451-4448-4204-9fb5-13c3282e156f&amp;book=71391929-4792-4c68-ad17-31a9143ea7f1">실제 로컬 책 화면</a></p>
+
+  <h2>수정 후 검증</h2>
+  <p><strong>화면 전환:</strong> 서재 오버레이 상태에서 읽기 화면을 벗어나면 본문의 inert와 배경 막이 즉시 해제되는 회귀 검사가 통과했습니다. 실제 앱에서도 홈 전환과 같은 책 복귀 후 본문 조작 제한이 없는 것을 확인했습니다. 실제 홈 전환은 일반 서재 상태로 확인했고, 겹쳐 열린 상태의 전환은 React 시험에서 확인했습니다.</p>
+  <p><strong>메모 폭:</strong> 실제 2560 화면에서 메모를 표시 상한까지 드래그한 뒤 1024로 줄였습니다. 첫 왼쪽 키 입력에서 폭이 174.33 → 158.33px로 정확히 16px 줄었습니다. 드래그도 첫 이동부터 반응했습니다. 시험 뒤 원래 선호 폭 약 360과 표시 폭 172.33px로 복원했습니다.</p>
+  <p><strong>글자 크기:</strong> 실제 1024에서 20pt와 7pt 모두 서재 폭 174.68px, 본문 글 영역 폭 316.66px, 본문 중심 599.34px로 같았습니다. 선택한 17pt로 복원했습니다. 새 글·메모를 저장하지 않았습니다.</p>
+
+  <h2>수정한 동작 문제 · P2</h2>
+  <p class="small">아래 조건과 결과는 수정 전 증상 기록입니다. 각 문제의 수정안과 회귀 검증은 완료했습니다.</p>
+  <h3>1. 서재를 겹쳐 연 뒤 홈으로 이동하면 새 화면 조작이 막힘</h3>
+  <p><strong>조건:</strong> 좁은 책 화면에서 서재를 본문 위에 겹쳐 열고, 그 안에서 홈이나 프로젝트를 선택합니다.</p>
+  <p><strong>결과:</strong> 책 읽기 모드는 끝나지만 오버레이 상태가 남습니다. 새 화면의 본문에도 <code>inert</code>가 유지되어 클릭과 키보드 조작이 막힙니다. 뒤의 어두운 막도 남고, 상단 서재 버튼의 동작이 표시와 어긋납니다.</p>
+  <p><strong>수정:</strong> 책 읽기 화면을 벗어날 때 오버레이와 관련 서재 상태를 정리합니다. 홈·프로젝트로 전환하는 검사를 추가합니다.</p>
+  <p class="small">위치: <code>components/MainLayout.tsx:207–209, 358</code>. React 테스트 모형에서 읽기 모드 해제 후에도 본문 inert와 닫기 막이 남는 것을 확인했습니다. 실제 저장 글이나 메모를 변경하지 않았습니다.</p>
+
+  <h3>2. 메모를 화면 한계까지 늘린 뒤 줄이기 조작이 한동안 반응하지 않음</h3>
+  <p><strong>조건:</strong> 넓은 화면에서 메모 폭을 크게 저장한 뒤 1024로 줄이거나, 메모가 화면 한계에 닿은 상태에서 계속 늘립니다.</p>
+  <p><strong>결과:</strong> 표시 폭은 제한되지만 조절은 큰 저장값에서 출발합니다. 저장값 960 → 944로 줄여도 실제 메모 폭은 218px로 그대로였습니다. 800·600·400에서도 표시 폭이 218px로 같았습니다.</p>
+  <p><strong>수정:</strong> 메모 표시 한계에 대응하는 저장값 범위를 공통 계산에서 반환하고, 서재처럼 드래그·키보드 조절을 현재 표시 한계에서 시작합니다. 화면을 줄인 뒤 반대 방향 조절 검사를 추가합니다.</p>
+  <p class="small">위치: <code>components/MainLayout.tsx:360</code>, <code>components/main-layout/getReadingWorkspaceMetrics.ts:60–64</code>. 공통 계산과 React 키보드 조절 시험으로 확인했습니다.</p>
+
+  <h3>3. 글자 크기만 바꿔도 서재가 접히고 본문 중심이 이동함</h3>
+  <p><strong>조건:</strong> 1024에서 서재를 연 뒤 글자 크기를 12pt → 20pt로 바꿉니다.</p>
+  <p><strong>결과:</strong> 댓글 최소 폭이 사용자 글자 크기에 비례합니다. 기본 서재 폭 선호 272에서 댓글 폭은 150.8px로 같지만 최소 기준이 96 → 160px로 늘어 서재가 자동으로 닫힙니다. 본문 중심도 614.4 → 512px로 바뀝니다. 글자 선택과 본문 폭·중심을 독립적으로 유지한다는 확정 기준과 어긋납니다.</p>
+  <p><strong>수정:</strong> 서재 자동 접기 기준을 사용자 글자 선택과 분리된 화면 공간 기준으로 계산합니다. 글자 범위를 오갈 때 서재 상태와 본문 중심을 유지하는 검사를 추가합니다.</p>
+  <p class="small">위치: <code>components/main-layout/getReadingWorkspaceMetrics.ts:74–76</code>, <code>components/MainLayout.tsx:195–205</code>. 계산과 React 상태 변화 시험으로 확인했습니다.</p>
+
+  <h2 id="solutions">권장 해결안과 완료 기준</h2>
+  <h3>1. 화면 전환 시 오버레이 상태만 정리</h3>
+  <p>책 읽기 화면을 벗어날 때 <code>libraryOverlayOpen</code>을 끄고, 서재 상태를 실제 펼침·접힘 값과 맞춥니다. 오버레이의 어두운 막과 본문 <code>inert</code>는 책 읽기 화면에서 오버레이가 실제로 활성화된 경우에만 적용합니다.</p>
+  <p>화면 전체를 새로 만드는 방식은 피합니다. 기존 초안과 책별 스크롤 위치를 유지하면서 막는 상태만 해제합니다.</p>
+  <p><strong>완료 기준:</strong> 서재를 겹쳐 연 상태에서 홈·프로젝트로 이동한 직후 새 화면의 클릭과 Tab 이동이 가능하고, 어두운 막이 사라집니다. 책으로 돌아가도 초안과 읽던 위치가 유지됩니다.</p>
+
+  <h3>2. 실제 표시 가능한 폭을 같은 조절 한계로 사용</h3>
+  <p>공통 계산 함수에서 화면 안에 표시 가능한 메모 폭과 그에 대응하는 저장값 범위를 구합니다. 이 범위를 기존 폭 조절 훅에 전달합니다. 표시와 드래그·키보드가 같은 한계를 사용하도록 맞춥니다.</p>
+  <p>조절을 시작할 때만 큰 저장값을 현재 표시 한계로 보정합니다. 화면이 작아졌다는 이유로 저장한 선호값을 즉시 덮어쓰지 않습니다. 사용자가 직접 조절하면 그 결과를 저장합니다.</p>
+  <p><strong>예:</strong> 저장값이 960이더라도 1024 화면에서 실제 최대 폭이 218px라면, 한 번 왼쪽으로 16px 조절했을 때 바로 202px로 줄어야 합니다.</p>
+  <p><strong>완료 기준:</strong> 큰 화면에서 메모를 넓힌 뒤 1024로 줄여도, 반대 방향 드래그와 첫 화살표 키 입력부터 폭이 변합니다. 본문 중심과 메모의 시작선은 유지됩니다.</p>
+
+  <h3>3. 자동 접기는 글자 선택과 별개의 공간 기준으로 계산</h3>
+  <p>현재의 <code>선택한 댓글 글자 크기 × 8</code> 기준을 화면 폭에 따른 공간 기준으로 바꿉니다. 예를 들어 현재 기본 12pt에서 쓰는 1024의 최소 댓글 폭 96px를 기준으로 삼고, 넓은 화면에서는 공통 계산으로 완만하게 늘립니다. 슬라이더 값은 이 기준에 넣지 않습니다.</p>
+  <p>화면이나 서재 폭이 바뀌어 공간이 부족하면 기존 자동 접기·다시 펼치기를 유지합니다. 글자 크기 변경은 글자의 크기·줄바꿈·입력 높이에만 반영합니다.</p>
+  <p><strong>완료 기준:</strong> 같은 화면과 서재 폭에서 7pt → 20pt → 12pt로 바꿔도 서재 상태와 본문 폭·중심이 유지됩니다. 화면·서재 폭 변경에 따른 공간 부족 처리와 읽던 위치·입력 커서 보존도 함께 확인합니다.</p>
+
+  <p><strong>구현 범위:</strong> <code>components/MainLayout.tsx</code>, <code>components/main-layout/getReadingWorkspaceMetrics.ts</code>, <code>components/main-layout/BookReadingWorkspace.tsx</code>와 관련 검사입니다. 메모 조절은 기존 <code>useSidebarResize</code> 훅의 범위 인자를 재사용하며, 스크린리더에 표시하는 최소·최대·현재 값도 같은 범위를 사용합니다. 새 라이브러리나 저장 필드 변경 없이 구현했습니다.</p>
+
+  <h2>문서 정리 · P3</h2>
+  <p><code>docs/policies/settings-panel.md</code>의 인용구 너비도 같은 행 구조를 사용한다는 이전 문장을 제거해, 현재의 인용구 너비 조절 제거 정책과 맞췄습니다.</p>
+
+  <h2>통과한 부분과 검증 범위</h2>
+  <p>숫자만 표시하는 7~20pt 슬라이더, 기본 12pt, 초기 화면과 설정 정규화, 기존 범위 안의 숫자값 유지, 연속 변경 300ms 저장 예약과 계정 전환 시 예약 취소는 확인했습니다. 변경된 주요 UI의 자동 디자인 검사도 문제를 보고하지 않았습니다.</p>
+  <p class="small">수정 전 세 문제는 코드와 React 시험에서 재현했고, 수정 후 글자·메모 조절과 일반 화면 전환은 실제 인앱 브라우저에서도 확인했습니다. 마우스 드래그 검증은 브라우저 입력 API로 수행했습니다. VoiceOver/NVDA의 실제 음성, 실물 터치와 모니터별 배율은 이번 검증에 포함하지 않았습니다.</p>
+  <p class="small">리뷰 전용 임시 시험 파일과 완료된 검사 프로세스는 정리했습니다. 기존 로컬 서버와 실제 책 탭은 검토용으로 유지합니다.</p>
+</main></body></html>

@@ -10,7 +10,7 @@
     --font-display: 'Noto Serif KR', 'Iowan Old Style', 'Times New Roman', serif;
     --font-ui-active: var(--font-ui);
     --font-display-active: var(--font-display);
-    --font-base-pt: 13pt;
+    --font-base-pt: 12pt;
     --citation-column-width: 44rem;
     --type-muted-size: calc(var(--font-base-pt) * 0.75);
     --type-label-size: calc(var(--font-base-pt) * 0.875);
@@ -1069,17 +1069,377 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
 .book-insertion-preview { margin-block: 0.5rem; grid-template-columns: 2.75rem minmax(0, 1fr); }
 .book-insertion-preview > span:last-child { display: flex; align-items: center; min-height: 2.75rem; padding: 0.5rem 0.75rem; border: 1px dashed var(--accent); border-radius: 0.5rem; background: var(--accent-soft); color: var(--text-main); font-size: 0.8125rem; overflow-wrap: anywhere; }
 
-/* Match the saved citation's text column, including its action gutters. */
+/* Keep the input aligned with saved text while its depth controls sit outside. */
+.book-composer-frame {
+  --composer-indent: min(calc(var(--citation-depth, 0) * var(--chapter-indent-step, 2rem)), var(--chapter-indent-limit, 6rem));
+  width: calc(100% - var(--composer-indent));
+  margin-inline-start: var(--composer-indent);
+  transition: width 200ms ease-out, margin-inline-start 200ms ease-out;
+}
+.book-composer-row {
+  --composer-rail: 0px;
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 12px;
+  row-gap: 8px;
+  width: calc(100% + var(--composer-rail));
+  margin-inline-start: calc(-1 * var(--composer-rail));
+}
+.book-composer-row[data-depth-controls="true"] {
+  --composer-rail: min(104px, max(0px, calc(var(--book-composer-left-room, var(--book-column-left, 12px)) + var(--composer-indent) - 4px)));
+}
+.book-composer-row > .book-citation-composer {
+  flex: 0 0 calc(100% - var(--composer-rail));
+  min-width: 0;
+  margin-inline-start: auto;
+}
 .book-citation-composer {
-  margin-inline-start: min(calc(var(--citation-depth, 0) * var(--chapter-indent-step)), var(--chapter-indent-limit));
+  container-type: inline-size;
+  --composer-control-height: 32px;
+  transition-property: border-color, background-color, box-shadow;
+  transition-duration: 200ms;
+  transition-timing-function: ease-out;
 }
 .book-citation-composer .citation-composer-text {
   padding-inline-start: calc(3rem - 3px);
   padding-inline-end: calc(2.75rem - 3px);
 }
 .book-citation-composer textarea {
+  display: block;
   padding-inline: 0;
   font-family: var(--font-display-active);
   font-size: var(--type-body-size);
   line-height: 1.72;
+}
+
+/* The desktop book is one bounded reading group, rather than two sidebars. */
+.book-reading-host { flex: 1; min-height: 0; min-width: 0; padding-inline: var(--reading-host-padding, 24px); }
+.book-reading-workspace {
+  display: grid;
+  grid-template-columns: var(--reading-comment-width, 262px) var(--reading-commentGap-width, 40px) var(--reading-body-width, 592px) var(--reading-memoGap-width, 40px) var(--reading-memo-width, 264px);
+  width: var(--reading-total-width, 1198px);
+  height: 100%;
+  margin-inline-start: var(--reading-group-left, 0px);
+}
+.book-reading-primary { grid-column: 1 / 4; min-height: 0; width: calc(100% + var(--reading-scrollbar-width, 0px)); }
+.book-reading-workspace [data-book-header] > div { padding-block: 34px 22px; padding-inline: 48px 44px; }
+.book-reading-workspace .book-title { font-size: calc(var(--type-body-size) * 12 / 7); }
+.book-reading-workspace .book-passage-lane { width: var(--reading-comment-width, 262px); align-items: flex-start; }
+.book-reading-workspace .book-passage-column { width: var(--reading-comment-width, 262px); }
+.book-reading-workspace [data-archive-scroll] { overflow-x: hidden; }
+.book-reading-memo { grid-column: 5; min-height: 0; position: relative; }
+.book-reading-memo-scroll { height: 100%; overflow-y: auto; padding: 34px 0 24px 10px; }
+.book-reading-memo[data-collapsed="true"] .book-reading-memo-scroll { overflow-y: hidden; }
+.book-reading-workspace [data-reading-scrollbar] { scrollbar-gutter: stable; }
+.book-reading-workspace [data-reading-scrollbar]::-webkit-scrollbar { width: 4px; height: 4px; }
+.book-reading-workspace [data-reading-scrollbar]::-webkit-scrollbar-track { background: transparent; }
+.book-reading-workspace [data-reading-scrollbar]::-webkit-scrollbar-thumb { border-radius: 999px; background: transparent; }
+.book-reading-workspace [data-reading-scrollbar][data-scrolling="true"]::-webkit-scrollbar-thumb { background: var(--text-muted); }
+@supports (-moz-appearance: none) {
+  .book-reading-workspace [data-reading-scrollbar] { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+  .book-reading-workspace [data-reading-scrollbar][data-scrolling="true"] { scrollbar-color: var(--text-muted) transparent; }
+}
+.book-reading-memo [data-reading-memo] { display: block; height: auto; min-height: 100%; background: transparent; border: 0; }
+.book-reading-memo [data-reading-memo] > header { position: sticky; top: 0; z-index: 1; border: 0; padding: 0; min-height: 36px; gap: 6px; margin-bottom: 22px; background: var(--bg-main); }
+.book-reading-memo [data-reading-memo] > header p { display: none; }
+.book-reading-memo [data-reading-memo] > header h2 { font-family: var(--font-display-active); font-size: 18px; line-height: 1.5; }
+.book-reading-memo [data-reading-memo] > label { display: block; padding: 0; }
+.book-reading-memo [data-reading-memo] textarea { display: block; width: 100%; min-height: 360px; overflow: hidden; font-family: var(--font-display-active); font-size: var(--type-body-size); line-height: 1.72; }
+.book-reading-memo [data-reading-memo] > footer { padding: 8px 0 0; min-height: 44px; }
+.book-reading-memo-resize { position: absolute; inset-block: 0; right: -8px; width: 8px; cursor: col-resize; }
+.book-reading-memo-resize:hover, .book-reading-memo-resize:focus-visible { background: var(--accent-border); outline: none; }
+
+/* User-selected book composer: visible kinds and a compact save action. */
+.book-composer-kinds { display: inline-flex; flex: none; align-items: center; gap: 2px; border: 1px solid var(--border-main); border-radius: 20px; padding: 2px; background: var(--bg-input); }
+.book-composer-kinds label { position: relative; display: grid; place-items: center; min-width: 64px; min-height: calc(var(--composer-control-height) - 6px); padding: 0 10px; border-radius: 17px; white-space: nowrap; font-size: 14px; color: var(--text-main); cursor: pointer; }
+.book-composer-kinds input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.book-composer-kinds label:has(input:checked) { background: var(--bg-card); font-weight: 600; }
+.book-composer-kinds label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.book-composer-kinds:has(input:disabled) { opacity: 0.6; }
+.book-composer-depth-controls {
+  --composer-control-height: 32px;
+  --depth-button-count: 1;
+  --depth-controls-size: calc(var(--composer-control-height) * var(--depth-button-count) + 4px * (var(--depth-button-count) - 1));
+  display: flex;
+  flex: none;
+  align-items: center;
+  align-self: flex-end;
+  gap: 4px;
+  margin-bottom: 9px;
+  padding-inline-start: max(0px, calc(var(--composer-rail) - var(--depth-controls-size) - 12px));
+}
+.book-composer-depth-controls:has(button + button) { --depth-button-count: 2; }
+.book-composer-depth-controls button { display: grid; place-items: center; width: var(--composer-control-height); height: var(--composer-control-height); border: 0; border-radius: 999px; background: transparent; color: var(--text-main); }
+.book-composer-depth-controls button:disabled { opacity: 1; color: var(--text-muted); cursor: not-allowed; }
+.book-composer-depth-controls button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.book-composer-actions { display: flex; flex: none; align-items: center; margin-left: auto; gap: 12px; }
+.book-composer-page { width: 124px; height: var(--composer-control-height); min-height: var(--composer-control-height); border-radius: 20px; }
+.book-composer-page > svg { margin-right: 7px; }
+.book-composer-page input { height: 100%; min-height: 0; font-size: 16px; }
+.book-composer-submit { width: var(--composer-control-height); height: var(--composer-control-height); border-radius: 50%; }
+.dark .book-composer-submit:not(:disabled) { color: var(--bg-main); }
+@container (max-width: 414px) {
+  .book-composer-toolbar { --composer-control-height: 44px; }
+}
+@media (max-width: 1023px) {
+  .book-composer-depth-controls { --composer-control-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .book-composer-frame, .book-citation-composer { transition: none; }
+}
+
+/* Large-screen reading metrics. The wrapper owns every value; consumers only apply it. */
+@media (min-width: 1024px) {
+  .reading-responsive {
+    --type-body-size: var(--reading-body-font-size, 1rem);
+    --type-body-bounded-size: var(--reading-ui-font-size, 1rem);
+    --type-label-size: var(--reading-label-font-size, 0.875rem);
+    --type-label-bounded-size: var(--reading-label-font-size, 0.875rem);
+    --type-action-size: var(--reading-label-font-size, 0.875rem);
+    --type-action-bounded-size: var(--reading-label-font-size, 0.875rem);
+    --type-muted-size: var(--reading-annotation-font-size, 0.75rem);
+    --type-muted-bounded-size: var(--reading-annotation-font-size, 0.75rem);
+    --type-title-size: var(--reading-title-font-size, 1.25rem);
+    --type-title-bounded-size: var(--reading-title-font-size, 1.125rem);
+  }
+
+  .reading-responsive > header > div {
+    height: var(--reading-header-height, 50.4px);
+    padding-inline: var(--reading-header-padding, 16px);
+  }
+  .reading-responsive > header .brand-wordmark,
+  .reading-responsive > header > div > div:last-child {
+    width: var(--reading-wordmark-width, 112px) !important;
+  }
+  .reading-responsive > header .brand-wordmark {
+    font-size: calc(var(--reading-ui-font-size, 1rem) * 1.25);
+  }
+  .reading-responsive > header > div > button:first-child,
+  .reading-responsive > header label {
+    height: max(36px, var(--reading-control-size, 32px));
+  }
+  .reading-responsive > header > div > button:first-child span {
+    font-size: var(--reading-label-font-size, 0.875rem);
+  }
+  .reading-responsive > header > div > div:last-child > button {
+    width: max(40px, var(--reading-control-size, 32px));
+    height: max(40px, var(--reading-control-size, 32px));
+  }
+  .reading-responsive > header label {
+    max-width: var(--reading-search-width, 544px);
+    font-size: var(--reading-ui-font-size, 1rem);
+  }
+  .reading-responsive > header svg {
+    width: var(--reading-icon-size, 16px);
+    height: var(--reading-icon-size, 16px);
+  }
+
+  .reading-responsive .project-sidebar {
+    font-size: var(--reading-sidebar-font-size, 0.875rem);
+  }
+  .reading-responsive .project-sidebar-content {
+    padding-inline: var(--reading-sidebar-padding, 12px);
+  }
+  .reading-responsive .project-sidebar-content > button,
+  .reading-responsive .project-sidebar-content > div > button,
+  .reading-responsive .project-sidebar-content > div > div > button,
+  .reading-responsive .library-tree-row {
+    min-height: var(--reading-sidebar-row-height, 40px);
+    padding-block: var(--reading-sidebar-row-padding, 4px);
+    font-size: var(--reading-sidebar-font-size, 0.875rem);
+  }
+  .reading-responsive .project-sidebar-recent-title {
+    font-size: var(--reading-sidebar-font-size, 0.875rem);
+  }
+  .reading-responsive .project-sidebar-recent-meta,
+  .reading-responsive .project-sidebar-section {
+    font-size: var(--reading-sidebar-meta-font-size, 0.75rem);
+  }
+  .reading-responsive .project-sidebar-content > p,
+  .reading-responsive .project-sidebar-content .type-section-bounded,
+  .reading-responsive .library-sidebar-tree > div:first-child {
+    font-size: var(--reading-sidebar-label-font-size, 0.75rem);
+  }
+  .reading-responsive .project-sidebar-section + div > button {
+    font-size: var(--reading-sidebar-label-font-size, 0.75rem);
+    gap: var(--reading-sidebar-row-padding, 4px);
+    padding-inline: var(--reading-sidebar-row-padding, 4px);
+    white-space: nowrap;
+  }
+  .reading-responsive .project-sidebar svg,
+  .reading-responsive .reading-sidebar-icon {
+    width: var(--reading-sidebar-icon-size, 16px);
+    height: var(--reading-sidebar-icon-size, 16px);
+  }
+  .reading-responsive .library-tree-toggle,
+  .reading-responsive .library-tree-row > span:first-of-type,
+  .reading-responsive .library-tree-open,
+  .reading-responsive .library-sidebar-tree .ui-btn-icon {
+    width: var(--reading-sidebar-control-size, 28px);
+    height: var(--reading-sidebar-control-size, 28px);
+    min-height: var(--reading-sidebar-control-size, 28px);
+  }
+  .reading-responsive .library-tree-open {
+    font-size: var(--reading-sidebar-label-font-size, 0.75rem);
+  }
+
+  .reading-responsive .book-reading-workspace [data-book-header] > div {
+    padding-block-start: calc(var(--reading-row-gap, 40px) * 0.85);
+    padding-block-end: calc(var(--reading-row-gap, 40px) * 0.55);
+    padding-inline-start: var(--reading-body-pad-left, 48px);
+    padding-inline-end: var(--reading-body-pad-right, 44px);
+  }
+  .reading-responsive .book-reading-workspace [data-book-header] button {
+    min-height: var(--reading-control-size, 32px);
+    font-size: var(--reading-annotation-font-size, 0.75rem);
+  }
+  .reading-responsive .book-reading-workspace .book-title {
+    font-size: var(--reading-title-font-size, calc(var(--reading-body-font-size, 1rem) * 12 / 7));
+  }
+  .reading-responsive .chapter-list,
+  .reading-responsive .book-writing-surface {
+    --chapter-indent-step: var(--reading-indent-step, 32px);
+    --chapter-indent-limit: var(--reading-indent-cap, 96px);
+    --chapter-text-offset: var(--reading-body-pad-left, 48px);
+  }
+  .reading-responsive .chapter-row {
+    grid-template-columns: calc(var(--reading-body-pad-left, 48px) - var(--reading-editor-gap, 12px) / 3) minmax(0, 1fr) var(--reading-control-size, 32px) var(--reading-control-size, 32px);
+    column-gap: calc(var(--reading-editor-gap, 12px) / 3);
+    min-height: var(--reading-control-size, 32px);
+  }
+  .reading-responsive .chapter-control,
+  .reading-responsive .chapter-title-input {
+    height: var(--reading-control-size, 32px);
+  }
+  .reading-responsive .chapter-control svg,
+  .reading-responsive .book-citation-row svg,
+  .reading-responsive .book-citation-composer svg,
+  .reading-responsive .book-composer-depth-controls svg {
+    width: var(--reading-icon-size, 16px);
+    height: var(--reading-icon-size, 16px);
+  }
+  .reading-responsive .chapter-title-input {
+    font-size: var(--reading-body-font-size, 1rem);
+  }
+  .reading-responsive .chapter-title-root { font-size: calc(var(--reading-body-font-size, 1rem) * 1.6); }
+  .reading-responsive .chapter-title-child { font-size: calc(var(--reading-body-font-size, 1rem) * 1.3); }
+  .reading-responsive .chapter-title-deep { font-size: calc(var(--reading-body-font-size, 1rem) * 1.1); }
+  .reading-responsive .chapter-row { --chapter-font-size: calc(var(--reading-body-font-size, 1rem) * 1.1); }
+  .reading-responsive .chapter-row[data-chapter-depth="0"] { --chapter-font-size: calc(var(--reading-body-font-size, 1rem) * 1.6); }
+  .reading-responsive .chapter-row[data-chapter-depth="1"] { --chapter-font-size: calc(var(--reading-body-font-size, 1rem) * 1.3); }
+  .reading-responsive .chapter-row[data-chapter-editing="false"] > .chapter-control {
+    margin-top: calc((var(--chapter-first-line-height) - var(--reading-control-size, 32px)) / 2);
+  }
+  .reading-responsive .chapter-drop-anchor {
+    width: var(--reading-control-size, 32px);
+    height: var(--reading-control-size, 32px);
+  }
+  .reading-responsive .book-row-content[data-row-kind="sentence"] {
+    padding-block: calc(var(--reading-row-gap, 40px) / 2);
+  }
+  .reading-responsive .book-citation-row[data-compare-comments="true"] {
+    grid-template-columns: var(--reading-body-left, 302px) calc(var(--reading-body-pad-left, 48px) - 4px) minmax(0, 1fr) calc(var(--reading-body-pad-right, 44px) - 4px);
+    margin-left: calc(-1 * var(--reading-body-left, 302px));
+  }
+  .reading-responsive .citation-gutter {
+    width: calc(var(--reading-body-pad-left, 48px) - 4px);
+  }
+  .reading-responsive .citation-gutter .citation-move-handle,
+  .reading-responsive .citation-gutter label {
+    width: var(--reading-control-size, 32px);
+    height: var(--reading-control-size, 32px);
+  }
+  .reading-responsive .citation-detail-slot {
+    width: calc(var(--reading-body-pad-right, 44px) - 4px);
+  }
+  .reading-responsive .citation-detail-button {
+    width: var(--reading-control-size, 32px);
+    height: var(--reading-control-size, 32px);
+  }
+  .reading-responsive [data-book-citation-text] {
+    font-size: var(--reading-body-font-size, 1rem);
+  }
+  .reading-responsive [data-citation-metadata] {
+    margin-top: var(--reading-editor-gap, 12px);
+    gap: calc(var(--reading-editor-gap, 12px) / 2) var(--reading-editor-gap, 12px);
+    font-size: var(--reading-annotation-font-size, 0.76rem);
+  }
+  .reading-responsive [data-citation-metadata] svg,
+  .reading-responsive .book-passage-column svg,
+  .reading-responsive [data-reading-memo] [aria-live] svg {
+    width: var(--reading-small-icon-size, 14px);
+    height: var(--reading-small-icon-size, 14px);
+  }
+
+  .reading-responsive .book-passage-column {
+    font-size: var(--reading-annotation-font-size, 0.75rem);
+  }
+  .reading-responsive .book-passage-column .passage-notes-content {
+    padding-inline: var(--reading-comment-pad, 6px);
+  }
+  .reading-responsive .book-passage-column p,
+  .reading-responsive .book-passage-column textarea,
+  .reading-responsive .book-passage-column h2 {
+    font-size: var(--reading-annotation-font-size, 0.75rem);
+    line-height: 1.6;
+  }
+  .reading-responsive .book-passage-column button {
+    font-size: var(--reading-label-font-size, 0.875rem);
+  }
+
+  .reading-responsive .book-reading-memo-scroll {
+    padding-block-start: calc(var(--reading-row-gap, 40px) * 0.85);
+    padding-inline-start: var(--reading-memo-pad, 10px);
+  }
+  .reading-responsive .book-reading-memo [data-reading-memo] > header {
+    min-height: var(--reading-control-size, 32px);
+    gap: calc(var(--reading-editor-gap, 12px) / 2);
+  }
+  .reading-responsive .book-reading-memo [data-reading-memo] > header h2 {
+    font-size: var(--reading-ui-font-size, 1rem);
+  }
+  .reading-responsive .book-reading-memo [data-reading-memo] > header button {
+    width: var(--reading-control-size, 32px);
+    height: var(--reading-control-size, 32px);
+  }
+  .reading-responsive .book-reading-memo [data-reading-memo] > header button svg {
+    width: calc(var(--reading-icon-size, 16px) * 1.125);
+    height: calc(var(--reading-icon-size, 16px) * 1.125);
+  }
+  .reading-responsive .book-reading-memo [data-reading-memo] textarea {
+    min-height: var(--reading-memo-min-height, 360px);
+    font-size: var(--reading-body-font-size, 1rem);
+  }
+
+  .reading-responsive .book-composer-frame {
+    --composer-indent: min(calc(var(--citation-depth, 0) * var(--reading-indent-step, 32px)), var(--reading-indent-cap, 96px));
+  }
+  .reading-responsive .book-composer-row {
+    column-gap: var(--reading-editor-gap, 12px);
+    row-gap: calc(var(--reading-editor-gap, 12px) * 2 / 3);
+  }
+  .reading-responsive .book-composer-row[data-depth-controls="true"] {
+    --composer-rail: min(var(--reading-hierarchy-rail, 104px), max(0px, calc(var(--book-composer-left-room, var(--book-column-left, 12px)) + var(--composer-indent) - 4px)));
+  }
+  .reading-responsive .book-citation-composer,
+  .reading-responsive .book-composer-depth-controls {
+    --composer-control-height: var(--reading-control-size, 32px);
+  }
+  .reading-responsive .book-citation-composer textarea {
+    font-size: var(--reading-body-font-size, 1rem);
+  }
+  .reading-responsive .book-citation-composer .citation-composer-text {
+    padding-inline-start: calc(var(--reading-body-pad-left, 48px) - 3px);
+    padding-inline-end: calc(var(--reading-body-pad-right, 44px) - 3px);
+  }
+  .reading-responsive .book-composer-kinds label,
+  .reading-responsive .book-composer-page input {
+    font-size: var(--reading-label-font-size, 0.875rem);
+  }
+  .reading-responsive .book-composer-page {
+    width: var(--reading-page-width, 124px);
+  }
+  .reading-responsive .book-composer-actions {
+    gap: var(--reading-editor-gap, 12px);
+  }
 }

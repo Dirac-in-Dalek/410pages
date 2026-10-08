@@ -30,7 +30,7 @@
 
 ## 5. Layout and Spacing
 
-- The reading column is the main anchor and retains a consistent maximum width.
+- The reading column is the main anchor. Desktop book widths follow the viewport reading budget rather than a fixed maximum; see the 2026-10-07 update below.
 - Use the existing 4px-based spacing scale; major component gaps are 8, 12, 16, or 24px.
 - Author index tiles form the home rhythm; book silhouettes form the second-level rhythm. Inside a book, sentences and words use the same flat rows separated by whitespace or a single divider.
 - Desktop uses one left navigation rail. Mobile exposes the same hierarchy in one modal sheet.
@@ -72,6 +72,16 @@
 - Word text uses `break-words`; editor controls use wrapping flex layouts.
 - Desktop search remains visually centered even when account actions change width.
 - Mobile overlays use a plain dim layer and solid panels, not glassmorphism.
+
+## 2026-10-07 Wider book reading workspace
+
+- At 1024 CSS pixels and above, center the title, citation text and composer text on the whole viewport when the sidebar is closed, and on the remaining area when it occupies space. Default visible comment/body/memo widths use 1:2:1.
+- Use one `getReadingWorkspaceMetrics` result for typography, widths, spacing, controls, indentation and sidebar density. Grow reading space faster than text; do not uniformly scale the 1024 scene.
+- The user chooses font size. Citation width follows the screen reading budget and does not change when only font preference changes. Height affects visible space and memo minimum height, not font growth.
+- Grow the sidebar and its contents. For book detail, scale its source width with the viewport and cap the displayed width at 30% of the viewport; the default source yields about 20% above 1360px. Recompute the reading budget and center after sidebar changes. This follow-up user decision replaces the earlier fixed global center and no-touch comment position rule. Keep the minimum-space sidebar fallback available.
+- Keep the memo's starting edge anchored next to the body; resize from its right edge. Preserve source preferences separately from displayed sizes.
+- Use the displayed memo limits for drag and keyboard bounds; viewport changes alone do not overwrite source preferences. Library space fallback follows viewport geometry, not the user's font size. Clear reading-only overlays when navigating out of book detail.
+- Resize textareas after width/font changes without remounting or losing drafts, selection or reading anchors. Preserve the user-approved composer width animation and reduced-motion behavior.
 
 ## 2026-09-13 Chapter alignment refinement
 

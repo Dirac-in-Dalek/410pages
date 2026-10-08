@@ -1,0 +1,53 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "cream-palette",
+        "value": "*",
+        "files": [
+          "docs/design-reviews/2026-10-06-auth-alert.html"
+        ],
+        "createdAt": "2026-10-06T04:35:38.431Z",
+        "reason": "Codex: intentional comparison fixture reproduces the existing Mahler Light palette from index.css:317-345; preserving the incumbent background keeps the error-color comparison controlled."
+      },
+      {
+        "rule": "repeating-stripes-gradient",
+        "value": "*",
+        "files": [
+          "docs/design-reviews/2026-10-06-auth-alert.html"
+        ],
+        "createdAt": "2026-10-06T04:35:38.505Z",
+        "reason": "Codex: intentional comparison fixture renders the existing Mahler Light texture from index.css:342-344; this is inherited reference context rather than a new texture proposal."
+      },
+      {
+        "rule": "layout-transition",
+        "value": "*",
+        "files": [
+          "docs/design-reviews/2026-10-06-chapter-writing-controls.css"
+        ],
+        "createdAt": "2026-10-06T08:55:40.894Z",
+        "reason": "user confirmed: 2026-10-06 화살표를 누르면 실제 입력창이 늘고 줄어드는 애니메이션을 요청했다. Codex: 글자 크기와 줄바꿈을 유지하기 위해 시안의 margin-inline-start 전환을 200ms로 한정했고 reduced-motion에서는 끈다. 이 예외는 성능 측정 완료를 뜻하지 않는다."
+      },
+      {
+        "rule": "layout-transition",
+        "value": "*",
+        "files": [
+          "index.css"
+        ],
+        "createdAt": "2026-10-06T11:57:09.837Z",
+        "reason": "user confirmed: 실제 입력창 폭이 화살표에 따라 늘고 줄어드는 애니메이션을 요청하고 구현을 승인했다(2026-10-06). Codex: 2026-10-07 화살표를 박스 밖으로 옮기면서 book-composer-frame의 width와 margin-inline-start를 200ms ease-out으로 전환한다. 글자·커서를 확대하지 않고 같은 단계 인용문과 줄바꿈을 맞추며 reduced-motion에서는 전환을 끈다. 성능 프레임 측정은 미검증이다."
+      },
+      {
+        "rule": "repeating-stripes-gradient",
+        "value": "*",
+        "files": [
+          "docs/design-reviews/2026-10-06-chapter-writing-fixture.html"
+        ],
+        "createdAt": "2026-10-06T12:04:03.831Z",
+        "reason": "Codex: 제품 UI를 그대로 렌더링하는 로컬 검증 fixture가 기존 전체 theme index.css를 읽는다. 새 줄무늬를 설계한 것이 아니며 사용자 승인한 입력부 배치만 비교한다. 기존 테마 팔레트와 질감을 보존한다."
+      }
+    ]
+  }
+}

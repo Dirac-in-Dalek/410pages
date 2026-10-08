@@ -1,0 +1,95 @@
+{
+  "date": "2026-10-06",
+  "status": "implemented-and-verified",
+  "branch": "codex/410pages-ui-components",
+  "implementationApproved": true,
+  "baselineViewport": [
+    1024,
+    768
+  ],
+  "actualApp": {
+    "desktop": true,
+    "composerOuterWidth": 592,
+    "textWidth": 500,
+    "savedTextWidth": 500,
+    "textLeft": 380,
+    "textRight": 880,
+    "composerHeight": 102,
+    "serverWritesDuringQa": 0
+  },
+  "localComponentFlow": {
+    "createChapterAtDepth": 2,
+    "afterSaveMode": "citation",
+    "consecutiveQuotes": 2,
+    "quoteDepths": [
+      2,
+      2
+    ],
+    "composerTextWidth": 436,
+    "quoteTextWidths": [
+      436,
+      436
+    ],
+    "leftRightDifference": 0,
+    "forwardAnchor": "citation-102",
+    "nextAllowedDepth": 3
+  },
+  "browserChecks": {
+    "keyboardInAtLimitFocus": "out-arrow",
+    "keyboardOutAtRootFocus": "in-arrow",
+    "transparentPill": true,
+    "resizeTransitionElapsedSeconds": 0.2,
+    "reducedMotionSeconds": 0,
+    "mobileWidth657": {
+      "scrollbar": 4,
+      "footerCorrection": 4,
+      "inputAndQuoteTextWidth": 505
+    },
+    "emptyMobileBook": {
+      "scrollbar": 0,
+      "footerCorrection": 0,
+      "inwardDisabled": true
+    },
+    "nightWidth375": {
+      "touchHeight": 44,
+      "actionGroupWrapsTogether": true,
+      "horizontalOverflow": false
+    }
+  },
+  "verification": {
+    "typecheck": "pass",
+    "build": "pass",
+    "diffWhitespace": "pass",
+    "testFiles": 80,
+    "testsPassed": 564,
+    "failed": 0
+  },
+  "review": {
+    "depth": "deep",
+    "specialistModel": "gpt-6-astra",
+    "reasoningEffort": "high",
+    "agents": 1,
+    "actionableSpecialistDefects": 0,
+    "browserFollowupDefectFixed": "keyboard inward at maximum moved focus to BODY"
+  },
+  "unverified": [
+    "new chapter/citation persistence on real server",
+    "physical touch devices",
+    "other browsers",
+    "animation frame performance",
+    "deployment outcome"
+  ],
+  "sourceHashes": {
+    "features/citation-entry/ui/CitationEditor.tsx": "83e8f583de6edae9f840fe1a0bb2bb305df81129f851d6984fa59ddd5a0fe5fc",
+    "features/archive/ui/ArchiveScreen.tsx": "fe1d6c8e29616f35362a5ade83239886cacfca94c4fee70f5f73a2432187c8e5",
+    "index.css": "8915c224ac805101d6eaff381aac925c97f756898fcd1b99387762d385c133a8"
+  },
+  "resources": {
+    "temporaryViewportCleared": true,
+    "reducedMotionOverrideCleared": true,
+    "qaTab": "25",
+    "qaTabDisposition": "converted to implementation report",
+    "developmentServerPid": 47020,
+    "serverKeptFor": "continued user browser annotations"
+  }
+}

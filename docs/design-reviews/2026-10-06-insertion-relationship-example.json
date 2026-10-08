@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "target": "410pages-book-citation-composer",
+  "scope": "insertion-relationship-display",
+  "baselineVersion": "CitationEditor:e3238c7b985cdcf9",
+  "storageKey": "410pages.workbench.insertion-relationship.v1",
+  "unit": "CSS px",
+  "parameters": {
+    "placement": "gutter",
+    "cueSize": 16,
+    "hideStatus": true,
+    "connector": true
+  },
+  "comparisonEnvironment": {
+    "relationship": "child",
+    "width": 633,
+    "theme": "day",
+    "kind": "citation",
+    "parentOffscreen": false,
+    "pending": false,
+    "content": ""
+  },
+  "implementationApproved": false
+}

@@ -58,7 +58,7 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
 
     if (isBookView && compactBookHeader) {
         return (
-            <div className={columnClassName}>
+            <div data-book-header>
                 <div className="px-12 pb-2 pt-3">
                     <h2 data-search-results-title tabIndex={-1} className="book-title break-words text-[var(--text-main)]">{title}</h2>
                     {onBackToAuthor && (

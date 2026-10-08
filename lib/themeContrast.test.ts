@@ -1,5 +1,8 @@
 import { readFileSync } from 'node:fs';
+import postcss from 'postcss';
+import tailwindcss from 'tailwindcss';
 import { describe, expect, it } from 'vitest';
+import tailwindConfig from '../tailwind.config.js';
 
 const relativeLuminance = (hex: string) => {
   const channels = hex
@@ -34,6 +37,34 @@ describe('theme muted text contrast', () => {
         expect(surface, `${theme} surface token`).toBeTruthy();
         expect(contrastRatio(muted!, surface!), `${theme}: ${muted} on ${surface}`).toBeGreaterThanOrEqual(4.5);
       }
+    }
+  });
+});
+
+describe('theme utility activation', () => {
+  it('activates generated dark text only when the app adds its dark class', async () => {
+    const result = await postcss([tailwindcss({
+      ...tailwindConfig,
+      content: [{ raw: '<div class="text-red-800 dark:text-red-100"></div>', extension: 'html' }],
+    })]).process('@tailwind utilities;', { from: undefined });
+    let darkSelector = '';
+    result.root.walkRules((rule) => {
+      if (rule.selector.includes('dark\\:text-red-100')) darkSelector = rule.selector;
+    });
+    expect(darkSelector).not.toBe('');
+
+    const previousClasses = document.documentElement.className;
+    const message = document.createElement('div');
+    message.className = 'text-red-800 dark:text-red-100';
+    document.body.append(message);
+    try {
+      document.documentElement.classList.remove('dark');
+      expect(message.matches(darkSelector)).toBe(false);
+      document.documentElement.classList.add('dark');
+      expect(message.matches(darkSelector)).toBe(true);
+    } finally {
+      document.documentElement.className = previousClasses;
+      message.remove();
     }
   });
 });
