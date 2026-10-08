@@ -58,6 +58,8 @@ npm run build
 
 배포 환경에도 브라우저용 Supabase 변수와 서버용 YES24 변수를 구분해 설정해야 한다. 이 저장소의 CI는 타입 검사·테스트·빌드만 수행하며 운영 DB 변경이나 배포 성공을 보장하지 않는다.
 
+데이터베이스 점검 결과와 운영 확인 절차는 [2026-10-08 Supabase 점검](docs/database-audits/2026-10-08-supabase-health.md)을 참고한다. [읽기 전용 점검 SQL](supabase/audit/health-check.sql)은 SQL Editor에서 메타데이터·집계 JSON 하나를 반환한다. `python scripts/qa-database.py --output /tmp/410pages-database-audit.json`은 Docker의 일회성 PostgreSQL에서 저장소 SQL을 검증하며 운영 Supabase에는 연결하지 않는다.
+
 ## Git 생성물
 
 `.playwright-cli/`, `.superpowers/`, `output/playwright/`, `.env.local`, `dist/`, `node_modules/`는 로컬 파일로 유지한다. 보존할 시안·검증 기록만 `docs/design-reviews/`로 선별한다.
