@@ -20,7 +20,7 @@
 
 ## 배포 순서
 
-1. 운영 프로젝트의 SQL Editor에서 [`20261008120000_add_text_formatting.sql`](../../supabase/migrations/20261008120000_add_text_formatting.sql)을 실행한다. 기존 마이그레이션이 적용된 프로젝트가 전제다. SQL은 트랜잭션으로 묶여 있다.
+1. 운영 프로젝트에서 [`20261008120000_add_text_formatting.sql`](../../supabase/migrations/20261008120000_add_text_formatting.sql)을 실행한다(SQL Editor 또는 관리 API). 기존 마이그레이션이 적용된 프로젝트가 전제다. SQL은 트랜잭션으로 묶여 있다.
 2. 아래 확인 SQL을 실행해 세 열과 함수가 존재하는지 확인한다.
 3. PR의 CI·리뷰가 통과한 후 클라이언트를 배포한다. 이 순서를 지켜야 메모 저장 RPC가 실패하지 않는다.
 
@@ -43,4 +43,5 @@ select to_regprocedure('public.save_text_formatting(text,uuid,text,text,jsonb)')
 - Vitest: 서식 겹침/토글/상대 크기, 텍스트 수정 후 범위 보존, 이모지/줄바꿈 변환, 저장 순서와 실패 롤백, 초안 복구, 기존 로그인·설정·읽기 기능 회귀 검사.
 - PGlite의 실제 PostgreSQL 엔진: 새 마이그레이션 실행, UTF-16 저장, 레거시 하이라이트 반영, 잘못된 JSON/범위 거절, RLS와 익명 호출 차단, 본문 충돌 거절, 메모와 서식의 원자적 저장, 책·저자 병합.
 - Chromium과 가짜 Supabase API: 메인/책/댓글/메모 서식 버튼, 연속 크기 조절, 상대 크기의 중앙 설정 상속, 320/1024/1440/3840px, 접기/펴기, 새로고침, 저장 실패 초안과 재시도. 스크린샷은 로컬 `output/playwright/text-format-*.png`에 저장된다.
-- 운영 DB에는 공개 키를 이용한 읽기 전용 API 확인만 수행했다. 새 열은 현재 `42703`(열 없음)을 반환하므로 운영 DB 마이그레이션 적용 확인 전에는 배포하지 않는다.
+- 운영 DB: 2026-10-08에 관리 API로 마이그레이션을 적용했다. 스키마 변경과 `supabase_migrations.schema_migrations`의 적용 이력(`20261008120000`, `add_text_formatting`)을 같은 트랜잭션에 기록했다. 기록된 SQL은 저장소의 파일과 일치한다.
+- 운영 확인: 세 JSONB 열의 기본값·NOT NULL, 검증 완료된 세 CHECK 제약, 여섯 함수의 본문·호출 권한, 기존 RLS 정책 보존을 확인했다. 순수 함수로 빈 문자열/이모지 UTF-16 길이, 잘못된 범위·겹침·알 수 없는 서식·크기 제한 거절, 병합 후 위치를 확인했다. 공개 API의 새 열 조회는 모두 200이고 익명 저장 호출은 401/`42501`로 차단됐다. 운영 확인은 스키마·권한 조회와 순수 함수·익명 API 호출로 수행했으며, 인증된 저장과 병합은 위 PGlite·브라우저 검증에 포함된다.
