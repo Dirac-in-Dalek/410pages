@@ -254,25 +254,34 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     return () => document.removeEventListener('keydown', closeOnEscape);
   }, [activeLibraryOverlay, closeLibraryOverlay]);
 
+  const libraryToggle = (
+    <button
+      id="library-toggle"
+      ref={homeToggleRef}
+      type="button"
+      aria-label={libraryVisible ? '홈 패널 접기' : '홈 패널 펼치기'}
+      title={libraryVisible ? '서재 접기' : '서재 펼치기'}
+      aria-expanded={libraryVisible}
+      aria-controls={homePanelId}
+      data-passage-note-trigger
+      onClick={toggleLibrary}
+      style={bookReadingWorkspace ? { left: (libraryVisible ? displayedLeftWidth : 0) + 12 } : undefined}
+      className={bookReadingWorkspace
+        ? 'book-library-toggle fixed z-50 flex items-center justify-center rounded-lg bg-[var(--bg-main)] text-[var(--text-muted)] transition-colors hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)]'
+        : 'inline-flex h-9 shrink-0 gap-1.5 px-2 items-center justify-center rounded-lg bg-[var(--bg-input)] text-[var(--text-secondary)] transition-[background-color,color,transform] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)] active:scale-95 motion-reduce:transition-none'}
+    >
+      {libraryVisible ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
+      {!bookReadingWorkspace ? <span className="text-sm">서재</span> : null}
+    </button>
+  );
+
   return (
     <div data-reading-responsive={bookReadingWorkspace || undefined}
       style={bookReadingWorkspace ? readingMetrics.cssVariables as React.CSSProperties : undefined}
-      className={`${bookReadingWorkspace ? 'reading-responsive ' : ''}font-size-app flex h-screen w-full flex-col overflow-hidden bg-[var(--bg-main)] font-sans text-[var(--text-main)] transition-colors duration-200`}>
+      className={`${bookReadingWorkspace ? 'reading-responsive ' : ''}font-size-app isolate flex h-screen w-full flex-col overflow-hidden bg-[var(--bg-main)] font-sans text-[var(--text-main)] transition-colors duration-200`}>
       <header className="border-b border-[var(--border-main)] bg-[var(--bg-card)]">
         <div className="flex h-[3.15rem] items-center gap-3 px-4">
-      <button
-        ref={homeToggleRef}
-        type="button"
-        aria-label={libraryVisible ? '홈 패널 접기' : '홈 패널 펼치기'}
-        title={libraryVisible ? '홈 패널 접기' : '홈 패널 펼치기'}
-        aria-expanded={libraryVisible}
-        aria-controls={homePanelId}
-        data-passage-note-trigger
-        onClick={toggleLibrary}
-        className="inline-flex h-9 shrink-0 gap-1.5 px-2 items-center justify-center rounded-lg bg-[var(--bg-input)] text-[var(--text-secondary)] transition-[background-color,color,transform] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)] active:scale-95 motion-reduce:transition-none"
-      >
-        {libraryVisible ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}<span className="text-sm">서재</span>
-      </button>
+          {!bookReadingWorkspace ? libraryToggle : null}
 
           <div className="brand-wordmark shrink-0 text-[1.25rem] text-[var(--accent)]" style={{ width: 112 }}>
             <span className="brand-number">410</span><span className="brand-text">pages</span>
@@ -311,6 +320,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           </div>
         </div>
       </header>
+
+      {bookReadingWorkspace ? libraryToggle : null}
 
       <div className="flex min-h-0 flex-1">
         {activeLibraryOverlay ? <button type="button" aria-label="서재 닫기" onClick={closeLibraryOverlay}
