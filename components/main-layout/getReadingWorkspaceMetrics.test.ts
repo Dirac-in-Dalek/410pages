@@ -7,7 +7,6 @@ const metrics = (overrides = {}) => getReadingWorkspaceMetrics({
   userFontPt: 14,
   sidebarWidthPreference: 272,
   sidebarOpen: false,
-  memoWidthPreference: 360,
   memoChrome: 14,
   ...overrides,
 });
@@ -114,45 +113,28 @@ describe('getReadingWorkspaceMetrics', () => {
     expect(legacyLarge.sidebarPreferenceMaximum).toBeCloseTo(408);
   });
 
-  it('preserves a memo width override without changing body width or center', () => {
-    const normal = metrics({ viewportWidth: 1920, viewportHeight: 1080 });
-    const resized = metrics({ viewportWidth: 1920, viewportHeight: 1080, memoWidthPreference: 440 });
-    expect(resized.memoText).toBeGreaterThan(normal.memoText);
-    expect(resized.bodyText).toBe(normal.bodyText);
-    expect(resized.bodyLeft).toBe(normal.bodyLeft);
-  });
-
-  it('clamps memo resize preferences to the visible range without changing the stored preference', () => {
-    const saturated = metrics({ memoWidthPreference: 960 });
-    expect(saturated.memoWidthPreference).toBe(960);
-    expect(saturated.memoText).toBe(204);
-    expect(saturated.memo).toBe(218);
-    expect(saturated.memoPreferenceMinimum).toBe(232);
-    expect(saturated.memoPreferenceMaximum).toBe(362);
-
-    const reduced = metrics({
-      memoWidthPreference: saturated.memoPreferenceMaximum - 16 / saturated.memoPreferenceScale,
-    });
-    expect(reduced.memo).toBe(202);
-  });
-
-  it('keeps memo resize bounds independent of font preference and adapts them to viewport capacity', () => {
-    const fonts = [7, 12, 20].map(userFontPt => metrics({ userFontPt, memoWidthPreference: 960 }));
-    for (const result of fonts.slice(1)) {
-      expect(result.memoPreferenceMinimum).toBe(fonts[0].memoPreferenceMinimum);
-      expect(result.memoPreferenceMaximum).toBe(fonts[0].memoPreferenceMaximum);
+  it('moves the whole memo beyond the right viewport edge for every reading layout', () => {
+    for (const viewportWidth of [1024, 1440, 1920, 3840]) {
+      for (const sidebarOpen of [false, true]) {
+        const result = metrics({ viewportWidth, sidebarOpen });
+        const shift = Number.parseFloat(result.cssVariables['--reading-memo-slide-distance']);
+        expect(result.bodyRight + result.columnGap + shift).toBeGreaterThan(viewportWidth);
+      }
     }
+  });
 
-    const wide = metrics({ viewportWidth: 1920, viewportHeight: 1080, memoWidthPreference: 960 });
-    const narrow = metrics({ memoWidthPreference: wide.memoPreferenceMaximum });
-    expect(wide.memoPreferenceMaximum).toBeGreaterThan(narrow.memoPreferenceMaximum);
-    expect(narrow.memoWidthPreference).toBe(wide.memoPreferenceMaximum);
-    expect(narrow.memo).toBe(218);
-
-    const constrained = metrics({ viewportWidth: 700, sidebarOpen: true, memoWidthPreference: 232 });
-    expect(constrained.memoPreferenceMinimum).toBeGreaterThan(232);
-    expect(constrained.memoPreferenceMaximum).toBeGreaterThanOrEqual(constrained.memoPreferenceMinimum);
-    expect(metrics({ viewportWidth: 700, sidebarOpen: true, memoWidthPreference: constrained.memoPreferenceMinimum }).memoText).toBe(0);
+  it('keeps the default memo width independent of font choice and within available space', () => {
+    for (const viewportWidth of [1024, 1920, 3840]) {
+      const sizes = [7, 12, 20].map(userFontPt => metrics({ viewportWidth, userFontPt }));
+      for (const result of sizes) {
+        expect(result.memo).toBe(sizes[0].memo);
+        expect(result.memoRight).toBeLessThanOrEqual(viewportWidth - 24);
+        expect(result.memoText / result.bodyText).toBeCloseTo(0.5);
+      }
+    }
+    const compact = metrics({ viewportWidth: 700, sidebarOpen: true });
+    expect(compact.memoRight).toBeLessThanOrEqual(700 - 24);
+    expect(compact.memo).toBeLessThan(metrics().memo);
   });
 
   it('keeps automatic library fallback geometry independent of font preference', () => {

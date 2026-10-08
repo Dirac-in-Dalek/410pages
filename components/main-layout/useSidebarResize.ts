@@ -49,11 +49,9 @@ const usePanelResize = (key: string, fallback: number, right = false) => {
   };
 };
 
-export const useSidebarResize = (readingMemo = false, storageKeyPrefix = '') => {
+export const useSidebarResize = (storageKeyPrefix = '') => {
   const left = usePanelResize(`${storageKeyPrefix}leftSidebarWidth`, 272);
-  const legacyRight = usePanelResize(`${storageKeyPrefix}rightSidebarWidth`, 320, true);
-  const readingRight = usePanelResize(`${storageKeyPrefix}bookReadingMemoWidth`, 360);
-  const right = readingMemo ? readingRight : legacyRight;
+  const right = usePanelResize(`${storageKeyPrefix}rightSidebarWidth`, 320, true);
   return {
     leftWidth: left.sourceWidth, leftWidthPreference: left.sourceWidth, isResizingLeft: left.resizing, startLeftResize: left.start, adjustLeftWidth: left.adjust,
     rightWidth: right.sourceWidth, rightWidthPreference: right.sourceWidth, isResizingRight: right.resizing, startRightResize: right.start, adjustRightWidth: right.adjust,

@@ -1167,15 +1167,17 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
   --reading-panel-motion-easing: cubic-bezier(0.22, 1, 0.36, 1);
 }
 .reading-responsive[data-reading-resizing="true"] { --reading-panel-motion-duration: 0ms; }
-.book-library-toggle {
+.book-library-toggle, .book-memo-toggle {
   top: calc(var(--reading-header-height, 50.4px) + 1px + (var(--reading-panel-header-height) - var(--reading-control-size, 32px)) / 2);
   width: var(--reading-control-size, 32px);
   height: var(--reading-control-size, 32px);
-  transition-property: left, background-color, color;
+  transition-property: background-color, color;
   transition-duration: var(--reading-panel-motion-duration);
   transition-timing-function: var(--reading-panel-motion-easing);
 }
-.book-library-toggle svg { width: calc(var(--reading-icon-size, 16px) * 1.125); height: calc(var(--reading-icon-size, 16px) * 1.125); }
+.book-library-toggle { transition-property: left, background-color, color; }
+.book-memo-toggle { right: 12px; }
+.book-library-toggle svg, .book-memo-toggle svg { width: calc(var(--reading-icon-size, 16px) * 1.125); height: calc(var(--reading-icon-size, 16px) * 1.125); }
 .reading-library-panel {
   transition-property: width, opacity;
   transition-duration: var(--reading-panel-motion-duration);
@@ -1204,8 +1206,16 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
 .book-reading-workspace .book-passage-column { width: var(--reading-comment-width, 262px); }
 .book-reading-workspace [data-archive-scroll] { overflow-x: hidden; }
 .book-reading-memo { grid-column: 5; min-height: 0; position: relative; }
+.book-reading-memo-slide {
+  height: 100%;
+  transform: translateX(0);
+  transition: transform var(--reading-panel-motion-duration, 240ms) var(--reading-panel-motion-easing, ease-out);
+}
+.book-reading-memo[data-collapsed="true"] .book-reading-memo-slide {
+  transform: translateX(var(--reading-memo-slide-distance, 100vw));
+  pointer-events: none;
+}
 .book-reading-memo-scroll { height: 100%; overflow-y: auto; padding: 0 0 24px 10px; }
-.book-reading-memo[data-collapsed="true"] .book-reading-memo-scroll { overflow-y: hidden; }
 .book-reading-workspace [data-reading-scrollbar] { scrollbar-gutter: stable; }
 .book-reading-workspace [data-reading-scrollbar]::-webkit-scrollbar { width: 4px; height: 4px; }
 .book-reading-workspace [data-reading-scrollbar]::-webkit-scrollbar-track { background: transparent; }
@@ -1222,8 +1232,6 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
 .book-reading-memo [data-reading-memo] > label { display: block; padding: 0; }
 .book-reading-memo [data-reading-memo] textarea { display: block; width: 100%; min-height: 360px; overflow: hidden; font-family: var(--font-display-active); font-size: var(--type-body-size); line-height: 1.72; }
 .book-reading-memo [data-reading-memo] > footer { padding: 8px 0 0; min-height: 44px; }
-.book-reading-memo-resize { position: absolute; inset-block: 0; right: -8px; width: 8px; cursor: col-resize; }
-.book-reading-memo-resize:hover, .book-reading-memo-resize:focus-visible { background: var(--accent-border); outline: none; }
 
 /* User-selected book composer: visible kinds and a compact save action. */
 .book-composer-kinds { display: inline-flex; flex: none; align-items: center; gap: 2px; border: 1px solid var(--border-main); border-radius: 20px; padding: 2px; background: var(--bg-input); }
@@ -1472,14 +1480,6 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
   }
   .reading-responsive .book-reading-memo [data-reading-memo] > header h2 {
     font-size: var(--reading-ui-font-size, 1rem);
-  }
-  .reading-responsive .book-reading-memo [data-reading-memo] > header button {
-    width: var(--reading-control-size, 32px);
-    height: var(--reading-control-size, 32px);
-  }
-  .reading-responsive .book-reading-memo [data-reading-memo] > header button svg {
-    width: calc(var(--reading-icon-size, 16px) * 1.125);
-    height: calc(var(--reading-icon-size, 16px) * 1.125);
   }
   .reading-responsive .book-reading-memo [data-reading-memo] textarea {
     min-height: var(--reading-memo-min-height, 360px);

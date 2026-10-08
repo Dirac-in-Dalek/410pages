@@ -4,7 +4,6 @@ export type ReadingWorkspaceMetricsInput = {
   userFontPt: number;
   sidebarWidthPreference: number;
   sidebarOpen: boolean;
-  memoWidthPreference: number;
   memoChrome?: number;
   viewportPadding?: number;
 };
@@ -21,7 +20,6 @@ export function getReadingWorkspaceMetrics({
   userFontPt,
   sidebarWidthPreference,
   sidebarOpen,
-  memoWidthPreference,
   memoChrome = 14,
   viewportPadding = 24,
 }: ReadingWorkspaceMetricsInput) {
@@ -53,21 +51,12 @@ export function getReadingWorkspaceMetrics({
   const visibleBudget = Math.max(0, readingWidth - outerMargin * 2 - commentPad * 2 - bodyPadLeft - bodyPadRight - effectiveMemoChrome - columnGap * 2);
   const bodyText = visibleBudget / 2;
   const sideText = bodyText / 2;
-  const memoPreferenceScale = mix(1, 1.45, densityProgress);
   const body = bodyText + bodyPadLeft + bodyPadRight;
   const bodyLeft = readingCenter - bodyText / 2 - bodyPadLeft;
   const bodyRight = bodyLeft + body;
-  const memoPreferenceDelta = (memoWidthPreference - 360) * memoPreferenceScale;
-  const memoTextDesired = Math.max(0, sideText + memoPreferenceDelta);
   const rightLimit = viewportWidth - viewportPadding;
   const availableMemoText = Math.max(0, rightLimit - bodyRight - columnGap - effectiveMemoChrome);
-  const memoText = Math.min(memoTextDesired, availableMemoText);
-  const memoPreferenceMinimum = clamp(360 - sideText / memoPreferenceScale, 232, 960);
-  const memoPreferenceMaximum = clamp(
-    360 + (availableMemoText - sideText) / memoPreferenceScale,
-    memoPreferenceMinimum,
-    960,
-  );
+  const memoText = Math.min(sideText, availableMemoText);
   const memo = memoText + effectiveMemoChrome;
   const commentRight = bodyLeft - columnGap;
   const desiredComment = sideText + commentPad * 2;
@@ -88,6 +77,7 @@ export function getReadingWorkspaceMetrics({
     '--reading-body-width': px(body),
     '--reading-memoGap-width': px(columnGap),
     '--reading-memo-width': px(memo),
+    '--reading-memo-slide-distance': px(Math.max(0, viewportWidth - bodyRight - columnGap) + 1),
     '--reading-body-left': px(bodyColumnLeft),
     '--reading-group-left': px(groupLeft - contentLeft),
     '--reading-total-width': px(total),
@@ -148,10 +138,6 @@ export function getReadingWorkspaceMetrics({
     readingLeft,
     readingWidth,
     readingCenter,
-    memoWidthPreference,
-    memoPreferenceScale,
-    memoPreferenceMinimum,
-    memoPreferenceMaximum,
     comment,
     commentText,
     commentRight,

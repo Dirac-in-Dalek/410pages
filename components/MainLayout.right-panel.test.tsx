@@ -43,8 +43,9 @@ describe('MainLayout right panel', () => {
 
   it('keeps the book memo and reading anchor mounted inside the group when folded', () => {
     const closeComments = vi.fn();
+    const changeMemo = vi.fn();
     const panel = <textarea aria-label="예제 책 메모" defaultValue="유지할 초안" />;
-    const props = { ...baseProps, bookReadingWorkspace: true, rightPanel: panel, homePanelOpen: false, hasInlinePassageNotes: true, onCloseInlinePassageNotes: closeComments };
+    const props = { ...baseProps, bookReadingWorkspace: true, rightPanel: panel, homePanelOpen: false, hasInlinePassageNotes: true, onCloseInlinePassageNotes: closeComments, onRightPanelOpenChange: changeMemo };
     const view = render(<MainLayout {...props} rightPanelOpen><div data-testid="reading-anchor">본문</div></MainLayout>);
     const input = screen.getByRole('textbox', { name: '예제 책 메모' });
     const anchor = screen.getByTestId('reading-anchor');
@@ -57,6 +58,12 @@ describe('MainLayout right panel', () => {
     expect(input.closest('[data-book-reading-workspace]')).not.toBeNull();
     fireEvent.click(screen.getByRole('button', { name: '홈 패널 펼치기' }));
     expect(closeComments).not.toHaveBeenCalled();
+    const toggle = screen.getByRole('button', { name: '메모 접기' });
+    const memoPanel = document.getElementById(toggle.getAttribute('aria-controls')!)!;
+    expect(memoPanel.contains(toggle)).toBe(false);
+    fireEvent.click(toggle);
+    expect(changeMemo).toHaveBeenCalledWith(false);
+    expect(document.activeElement).toBe(toggle);
     view.rerender(<MainLayout {...props} rightPanelOpen={false}><div data-testid="reading-anchor">본문</div></MainLayout>);
     expect(screen.getByTestId('reading-anchor')).toBe(anchor);
     expect(document.querySelector('textarea')).toBe(input);
@@ -64,11 +71,17 @@ describe('MainLayout right panel', () => {
     expect((input as HTMLTextAreaElement).selectionStart).toBe(3);
     expect(memoScroll.scrollTop).toBe(33);
     expect(input.closest('.book-reading-memo')?.getAttribute('data-collapsed')).toBe('true');
-    expect(input.closest('.book-reading-memo')?.hasAttribute('aria-hidden')).toBe(false);
+    expect(memoPanel.getAttribute('aria-hidden')).toBe('true');
+    expect(memoPanel.hasAttribute('inert')).toBe(true);
+    expect(screen.queryByRole('textbox', { name: '예제 책 메모' })).toBeNull();
+    expect(screen.getByRole('button', { name: '메모 펼치기' })).toBe(toggle);
+    fireEvent.click(toggle);
+    expect(changeMemo).toHaveBeenLastCalledWith(true);
     view.rerender(<MainLayout {...props} rightPanelOpen><div data-testid="reading-anchor">본문</div></MainLayout>);
     expect(document.querySelector('textarea')).toBe(input);
     expect((input as HTMLTextAreaElement).selectionStart).toBe(3);
     expect(memoScroll.scrollTop).toBe(33);
+    expect(memoPanel.hasAttribute('inert')).toBe(false);
   });
 
   it('retries a clamped memo position after a long book returns and its content grows', async () => {
@@ -167,31 +180,19 @@ describe('MainLayout right panel', () => {
     expect(document.body.style.cursor).not.toBe('col-resize');
   });
 
-  it('isolates fixture resize widths from the real profile storage keys', () => {
+  it('isolates library fixture resizing and never writes a reading memo width', () => {
+    vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(1440);
     localStorage.setItem('leftSidebarWidth', '271');
     localStorage.setItem('rightSidebarWidth', '319');
     localStorage.setItem('bookReadingMemoWidth', '360');
-    render(
-      <MainLayout
-        {...baseProps}
-        bookReadingWorkspace
-        homePanelOpen={false}
-        resizeStorageKeyPrefix="reading-fixture:"
-        rightPanel={<div>메모</div>}
-      >
-        <div data-archive-scroll>본문</div>
-      </MainLayout>,
-    );
-
-    fireEvent.mouseDown(screen.getByRole('separator', { name: '메모 패널 너비 조절' }), { clientX: 700 });
-    expect(screen.getByRole('separator', { name: '메모 패널 너비 조절' }).getAttribute('aria-valuenow')).toBe('360');
-    expect(screen.getByRole('separator', { name: '메모 패널 너비 조절' }).getAttribute('aria-valuetext')).toBe('216픽셀');
-    fireEvent.mouseMove(window, { clientX: 716 });
+    render(<MainLayout {...baseProps} bookReadingWorkspace resizeStorageKeyPrefix="reading-fixture:" rightPanel={<div>메모</div>}><div data-archive-scroll>본문</div></MainLayout>);
+    const separator = screen.getByRole('separator', { name: '홈 패널 너비 조절' });
+    fireEvent.mouseDown(separator, { clientX: 288 });
+    fireEvent.mouseMove(window, { clientX: 320 });
     fireEvent.mouseUp(window);
-
-    expect(screen.getByRole('separator', { name: '메모 패널 너비 조절' }).getAttribute('aria-valuenow')).toBe('362');
-    expect(screen.getByRole('separator', { name: '메모 패널 너비 조절' }).getAttribute('aria-valuetext')).toBe('218픽셀');
-    expect(localStorage.getItem('reading-fixture:bookReadingMemoWidth')).toBe('362');
+    expect(Number(localStorage.getItem('reading-fixture:leftSidebarWidth'))).toBeGreaterThan(272);
+    expect(localStorage.getItem('reading-fixture:bookReadingMemoWidth')).toBeNull();
+    expect(screen.queryByRole('separator', { name: '메모 패널 너비 조절' })).toBeNull();
     expect(localStorage.getItem('leftSidebarWidth')).toBe('271');
     expect(localStorage.getItem('rightSidebarWidth')).toBe('319');
     expect(localStorage.getItem('bookReadingMemoWidth')).toBe('360');
@@ -355,25 +356,19 @@ describe('MainLayout right panel', () => {
     }
   });
 
-  it('reduces a saturated reading memo on the first keyboard and drag adjustment', () => {
+  it('ignores old stored memo widths and exposes no reading memo resize control', () => {
     vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(1024);
-    vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(768);
+    const common = { ...baseProps, bookReadingWorkspace: true, homePanelOpen: false, rightPanel: <div>메모</div>, resizeStorageKeyPrefix: 'reading-fixture:' };
     localStorage.setItem('reading-fixture:bookReadingMemoWidth', '960');
-    render(<MainLayout {...baseProps} bookReadingWorkspace homePanelOpen={false} resizeStorageKeyPrefix="reading-fixture:" rightPanel={<div>메모</div>}><div data-archive-scroll>본문</div></MainLayout>);
-    const separator = screen.getByRole('separator', { name: '메모 패널 너비 조절' });
-    const visibleWidth = () => Number.parseInt(separator.getAttribute('aria-valuetext') || '0', 10);
-    const initialWidth = visibleWidth();
-    expect(separator.getAttribute('aria-valuenow')).toBe(separator.getAttribute('aria-valuemax'));
-
-    fireEvent.keyDown(separator, { key: 'ArrowLeft' });
-    const keyboardWidth = visibleWidth();
-    expect(keyboardWidth).toBeLessThan(initialWidth);
-    expect(Number(separator.getAttribute('aria-valuenow'))).toBeLessThan(Number(separator.getAttribute('aria-valuemax')));
-
-    fireEvent.mouseDown(separator, { clientX: 700 });
-    fireEvent.mouseMove(window, { clientX: 684 });
-    fireEvent.mouseUp(window);
-    expect(visibleWidth()).toBeLessThan(keyboardWidth);
+    const wide = render(<MainLayout {...common}><div data-archive-scroll>본문</div></MainLayout>);
+    const width = document.querySelector<HTMLElement>('[data-reading-responsive]')!.style.getPropertyValue('--reading-memo-width');
+    expect(screen.queryByRole('separator', { name: '메모 패널 너비 조절' })).toBeNull();
+    expect(localStorage.getItem('reading-fixture:bookReadingMemoWidth')).toBe('960');
+    wide.unmount();
+    localStorage.setItem('reading-fixture:bookReadingMemoWidth', '232');
+    render(<MainLayout {...common}><div data-archive-scroll>본문</div></MainLayout>);
+    expect(document.querySelector<HTMLElement>('[data-reading-responsive]')!.style.getPropertyValue('--reading-memo-width')).toBe(width);
+    expect(localStorage.getItem('reading-fixture:bookReadingMemoWidth')).toBe('232');
   });
 
   it('updates library access immediately on rapid reversals without remounting its content', () => {
