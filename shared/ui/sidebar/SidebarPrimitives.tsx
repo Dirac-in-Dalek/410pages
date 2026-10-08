@@ -62,6 +62,7 @@ export const EditorialSheetHeader: React.FC<EditorialSheetHeaderProps> = ({
 );
 
 type EditorialToolbarButtonProps = {
+  id?: string;
   active?: boolean;
   onClick: () => void;
   ariaLabel: string;
@@ -69,12 +70,14 @@ type EditorialToolbarButtonProps = {
 };
 
 export const EditorialToolbarButton: React.FC<EditorialToolbarButtonProps> = ({
+  id,
   active = false,
   onClick,
   ariaLabel,
   children,
 }) => (
   <button
+    id={id}
     type="button"
     onClick={onClick}
     className={[

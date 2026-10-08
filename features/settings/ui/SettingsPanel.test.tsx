@@ -155,6 +155,30 @@ describe('SettingsPanel', () => {
     expect(baseProps.onClose).toHaveBeenCalled();
   });
 
+  it('returns focus to the current settings opener when responsive layout replaces the original button', async () => {
+    const user = userEvent.setup();
+    const Harness: React.FC<{ isMobile: boolean }> = ({ isMobile }) => {
+      const [isOpen, setIsOpen] = useState(false);
+      return (
+        <>
+          <button key={isMobile ? 'mobile' : 'desktop'} id="settings-trigger" type="button" onClick={() => setIsOpen(true)}>
+            {isMobile ? '모바일 설정' : '데스크톱 설정'}
+          </button>
+          <SettingsPanel {...baseProps} isMobile={isMobile} isOpen={isOpen} onClose={() => setIsOpen(false)} />
+        </>
+      );
+    };
+    const { rerender } = render(<Harness isMobile={false} />);
+    await user.click(screen.getByRole('button', { name: '데스크톱 설정' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: '닫기' })).toBe(document.activeElement));
+
+    rerender(<Harness isMobile />);
+    await user.keyboard('{Escape}');
+
+    expect(screen.queryByRole('dialog', { name: '설정' })).toBeNull();
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: '모바일 설정' }));
+  });
+
   it('keeps the theme selector collapsed until opened and sends live theme changes', async () => {
     const user = userEvent.setup();
     render(<SettingsPanel {...baseProps} />);
@@ -202,6 +226,40 @@ describe('SettingsPanel', () => {
     expect(screen.queryByRole('group', { name: '테마 선택' })).toBeNull();
     await waitFor(() => expect(trigger).toBe(document.activeElement));
     expect(baseProps.onClose).not.toHaveBeenCalled();
+  });
+
+  it('closes only the font list on Escape and closes the settings dialog on the next Escape', async () => {
+    const user = userEvent.setup();
+    render(<SettingsPanel {...baseProps} />);
+    await waitFor(() => expect(screen.getByRole('button', { name: '닫기' })).toBe(document.activeElement));
+    const trigger = screen.getByRole('button', { name: '현재 서체: 프리텐다드' });
+
+    await user.click(trigger);
+    await user.keyboard('{Escape}');
+
+    expect(screen.queryByRole('group', { name: '서체 선택' })).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+    expect(baseProps.onClose).not.toHaveBeenCalled();
+
+    await user.keyboard('{Escape}');
+    expect(baseProps.onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('reaches the last theme with the keyboard and restores focus after applying it', async () => {
+    const user = userEvent.setup();
+    render(<SettingsPanel {...baseProps} />);
+    await waitFor(() => expect(screen.getByRole('button', { name: '닫기' })).toBe(document.activeElement));
+    const trigger = screen.getByRole('button', { name: '현재 테마: Auto' });
+
+    trigger.focus();
+    await user.keyboard('{ArrowDown}{End}');
+    expect(screen.getByRole('button', { name: 'Shostakovich Dark' })).toBe(document.activeElement);
+    expect(baseProps.onThemeChange).not.toHaveBeenCalled();
+    await user.keyboard('{Enter}');
+
+    expect(baseProps.onThemeChange).toHaveBeenCalledWith('shostakovich-dark');
+    expect(screen.queryByRole('group', { name: '테마 선택' })).toBeNull();
+    expect(document.activeElement).toBe(trigger);
   });
 
   it('shows the existing numeric font size without preset controls', () => {
