@@ -1,3 +1,4 @@
+import type { TextFormatRange } from '../../types';
 import type {
   AddCitationInput,
   AuthorDeletePreview,
@@ -68,7 +69,7 @@ export interface ArchiveScreenFactoryInput {
   selectedIds: Set<string>;
   selectedFilter: ArchiveSelectedFilter;
   isCopying: boolean;
-  onSelectAll: () => void;
+  onSelectAll: (select: boolean) => void;
   onCopy: () => void | Promise<unknown>;
   onBatchDeleteRequest: () => void;
   onCancelSelection: () => void;
@@ -79,10 +80,10 @@ export interface ArchiveScreenFactoryInput {
   chapterActionsDisabled?: boolean;
   onToggleSelect: (id: string, selected: boolean) => void;
   onAddNote: (citationId: string, content: string) => void | Promise<unknown>;
-  onUpdateNote: (citationId: string, noteId: string, content: string) => void;
+  onUpdateNote: (citationId: string, noteId: string, content: string, formats?: TextFormatRange[], expectedText?: string) => void;
   onDeleteNote: (citationId: string, noteId: string) => void;
   onDeleteCitation: (id: string) => void;
-  onUpdateCitation: (id: string, data: Partial<Citation>) => void | Promise<unknown>;
+  onUpdateCitation: (id: string, data: Partial<Citation>, expectedText?: string) => void | Promise<unknown>;
   passageNoteCitationId?: string | null;
   onPassageNoteCitationChange?: (citationId: string | null) => void;
 }

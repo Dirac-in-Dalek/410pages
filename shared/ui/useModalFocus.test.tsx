@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { useModalFocus } from './useModalFocus';
 
 const Modal = ({ onClose }: { onClose: () => void }) => {
@@ -47,6 +47,19 @@ describe('useModalFocus', () => {
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).toBeNull();
     await waitFor(() => expect(document.activeElement).toBe(trigger));
+  });
+
+  it('closes the formatting toolbar before closing its containing memo dialog', async () => {
+    const closeModal = vi.fn();
+    const View = () => {
+      const [toolbar, setToolbar] = useState(true);
+      const ref = useModalFocus<HTMLDivElement>(true, closeModal);
+      return <div ref={ref} role="dialog"><button>메모 입력</button>{toolbar ? <div role="toolbar"><button data-text-format-close onClick={() => setToolbar(false)}>서식 닫기</button></div> : null}</div>;
+    };
+    const user = userEvent.setup(); render(<View />);
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('toolbar')).toBeNull();expect(closeModal).not.toHaveBeenCalled();
+    await user.keyboard('{Escape}');expect(closeModal).toHaveBeenCalledOnce();
   });
 
   it('recovers focus when the active control becomes disabled', async () => {

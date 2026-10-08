@@ -1,3 +1,4 @@
+import { normalizeTextFormats } from '../../../shared/logic/textFormats';
 import type { Citation, Highlight } from '../../../types';
 
 const CITATION_DRAFT_STORAGE_PREFIX = 'citation-drafts.v1';
@@ -67,6 +68,7 @@ const normalizeDraft = (value: unknown): Citation | null => {
       ? candidate.tags.filter((tag): tag is string => typeof tag === 'string')
       : [],
     highlights: normalizeHighlights(candidate.highlights),
+    ...(candidate.textFormats === undefined ? {} : { textFormats: normalizeTextFormats(candidate.textFormats, candidate.text.length) }),
     createdAt: candidate.createdAt,
     createdAtSort: optionalNumber(candidate.createdAtSort),
     orderKey: optionalString(candidate.orderKey),

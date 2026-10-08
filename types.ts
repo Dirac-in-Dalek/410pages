@@ -2,7 +2,19 @@ export interface Note {
   id: string;
   content: string;
   createdAt: number;
+  textFormats?: TextFormatRange[];
 }
+
+export type TextFormat = {
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  highlight?: boolean;
+  /** Point offset from the centrally configured, inherited text size. */
+  fontSizeOffset?: number;
+};
+
+export type TextFormatRange = TextFormat & { start: number; end: number };
 
 export interface Highlight {
   id: string;
@@ -30,6 +42,7 @@ export interface Citation {
   notes: Note[];
   tags: string[];
   highlights?: Highlight[];
+  textFormats?: TextFormatRange[];
   createdAt: number;
   /** Manual position in the book body; original creation time is preserved. */
   createdAtSort?: number;
@@ -50,6 +63,7 @@ export interface BookSource {
   id: string;
   title: string;
   memo?: string;
+  memoFormats?: TextFormatRange[];
   sortIndex: number | null;
   createdAt: number;
   authorId: string;

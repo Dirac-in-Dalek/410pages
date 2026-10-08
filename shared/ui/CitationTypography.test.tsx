@@ -292,7 +292,7 @@ describe('Citation typography', () => {
     const user = userEvent.setup();
 
     render(
-      <CitationCard
+      <CitationCard onRetrySave={vi.fn()}
         citation={citation}
         index={0}
         username="Dalek"
@@ -306,7 +306,7 @@ describe('Citation typography', () => {
       />
     );
 
-    const quote = screen.getByText('Font preference should affect this quote.');
+    const quote = screen.getByText('Font preference should affect this quote.').closest('blockquote')!;
     expect(quote.tagName).toBe('BLOCKQUOTE');
     expect(quote.className).not.toContain('font-serif');
 
@@ -321,7 +321,7 @@ describe('Citation typography', () => {
     const user = userEvent.setup();
 
     render(
-      <CitationCard
+      <CitationCard onRetrySave={vi.fn()}
         citation={citation}
         index={0}
         username="Dalek"
@@ -335,7 +335,7 @@ describe('Citation typography', () => {
       />
     );
 
-    await user.dblClick(screen.getByText('Font preference should affect this quote.'));
+    await user.dblClick(screen.getByText('Font preference should affect this quote.').closest('blockquote')!);
 
     expect(screen.getByPlaceholderText('이 인용문에 메모 추가…')).not.toBeNull();
   });
@@ -366,7 +366,7 @@ describe('Citation typography', () => {
 
     expect(screen.getByText('저장에 실패했습니다. 다시 시도해주세요.')).not.toBeNull();
 
-    await user.dblClick(screen.getByText('Font preference should affect this quote.'));
+    await user.dblClick(screen.getByText('Font preference should affect this quote.').closest('blockquote')!);
 
     expect(screen.queryByPlaceholderText('이 인용문에 메모 추가…')).toBeNull();
 
@@ -376,7 +376,7 @@ describe('Citation typography', () => {
 
   it('does not render per-card copy, edit, or delete buttons in the resting card UI', () => {
     render(
-      <CitationCard
+      <CitationCard onRetrySave={vi.fn()}
         citation={citation}
         index={0}
         username="Dalek"
@@ -400,7 +400,7 @@ describe('Citation typography', () => {
     const onDelete = vi.fn();
 
     render(
-      <CitationCard
+      <CitationCard onRetrySave={vi.fn()}
         citation={citation}
         index={0}
         username="Dalek"
@@ -427,7 +427,7 @@ describe('Citation typography', () => {
     const user = userEvent.setup();
 
     render(
-      <CitationCard
+      <CitationCard onRetrySave={vi.fn()}
         citation={citation}
         index={0}
         username="Dalek"
@@ -441,7 +441,7 @@ describe('Citation typography', () => {
       />
     );
 
-    await user.dblClick(screen.getByText('Font preference should affect this quote.'));
+    await user.dblClick(screen.getByText('Font preference should affect this quote.').closest('blockquote')!);
 
     const noteInput = screen.getByPlaceholderText('이 인용문에 메모 추가…');
     const cancelButton = screen.getByRole('button', { name: /취소/i });
@@ -461,7 +461,7 @@ describe('Citation typography', () => {
     const onAddNote = vi.fn();
 
     render(
-      <CitationCard
+      <CitationCard onRetrySave={vi.fn()}
         citation={citation}
         index={0}
         username="Dalek"
@@ -492,7 +492,7 @@ describe('Citation typography', () => {
     const user = userEvent.setup();
 
     render(
-      <CitationCard
+      <CitationCard onRetrySave={vi.fn()}
         citation={{
           ...citation,
           notes: [{ id: 'note-1', content: 'A compact memo', createdAt: Date.now() }],
@@ -521,7 +521,7 @@ describe('Citation typography', () => {
     const user = userEvent.setup();
 
     render(
-      <CitationCard
+      <CitationCard onRetrySave={vi.fn()}
         citation={{
           ...citation,
           notes: [{ id: 'note-1', content: 'A compact memo', createdAt: Date.now() }],
@@ -540,14 +540,14 @@ describe('Citation typography', () => {
 
     await user.click(screen.getByRole('button', { name: /메모 1개/i }));
 
-    expect(screen.getByText('A compact memo').parentElement?.className).toContain('type-note');
+    expect(screen.getByText('A compact memo').closest('.type-note')?.className).toContain('type-note');
   });
 
   it('cancels both quote editing and memo input together', async () => {
     const user = userEvent.setup();
 
     render(
-      <CitationCard
+      <CitationCard onRetrySave={vi.fn()}
         citation={citation}
         index={0}
         username="Dalek"
@@ -561,7 +561,7 @@ describe('Citation typography', () => {
       />
     );
 
-    await user.dblClick(screen.getByText('Font preference should affect this quote.'));
+    await user.dblClick(screen.getByText('Font preference should affect this quote.').closest('blockquote')!);
     const quoteEditor = screen.getByDisplayValue('Font preference should affect this quote.');
     await user.type(quoteEditor, ' revised');
     await user.type(screen.getByPlaceholderText('이 인용문에 메모 추가…'), 'Draft note');
@@ -578,7 +578,7 @@ describe('Citation typography', () => {
     const onUpdate = vi.fn();
 
     render(
-      <CitationCard
+      <CitationCard onRetrySave={vi.fn()}
         citation={citation}
         index={0}
         username="Dalek"
@@ -592,7 +592,7 @@ describe('Citation typography', () => {
       />
     );
 
-    await user.dblClick(screen.getByText('Font preference should affect this quote.'));
+    await user.dblClick(screen.getByText('Font preference should affect this quote.').closest('blockquote')!);
     const quoteEditor = screen.getByDisplayValue('Font preference should affect this quote.');
     await user.clear(quoteEditor);
     await user.type(quoteEditor, 'Updated quote');
@@ -614,7 +614,7 @@ describe('Citation typography', () => {
 
     render(
       <div>
-        <CitationCard
+        <CitationCard onRetrySave={vi.fn()}
           citation={citation}
           index={0}
           username="Dalek"
@@ -630,7 +630,7 @@ describe('Citation typography', () => {
       </div>
     );
 
-    await user.dblClick(screen.getByText('Font preference should affect this quote.'));
+    await user.dblClick(screen.getByText('Font preference should affect this quote.').closest('blockquote')!);
     expect(screen.getByPlaceholderText('이 인용문에 메모 추가…')).not.toBeNull();
 
     await user.click(screen.getByRole('button', { name: 'Outside target' }));
@@ -644,7 +644,7 @@ describe('Citation typography', () => {
 
     render(
       <div>
-        <CitationCard
+        <CitationCard onRetrySave={vi.fn()}
           citation={citation}
           index={0}
           username="Dalek"
@@ -660,7 +660,7 @@ describe('Citation typography', () => {
       </div>
     );
 
-    await user.dblClick(screen.getByText('Font preference should affect this quote.'));
+    await user.dblClick(screen.getByText('Font preference should affect this quote.').closest('blockquote')!);
     await user.type(screen.getByPlaceholderText('이 인용문에 메모 추가…'), 'Draft note');
     await user.click(screen.getByRole('button', { name: 'Outside target' }));
 
@@ -670,7 +670,7 @@ describe('Citation typography', () => {
 
   it('starts long citations in a collapsed state with a More action', async () => {
     render(
-      <CitationCard
+      <CitationCard onRetrySave={vi.fn()}
         citation={{
           ...citation,
           text: 'Long quote '.repeat(80),
@@ -697,7 +697,7 @@ describe('Citation typography', () => {
     const user = userEvent.setup();
 
     render(
-      <CitationCard
+      <CitationCard onRetrySave={vi.fn()}
         citation={{
           ...citation,
           text: 'Long quote '.repeat(80),
@@ -750,7 +750,7 @@ describe('Citation typography', () => {
 
     try {
       render(
-        <CitationCard
+        <CitationCard onRetrySave={vi.fn()}
           citation={{
             ...citation,
             text: 'Long quote '.repeat(80),
@@ -784,7 +784,7 @@ describe('Citation typography', () => {
 
   it('hides the current author chip when the archive is already scoped to that author', () => {
     render(
-      <CitationCard
+      <CitationCard onRetrySave={vi.fn()}
         citation={citation}
         index={0}
         username="Dalek"
@@ -806,7 +806,7 @@ describe('Citation typography', () => {
 
   it('hides both author and book chips when the archive is already scoped to that book', () => {
     render(
-      <CitationCard
+      <CitationCard onRetrySave={vi.fn()}
         citation={citation}
         index={0}
         username="Dalek"

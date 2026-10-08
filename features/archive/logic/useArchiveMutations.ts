@@ -1,3 +1,5 @@
+import { rebaseTextFormats, formatsWithLegacyHighlights, legacyHighlightsFromFormats } from '../../../shared/logic/textFormats';
+import type { TextFormatRange } from '../../../types';
 import { useLibrarySourceMutations } from './useLibrarySourceMutations';
 import type { UseArchiveMutationsOptions } from '../contract/archiveMutationContract';
 import { renameChapterBlock as renameChapterBlockRecord, moveChapterBlock as moveChapterBlockRecord } from '../../../shared/api/chapterBlockApi';
@@ -240,7 +242,7 @@ export const useArchiveMutations = ({
   );
 
   const handleUpdateNote = useCallback(
-    async (citationId: string, noteId: string, content: string) => {
+    async (citationId: string, noteId: string, content: string, formats?: TextFormatRange[], expectedText?: string) => {
       if (!session) {
         return false;
       }
@@ -249,9 +251,12 @@ export const useArchiveMutations = ({
       }
 
       try {
-        await updateNoteRecord(session.user.id, noteId, content);
+        const note = citationsRef.current.find(citation => citation.id === citationId)?.notes.find(note => note.id === noteId);
+        const nextFormats = formats ?? (note?.textFormats?.length ? rebaseTextFormats(note.content, content, note.textFormats) : undefined);
+        if (nextFormats !== undefined) await updateNoteRecord(session.user.id, noteId, content, nextFormats, expectedText ?? note?.content);
+        else await updateNoteRecord(session.user.id, noteId, content);
         invalidateDataLoad();
-        setCitations((current) => updateCitationNote(current, citationId, noteId, content));
+        setCitations((current) => updateCitationNote(current, citationId, noteId, content, nextFormats));
         setMutationError(null);
         return true;
       } catch (error) {
@@ -336,7 +341,7 @@ export const useArchiveMutations = ({
   }, [session, citations, invalidateDataLoad, setCitations]);
 
   const handleUpdateCitation = useCallback(
-    async (citationId: string, data: Partial<Citation>) => {
+    async (citationId: string, data: Partial<Citation>, expectedText?: string) => {
       if (!session) {
         return false;
       }
@@ -355,7 +360,18 @@ export const useArchiveMutations = ({
       }
 
       try {
-        const patch = await updateCitationRecord(session.user.id, citationId, data);
+        const current = citationsRef.current.find(citation => citation.id === citationId);
+        let nextData = data;
+        if (current && data.text !== undefined && data.text !== current.text && data.textFormats === undefined) {
+          const formats = formatsWithLegacyHighlights(current.text, current.textFormats, current.highlights);
+          if (formats.length) {
+            const rebased = rebaseTextFormats(current.text, data.text, formats);
+            nextData = { ...data, textFormats: rebased, highlights: legacyHighlightsFromFormats(rebased) };
+          }
+        }
+        const patch = expectedText === undefined
+          ? await updateCitationRecord(session.user.id, citationId, nextData)
+          : await updateCitationRecord(session.user.id, citationId, nextData, expectedText);
         invalidateDataLoad();
         setCitations((current) => patchCitation(current, citationId, patch));
         setMutationError(null);
@@ -664,12 +680,13 @@ export const useArchiveMutations = ({
   );
 
   const handleUpdateBookMemo = useCallback(
-    async (bookId: string, memo: string) => {
+    async (bookId: string, memo: string, formats?: TextFormatRange[], expectedText?: string) => {
       if (!session) return false;
       try {
-        await updateBookMemoRecord(session.user.id, bookId, memo);
+        if (formats === undefined) await updateBookMemoRecord(session.user.id, bookId, memo);
+        else await updateBookMemoRecord(session.user.id, bookId, memo, formats, expectedText);
         setBooks((current) => current.map((book) =>
-          book.id === bookId ? { ...book, memo } : book
+          book.id === bookId ? { ...book, memo, ...(formats === undefined ? {} : { memoFormats: formats }) } : book
         ));
         setMutationError(null);
         return true;

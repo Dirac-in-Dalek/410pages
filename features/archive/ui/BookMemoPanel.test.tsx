@@ -5,6 +5,10 @@ import { moveBookMemoDraftAfterMerge, readBookMemoDraft, storeBookMemoDraft } fr
 import { BookMemoPanel } from './BookMemoPanel';
 import { BookReadingWorkspace } from '../../../components/main-layout/BookReadingWorkspace';
 
+vi.mock('../../../shared/ui/RichTextEditor', () => ({
+  RichTextEditor: ({ text, formats, onChange, label }: any) => <textarea aria-label={label} value={text} onChange={event => onChange(event.target.value, formats)} />
+}));
+
 const book: BookSource = {
   id: 'book-1',
   title: '테스트 책',
@@ -25,33 +29,6 @@ describe('BookMemoPanel', () => {
 
   afterEach(() => vi.useRealTimers());
 
-  it('grows a reading memo after a font preference change without changing the draft or saving it', async () => {
-    let contentHeight = 360;
-    const height = vi.spyOn(HTMLTextAreaElement.prototype, 'scrollHeight', 'get').mockImplementation(() => contentHeight);
-    const onSave = vi.fn();
-    const view = render(<div data-reading-responsive><div data-reading-memo-scroll><BookMemoPanel reading userId="user-1" book={book} onSave={onSave} /></div></div>);
-    const input = screen.getByRole('textbox', { name: '책 전체 메모' }) as HTMLTextAreaElement;
-    const readingScroll = input.closest<HTMLElement>('[data-reading-memo-scroll]')!;
-    const readingScope = input.closest<HTMLElement>('[data-reading-responsive]')!;
-    expect(input.style.height).toBe('360px');
-    readingScroll.scrollTop = 91;
-    input.scrollTop = 17;
-    input.focus();
-    input.setSelectionRange(2, 5);
-    contentHeight = 720;
-    await act(async () => { readingScope.style.setProperty('--reading-body-font-size', '24px'); });
-    expect(input.style.height).toBe('720px');
-    expect(input.value).toBe(book.memo);
-    expect(readingScroll.scrollTop).toBe(91);
-    expect(input.scrollTop).toBe(17);
-    expect(document.activeElement).toBe(input);
-    expect([input.selectionStart, input.selectionEnd]).toEqual([2, 5]);
-    expect(document.querySelector('textarea[aria-hidden="true"]')).toBeNull();
-    expect(onSave).not.toHaveBeenCalled();
-    view.unmount();
-    height.mockRestore();
-  });
-
   it('saves 800ms after the last input and removes the recovered draft', async () => {
     const onSave = vi.fn().mockResolvedValue(true);
     render(<BookMemoPanel userId="user-1" book={book} onSave={onSave} />);
@@ -62,7 +39,7 @@ describe('BookMemoPanel', () => {
     expect(screen.getByText('저장 중…')).toBeTruthy();
 
     await act(async () => vi.advanceTimersByTimeAsync(800));
-    expect(onSave).toHaveBeenCalledWith('book-1', '새 메모');
+    expect(onSave).toHaveBeenCalledWith('book-1', '새 메모', [], book.memo);
     expect(readBookMemoDraft('user-1', 'book-1')).toBeNull();
     expect(screen.getByText('저장됨')).toBeTruthy();
   });
@@ -76,7 +53,7 @@ describe('BookMemoPanel', () => {
     expect(screen.getByText('실패')).toBeTruthy();
     expect(readBookMemoDraft('user-1', 'book-1')).toBe('실패 초안');
     await act(async () => fireEvent.click(screen.getByRole('button', { name: '다시 저장' })));
-    expect(onSave).toHaveBeenLastCalledWith('book-1', '실패 초안');
+    expect(onSave).toHaveBeenLastCalledWith('book-1', '실패 초안', [], book.memo);
     expect(readBookMemoDraft('user-1', 'book-1')).toBeNull();
   });
 
@@ -91,7 +68,7 @@ describe('BookMemoPanel', () => {
     expect(onSave).not.toHaveBeenCalled();
 
     await act(async () => fireEvent.click(screen.getByRole('button', { name: '복구된 초안 저장' })));
-    expect(onSave).toHaveBeenCalledWith('book-1', '다른 기기와 비교할 초안');
+    expect(onSave).toHaveBeenCalledWith('book-1', '다른 기기와 비교할 초안', [], book.memo);
   });
 
   it('does not show idle autosave copy or a normal manual save action', () => {
@@ -115,7 +92,7 @@ describe('BookMemoPanel', () => {
     expect(document.querySelector('textarea')).toBe(input);
     expect(input.value).toBe('접기 전에 작성한 메모');
     await act(async () => vi.advanceTimersByTime(800));
-    expect(onSave).toHaveBeenCalledWith(book.id, '접기 전에 작성한 메모');
+    expect(onSave).toHaveBeenCalledWith(book.id, '접기 전에 작성한 메모', [], book.memo);
     rerender(<BookReadingWorkspace {...common} memoOpen><div data-archive-scroll>본문</div></BookReadingWorkspace>);
     expect(screen.getByRole('textbox', { name: '책 전체 메모' })).toBe(input);
     expect(input.value).toBe('접기 전에 작성한 메모');
@@ -136,7 +113,7 @@ describe('BookMemoPanel', () => {
     expect(onSave).toHaveBeenCalledTimes(1);
 
     await act(async () => finishFirst(true));
-    expect(onSave).toHaveBeenNthCalledWith(2, 'book-1', '최신 메모');
+    expect(onSave).toHaveBeenNthCalledWith(2, 'book-1', '최신 메모', [], '첫 메모');
   });
 
   it('does not let an older save delete a newer debounce draft', async () => {
@@ -154,7 +131,7 @@ describe('BookMemoPanel', () => {
 
     expect(readBookMemoDraft('user-1', 'book-1')).toBe('더 최신 메모');
     await act(async () => vi.advanceTimersByTimeAsync(800));
-    expect(onSave).toHaveBeenNthCalledWith(2, 'book-1', '더 최신 메모');
+    expect(onSave).toHaveBeenNthCalledWith(2, 'book-1', '더 최신 메모', [], '첫 메모');
   });
 
   it('clears a matching saved draft after switching to another book', async () => {

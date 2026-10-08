@@ -47,3 +47,22 @@ describe('bookMemoDraftStorage', () => {
     expect(readBookMemoDraft('user-a', 'target')).toBe('최신 대상 초안\n\n---\n\n원본 서버 메모');
   });
 });
+
+describe('formatted memo draft recovery',()=>{
+  beforeEach(()=>localStorage.clear());
+  it('stores text and formats together and reads legacy plain drafts', async()=>{
+    const {readBookMemoDraftContent}=await import('./bookMemoDraftStorage');
+    localStorage.setItem('book-memo-draft.v1:owner:book','old plain draft');
+    expect(readBookMemoDraftContent('owner','book')).toEqual({text:'old plain draft',formats:[]});
+    storeBookMemoDraft('owner','book','새😀메모',[{start:1,end:3,bold:true,fontSizeOffset:2}]);
+    expect(readBookMemoDraftContent('owner','book')).toEqual({text:'새😀메모',formats:[{start:1,end:3,bold:true,fontSizeOffset:2}]});
+    removeBookMemoDraft('owner','book');expect(readBookMemoDraftContent('owner','book')).toBeNull();
+  });
+  it('preserves formatted source and target drafts when books merge',async()=>{
+    const {readBookMemoDraftContent}=await import('./bookMemoDraftStorage');
+    storeBookMemoDraft('owner','target','😀target',[{start:0,end:2,bold:true}]);
+    storeBookMemoDraft('owner','source','source',[{start:0,end:6,italic:true}]);
+    expect(moveBookMemoDraftAfterMerge('owner','source','target','','')).toBe(true);
+    expect(readBookMemoDraftContent('owner','target')).toEqual({text:'😀target\n\n---\n\nsource',formats:[{start:0,end:2,bold:true},{start:15,end:21,italic:true}]});
+  });
+});

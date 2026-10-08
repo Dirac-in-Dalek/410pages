@@ -39,6 +39,7 @@ const baseProps = {
   onAddNote: vi.fn(),
   onUpdateNote: vi.fn(),
   onDeleteNote: vi.fn(),
+  onRetryCitationSave: vi.fn(),
   onDeleteCitation: vi.fn(),
   onUpdateCitation: vi.fn(),
   onCreateChapterBlock: vi.fn(),

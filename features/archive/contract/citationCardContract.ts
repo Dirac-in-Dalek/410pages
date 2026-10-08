@@ -1,3 +1,4 @@
+import type { TextFormatRange } from '../../../types';
 import { CitationEditDraftStore } from '../logic/citationEditDrafts';
 import { Citation } from '../../../types';
 
@@ -22,9 +23,9 @@ export interface CitationCardProps {
   isSelected: boolean;
   onToggleSelect: (id: string, selected: boolean) => void;
   onAddNote: (citationId: string, content: string) => boolean | void | Promise<boolean | void>;
-  onUpdateNote: (citationId: string, noteId: string, content: string) => boolean | void | Promise<boolean | void>;
+  onUpdateNote: (citationId: string, noteId: string, content: string, formats?: TextFormatRange[], expectedText?: string) => boolean | void | Promise<boolean | void>;
   onDeleteNote: (citationId: string, noteId: string) => boolean | void | Promise<boolean | void>;
   onDelete: (id: string) => void;
-  onUpdate: (id: string, data: Partial<Citation>) => boolean | void | Promise<boolean | void>;
+  onUpdate: (id: string, data: Partial<Citation>, expectedText?: string) => boolean | void | Promise<boolean | void>;
   onRetrySave: (id: string) => void | Promise<unknown>;
 }

@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { MobileLayout } from './MobileLayout';
 
 const authorFolderProps = {
+  books: [], citations: [], isHomeView: false, selectedBookId: null, onHomeSelect: vi.fn(), onBookSelect: vi.fn(),
   authorFolderLoading: false,
   authorFolderLoadError: null,
   onRetryAuthorFolders: vi.fn(),

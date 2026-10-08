@@ -1,3 +1,4 @@
+import type { TextFormatRange } from '../../../types';
 import type {
   ChapterBlock,
   BookSource,
@@ -47,13 +48,14 @@ export const updateCitationNote = (
   citations: Citation[],
   citationId: string,
   noteId: string,
-  content: string
+  content: string,
+  textFormats?: TextFormatRange[]
 ) =>
   citations.map((citation) =>
     citation.id === citationId
       ? {
           ...citation,
-          notes: citation.notes.map((note) => (note.id === noteId ? { ...note, content } : note)),
+          notes: citation.notes.map((note) => (note.id === noteId ? { ...note, content, ...(textFormats === undefined ? {} : { textFormats }) } : note)),
         }
       : citation
   );
@@ -174,6 +176,7 @@ export const applyRenameAuthorToBooks = (
               title: targetMerge.toBookTitle,
               sortIndex: targetMerge.toBookSortIndex,
               memo: targetMerge.toBookMemo,
+              memoFormats: targetMerge.toBookMemoFormats ?? [],
             }
           : {}),
         ...(belongsToRenamedAuthor
@@ -256,6 +259,7 @@ export const applyRenameBookToBooks = (
         title: result.bookTitle,
         sortIndex: result.bookSortIndex,
         memo: result.bookMemo,
+        memoFormats: result.bookMemoFormats ?? [],
       }];
     })
   );

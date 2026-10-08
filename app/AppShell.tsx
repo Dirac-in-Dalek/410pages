@@ -169,7 +169,7 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
   const openDesktopBookMemo = React.useCallback(() => {
     setIsDesktopBookMemoOpen(true);
     window.requestAnimationFrame(() => {
-      document.querySelector<HTMLTextAreaElement>('textarea[aria-label="책 전체 메모"]')?.focus({ preventScroll: true });
+      document.querySelector<HTMLElement>('[data-book-memo-editor]')?.focus({ preventScroll: true });
     });
   }, []);
 
@@ -288,6 +288,7 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
       title: result.bookTitle,
       sortIndex: result.bookSortIndex,
       memo: result.bookMemo,
+      memoFormats: result.bookMemoFormats ?? [],
     });
     return true;
   };
@@ -317,6 +318,7 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
         title: merge?.toBookTitle ?? targetBook.title,
         sortIndex: merge?.toBookSortIndex ?? targetBook.sortIndex,
         memo: merge?.toBookMemo ?? targetBook.memo,
+        memoFormats: merge?.toBookMemoFormats ?? targetBook.memoFormats,
         authorId: result.authorId,
         author: result.authorName,
         authorSortIndex: result.authorSortIndex,

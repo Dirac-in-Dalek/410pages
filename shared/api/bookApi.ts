@@ -1,3 +1,5 @@
+import type { TextFormatRange } from '../../types';
+import { saveTextFormatting } from './textFormattingApi';
 import { getSupabaseClient } from '../../lib/supabase';
 import type { BookDeletePreview, BookSource, CreateBookInput, DeleteBookCascadeResult } from '../../types';
 import { requireActiveUser, GetOrCreateAuthorResult, BookSourceRow, mapBookSourceRow } from './libraryApiUtils';
@@ -16,6 +18,7 @@ export type RenameBookResult = {
     bookTitle: string;
     bookSortIndex: number | null;
     bookMemo: string;
+    bookMemoFormats?: TextFormatRange[];
     citationOrderKeys?: Record<string, string>;
     chapterOrderKeys?: Record<string, string>;
 };
@@ -24,11 +27,7 @@ export async function fetchBooks(userId: string) {
         const { data, error } = await getSupabaseClient()
             .from('books')
             .select(`
-        id,
-        title,
-        memo,
-        sort_index,
-        created_at,
+        *,
         author:authors(id, name, sort_index, is_self)
       `)
             .eq('user_id', userId)
@@ -106,11 +105,15 @@ export async function renameBook(userId: string, id: string, name: string): Prom
         return data as RenameBookResult;
     }
 
-export async function updateBookMemo(userId: string, id: string, memo: string) {
+export async function updateBookMemo(userId: string, id: string, memo: string, formats?: TextFormatRange[], expectedText?: string) {
+        if (formats !== undefined && expectedText !== undefined) {
+            await saveTextFormatting(userId, 'memo', id, expectedText, memo, formats);
+            return;
+        }
         await requireActiveUser(userId, 'book memo update');
         const { data, error } = await getSupabaseClient()
             .from('books')
-            .update({ memo })
+            .update({ memo, ...(formats === undefined ? {} : { memo_formats: formats }) })
             .eq('id', id)
             .eq('user_id', userId)
             .select('id')
