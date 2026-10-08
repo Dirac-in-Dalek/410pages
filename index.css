@@ -1163,13 +1163,32 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
 /* The desktop book is one bounded reading group, rather than two sidebars. */
 .reading-responsive {
   --reading-panel-header-height: max(var(--reading-control-size, 32px), calc(var(--reading-ui-font-size, 1rem) * 1.5));
+  --reading-panel-motion-duration: 240ms;
+  --reading-panel-motion-easing: cubic-bezier(0.22, 1, 0.36, 1);
 }
+.reading-responsive[data-reading-resizing="true"] { --reading-panel-motion-duration: 0ms; }
 .book-library-toggle {
   top: calc(var(--reading-header-height, 50.4px) + 1px + (var(--reading-panel-header-height) - var(--reading-control-size, 32px)) / 2);
   width: var(--reading-control-size, 32px);
   height: var(--reading-control-size, 32px);
+  transition-property: left, background-color, color;
+  transition-duration: var(--reading-panel-motion-duration);
+  transition-timing-function: var(--reading-panel-motion-easing);
 }
 .book-library-toggle svg { width: calc(var(--reading-icon-size, 16px) * 1.125); height: calc(var(--reading-icon-size, 16px) * 1.125); }
+.reading-library-panel {
+  transition-property: width, opacity;
+  transition-duration: var(--reading-panel-motion-duration);
+  transition-timing-function: var(--reading-panel-motion-easing);
+}
+.reading-responsive :is(.book-reading-workspace, [data-book-column], [data-archive-scroll] > div:first-child, .book-citation-row[data-compare-comments="true"], .book-passage-lane, .book-passage-column) {
+  transition-property: width, margin-left, grid-template-columns;
+  transition-duration: var(--reading-panel-motion-duration);
+  transition-timing-function: var(--reading-panel-motion-easing);
+}
+@media (prefers-reduced-motion: reduce) {
+  .reading-responsive { --reading-panel-motion-duration: 0ms; }
+}
 .book-reading-host { flex: 1; min-height: 0; min-width: 0; padding-inline: var(--reading-host-padding, 24px); }
 .book-reading-workspace {
   display: grid;
