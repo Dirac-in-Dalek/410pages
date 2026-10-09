@@ -47,7 +47,7 @@ export const ProjectCreateComposer: React.FC<ProjectCreateComposerProps> = ({
           }}
           className={
             compact
-              ? 'type-body-bounded flex-1 px-3 py-2.5 border border-[var(--border-main)] rounded-md bg-[var(--bg-input)]'
+              ? 'type-body-bounded min-w-0 flex-1 px-3 py-2.5 border border-[var(--border-main)] rounded-md bg-[var(--bg-input)]'
               : 'type-body-bounded w-full border-none bg-transparent px-2 py-1.5 text-[0.92rem] text-[var(--text-main)] focus:ring-0 placeholder:text-[var(--text-muted)]'
           }
         />
