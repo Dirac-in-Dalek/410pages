@@ -1,8 +1,7 @@
 import { readFileSync } from 'node:fs';
 import postcss from 'postcss';
-import tailwindcss from 'tailwindcss';
+import tailwindcss from '@tailwindcss/postcss';
 import { describe, expect, it } from 'vitest';
-import tailwindConfig from '../tailwind.config.js';
 
 const relativeLuminance = (hex: string) => {
   const channels = hex
@@ -43,10 +42,10 @@ describe('theme muted text contrast', () => {
 
 describe('theme utility activation', () => {
   it('activates generated dark text only when the app adds its dark class', async () => {
-    const result = await postcss([tailwindcss({
-      ...tailwindConfig,
-      content: [{ raw: '<div class="text-red-800 dark:text-red-100"></div>', extension: 'html' }],
-    })]).process('@tailwind utilities;', { from: undefined });
+    const result = await postcss([tailwindcss({ optimize: true })]).process(
+      readFileSync('index.css', 'utf8') + '\n@source inline("text-red-800 dark:text-red-100");',
+      { from: 'index.css' },
+    );
     let darkSelector = '';
     result.root.walkRules((rule) => {
       if (rule.selector.includes('dark\\:text-red-100')) darkSelector = rule.selector;

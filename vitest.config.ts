@@ -9,7 +9,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     clearMocks: true,
-    passWithNoTests: true,
+    passWithNoTests: false,
     include: ['**/*.{test,spec}.{ts,tsx,js,jsx}'],
     exclude: ['**/.worktrees/**', '**/dist/**', '**/node_modules/**'],
   },
