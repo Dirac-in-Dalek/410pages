@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Book, ChevronDown, ChevronRight, Edit2, Home, Plus, Trash2 } from 'lucide-react';
+import { Book, ChevronDown, ChevronRight, Edit2, Plus, Trash2 } from 'lucide-react';
 import type { Project } from '../../../types';
 import type {
   ProjectDropIndicator,
@@ -16,7 +16,7 @@ import {
 import { ProjectSidebarProjectsSection } from './ProjectSidebarProjectsSection';
 import { LibrarySidebarTree } from './LibrarySidebarTree';
 import { findRecentlyCitedBooks } from '../logic/archiveTree';
-import { EditorialListButton, EditorialSectionLabel } from '../../../shared/ui/sidebar/SidebarPrimitives';
+import { EditorialSectionLabel } from '../../../shared/ui/sidebar/SidebarPrimitives';
 
 export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
   projects,
@@ -32,8 +32,6 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
   treeData = [],
   selectedBookId = null,
   selectedFilter,
-  isHomeView = false,
-  onHomeSelect,
   onBookSelect,
   onTreeItemClick,
   authorFolderLoading,
@@ -401,18 +399,6 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
           }
         }}
       >
-        <EditorialListButton
-          active={isHomeView}
-          onClick={onHomeSelect}
-          className={[
-            'project-sidebar-home mb-2 flex min-h-10 items-center justify-center gap-2',
-            isHomeView ? '!border-transparent !bg-[var(--accent-soft)] !text-[var(--accent-strong)]' : '',
-          ].join(' ')}
-        >
-          <Home size={16} />
-          홈
-        </EditorialListButton>
-
         <EditorialSectionLabel>최근 기록한 책</EditorialSectionLabel>
         <div className="mb-4 space-y-0.5">
           {recentBooks.length ? recentBooks.map((book) => (

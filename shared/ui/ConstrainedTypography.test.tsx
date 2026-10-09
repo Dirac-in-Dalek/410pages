@@ -30,7 +30,7 @@ describe('Constrained typography', () => {
     render(
       <ProjectSidebar
         books={[]} citations={[]} treeData={treeData} selectedBookId={null} selectedFilter={null}
-        isHomeView={false} onHomeSelect={vi.fn()} onBookSelect={vi.fn()} onTreeItemClick={vi.fn()}
+        onBookSelect={vi.fn()} onTreeItemClick={vi.fn()}
         authorFolderLoading={false} authorFolderLoadError={null} onRetryAuthorFolders={vi.fn()}
         onCreateAuthorFolder={vi.fn()} onRenameAuthorFolder={vi.fn()} onDeleteAuthorFolder={vi.fn()}
         onMoveAuthorToFolder={vi.fn()} onRemoveAuthorFromFolder={vi.fn()}
