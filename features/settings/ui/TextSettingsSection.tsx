@@ -66,10 +66,6 @@ export const TextSettingsSection: React.FC<TextSettingsSectionProps> = ({
           />
           <div aria-hidden="true" className="flex justify-between text-xs tabular-nums text-[var(--text-muted)]"><span>{MIN_BASE_FONT_PT}pt</span><span>{MAX_BASE_FONT_PT}pt</span></div>
         </div>
-        <div className="px-3 py-3">
-          <p className="text-xs text-[var(--text-muted)]">미리보기</p>
-          <p className="flex min-h-16 items-center break-words py-2 leading-relaxed text-[var(--text-main)]" style={{ fontFamily: getFontOption(fontFamily)?.fontFamily, fontSize: `${baseFontPt}pt` }}>좋은 문장은 오래 남습니다.</p>
-        </div>
       </div>
     </section>
   );
