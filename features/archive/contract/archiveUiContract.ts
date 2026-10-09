@@ -1,3 +1,4 @@
+import type { CitationUpdate } from '../../../types';
 import type { TextFormatRange } from '../../../types';
 import { CitationEditDraftStore } from '../logic/citationEditDrafts';
 import type { AddCitationInput, BookPosition, ChapterBlock, Citation, CreateChapterBlockInput, Project } from '../../../types';
@@ -38,7 +39,7 @@ export interface CitationListProps {
     onUpdateNote: (citationId: string, noteId: string, content: string, formats?: TextFormatRange[], expectedText?: string) => void;
     onDeleteNote: (citationId: string, noteId: string) => void;
     onDeleteCitation: (id: string) => void;
-    onUpdateCitation: (id: string, data: Partial<Citation>, expectedText?: string) => void;
+    onUpdateCitation: (id: string, data: CitationUpdate, expectedText?: string) => void;
     onRetryCitationSave: (citationId: string) => void | Promise<unknown>;
     chapterBlocks?: ChapterBlock[];
     isBookView?: boolean;

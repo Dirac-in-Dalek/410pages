@@ -1,3 +1,4 @@
+import type { CitationUpdate } from '../../../types';
 import React from 'react';
 import type { Citation } from '../../../types';
 import { FormattedText } from '../../../shared/ui/FormattedText';
@@ -6,7 +7,7 @@ import { formatsWithLegacyHighlights, legacyHighlightsFromFormats } from '../../
 type FlatCitationHighlightTextProps = {
   citation: Citation;
   disabled?: boolean;
-  onUpdate: (id: string, data: Partial<Citation>, expectedText?: string) => unknown | Promise<unknown>;
+  onUpdate: (id: string, data: CitationUpdate, expectedText?: string) => unknown | Promise<unknown>;
   onHighlight: () => void;
 };
 

@@ -1,3 +1,4 @@
+import { fetchAllRows } from './pagination';
 import { getSupabaseClient } from '../../lib/supabase';
 import type { BookPosition, ChapterBlock, CreateChapterBlockInput } from '../../types';
 import { createAppendBookOrderKey, mutateWithBookOrderRetry, validateBookPosition } from './bookOrderApi';
@@ -25,21 +26,17 @@ const mapChapterBlockRow = (row: ChapterBlockRow): ChapterBlock => ({
 });
 
 export async function fetchChapterBlocks(userId: string, bookId: string) {
-        const { data, error } = await getSupabaseClient()
-            .from('chapter_blocks')
-            .select('*')
-            .eq('user_id', userId)
-            .eq('book_id', bookId)
-            .order('created_at_sort', { ascending: true });
-        if (error) throw error;
-        return (data || []).map(mapChapterBlockRow);
-    }
+    const data = await fetchAllRows<ChapterBlockRow>((from, to) => getSupabaseClient().from('chapter_blocks')
+        .select('*').eq('user_id', userId).eq('book_id', bookId)
+        .order('created_at_sort', { ascending: true }).order('id').range(from, to));
+    return data.map(mapChapterBlockRow);
+}
 
 export async function createChapterBlock(userId: string, input: CreateChapterBlockInput) {
         if (input.depth !== undefined && (!Number.isInteger(input.depth) || input.depth < 0)) throw new Error('Invalid chapter depth');
         if (input.orderKey !== undefined) validateBookPosition(input.orderKey, 'Invalid chapter position');
         const initialOrderKey = input.orderKey ?? await createAppendBookOrderKey(userId, input.bookId);
-        const data = await mutateWithBookOrderRetry(userId, input.bookId, initialOrderKey, (orderKey) =>
+        const data = await mutateWithBookOrderRetry<ChapterBlockRow>(userId, input.bookId, initialOrderKey, (orderKey) =>
             getSupabaseClient().from('chapter_blocks').insert({
                 book_id: input.bookId,
                 label: input.label,

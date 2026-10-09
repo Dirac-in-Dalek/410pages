@@ -1,10 +1,11 @@
+import type { ArchiveSession } from '../contract/archiveMutationContract';
 import { useState, useCallback, useEffect } from 'react';
 import { Citation } from '../../../types';
 import { formatCitationCopyText, writeTextToClipboard } from '../../../lib/citationCopy';
 
 export const useBulkSelection = (
     filteredCitations: Citation[],
-    session: any,
+    session: ArchiveSession,
     resolveCitationId: (citationId: string) => Promise<string | null>,
     username: string,
     onAddCitationsToProject: (projectId: string, citationIds: string[]) => Promise<boolean>,

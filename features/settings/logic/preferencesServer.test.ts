@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const mockSession = vi.fn();
 const mockMaybeSingle = vi.fn();
 const mockEq = vi.fn(() => ({
   maybeSingle: mockMaybeSingle,
@@ -16,6 +17,7 @@ const mockFrom = vi.fn(() => ({
 vi.mock('../../../lib/supabase', () => ({
   getSupabaseClient: () => ({
     from: mockFrom,
+    auth: { getSession: mockSession },
   }),
 }));
 
@@ -24,6 +26,7 @@ import { readServerPreferences, persistServerPreferences } from './preferencesSe
 describe('preferencesServer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSession.mockResolvedValue({ data: { session: { user: { id: 'user-1' } } }, error: null });
   });
 
   it('reads and normalizes server preferences from the profile row', async () => {

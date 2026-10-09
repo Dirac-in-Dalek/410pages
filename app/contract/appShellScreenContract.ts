@@ -1,3 +1,4 @@
+import type { CitationUpdate } from '../../types';
 import type { TextFormatRange } from '../../types';
 import type {
   AddCitationInput,
@@ -83,7 +84,7 @@ export interface ArchiveScreenFactoryInput {
   onUpdateNote: (citationId: string, noteId: string, content: string, formats?: TextFormatRange[], expectedText?: string) => void;
   onDeleteNote: (citationId: string, noteId: string) => void;
   onDeleteCitation: (id: string) => void;
-  onUpdateCitation: (id: string, data: Partial<Citation>, expectedText?: string) => void | Promise<unknown>;
+  onUpdateCitation: (id: string, data: CitationUpdate, expectedText?: string) => void | Promise<unknown>;
   passageNoteCitationId?: string | null;
   onPassageNoteCitationChange?: (citationId: string | null) => void;
 }

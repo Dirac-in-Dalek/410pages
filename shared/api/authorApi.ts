@@ -1,3 +1,4 @@
+import { fetchAllRows } from './pagination';
 import type { TextFormatRange } from '../../types';
 import { getSupabaseClient } from '../../lib/supabase';
 import type { AuthorSource } from '../../types';
@@ -42,14 +43,11 @@ type RenameAuthorResult = {
 };
 
 export async function fetchAuthors(userId: string) {
-        const { data, error } = await getSupabaseClient()
-            .from('authors')
-            .select('id, name, sort_index, created_at, is_self')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false });
-        if (error) throw error;
-        return (data || []).map((row: AuthorSourceRow) => mapAuthorSourceRow(row));
-    }
+    const data = await fetchAllRows<AuthorSourceRow>((from, to) => getSupabaseClient().from('authors')
+        .select('id, name, sort_index, created_at, is_self').eq('user_id', userId)
+        .order('created_at', { ascending: false }).order('id').range(from, to));
+    return data.map(mapAuthorSourceRow);
+}
 
 export async function createAuthor(userId: string, name: string) {
         const trimmed = name.trim();

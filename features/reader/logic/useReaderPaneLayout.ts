@@ -37,7 +37,7 @@ const calculateDynamicMaxLeft = (containerWidth: number, rightWidth: number) =>
 const calculateDynamicMaxRight = (containerWidth: number, leftPaneWidth: number) =>
   Math.min(RIGHT_MAX, Math.max(RIGHT_MIN, containerWidth - leftPaneWidth - CENTER_MIN));
 
-export const useReaderPaneLayout = (containerRef: RefObject<HTMLElement>) => {
+export const useReaderPaneLayout = (containerRef: RefObject<HTMLElement | null>) => {
   const [leftWidth, setLeftWidth] = useState(() => clamp(readStoredNumber('readerLeftPaneWidth', LEFT_DEFAULT), LEFT_MIN, LEFT_MAX));
   const [rightWidth, setRightWidth] = useState(() =>
     clamp(readStoredNumber('readerRightPaneWidth', RIGHT_DEFAULT), RIGHT_MIN, RIGHT_MAX)

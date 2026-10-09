@@ -86,7 +86,7 @@ export const useArchiveFilter = (
             authorReorderInFlightRef.current = false;
             setAuthorOrderSaving(false);
         }
-    }, [getCurrentOrderedAuthors, onOrderPersisted, userId]);
+    }, [getCurrentOrderedAuthors, onOrderPersisted, setAuthorOrder, userId]);
 
     const handleReorderBookAt = useCallback(async (authorId: string, dragBookId: string, dropIndex: number) => {
         if (!authorId || !dragBookId || !userId || bookReorderInFlightRef.current) return false;
@@ -119,7 +119,7 @@ export const useArchiveFilter = (
             bookReorderInFlightRef.current = false;
             setBookOrderSaving(false);
         }
-    }, [getCurrentOrderedBooks, onOrderPersisted, userId]);
+    }, [getCurrentOrderedBooks, onOrderPersisted, setBookOrderByAuthor, userId]);
 
     return {
         searchTerm,

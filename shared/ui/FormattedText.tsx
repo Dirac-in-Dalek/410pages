@@ -68,7 +68,7 @@ export function FormattedText({ text, formats = EMPTY_FORMATS, onSave, onSelect,
   const textRef = React.useRef(text);
   const saveRef = React.useRef(onSave);
   saveRef.current = onSave;
-  React.useLayoutEffect(() => {
+  const restoreSelection = React.useEffectEvent(() => {
     if (!selection || !root.current || textRef.current !== text) return;
     const walker = document.createTreeWalker(root.current, NodeFilter.SHOW_TEXT);
     const range = document.createRange();
@@ -84,7 +84,8 @@ export function FormattedText({ text, formats = EMPTY_FORMATS, onSave, onSelect,
       }
       cursor += length;
     }
-  }, [local]);
+  });
+  React.useLayoutEffect(() => { restoreSelection(); }, [local]);
   React.useEffect(() => {
     if (textRef.current !== text) {
       textRef.current = text; revision.current++; setSelection(null); pending.current = 0;
@@ -94,6 +95,7 @@ export function FormattedText({ text, formats = EMPTY_FORMATS, onSave, onSelect,
       confirmed.current = normalizeTextFormats(formats, text.length); localRef.current = confirmed.current; setLocal(confirmed.current);
     }
   }, [text, formats]);
+  const invalidatePendingSaves = React.useCallback(() => { revision.current++; }, []);
   React.useEffect(() => {
     const element = root.current;
     if (!element) return;
@@ -115,9 +117,9 @@ export function FormattedText({ text, formats = EMPTY_FORMATS, onSave, onSelect,
         document.removeEventListener('pointerdown', dismiss); document.removeEventListener('keydown', dismiss);
         window.removeEventListener('scroll', dismiss, true);
       }
-      revision.current++;
+      invalidatePendingSaves();
     };
-  }, []);
+  }, [invalidatePendingSaves]);
   const capture = () => {
     if (!root.current) return;
     const next = selectionIn(root.current, text);

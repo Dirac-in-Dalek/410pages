@@ -82,7 +82,6 @@ export const CitationList: React.FC<CitationListProps> = ({
         });
     }, []);
     const chapterListRef = useRef<HTMLDivElement>(null);
-    const [overflowingCitationIds, setOverflowingCitationIds] = useState<Set<string>>(() => new Set());
     const [expandedCitationIds, setExpandedCitationIds] = useState<Set<string>>(() => new Set());
     const [detailCitationId, setDetailCitationId] = useState<string | null>(null);
     const [copiedRecoveryCitationId, setCopiedRecoveryCitationId] = useState<string | null>(null);
@@ -159,22 +158,6 @@ export const CitationList: React.FC<CitationListProps> = ({
         if (!citations.some((citation) => citation.id === detailCitationId)) setDetailCitationId(null);
     }, [detailCitationId, citations]);
 
-    const handleTextOverflowChange = useCallback((id: string, isOverflowing: boolean) => {
-        setOverflowingCitationIds((prev) => {
-            const alreadyTracked = prev.has(id);
-            if (alreadyTracked === isOverflowing) return prev;
-
-            const next = new Set(prev);
-            if (isOverflowing) {
-                next.add(id);
-            } else {
-                next.delete(id);
-            }
-            return next;
-        });
-
-    }, []);
-
     const handleTextExpandedChange = useCallback((id: string, isExpanded: boolean) => {
         setExpandedCitationIds((prev) => {
             const alreadyExpanded = prev.has(id);
@@ -218,10 +201,6 @@ export const CitationList: React.FC<CitationListProps> = ({
 
     useEffect(() => {
         const visibleIds = new Set(visibleSentenceIdsKey ? visibleSentenceIdsKey.split('\u0000') : []);
-        setOverflowingCitationIds((prev) => {
-            const next = new Set([...prev].filter((id) => visibleIds.has(id)));
-            return next.size === prev.size ? prev : next;
-        });
         setExpandedCitationIds((prev) => {
             const next = new Set([...prev].filter((id) => visibleIds.has(id)));
             return next.size === prev.size ? prev : next;
@@ -709,7 +688,6 @@ export const CitationList: React.FC<CitationListProps> = ({
                                     projectNames={citationProjects}
                                     isTextExpanded={expandedCitationIds.has(item.citation.id)}
                                     onTextExpandedChange={handleTextExpandedChange}
-                                    onTextOverflowChange={handleTextOverflowChange}
                                     isSelected={selectedIds.has(item.citation.id)}
                                     onToggleSelect={onToggleSelect}
                                     onAddNote={onAddNote}

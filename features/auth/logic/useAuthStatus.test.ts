@@ -278,7 +278,7 @@ describe('useAuthStatus', () => {
       await Promise.resolve();
     });
 
-    expect(result.current.session.user.id).toBe('user-2');
+    expect(result.current.session?.user.id).toBe('user-2');
     expect(result.current.username).toBe('User Two');
   });
 
@@ -298,7 +298,7 @@ describe('useAuthStatus', () => {
       authStateChangeCallback?.('SIGNED_IN', { user: { id: 'user-2' } });
     });
 
-    expect(result.current.session.user.id).toBe('user-2');
+    expect(result.current.session?.user.id).toBe('user-2');
     expect(result.current.avatarUrl).toBeNull();
 
     await act(async () => {

@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import type { Session } from '@supabase/supabase-js';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import {
     clearPersistedAuthSession,
     reconcilePersistedAuthSession,
@@ -13,7 +14,7 @@ import { DEFAULT_USERNAME, clearCachedDisplayName } from '../../profile/policy/d
 import { getSupabaseClient, SUPABASE_AUTH_STORAGE_KEY } from '../../../lib/supabase';
 
 export const useAuthStatus = () => {
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [username, setUsername] = useState(DEFAULT_USERNAME);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -22,7 +23,7 @@ export const useAuthStatus = () => {
   const currentUserIdRef = useRef<string | null>(null);
   const isMountedRef = useRef(true);
 
-  const fetchProfile = async (userId: string, activeSession: any, generation: number) => {
+  const fetchProfile = async (userId: string, activeSession: Session, generation: number) => {
     const fallbackProfile = buildFallbackProfileSnapshot(userId, activeSession);
     const isCurrent = () =>
       isMountedRef.current &&
@@ -44,7 +45,7 @@ export const useAuthStatus = () => {
     }
   };
 
-  const applySession = (nextSession: any) => {
+  const applySession = useEffectEvent((nextSession: Session | null) => {
     const generation = ++sessionGenerationRef.current;
     currentUserIdRef.current = nextSession?.user?.id ?? null;
     setSession(nextSession);
@@ -61,7 +62,7 @@ export const useAuthStatus = () => {
     setUsername(DEFAULT_USERNAME);
     setAvatarUrl(null);
     setLoading(false);
-  };
+  });
 
   const handleUpdateUsername = async (newUsername: string) => {
     if (!session) return false;

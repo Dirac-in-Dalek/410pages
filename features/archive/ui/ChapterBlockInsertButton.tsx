@@ -35,13 +35,13 @@ export const ChapterBlockInsertButton: React.FC<ChapterBlockInsertButtonProps> =
   const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const resetInput = () => {
+  const resetInput = React.useCallback(() => {
     if (inputRef.current) {
       inputRef.current.value = '';
     }
     setCanSubmit(false);
     setDepth(previousDepth ?? 0);
-  };
+  }, [previousDepth]);
 
   useEffect(() => {
     if (!isEditing) return;
@@ -57,7 +57,7 @@ export const ChapterBlockInsertButton: React.FC<ChapterBlockInsertButtonProps> =
     return () => {
       document.removeEventListener('mousedown', handlePointerDown);
     };
-  }, [isEditing, isSubmitting, onCancel]);
+  }, [isEditing, isSubmitting, onCancel, resetInput]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();

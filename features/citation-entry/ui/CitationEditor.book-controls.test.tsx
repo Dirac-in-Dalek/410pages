@@ -19,7 +19,7 @@ describe('book composer kind controls', () => {
       }) : style;
     });
     // Model native auto height: rows is two by default, including vertical padding.
-    const heightSpy = vi.spyOn(HTMLTextAreaElement.prototype, 'scrollHeight', 'get').mockImplementation(function () {
+    const heightSpy = vi.spyOn(HTMLTextAreaElement.prototype, 'scrollHeight', 'get').mockImplementation(function (this: HTMLTextAreaElement) {
       return Math.max(this.rows, this.value.split('\n').length) * lineHeight + 12;
     });
     const onAddCitation = vi.fn();

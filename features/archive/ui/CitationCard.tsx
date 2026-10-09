@@ -90,7 +90,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
     }
   };
 
-  const adjustHeight = (ref: React.RefObject<HTMLTextAreaElement>) => {
+  const adjustHeight = (ref: React.RefObject<HTMLTextAreaElement | null>) => {
     if (ref.current) {
       ref.current.style.height = 'auto';
       const newHeight = Math.min(ref.current.scrollHeight, 400);
@@ -319,7 +319,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
         text: editText,
         author: editAuthor,
         book: editBook,
-        page: editPage || undefined
+        page: editPage || null
       }));
       if (didUpdate === false) return;
 
@@ -356,6 +356,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
     closeEditingSession();
   };
 
+  const cancelPristineEdit = React.useEffectEvent(handleCancel);
   useEffect(() => {
     if (!isEditing) return;
 
@@ -364,14 +365,14 @@ export const CitationCard: React.FC<CitationCardProps> = ({
       if (cardRef.current.contains(event.target as Node)) return;
       if (!isEditSessionPristine) return;
 
-      handleCancel();
+      cancelPristineEdit();
     };
 
     document.addEventListener('mousedown', handlePointerDownOutside);
     return () => {
       document.removeEventListener('mousedown', handlePointerDownOutside);
     };
-  }, [handleCancel, isEditSessionPristine, isEditing]);
+  }, [isEditSessionPristine, isEditing]);
 
   const handleCardDoubleClick = (event: React.MouseEvent<HTMLDivElement>) => {
     if (isEditing) return;

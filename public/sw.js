@@ -8,7 +8,7 @@ self.addEventListener('install', (event) => {
 
     const html = await shellResponse.clone().text();
     const assetPaths = [...new Set(
-      [...html.matchAll(/(?:src|href)="(\/[^"#?]+)[^\"]*"/g)].map((match) => match[1])
+      [...html.matchAll(/(?:src|href)="(\/[^"#?]+)[^"]*"/g)].map((match) => match[1])
     )];
     const assets = await Promise.all(assetPaths.map(async (path) => {
       const response = await fetch(path);

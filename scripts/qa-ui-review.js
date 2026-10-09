@@ -22,7 +22,10 @@ async (page) => {
     if(url.pathname==='/rest/v1/rpc/get_or_create_book')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({bookId:'b3',bookTitle:'PDF 검증용',bookSortIndex:2,bookCreatedAt:'2026-09-01T00:00:00Z',authorId:author.id,authorName:author.name,authorSortIndex:0,isSelf:false})});
     if(url.pathname.startsWith('/rest/v1/')){
       const table=url.pathname.split('/').pop();
-      const data={profiles:{username:'검토용 독자',avatar_path:null,preferences:null},authors:[author,{...author,id:'a2',name:'박산책',sort_index:1}],books:[book,{...book,id:'b2',title:'여백의 시간',sort_index:1}],citations,projects:[],chapter_blocks:chapters,author_folders:[],author_folder_memberships:[]}[table]??[];
+      const raw={notes:citations.flatMap(c=>c.notes.map(n=>({...n,citation_id:c.id}))),profiles:{username:'검토용 독자',avatar_path:null,preferences:null},authors:[author,{...author,id:'a2',name:'박산책',sort_index:1}],books:[book,{...book,id:'b2',title:'여백의 시간',sort_index:1}],citations,projects:[],chapter_blocks:chapters,author_folders:[],author_folder_memberships:[]}[table]??[];
+      const requestUrl=route.request().url();
+      const offset=Number(/[?&]offset=(\d+)/.exec(requestUrl)?.[1]||0), limit=Number(/[?&]limit=(\d+)/.exec(requestUrl)?.[1]||1000);
+      const data=Array.isArray(raw)?raw.slice(offset,offset+limit):raw;
       return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(data)});
     }
     if(url.pathname.startsWith('/auth/v1/'))return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(url.pathname.endsWith('/user')?user:session)});
@@ -70,8 +73,9 @@ async (page) => {
   await page.setViewportSize({width:1440,height:1000});
   await page.getByRole('textbox',{name:'이 책의 인용문 검색',exact:true}).waitFor();
   await page.getByRole('button',{name:/구절 메모 열기:/}).first().click();
-  await page.getByRole('button',{name:'홈 패널 펼치기',exact:true}).waitFor();
+  await page.getByRole('textbox',{name:'인용문 메모 입력',exact:true}).waitFor();
   await page.screenshot({path:'output/playwright/comments-desktop-fixed.png'});
+  await page.getByRole('button',{name:'구절 메모 닫기',exact:true}).click();
   await page.getByRole('button',{name:'김기록의 책',exact:true}).click();
   await page.route(pdfModule,route=>route.abort());
   await page.getByRole('button',{name:'책 추가',exact:true}).click();

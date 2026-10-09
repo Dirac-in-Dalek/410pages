@@ -1,38 +1,28 @@
+import { parseAuthorDeleteResult, parseAuthorDeletePreview } from './libraryMutationResults';
+import { fetchAllRows } from './pagination';
 import { getSupabaseClient } from '../../lib/supabase';
-import type { AuthorDeletePreview, AuthorFolder, AuthorFolderMembership, DeleteAuthorCascadeResult } from '../../types';
+import type { AuthorFolder, AuthorFolderMembership } from '../../types';
 import { requireActiveUser, getNextSortIndex } from './libraryApiUtils';
+import { requireMutationRow } from './mutationResult';
 
 
 
 export async function fetchAuthorFolders(userId: string) {
-        const [{ data: folderRows, error: folderError }, { data: membershipRows, error: membershipError }] = await Promise.all([
-            getSupabaseClient()
-                .from('author_folders')
-                .select('id, name, sort_index, created_at')
-                .eq('user_id', userId)
-                .order('sort_index', { ascending: true })
-                .order('created_at', { ascending: true }),
-            getSupabaseClient()
-                .from('author_folder_memberships')
-                .select('author_id, folder_id, created_at')
-                .eq('user_id', userId),
-        ]);
-        if (folderError) throw folderError;
-        if (membershipError) throw membershipError;
-        return {
-            folders: (folderRows || []).map((row) => ({
-                id: row.id,
-                name: row.name,
-                sortIndex: row.sort_index,
-                createdAt: new Date(row.created_at).getTime(),
-            } as AuthorFolder)),
-            memberships: (membershipRows || []).map((row) => ({
-                authorId: row.author_id,
-                folderId: row.folder_id,
-                createdAt: new Date(row.created_at).getTime(),
-            } as AuthorFolderMembership)),
-        };
-    }
+    const [folders, memberships] = await Promise.all([
+        fetchAllRows((from, to) => getSupabaseClient().from('author_folders')
+            .select('id, name, sort_index, created_at').eq('user_id', userId)
+            .order('sort_index').order('created_at').order('id').range(from, to)),
+        fetchAllRows((from, to) => getSupabaseClient().from('author_folder_memberships')
+            .select('author_id, folder_id, created_at').eq('user_id', userId)
+            .order('author_id').range(from, to)),
+    ]);
+    return {
+        folders: folders.map(row => ({ id: row.id, name: row.name, sortIndex: row.sort_index,
+            createdAt: new Date(row.created_at).getTime() } as AuthorFolder)),
+        memberships: memberships.map(row => ({ authorId: row.author_id, folderId: row.folder_id,
+            createdAt: new Date(row.created_at).getTime() } as AuthorFolderMembership)),
+    };
+}
 
 export async function createAuthorFolder(userId: string, name: string) {
         const trimmed = name.trim();
@@ -55,12 +45,14 @@ export async function createAuthorFolder(userId: string, name: string) {
 export async function renameAuthorFolder(userId: string, folderId: string, name: string) {
         const trimmed = name.trim();
         if (!trimmed) throw new Error('Author folder name is required');
-        const { error } = await getSupabaseClient()
+        const { data, error } = await getSupabaseClient()
             .from('author_folders')
             .update({ name: trimmed })
             .eq('id', folderId)
-            .eq('user_id', userId);
-        if (error) throw error;
+            .eq('user_id', userId)
+            .select('id')
+            .maybeSingle();
+        requireMutationRow(data, error, 'Author folder');
     }
 
 export async function deleteAuthorFolder(userId: string, folderId: string) {
@@ -102,7 +94,7 @@ export async function deleteAuthorCascade(userId: string, authorId: string) {
             source_author_id: authorId,
         });
         if (error) throw error;
-        return data as DeleteAuthorCascadeResult;
+        return parseAuthorDeleteResult(data);
     }
 
 export async function previewAuthorDeletion(userId: string, authorId: string) {
@@ -112,5 +104,5 @@ export async function previewAuthorDeletion(userId: string, authorId: string) {
             source_author_id: authorId,
         });
         if (error) throw error;
-        return data as AuthorDeletePreview;
+        return parseAuthorDeletePreview(data);
     }

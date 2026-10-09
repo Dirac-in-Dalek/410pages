@@ -71,7 +71,7 @@ export const PassageNotesPanel: React.FC<PassageNotesPanelProps> = ({
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('pointerdown', handlePointerDown);
     };
-  }, [mobile, inline, readOnly, onClose]);
+  }, [mobile, inline, readOnly, onClose, rootRef]);
 
   React.useLayoutEffect(() => {
     const input = draftRef.current;

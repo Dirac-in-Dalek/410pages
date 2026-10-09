@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import React, { useEffect, useCallback, useRef, useState, useSyncExternalStore } from 'react';
 import { BookComposerDraftStore } from './bookComposerDrafts';
 import { AddCitationInput } from '../../../types';
 import {
@@ -58,10 +58,19 @@ export const useCitationEntryController = ({
   const values = snapshot?.values ?? createResetValues(prefillData);
   const isSubmitting = snapshot?.saving ?? false;
   const [isDraggingOver, setIsDraggingOver] = useState(false);
-  const setValues = (update: React.SetStateAction<CitationEditorValues>) => {
-    const current = drafts.get(scope)?.values ?? createResetValues(prefillData);
+  const prefillAuthor = prefillData?.author;
+  const prefillBook = prefillData?.book;
+  const prefillBookId = prefillData?.bookId;
+  const isControlled = Boolean(controlledValues);
+  const controlledText = controlledValues?.text;
+  const controlledAuthor = controlledValues?.author;
+  const controlledBook = controlledValues?.book;
+  const controlledBookId = controlledValues?.bookId;
+  const controlledPage = controlledValues?.page;
+  const setValues = useCallback((update: React.SetStateAction<CitationEditorValues>) => {
+    const current = drafts.get(scope)?.values ?? createResetValues({ author: prefillAuthor ?? "", book: prefillBook ?? "", bookId: prefillBookId });
     drafts.patch(scope, { values: typeof update === 'function' ? update(current) : update });
-  };
+  }, [drafts, prefillAuthor, prefillBook, prefillBookId, scope]);
   const setIsSubmitting = (saving: boolean) => drafts.patch(scope, { saving });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const pageInputRef = useRef<HTMLInputElement>(null);
@@ -107,33 +116,15 @@ export const useCitationEntryController = ({
   }, [values.text]);
 
   useEffect(() => {
-    if (controlledValues) return;
-    setValues((current) => ({
-      ...current,
-      author: prefillData?.author || '',
-      book: prefillData?.book || '',
-      bookId: prefillData?.bookId,
-    }));
-  }, [controlledValues, prefillData]);
+    if (isControlled) return;
+    setValues(current => ({ ...current, author: prefillAuthor || '', book: prefillBook || '', bookId: prefillBookId }));
+  }, [isControlled, prefillAuthor, prefillBook, prefillBookId, setValues]);
 
   useEffect(() => {
-    if (!controlledValues) return;
-
-    setValues({
-      text: controlledValues.text ?? '',
-      author: controlledValues.author ?? '',
-      book: controlledValues.book ?? '',
-      bookId: controlledValues.bookId,
-      page: controlledValues.page ?? '',
-    });
-  }, [
-    controlledValues,
-    controlledValues?.author,
-    controlledValues?.book,
-    controlledValues?.bookId,
-    controlledValues?.page,
-    controlledValues?.text,
-  ]);
+    if (!isControlled) return;
+    setValues({ text: controlledText ?? '', author: controlledAuthor ?? '', book: controlledBook ?? '',
+      bookId: controlledBookId, page: controlledPage ?? '' });
+  }, [isControlled, controlledText, controlledAuthor, controlledBook, controlledBookId, controlledPage, setValues]);
 
   useEffect(() => {
     if (!autoFocusText || readOnly) return;

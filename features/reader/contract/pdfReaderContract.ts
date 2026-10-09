@@ -1,3 +1,4 @@
+import type { CitationUpdate } from '../../../types';
 import type { TextFormatRange } from '../../../types';
 import type {
   AddCitationInput,
@@ -100,7 +101,7 @@ export interface PdfReaderPageProps {
   onUpdateNote: (citationId: string, noteId: string, content: string, formats?: TextFormatRange[], expectedText?: string) => void;
   onDeleteNote: (citationId: string, noteId: string) => void;
   onDeleteCitation: (id: string) => void;
-  onUpdateCitation: (id: string, data: Partial<Citation>, expectedText?: string) => void;
+  onUpdateCitation: (id: string, data: CitationUpdate, expectedText?: string) => void;
   onBulkUpdateCitationSource: (
     citationIds: string[],
     source: CitationSourceInput
