@@ -1,3 +1,4 @@
+import type { CitationUpdate } from '../../../types';
 import type { TextFormatRange } from '../../../types';
 import { CitationEditDraftStore } from '../logic/citationEditDrafts';
 import { Citation } from '../../../types';
@@ -26,6 +27,6 @@ export interface CitationCardProps {
   onUpdateNote: (citationId: string, noteId: string, content: string, formats?: TextFormatRange[], expectedText?: string) => boolean | void | Promise<boolean | void>;
   onDeleteNote: (citationId: string, noteId: string) => boolean | void | Promise<boolean | void>;
   onDelete: (id: string) => void;
-  onUpdate: (id: string, data: Partial<Citation>, expectedText?: string) => boolean | void | Promise<boolean | void>;
+  onUpdate: (id: string, data: CitationUpdate, expectedText?: string) => boolean | void | Promise<boolean | void>;
   onRetrySave: (id: string) => void | Promise<unknown>;
 }

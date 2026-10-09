@@ -1,3 +1,4 @@
+import type { Database } from '../shared/api/databaseContract';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { createAuthStorageAdapter } from './authStorage';
 
@@ -22,16 +23,16 @@ export const SUPABASE_AUTH_STORAGE_KEY = (() => {
     return projectRef ? `sb-${projectRef}-auth-token` : '';
 })();
 
-let client: SupabaseClient | null = null;
+let client: SupabaseClient<Database> | null = null;
 let hasWarnedMissingConfig = false;
 
-function createSupabaseBrowserClient(): SupabaseClient {
+function createSupabaseBrowserClient(): SupabaseClient<Database> {
     if ((!supabaseUrl || !supabaseAnonKey) && !hasWarnedMissingConfig) {
         console.warn('Missing Supabase Environment Variables');
         hasWarnedMissingConfig = true;
     }
 
-    return createClient(supabaseUrl || '', supabaseAnonKey || '', {
+    return createClient<Database>(supabaseUrl || '', supabaseAnonKey || '', {
         auth: {
             persistSession: true,
             storage: createAuthStorageAdapter(),
@@ -40,7 +41,7 @@ function createSupabaseBrowserClient(): SupabaseClient {
     });
 }
 
-export function getSupabaseClient(): SupabaseClient {
+export function getSupabaseClient(): SupabaseClient<Database> {
     if (!client) {
         client = createSupabaseBrowserClient();
     }
@@ -48,11 +49,11 @@ export function getSupabaseClient(): SupabaseClient {
     return client;
 }
 
-export const supabase = new Proxy({} as SupabaseClient, {
+export const supabase = new Proxy({} as SupabaseClient<Database>, {
     get(_target, property) {
         const instance = getSupabaseClient();
         const value = Reflect.get(instance as object, property, instance);
 
         return typeof value === 'function' ? value.bind(instance) : value;
     },
-}) as SupabaseClient;
+}) as SupabaseClient<Database>;

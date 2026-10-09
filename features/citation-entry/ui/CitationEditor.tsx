@@ -63,7 +63,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
     if (focusRequest && !kindGroupRef.current?.contains(document.activeElement)) {
       textareaRef.current?.focus({ preventScroll: true });
     }
-  }, [focusRequest]);
+  }, [focusRequest, textareaRef]);
 
   const depthControls = isBookComposer && chapterMode && onHierarchyKey && (
     <div role="group" aria-label="챕터 단계 변경" className="book-composer-depth-controls">

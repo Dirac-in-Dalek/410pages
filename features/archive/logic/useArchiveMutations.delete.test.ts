@@ -3,7 +3,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AuthorFolder, AuthorFolderMembership, AuthorSource, BookSource, ChapterBlock, Citation, Project } from '../../../types';
 
-const { mockAddCitation, mockBulkUpdateCitationSource, mockCreateAuthor, mockCreateBook, mockCreateAuthorFolder, mockDeleteAuthorCascade, mockDeleteBookCascade, mockMoveAuthorToFolder, mockRemoveAuthorFromFolder, mockCreateChapterBlock, mockDeleteChapterBlock, mockDeleteCitations, mockAddCitationsToProject, mockCreateProjectRecord, mockRenameBook, mockUpdateBookMemo } = vi.hoisted(() => ({
+const { mockAddCitation, mockBulkUpdateCitationSource, mockCreateAuthor, mockCreateBook, mockCreateAuthorFolder, mockDeleteAuthorCascade, mockDeleteBookCascade, mockMoveAuthorToFolder, mockRemoveAuthorFromFolder, mockCreateChapterBlock, mockDeleteChapterBlock, mockDeleteCitations, mockAddCitationsToProject, mockCreateProjectRecord, mockCreateProjectWithCitationsRecord, mockRenameBook, mockUpdateBookMemo } = vi.hoisted(() => ({
   mockAddCitation: vi.fn(),
   mockBulkUpdateCitationSource: vi.fn(),
   mockCreateAuthor: vi.fn(),
@@ -18,6 +18,7 @@ const { mockAddCitation, mockBulkUpdateCitationSource, mockCreateAuthor, mockCre
   mockDeleteCitations: vi.fn(),
   mockAddCitationsToProject: vi.fn(),
   mockCreateProjectRecord: vi.fn(),
+  mockCreateProjectWithCitationsRecord: vi.fn(),
   mockRenameBook: vi.fn(),
   mockUpdateBookMemo: vi.fn(),
 }));
@@ -64,6 +65,7 @@ vi.mock('../../../shared/api/projectApi', async (importOriginal) => ({
   ...await importOriginal<typeof import('../../../shared/api/projectApi')>(),
   addCitationsToProject: mockAddCitationsToProject,
   createProject: mockCreateProjectRecord,
+  createProjectWithCitations: mockCreateProjectWithCitationsRecord,
 }));
 
 import { useArchiveMutations } from './useArchiveMutations';
@@ -613,7 +615,7 @@ describe('useArchiveMutations author and book creation', () => {
 
   it('keeps bulk project writes inside the archive mutation controller', async () => {
     mockAddCitationsToProject.mockResolvedValue(undefined);
-    mockCreateProjectRecord.mockResolvedValue({ id: 'project-2', name: 'New folder', citationIds: [] });
+    mockCreateProjectWithCitationsRecord.mockResolvedValue({ id: 'project-2', name: 'New folder', citationIds: ['citation-2'] });
     const { result } = setup([]);
 
     await act(async () => {

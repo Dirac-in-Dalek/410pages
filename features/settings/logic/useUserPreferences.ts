@@ -1,3 +1,4 @@
+import { usePreferencePersistence } from './usePreferencePersistence';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SetStateAction } from 'react';
 import { normalizeFontPreference } from '../../../lib/fontRegistry';
@@ -11,7 +12,7 @@ import type {
 import { LEGACY_TEXT_SCALE_TO_BASE_FONT_PT } from '../policy/userPreferences';
 import { applyPreferencesToDocument, getSystemThemeIsDark } from './preferencesDocument';
 import { normalizeBaseFontPt, normalizeCitationWidthRem } from './preferencesNormalization';
-import { persistServerPreferences, readServerPreferences } from './preferencesServer';
+import { readServerPreferences } from './preferencesServer';
 import { persistPreferences, readStoredPreferences } from './preferencesStorage';
 
 type UseUserPreferencesOptions = {
@@ -73,19 +74,7 @@ export const useUserPreferences = (
     };
   }, [userId]);
 
-  useEffect(() => {
-    if (!userId || serverReadyUserId !== userId) {
-      return undefined;
-    }
-
-    const saveTimer = window.setTimeout(() => {
-      persistServerPreferences(userId, preferences).catch((error) => {
-        console.error('Error saving user preferences:', error);
-      });
-    }, 300);
-
-    return () => window.clearTimeout(saveTimer);
-  }, [preferences, serverReadyUserId, userId]);
+  const { saveError, retrySave } = usePreferencePersistence(userId, serverReadyUserId, preferences);
 
   useEffect(() => {
     if (documentPreferences.theme !== 'auto') {
@@ -113,6 +102,8 @@ export const useUserPreferences = (
   return useMemo(
     () => ({
       preferences,
+      saveError,
+      retrySave,
       setPreferences: setLocalPreferences,
       setBaseFontPt: (baseFontPt: number) =>
         setLocalPreferences((current) => ({
@@ -137,6 +128,6 @@ export const useUserPreferences = (
         })),
       isDarkMode: resolveThemePreference(documentPreferences.theme, getSystemThemeIsDark()).isDark,
     }),
-    [documentPreferences.theme, preferences, setLocalPreferences]
+    [documentPreferences.theme, preferences, retrySave, saveError, setLocalPreferences]
   );
 };

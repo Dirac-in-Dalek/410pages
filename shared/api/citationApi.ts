@@ -1,3 +1,8 @@
+import type { Tables, TablesUpdate } from './database.types';
+import type { Highlight } from '../../types';
+import { fetchAllRows } from './pagination';
+import { requireMutationRow } from './mutationResult';
+import type { CitationUpdate } from '../../types';
 import { normalizeTextFormats } from '../logic/textFormats';
 import { saveTextFormatting } from './textFormattingApi';
 import type { TextFormatRange } from '../../types';
@@ -23,7 +28,25 @@ type ResolvedCitationSource = {
     bookSortIndex: number | null;
 };
 
-const mapStoredCitation = (citation: any, resolvedSource?: ResolvedCitationSource): Citation => ({
+type SourceAuthor = Pick<Tables<'authors'>, 'id' | 'name' | 'sort_index' | 'is_self'>;
+type StoredCitationRow = Tables<'citations'> & {
+    author?: SourceAuthor | null;
+    book?: (Pick<Tables<'books'>, 'id' | 'title' | 'sort_index'> & { author?: SourceAuthor | null }) | null;
+    notes?: Tables<'notes'>[];
+};
+
+const readHighlights = (value: unknown): Highlight[] => {
+    if (!Array.isArray(value)) return [];
+    return value.flatMap((item: unknown) => {
+        if (!item || typeof item !== 'object') return [];
+        const row = item as Record<string, unknown>;
+        if (typeof row.id !== 'string' || typeof row.start !== 'number' || typeof row.end !== 'number') return [];
+        return [{ id: row.id, start: row.start, end: row.end,
+            ...(typeof row.color === 'string' ? { color: row.color } : {}) }];
+    });
+};
+
+const mapStoredCitation = (citation: StoredCitationRow, resolvedSource?: ResolvedCitationSource): Citation => ({
     id: citation.id,
     kind: 'sentence',
     text: citation.text,
@@ -39,14 +62,14 @@ const mapStoredCitation = (citation: any, resolvedSource?: ResolvedCitationSourc
     createdAt: new Date(citation.created_at).getTime(),
     ...(citation.created_at_sort == null ? {} : { createdAtSort: citation.created_at_sort }),
     ...(citation.order_key == null ? {} : { orderKey: citation.order_key }),
-    notes: (citation.notes || []).map((note: any) => ({
+    notes: (citation.notes || []).map((note) => ({
         id: note.id,
         content: note.content,
         textFormats: normalizeTextFormats(note.text_formats, note.content.length),
         createdAt: new Date(note.created_at).getTime(),
     })),
     tags: [],
-    highlights: citation.highlights || [],
+    highlights: readHighlights(citation.highlights),
     textFormats: normalizeTextFormats(citation.text_formats, citation.text.length),
 });
 
@@ -92,8 +115,8 @@ const resolveCitationSource = async (
         .maybeSingle();
     if (authorError) throw authorError;
 
-    let authorId = '';
-    let authorSortIndex: number | null = null;
+    let authorId: string;
+    let authorSortIndex: number | null;
 
     if (authorData) {
         authorId = authorData.id;
@@ -212,49 +235,27 @@ const resolveCitationSourceByBookId = async (
 };
 
 export async function fetchCitations() {
-        const { data, error } = await getSupabaseClient()
-            .from('citations')
-            .select(`
-        *,
-        book:books!citations_book_id_fkey(id, title, sort_index, author:authors(id, name, is_self, sort_index)),
-        author:authors!citations_author_id_fkey(id, name, is_self, sort_index),
-        notes(*)
-      `)
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        return (data || []).map((c: any) => {
-            // Prioritize direct author, then book's author
-            const authorObj = c.author || c.book?.author;
-            return {
-                id: c.id,
-                kind: 'sentence',
-                text: c.text,
-                authorId: authorObj?.id,
-                author: authorObj?.name || '',
-                authorSortIndex: authorObj?.sort_index ?? null,
-                isSelf: authorObj?.is_self || false,
-                bookId: c.book?.id || undefined,
-                book: c.book?.title || '',
-                bookSortIndex: c.book?.sort_index ?? null,
-                page: c.page || undefined,
-                pageSort: c.page_sort || undefined,
-                createdAt: new Date(c.created_at).getTime(),
-                ...(c.created_at_sort == null ? {} : { createdAtSort: c.created_at_sort }),
-                ...(c.order_key == null ? {} : { orderKey: c.order_key }),
-                notes: (c.notes || []).map((n: any) => ({
-                    id: n.id,
-                    content: n.content,
-                    textFormats: normalizeTextFormats(n.text_formats, n.content.length),
-                    createdAt: new Date(n.created_at).getTime()
-                })),
-                highlights: c.highlights || [],
-                textFormats: normalizeTextFormats(c.text_formats, c.text.length),
-                tags: []
-            } as Citation;
-        });
+    const [citations, notes] = await Promise.all([
+        fetchAllRows((from, to) => getSupabaseClient().from('citations').select(`
+            *,
+            book:books!citations_book_id_fkey(id, title, sort_index, author:authors(id, name, is_self, sort_index)),
+            author:authors!citations_author_id_fkey(id, name, is_self, sort_index)
+        `).order('created_at', { ascending: false }).order('id').range(from, to)),
+        fetchAllRows((from, to) => getSupabaseClient().from('notes').select('*')
+            .order('created_at').order('id').range(from, to)),
+    ]);
+    const notesByCitation = new Map<string, typeof notes>();
+    for (const note of notes) {
+        const group = notesByCitation.get(note.citation_id) ?? [];
+        group.push(note);
+        notesByCitation.set(note.citation_id, group);
     }
+    return citations.map(citation => mapStoredCitation({
+        ...citation,
+        author: citation.author ?? citation.book?.author,
+        notes: notesByCitation.get(citation.id) ?? [],
+    }));
+}
 
 export async function addCitation(userId: string, data: AddCitationInput) {
         if (data.createdAtSort !== undefined && (!Number.isFinite(data.createdAtSort) || !data.bookId)) throw new Error('Invalid citation position');
@@ -306,7 +307,7 @@ export async function addCitation(userId: string, data: AddCitationInput) {
                 author_id: resolvedSource.authorId,
                 page: data.page,
                 page_sort: extractPageSort(data.page),
-                ...(data.highlights !== undefined ? { highlights: data.highlights } : {}),
+                ...(data.highlights !== undefined ? { highlights: data.highlights.map(highlight => ({ ...highlight })) } : {}),
                 ...(data.textFormats !== undefined ? { text_formats: data.textFormats } : {}),
                 user_id: userId
             });
@@ -322,9 +323,9 @@ export async function addCitation(userId: string, data: AddCitationInput) {
             `)
             .single();
         };
-        let citation: any;
+        let citation: StoredCitationRow;
         if (resolvedSource.bookId && initialOrderKey) {
-            citation = await mutateWithBookOrderRetry(userId, resolvedSource.bookId, initialOrderKey, write);
+            citation = await mutateWithBookOrderRetry<StoredCitationRow>(userId, resolvedSource.bookId, initialOrderKey, write);
         } else {
             const { data: stored, error } = await write(null);
             if (error) throw error;
@@ -354,30 +355,32 @@ export async function moveCitation(userId: string, bookId: string, id: string, p
     } as Pick<Citation, 'createdAtSort' | 'orderKey'>;
 }
 
-export async function updateCitation(userId: string, id: string, data: Partial<Citation>, expectedText?: string) {
-        if (expectedText !== undefined && data.textFormats !== undefined) {
+export async function updateCitation(userId: string, id: string, data: CitationUpdate, expectedText?: string) {
+        if (expectedText !== undefined && data.textFormats !== undefined &&
+            data.author === undefined && data.book === undefined && data.page === undefined) {
             await saveTextFormatting(userId, 'citation', id, expectedText, data.text ?? expectedText, data.textFormats);
-            return data;
+            return { ...data, ...(data.page === null ? { page: undefined } : {}) } as Partial<Citation>;
         }
         const localPatch: Partial<Citation> = {};
-        const updateData: any = {};
+        const updateData: TablesUpdate<'citations'> = {};
         let destinationBookId: string | null | undefined;
         if (data.text !== undefined) {
             updateData.text = data.text;
             localPatch.text = data.text;
         }
         if (data.page !== undefined) {
-            updateData.page = data.page;
-            updateData.page_sort = extractPageSort(data.page);
-            localPatch.page = data.page;
-            localPatch.pageSort = extractPageSort(data.page);
+            updateData.page = data.page || null;
+            updateData.page_sort = extractPageSort(data.page ?? undefined) ?? null;
+            localPatch.page = data.page || undefined;
+            localPatch.pageSort = extractPageSort(data.page ?? undefined);
         }
         if (data.textFormats !== undefined) {
-            updateData.text_formats = data.textFormats;
+            updateData.text_formats = expectedText === undefined ? data.textFormats
+                : normalizeTextFormats(data.textFormats, (data.text ?? expectedText).length);
             localPatch.textFormats = data.textFormats;
         }
         if (data.highlights !== undefined) {
-            updateData.highlights = data.highlights;
+            updateData.highlights = data.highlights.map(highlight => ({ ...highlight }));
             localPatch.highlights = data.highlights;
         }
 
@@ -449,22 +452,24 @@ export async function updateCitation(userId: string, id: string, data: Partial<C
 
         if (destinationBookId) {
             const initialOrderKey = await createAppendBookOrderKey(userId, destinationBookId);
-            const stored = await mutateWithBookOrderRetry(userId, destinationBookId, initialOrderKey, (orderKey) =>
-                getSupabaseClient().from('citations')
+            const stored = await mutateWithBookOrderRetry(userId, destinationBookId, initialOrderKey, (orderKey) => {
+                let query = getSupabaseClient().from('citations')
                     .update({ ...updateData, order_key: orderKey })
                     .eq('id', id)
-                    .eq('user_id', userId)
-                    .select('id, order_key')
-                    .single()
-            );
+                    .eq('user_id', userId);
+                if (expectedText !== undefined) query = query.eq('text', expectedText);
+                return query.select('id, order_key').single();
+            });
             localPatch.orderKey = stored.order_key ?? undefined;
         } else {
-            const { error } = await getSupabaseClient()
+            let query = getSupabaseClient()
                 .from('citations')
                 .update(updateData)
                 .eq('id', id)
                 .eq('user_id', userId);
-            if (error) throw error;
+            if (expectedText !== undefined) query = query.eq('text', expectedText);
+            const { data: updated, error } = await query.select('id').maybeSingle();
+            requireMutationRow(updated, error, 'Citation');
         }
         return localPatch;
     }
@@ -604,12 +609,14 @@ export async function updateNote(userId: string, noteId: string, content: string
             await saveTextFormatting(userId, 'note', noteId, expectedText, content, formats);
             return;
         }
-        const { error } = await getSupabaseClient()
+        const { data, error } = await getSupabaseClient()
             .from('notes')
             .update({ content, ...(formats === undefined ? {} : { text_formats: formats }) })
             .eq('id', noteId)
-            .eq('user_id', userId);
-        if (error) throw error;
+            .eq('user_id', userId)
+            .select('id')
+            .maybeSingle();
+        requireMutationRow(data, error, 'Note');
     }
 
 export async function deleteNote(userId: string, noteId: string) {

@@ -8,7 +8,7 @@ describe('BookReadingWorkspace', () => {
 
   it('restores the visible citation anchor after responsive row geometry changes', () => {
     let layoutShift = 0;
-    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
       if (this.hasAttribute('data-archive-scroll')) return { top: 0, bottom: 600, height: 600 } as DOMRect;
       if (this.hasAttribute('data-row-content')) {
         const scroller = this.closest('[data-archive-scroll]') as HTMLElement | null;
@@ -17,7 +17,7 @@ describe('BookReadingWorkspace', () => {
       }
       return { top: 0, bottom: 0, height: 0 } as DOMRect;
     });
-    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockImplementation(function () {
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockImplementation(function (this: HTMLElement) {
       return this.hasAttribute('data-row-content') ? [this.getBoundingClientRect()] as unknown as DOMRectList : [] as unknown as DOMRectList;
     });
     const positions = new Map<string, ReadingScrollPosition>();
@@ -44,7 +44,7 @@ describe('BookReadingWorkspace', () => {
 
   it('keeps an initial top position at zero while display-contents rows reflow', () => {
     let layoutShift = 0;
-    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
       if (this.hasAttribute('data-archive-scroll')) return { top: 0, bottom: 600, height: 600 } as DOMRect;
       if (this.hasAttribute('data-row-content')) {
         const scroller = this.closest('[data-archive-scroll]') as HTMLElement | null;
@@ -53,7 +53,7 @@ describe('BookReadingWorkspace', () => {
       }
       return { top: 0, bottom: 0, height: 0 } as DOMRect;
     });
-    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockImplementation(function () {
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockImplementation(function (this: HTMLElement) {
       return this.hasAttribute('data-row-content') ? [this.getBoundingClientRect()] as unknown as DOMRectList : [] as unknown as DOMRectList;
     });
     const positions = new Map<string, ReadingScrollPosition>();

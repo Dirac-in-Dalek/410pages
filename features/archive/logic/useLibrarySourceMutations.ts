@@ -37,7 +37,7 @@ const handleCreateBook = useCallback(
         return undefined;
       }
     },
-    [invalidateDataLoad, session, setBooks]
+    [invalidateDataLoad, session, setBooks, setMutationError]
   );
 
 const handleCreateAuthor = useCallback(
@@ -62,7 +62,7 @@ const handleCreateAuthor = useCallback(
         return undefined;
       }
     },
-    [invalidateDataLoad, session, setAuthors]
+    [invalidateDataLoad, session, setAuthors, setMutationError]
   );
 
 const handleRenameAuthor = useCallback(
@@ -135,7 +135,7 @@ const handleRenameAuthor = useCallback(
         void refreshAuthorFolders();
       }
     },
-    [books, invalidateAuthorFolderLoad, invalidateDataLoad, refreshAuthorFolders, session, setAuthorFolderMemberships, setAuthors, setBooks, setCitations, setChapterBlocksByBook, refreshChapterBlocks]
+    [session, invalidateAuthorFolderLoad, invalidateDataLoad, setCitations, setChapterBlocksByBook, setAuthorFolderMemberships, setAuthors, setBooks, setMutationError, books, refreshChapterBlocks, refreshAuthorFolders]
   );
 
 const handleRenameBook = useCallback(
@@ -179,7 +179,7 @@ const handleRenameBook = useCallback(
         setMutationError('책 이름을 저장하지 못했습니다. 입력한 이름은 그대로 유지했습니다.');
       }
     },
-    [books, invalidateDataLoad, session, setBooks, setCitations, setChapterBlocksByBook, refreshChapterBlocks]
+    [session, books, invalidateDataLoad, setCitations, setChapterBlocksByBook, refreshChapterBlocks, setBooks, setMutationError]
   );
   return { handleCreateBook, handleCreateAuthor, handleRenameAuthor, handleRenameBook };
 }

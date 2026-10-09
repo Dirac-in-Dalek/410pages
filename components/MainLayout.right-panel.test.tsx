@@ -125,10 +125,10 @@ describe('MainLayout right panel', () => {
 
   it('collapses home before the book memo and does not reopen either when space returns', () => {
     let width = 700;
-    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
       return { left: this.hasAttribute('data-book-column') ? (width - 592) / 2 : 0, width: 0 } as DOMRect;
     });
-    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(function () {
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(function (this: HTMLElement) {
       return this.tagName === 'MAIN' ? width : 0;
     });
     const changeHome = vi.fn();
@@ -214,7 +214,7 @@ describe('MainLayout right panel', () => {
 
   it('uses the final available width while home is animating closed', () => {
     vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(700);
-    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
       return { left: this.hasAttribute('data-book-column') ? 54 : 0, width: 240 } as DOMRect;
     });
     const closeMemo = vi.fn();
@@ -251,7 +251,7 @@ describe('MainLayout right panel', () => {
 
   it('requests home collapse when comments lack reading space, but not during normal reading', () => {
     vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ left: 0, width: 0 } as DOMRect);
-    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(function () {
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(function (this: HTMLElement) {
       return this.tagName === 'MAIN' ? 700 : 0;
     });
     const onChange = vi.fn();

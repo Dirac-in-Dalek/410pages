@@ -1,3 +1,4 @@
+import { requireActiveUser } from '../../../shared/api/libraryApiUtils';
 import { getSupabaseClient } from '../../../lib/supabase';
 import type { UserPreferences } from '../contract/userPreferences';
 import { normalizePreferences } from './preferencesNormalization';
@@ -24,6 +25,7 @@ export const persistServerPreferences = async (
   userId: string,
   preferences: UserPreferences
 ) => {
+  await requireActiveUser(userId, 'preferences save');
   const { error } = await getSupabaseClient()
     .from('profiles')
     .upsert({ id: userId, preferences }, { onConflict: 'id' });

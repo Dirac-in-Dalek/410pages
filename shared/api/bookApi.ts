@@ -1,7 +1,9 @@
+import { parseBookDeleteResult, parseBookDeletePreview } from './libraryMutationResults';
+import { fetchAllRows } from './pagination';
 import type { TextFormatRange } from '../../types';
 import { saveTextFormatting } from './textFormattingApi';
 import { getSupabaseClient } from '../../lib/supabase';
-import type { BookDeletePreview, BookSource, CreateBookInput, DeleteBookCascadeResult } from '../../types';
+import type { BookSource, CreateBookInput } from '../../types';
 import { requireActiveUser, GetOrCreateAuthorResult, BookSourceRow, mapBookSourceRow } from './libraryApiUtils';
 
 type GetOrCreateBookResult = GetOrCreateAuthorResult & {
@@ -24,18 +26,13 @@ export type RenameBookResult = {
 };
 
 export async function fetchBooks(userId: string) {
-        const { data, error } = await getSupabaseClient()
-            .from('books')
-            .select(`
-        *,
-        author:authors(id, name, sort_index, is_self)
-      `)
-            .eq('user_id', userId)
-            .order('sort_index', { ascending: true, nullsFirst: false })
-            .order('created_at', { ascending: true });
-        if (error) throw error;
-        return (data || []).map((row: BookSourceRow) => mapBookSourceRow(row));
-    }
+    const data = await fetchAllRows<BookSourceRow>((from, to) => getSupabaseClient().from('books')
+        .select('*, author:authors(id, name, sort_index, is_self)')
+        .eq('user_id', userId)
+        .order('sort_index', { ascending: true, nullsFirst: false })
+        .order('created_at', { ascending: true }).order('id').range(from, to));
+    return data.map(mapBookSourceRow);
+}
 
 export async function deleteBookCascade(userId: string, bookId: string) {
         await requireActiveUser(userId, 'book deletion');
@@ -44,7 +41,7 @@ export async function deleteBookCascade(userId: string, bookId: string) {
             source_book_id: bookId,
         });
         if (error) throw error;
-        return data as DeleteBookCascadeResult;
+        return parseBookDeleteResult(data);
     }
 
 export async function previewBookDeletion(userId: string, bookId: string) {
@@ -54,7 +51,7 @@ export async function previewBookDeletion(userId: string, bookId: string) {
             source_book_id: bookId,
         });
         if (error) throw error;
-        return data as BookDeletePreview;
+        return parseBookDeletePreview(data);
     }
 
 export async function createBook(userId: string, input: CreateBookInput) {

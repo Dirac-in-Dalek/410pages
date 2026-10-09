@@ -53,7 +53,7 @@ export const BookMemoPanel: React.FC<BookMemoPanelProps> = ({
     setStatus(recoveredDraft === null ? 'idle' : 'recovered');
   }, [book.id, book.memo, book.memoFormats, userId]);
 
-  React.useEffect(() => {
+  const initializeBookDraft = React.useEffectEvent(() => {
     if (timerRef.current !== null) window.clearTimeout(timerRef.current);
     requestRef.current += 1;
     const recoveredDraft = readBookMemoDraftContent(userId, book.id);
@@ -62,6 +62,9 @@ export const BookMemoPanel: React.FC<BookMemoPanelProps> = ({
     setMemoBookId(book.id);
     setStatus(recoveredDraft === null ? 'idle' : 'recovered');
     setDraftStorageFailed(false);
+  });
+  React.useEffect(() => {
+    initializeBookDraft();
     return () => {
       if (timerRef.current !== null) window.clearTimeout(timerRef.current);
     };
@@ -83,7 +86,7 @@ export const BookMemoPanel: React.FC<BookMemoPanelProps> = ({
   const persistMemo = async (next: { text: string; formats: TextFormatRange[] }, request: number) => {
     if (timerRef.current !== null) window.clearTimeout(timerRef.current);
     setStatus('saving');
-    let didSave = false;
+    let didSave: boolean;
     const save = saveChainRef.current.then(async () => {
       const ok = await onSave(book.id, next.text, next.formats, savedMemosRef.current.get(`${userId}:${book.id}`) ?? book.memo ?? '');
       if (ok) savedMemosRef.current.set(`${userId}:${book.id}`, next.text);

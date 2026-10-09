@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockUpload = vi.fn();
 const mockGetPublicUrl = vi.fn();
-const mockChapterBlocksOrder = vi.fn();
+const mockChapterBlocksRange = vi.fn().mockResolvedValue({ data: [], error: null });
+const mockChapterBlocksOrder = vi.fn(() => chapterBlocksQuery);
 const mockChapterBlocksSelect = vi.fn(() => chapterBlocksQuery);
 const mockChapterBlocksEq = vi.fn(() => chapterBlocksQuery);
 const mockChapterBlocksDeleteEq = vi.fn();
@@ -51,6 +52,7 @@ const profileQuery = {
 const mockAuthorsMaybeSingle = vi.fn();
 const mockAuthorsSingle = vi.fn();
 const mockAuthorsNeq = vi.fn(() => authorsQuery);
+const mockAuthorsRange = vi.fn().mockResolvedValue({ data: [], error: null });
 const mockAuthorsOrder = vi.fn(() => authorsQuery);
 const mockAuthorsEq = vi.fn(() => authorsQuery);
 const mockAuthorsSelect = vi.fn(() => authorsQuery);
@@ -59,6 +61,7 @@ const authorsQuery = {
   eq: mockAuthorsEq,
   neq: mockAuthorsNeq,
   order: mockAuthorsOrder,
+  range: mockAuthorsRange,
   maybeSingle: mockAuthorsMaybeSingle,
   single: mockAuthorsSingle,
 };
@@ -73,6 +76,7 @@ const mockBooksMaybeSingle = vi.fn();
 const mockBooksUpdate = vi.fn(() => booksQuery);
 const mockBooksNeq = vi.fn(() => booksQuery);
 const mockBooksLimit = vi.fn(() => booksQuery);
+const mockBooksRange = vi.fn().mockResolvedValue({ data: [], error: null });
 const mockBooksOrder = vi.fn(() => booksQuery);
 const mockBooksEq = vi.fn(() => booksQuery);
 const mockBooksSelect = vi.fn(() => booksQuery);
@@ -80,6 +84,7 @@ const booksQuery = {
   select: mockBooksSelect,
   eq: mockBooksEq,
   order: mockBooksOrder,
+  range: mockBooksRange,
   limit: mockBooksLimit,
   neq: mockBooksNeq,
   maybeSingle: mockBooksMaybeSingle,
@@ -94,6 +99,7 @@ const chapterBlocksQuery = {
   select: mockChapterBlocksSelect,
   eq: mockChapterBlocksEq,
   order: mockChapterBlocksOrder,
+  range: mockChapterBlocksRange,
 };
 const mockChapterBlocksFrom = vi.fn((table: string) => {
   if (table === 'profiles') {
@@ -510,9 +516,7 @@ describe('api.deleteCitations', () => {
 describe('api.fetchBooks', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (mockBooksOrder as any)
-      .mockReturnValueOnce(booksQuery)
-      .mockResolvedValueOnce({
+    mockBooksRange.mockResolvedValueOnce({
         data: [
           {
             id: 'book-1',
@@ -536,10 +540,7 @@ describe('api.fetchBooks', () => {
     const books = await api.fetchBooks('user-1');
 
     expect(mockChapterBlocksFrom).toHaveBeenCalledWith('books');
-    expect(mockBooksSelect).toHaveBeenCalledWith(`
-        *,
-        author:authors(id, name, sort_index, is_self)
-      `);
+    expect(mockBooksSelect).toHaveBeenCalledWith(expect.stringContaining('author:authors'));
     expect(mockBooksEq).toHaveBeenCalledWith('user_id', 'user-1');
     expect(mockBooksOrder).toHaveBeenNthCalledWith(1, 'sort_index', {
       ascending: true,
@@ -567,7 +568,7 @@ describe('api.fetchBooks', () => {
 
 describe('api.fetchAuthors', () => {
   it('fetches authors even when they have no books', async () => {
-    (mockAuthorsOrder as any).mockResolvedValueOnce({
+    mockAuthorsRange.mockResolvedValueOnce({
       data: [{
         id: 'author-empty',
         name: 'Empty Author',
@@ -807,7 +808,7 @@ describe('api.renameAuthor', () => {
 describe('api.fetchChapterBlocks', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockChapterBlocksOrder.mockResolvedValue({
+    mockChapterBlocksRange.mockResolvedValueOnce({
       data: [
         {
           id: 'block-2',

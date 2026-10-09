@@ -138,8 +138,8 @@ export function BookReadingWorkspace({ bookId, children, memo, memoOpen, memoPan
       memoScroll.addEventListener(event, cancelMemoRestore);
     }
     const changes = new MutationObserver(restore);
-    changes.observe(group, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'data-book-memo-id'] });
-    const responsiveScope = group.closest<HTMLElement>('[data-reading-responsive]');
+    if (group) changes.observe(group, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'data-book-memo-id'] });
+    const responsiveScope = group?.closest<HTMLElement>('[data-reading-responsive]');
     const responsiveChanges = new MutationObserver(restore);
     if (responsiveScope) responsiveChanges.observe(responsiveScope, { attributes: true, attributeFilter: ['style'] });
     const sizes = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(restore);

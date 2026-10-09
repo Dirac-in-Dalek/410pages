@@ -1,10 +1,10 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 import { fetchCitations, moveCitation } from './citationApi';
-const mocks = vi.hoisted(() => ({ from: vi.fn(), update: vi.fn(), eq: vi.fn(), select: vi.fn(), single: vi.fn(), order: vi.fn() }));
+const mocks = vi.hoisted(() => ({ from: vi.fn(), update: vi.fn(), eq: vi.fn(), select: vi.fn(), single: vi.fn(), order: vi.fn(), range: vi.fn() }));
 vi.mock('../../lib/supabase', () => ({ getSupabaseClient: () => ({ from: mocks.from }) }));
 beforeEach(() => {
   vi.clearAllMocks();
-  for (const fn of [mocks.from, mocks.update, mocks.eq, mocks.select]) fn.mockReturnValue(mocks);
+  for (const fn of [mocks.from, mocks.update, mocks.eq, mocks.select, mocks.order]) fn.mockReturnValue(mocks);
   mocks.single.mockResolvedValue({ data: { id: 'q', created_at_sort: 25 }, error: null });
 });
 it('moves only the position and requires the user, book and citation to match', async () => {
@@ -29,7 +29,8 @@ it('propagates a failed scoped update instead of claiming the move succeeded', a
 });
 it('restores manual positions while keeping creation timestamps and legacy rows', async () => {
   const row = { text: 'Original', page: '50', page_sort: 50, created_at: '2026-09-01T00:00:00Z', book: { id: 'book', title: 'Book' }, notes: [] };
-  mocks.order.mockResolvedValue({ data: [{ ...row, id: 'moved', created_at_sort: 25, order_key: 'a1V' }, { ...row, id: 'legacy' }], error: null });
+  mocks.range.mockResolvedValueOnce({ data: [{ ...row, id: 'moved', created_at_sort: 25, order_key: 'a1V' }, { ...row, id: 'legacy' }], error: null });
+  mocks.range.mockResolvedValue({ data: [], error: null });
   const result = await fetchCitations();
   expect(result[0].createdAtSort).toBe(25);
   expect(result[0].orderKey).toBe('a1V');

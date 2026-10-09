@@ -1,3 +1,4 @@
+import type { CitationUpdate } from '../../../types';
 import type { AddCitationInput, Citation } from '../../../types';
 import { rebaseTextFormats, formatsWithLegacyHighlights, legacyHighlightsFromFormats } from '../../../shared/logic/textFormats';
 
@@ -53,9 +54,10 @@ const normalizeSourceName = (value: string | undefined) => value?.trim() || '';
 
 export const createOptimisticCitationEditPatch = (
   citation: Citation,
-  data: Partial<Citation>
+  data: CitationUpdate
 ): Partial<Citation> => {
-  const patch: Partial<Citation> = { ...data };
+  const { page, ...rest } = data;
+  const patch: Partial<Citation> = { ...rest, ...(page === undefined ? {} : { page: page || undefined }) };
   if (data.text !== undefined && data.text !== citation.text && data.textFormats === undefined) {
     const formats = formatsWithLegacyHighlights(citation.text, citation.textFormats, citation.highlights);
     if (formats.length) {
@@ -64,7 +66,7 @@ export const createOptimisticCitationEditPatch = (
     }
   }
   if (data.page !== undefined) {
-    patch.pageSort = extractCitationPageSort(data.page);
+    patch.pageSort = extractCitationPageSort(data.page ?? undefined);
   }
 
   const didAuthorChange =

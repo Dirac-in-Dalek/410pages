@@ -1,3 +1,4 @@
+import type { CitationUpdate } from '../../../types';
 import type { TextFormatRange } from '../../../types';
 import type { Dispatch, SetStateAction } from 'react';
 import type {
@@ -90,7 +91,7 @@ export type ArchiveMutationController = {
   handleUpdateNote: (citationId: string, noteId: string, content: string, formats?: TextFormatRange[], expectedText?: string) => Promise<boolean>;
   handleDeleteNote: (citationId: string, noteId: string) => Promise<boolean>;
   handleDeleteCitations: (ids: string[]) => Promise<boolean>;
-  handleUpdateCitation: (id: string, data: Partial<Citation>, expectedText?: string) => Promise<boolean>;
+  handleUpdateCitation: (id: string, data: CitationUpdate, expectedText?: string) => Promise<boolean>;
   handleBulkUpdateCitationSource: (
     citationIds: string[],
     source: CitationSourceInput

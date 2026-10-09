@@ -57,6 +57,8 @@ export type AddCitationInput = Omit<
   'id' | 'createdAt' | 'notes' | 'saveStatus' | 'optimisticOriginId'
 > & { id?: string; createdAt?: number };
 export type AddCitationResult = { ok: true; citationId: string } | { ok: false; error: unknown };
+/** undefined leaves the page unchanged; null explicitly removes it. */
+export type CitationUpdate = Omit<Partial<Citation>, 'page'> & { page?: string | null };
 export type BulkSourceUpdateResult = { ok: true; updatedCount: number } | { ok: false; error: unknown };
 
 export interface BookSource {

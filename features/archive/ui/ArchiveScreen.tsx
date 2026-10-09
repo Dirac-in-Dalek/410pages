@@ -1,3 +1,5 @@
+import type { AddCitationInput } from '../../../types';
+import type { CitationUpdate } from '../../../types';
 import type { TextFormatRange } from '../../../types';
 import { BookComposerDraftStore } from '../../citation-entry/logic/bookComposerDrafts';
 import { CitationEditDraftStore } from '../logic/citationEditDrafts';
@@ -34,7 +36,7 @@ type ArchiveScreenProps = {
   sortField: 'date' | 'page';
   dateDirection: 'asc' | 'desc';
   pageDirection: 'asc' | 'desc';
-  onAddCitation: (data: any) => void | Promise<unknown>;
+  onAddCitation: (data: AddCitationInput) => void | Promise<unknown>;
   onRetryCitationSave: (citationId: string) => void | Promise<unknown>;
   onDateSortClick: () => void;
   onPageSortClick: () => void;
@@ -66,7 +68,7 @@ type ArchiveScreenProps = {
   onUpdateNote: (citationId: string, noteId: string, content: string, formats?: TextFormatRange[], expectedText?: string) => void;
   onDeleteNote: (citationId: string, noteId: string) => void;
   onDeleteCitation: (id: string) => void;
-  onUpdateCitation: (id: string, data: Partial<Citation>, expectedText?: string) => void | Promise<unknown>;
+  onUpdateCitation: (id: string, data: CitationUpdate, expectedText?: string) => void | Promise<unknown>;
   showAllPassageNotes?: boolean;
   onToggleAllPassageNotes?: () => void;
   collapsedDividerIds?: ReadonlySet<string>;
@@ -182,10 +184,13 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
       depth = resolved.depths.get(chapter.id)! - 1;
     }
   };
+  const revealPendingInsertion = React.useEffectEvent((next: BookInsertion) => {
+    revealTarget(next);
+    drafts.patch(scope, { revealInsertion: undefined });
+  });
   useEffect(() => {
     if (!composer?.revealInsertion || loading) return;
-    revealTarget(composer.revealInsertion);
-    drafts.patch(scope, { revealInsertion: undefined });
+    revealPendingInsertion(composer.revealInsertion);
   }, [composer?.revealInsertion, loading]);
   const selectInsertion = (afterId: string | null, depth: number) => {
     if (drafts.get(scope)?.saving) return;

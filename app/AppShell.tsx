@@ -34,11 +34,10 @@ import { useUndoableCitationDelete } from '../features/archive/logic/useUndoable
 import { UndoDeleteToasts } from '../features/archive/ui/UndoDeleteToasts';
 import { BookMemoPanel } from '../features/archive/ui/BookMemoPanel';
 import { PassageNotesPanel } from '../features/archive/ui/PassageNotesPanel';
-import { NotebookPen } from 'lucide-react';
 
 type AuthStatus = ReturnType<typeof useAuthStatus>;
 
-const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatus }) => {
+const AuthenticatedAppShell: React.FC<{ authStatus: Omit<AuthStatus, 'session'> & { session: NonNullable<AuthStatus['session']> } }> = ({ authStatus }) => {
   const { isMobileApp } = useResponsiveMode();
   const [isOnline, setIsOnline] = React.useState(() => navigator.onLine);
   React.useEffect(() => {
@@ -55,7 +54,7 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
     session, username, avatarUrl, loading: authLoading,
     handleUpdateUsername, handleUpdateAvatar, handleSignOut
   } = authStatus;
-  const { preferences, setTheme, setFontFamily, setBaseFontPt, setCitationWidthRem } =
+  const { preferences, setTheme, setFontFamily, setBaseFontPt, setCitationWidthRem, saveError: preferencesError, retrySave: retryPreferences } =
     useUserPreferences(session?.user?.id ?? null);
 
   const {
@@ -235,7 +234,7 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
   };
   const isSelectedChapterLoading = selectedBookId !== null && chapterLoadingBookId === selectedBookId;
 
-  const settingsPanel = <SettingsPanel {...settingsPanelProps} />;
+  const settingsPanel = <SettingsPanel {...settingsPanelProps} preferencesError={preferencesError} onRetryPreferences={retryPreferences} />;
   const actionErrors = [
     mutationError ? { id: 'mutation', message: mutationError, dismiss: clearMutationError } : null,
     bulkError ? { id: 'bulk', message: bulkError, dismiss: clearBulkError } : null,
@@ -558,7 +557,7 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
     dataLoading,
     authLoading,
     sessionUserId,
-    initialMeta: readerInitialMeta?.userId === sessionUserId ? readerInitialMeta.meta : undefined,
+    initialMeta: readerInitialMeta && readerInitialMeta.userId === sessionUserId ? readerInitialMeta.meta : undefined,
     onBulkUpdateCitationSource: handleBulkUpdateCitationSource,
   });
   const mainLayoutProps = createMainLayoutProps({
@@ -720,7 +719,7 @@ const AppShell: React.FC = () => {
   return (
     <AuthenticatedAppShell
       key={authStatus.session.user.id}
-      authStatus={authStatus}
+      authStatus={{ ...authStatus, session: authStatus.session }}
     />
   );
 };

@@ -53,6 +53,7 @@ export const useArchiveQuery = ({
   const previousOwnerIdRef = useRef(ownerId);
 
   useEffect(() => {
+    const chapterGenerations = chapterRequestGenerationByBookRef.current;
     const didOwnerChange = previousOwnerIdRef.current !== ownerId;
     previousOwnerIdRef.current = ownerId;
     const restoredDrafts = ownerId ? readCitationDrafts(ownerId) : [];
@@ -72,7 +73,7 @@ export const useArchiveQuery = ({
     requestGenerationRef.current += 1;
     authorFolderRequestGenerationRef.current += 1;
     chapterViewGenerationRef.current += 1;
-    chapterRequestGenerationByBookRef.current.clear();
+    chapterGenerations.clear();
     activeChapterBookIdRef.current = null;
     setLoading(false);
     setHasLoaded(false);
@@ -85,10 +86,10 @@ export const useArchiveQuery = ({
       requestGenerationRef.current += 1;
       authorFolderRequestGenerationRef.current += 1;
       chapterViewGenerationRef.current += 1;
-      chapterRequestGenerationByBookRef.current.clear();
+      chapterGenerations.clear();
       activeChapterBookIdRef.current = null;
     };
-  }, [ownerId]);
+  }, [ownerId, setAuthorFolderMemberships, setAuthorFolders, setAuthors, setBooks, setChapterBlocksByBook, setCitations, setProjects]);
 
   const retryAuthorFolders = useCallback(async () => {
     const requestGeneration = ++authorFolderRequestGenerationRef.current;

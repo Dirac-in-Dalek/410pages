@@ -18,6 +18,8 @@ export type SettingsPanelProps = {
   isSavingAvatar?: boolean;
   isDisplayNameSaved?: boolean;
   isAvatarSaved?: boolean;
+  preferencesError?: string | null;
+  onRetryPreferences?: () => void;
   avatarError?: string | null;
   displayNameError?: string | null;
   onClose: () => void;
@@ -42,6 +44,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   isSavingAvatar = false,
   isDisplayNameSaved = false,
   isAvatarSaved = false,
+  preferencesError = null,
+  onRetryPreferences,
   avatarError = null,
   displayNameError = null,
   onClose,
@@ -368,6 +372,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 </div>
               </div>
             </section>
+
+            {preferencesError ? (
+              <div role="alert" className="flex items-center justify-between gap-3 text-sm text-red-600 dark:text-red-300">
+                <p>{preferencesError}</p>
+                <button type="button" className="ui-btn ui-btn--ghost shrink-0" onClick={onRetryPreferences}>다시 시도</button>
+              </div>
+            ) : null}
 
             <TextSettingsSection
               fontFamily={preferences.fontFamily}

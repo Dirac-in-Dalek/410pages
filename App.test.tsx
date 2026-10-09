@@ -87,7 +87,7 @@ const archiveFilterState = {
   searchTerm: '',
   setSearchTerm: vi.fn(),
   selectedProjectId: null,
-  selectedBookId: null,
+  selectedBookId: null as string | null,
   selectedAuthorId: null,
   isHomeView: true,
   isAuthorView: false,
