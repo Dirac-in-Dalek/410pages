@@ -98,7 +98,7 @@ export const ChapterBlockInsertButton: React.FC<ChapterBlockInsertButtonProps> =
     <form ref={formRef} data-chapter-node={draftId} data-chapter-depth={depth}
       style={{ '--chapter-depth': depth } as React.CSSProperties}
       className="chapter-row chapter-new-row" onSubmit={handleSubmit}>
-      <span data-chapter-anchor className="chapter-control chapter-fold" aria-hidden="true" />
+      <span className="chapter-control chapter-fold" aria-hidden="true" />
       <input
         ref={inputRef}
         aria-label="챕터 제목"

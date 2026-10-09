@@ -832,7 +832,6 @@ describe('approved chapter placement and subtree folding', () => {
 });
 
 it('keeps keyboard preview, save and cancel consistent for previously normalized descendants', async () => {
-  const bounds = vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([new DOMRect()] as unknown as DOMRectList);
   const user = userEvent.setup();
   function Screen() {
     const [blocks, setBlocks] = React.useState([0, 0, 2].map((depth, i) => chapterBlock({ id: String(i), bookId: 'book', label: ['A', 'B', 'C'][i], depth, createdAtSort: i + 1 })));
@@ -840,40 +839,32 @@ it('keeps keyboard preview, save and cancel consistent for previously normalized
       onRenameChapterBlock={async (_book, id, label, depth) => { setBlocks(current => current.map(c => c.id === id ? { ...c, label, depth: depth ?? c.depth } : c)); return true; }} />;
   }
   const { container } = render(<Screen />);
-  const parent = () => container.querySelector('[data-chapter-connection="2"]')?.getAttribute('data-chapter-parent');
-  try {
-    await user.click(screen.getByRole('button', { name: '챕터 제목 수정 B' }));
-    const input = screen.getByRole('textbox', { name: '챕터 제목 수정' }) as HTMLInputElement;
-    input.setSelectionRange(0, 0);
-    await user.keyboard('{Tab}');
-    await waitFor(() => expect(parent()).toBe('1'));
-    expect(container.querySelector('[data-chapter-node="2"]')?.getAttribute('data-chapter-depth')).toBe('2');
-    await user.keyboard('{Escape}');
-    await waitFor(() => expect(container.querySelector('[data-chapter-node="2"]')?.getAttribute('data-chapter-depth')).toBe('1'));
-    expect(parent()).toBe('1');
-    await user.click(screen.getByRole('button', { name: '챕터 제목 수정 B' }));
-    (screen.getByRole('textbox', { name: '챕터 제목 수정' }) as HTMLInputElement).setSelectionRange(0, 0);
-    await user.keyboard('{Tab}');
-    await user.click(screen.getByRole('button', { name: '챕터 제목 저장' }));
-    await waitFor(() => expect(screen.queryByRole('textbox', { name: '챕터 제목 수정' })).toBeNull());
-    expect(parent()).toBe('1');
-  } finally { bounds.mockRestore(); }
+  const depths = () => ['1', '2'].map(id => container.querySelector(`[data-chapter-node="${id}"]`)?.getAttribute('data-chapter-depth'));
+  await user.click(screen.getByRole('button', { name: '챕터 제목 수정 B' }));
+  const input = screen.getByRole('textbox', { name: '챕터 제목 수정' }) as HTMLInputElement;
+  input.setSelectionRange(0, 0);
+  await user.keyboard('{Tab}');
+  await waitFor(() => expect(depths()).toEqual(['1', '2']));
+  await user.keyboard('{Escape}');
+  await waitFor(() => expect(depths()).toEqual(['0', '1']));
+  await user.click(screen.getByRole('button', { name: '챕터 제목 수정 B' }));
+  (screen.getByRole('textbox', { name: '챕터 제목 수정' }) as HTMLInputElement).setSelectionRange(0, 0);
+  await user.keyboard('{Tab}');
+  await user.click(screen.getByRole('button', { name: '챕터 제목 저장' }));
+  await waitFor(() => expect(screen.queryByRole('textbox', { name: '챕터 제목 수정' })).toBeNull());
+  expect(depths()).toEqual(['1', '2']);
 });
 
 it('projects a new chapter with original stored levels and restores the display on cancel', async () => {
-  const bounds = vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([new DOMRect()] as unknown as DOMRectList);
   const user = userEvent.setup();
   const blocks = [2, 2].map((depth, i) => chapterBlock({ id: `old-${i}`, bookId: 'book', label: `원래 제목 ${i}`, depth, createdAtSort: i + 10 }));
   const { container } = render(<CitationList {...baseProps} isBookView citations={[]} chapterBlocks={blocks} />);
-  try {
-    await user.click(screen.getByRole('button', { name: '맨 위에 챕터 추가' }));
-    const draftId = screen.getByRole('textbox', { name: '챕터 제목' }).closest('form')!.dataset.chapterNode;
-    await waitFor(() => expect(container.querySelector('[data-chapter-connection="old-0"]')?.getAttribute('data-chapter-parent')).toBe(draftId));
-    expect(container.querySelector('[data-chapter-node="old-1"]')?.getAttribute('data-chapter-depth')).toBe('2');
-    await user.click(screen.getByRole('button', { name: '챕터 취소' }));
-    await waitFor(() => expect(container.querySelector('[data-chapter-connection="old-0"]')).toBeNull());
-    expect(container.querySelector('[data-chapter-node="old-1"]')?.getAttribute('data-chapter-depth')).toBe('1');
-  } finally { bounds.mockRestore(); }
+  await user.click(screen.getByRole('button', { name: '맨 위에 챕터 추가' }));
+  const depths = () => ['old-0', 'old-1'].map(id => container.querySelector(`[data-chapter-node="${id}"]`)?.getAttribute('data-chapter-depth'));
+  expect(screen.getByRole('textbox', { name: '챕터 제목' }).closest('form')!.dataset.chapterDepth).toBe('0');
+  await waitFor(() => expect(depths()).toEqual(['1', '2']));
+  await user.click(screen.getByRole('button', { name: '챕터 취소' }));
+  await waitFor(() => expect(depths()).toEqual(['0', '1']));
 });
 
 it('uses the full folded boundary at the last separator with filtered-out trailing citations', async () => {

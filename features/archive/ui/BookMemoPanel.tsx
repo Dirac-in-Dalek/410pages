@@ -157,7 +157,7 @@ export const BookMemoPanel: React.FC<BookMemoPanelProps> = ({
         ) : null}
       </header>
       <RichTextEditor key={`${userId}:${book.id}`} text={memo} formats={formats} onChange={scheduleSave}
-        label="책 전체 메모" placeholder="책 전체를 관통하는 생각, 질문, 다음에 볼 내용을 적어두세요."
+        label="책 전체 메모" placeholder="책을 읽으며 떠오르는 생각들을 정리해보세요"
         className={`book-memo-rich flex-1 px-3 py-3 font-sans text-sm leading-6 ${reading ? '' : 'min-h-0 overflow-y-auto'}`} />
       {showFooter ? <footer className="flex min-h-11 items-center gap-2 px-3 py-1.5">
         <p className="min-w-0 flex-1 text-[0.72rem] leading-5 text-[var(--text-muted)]">
