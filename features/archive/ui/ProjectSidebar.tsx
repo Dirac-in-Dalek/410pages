@@ -443,7 +443,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
         {isCreatingAuthorFolder ? (
           <form className="mb-2 flex items-center gap-1.5" onKeyDown={(event) => { if (event.key === 'Enter' && event.nativeEvent.isComposing) event.preventDefault(); }} onSubmit={(event) => { event.preventDefault(); void submitAuthorFolder(); }}>
             <input autoFocus value={newAuthorFolderName} onChange={(event) => setNewAuthorFolderName(event.target.value)} placeholder="저자 폴더 이름" aria-label="저자 폴더 이름" className="min-h-10 min-w-0 flex-1 rounded-lg border border-[var(--border-main)] bg-[var(--bg-input)] px-2.5 text-sm focus:border-[var(--accent-border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)]" />
-            <button type="submit" disabled={!newAuthorFolderName.trim() || isSubmittingAuthorFolder} className="min-h-10 rounded-lg bg-[var(--accent)] px-2.5 text-xs font-semibold text-white disabled:opacity-50">{isSubmittingAuthorFolder ? '저장 중' : '저장'}</button>
+            <button type="submit" disabled={!newAuthorFolderName.trim() || isSubmittingAuthorFolder} className="min-h-10 rounded-lg bg-[var(--accent)] px-2.5 text-xs font-semibold accent-button disabled:opacity-50">{isSubmittingAuthorFolder ? '저장 중' : '저장'}</button>
             <button type="button" disabled={isSubmittingAuthorFolder} onClick={() => { setIsCreatingAuthorFolder(false); setNewAuthorFolderName(''); }} className="min-h-10 rounded-lg px-2 text-xs text-[var(--text-muted)]">취소</button>
           </form>
         ) : null}

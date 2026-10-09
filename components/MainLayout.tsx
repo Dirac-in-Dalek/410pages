@@ -129,7 +129,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     userFontPt: DEFAULT_BASE_FONT_PT,
   }));
   React.useLayoutEffect(() => {
-    if (!bookReadingWorkspace) return;
     const root = document.documentElement;
     const read = () => {
       const style = getComputedStyle(root);
@@ -143,7 +142,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       setReadingEnvironment(current => current.viewportWidth === next.viewportWidth && current.viewportHeight === next.viewportHeight && current.userFontPt === next.userFontPt ? current : next);
     };
     const observer = new MutationObserver(read);
-    observer.observe(root, { attributes: true, attributeFilter: ['style', 'data-font'] });
+    if (bookReadingWorkspace) observer.observe(root, { attributes: true, attributeFilter: ['style', 'data-font'] });
     window.addEventListener('resize', read);
     read();
     return () => { observer.disconnect(); window.removeEventListener('resize', read); };
@@ -160,12 +159,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     sidebarOpen: true,
     memoChrome: 14,
   }), [readingEnvironment, leftWidthPreference]);
-  const displayedLeftWidth = bookReadingWorkspace ? readingMetrics.sidebarWidth : leftWidth;
-  const displayedRightWidth = bookReadingWorkspace ? readingMetrics.memo : rightWidth;
-  const readingSidebarBounds = bookReadingWorkspace ? {
+  const sidebarWidthBounds = bookReadingWorkspace ? {
     min: readingMetrics.sidebarPreferenceMinimum,
     max: readingMetrics.sidebarPreferenceMaximum,
-  } : undefined;
+  } : { min: 232, max: Math.min(960, Math.max(232, readingEnvironment.viewportWidth - 320)) };
+  const displayedLeftWidth = bookReadingWorkspace ? readingMetrics.sidebarWidth : Math.min(leftWidth, sidebarWidthBounds.max);
+  const displayedRightWidth = bookReadingWorkspace ? readingMetrics.memo : rightWidth;
 
   React.useLayoutEffect(() => {
     const main = mainRef.current;
@@ -375,11 +374,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           libraryOrderSaving={libraryOrderSaving}
           width={displayedLeftWidth}
           isResizing={isResizingLeft}
-          onStartResize={event => startLeftResize(event, bookReadingWorkspace ? readingMetrics.sidebarScale : 1, readingSidebarBounds)}
+          onStartResize={event => startLeftResize(event, bookReadingWorkspace ? readingMetrics.sidebarScale : 1, sidebarWidthBounds)}
         />}
-          <div role="separator" aria-label="홈 패널 너비 조절" aria-orientation="vertical" aria-valuemin={bookReadingWorkspace ? readingMetrics.sidebarMinimumWidth : 232} aria-valuemax={bookReadingWorkspace ? readingMetrics.sidebarMaximumWidth : 960} aria-valuenow={displayedLeftWidth} tabIndex={libraryVisible ? 0 : -1}
-            data-passage-note-trigger onMouseDown={event => startLeftResize(event, bookReadingWorkspace ? readingMetrics.sidebarScale : 1, readingSidebarBounds)}
-            onKeyDown={event => { if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); adjustLeftWidth(event.key === 'ArrowRight' ? 16 : -16, bookReadingWorkspace ? readingMetrics.sidebarScale : 1, readingSidebarBounds); } }}
+          <div role="separator" aria-label="홈 패널 너비 조절" aria-orientation="vertical" aria-valuemin={bookReadingWorkspace ? readingMetrics.sidebarMinimumWidth : sidebarWidthBounds.min} aria-valuemax={bookReadingWorkspace ? readingMetrics.sidebarMaximumWidth : sidebarWidthBounds.max} aria-valuenow={displayedLeftWidth} tabIndex={libraryVisible ? 0 : -1}
+            data-passage-note-trigger onMouseDown={event => startLeftResize(event, bookReadingWorkspace ? readingMetrics.sidebarScale : 1, sidebarWidthBounds)}
+            onKeyDown={event => { if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); adjustLeftWidth(event.key === 'ArrowRight' ? 16 : -16, bookReadingWorkspace ? readingMetrics.sidebarScale : 1, sidebarWidthBounds); } }}
             className="absolute inset-y-0 right-0 z-40 w-2 cursor-col-resize hover:bg-[var(--accent-border)] focus-visible:bg-[var(--accent-border)]" />
         </div>
 

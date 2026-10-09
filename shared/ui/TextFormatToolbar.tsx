@@ -30,9 +30,11 @@ export function TextFormatToolbar({ text, formats, selection, onChange, onClose,
       });
     };
     place();
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(place);
+    if (ref.current) observer?.observe(ref.current);
     window.addEventListener('resize', place);
     window.visualViewport?.addEventListener('resize', place);
-    return () => { window.removeEventListener('resize', place); window.visualViewport?.removeEventListener('resize', place); };
+    return () => { observer?.disconnect(); window.removeEventListener('resize', place); window.visualViewport?.removeEventListener('resize', place); };
   }, [selection, status]);
   const flags = [
     { flag: 'bold', label: '굵게', Icon: Bold }, { flag: 'italic', label: '기울임', Icon: Italic },

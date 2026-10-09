@@ -261,7 +261,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
             disabled={!canSubmit}
             className={`
               ${isBookComposer ? 'book-composer-submit' : ''} ${chapterMode ? 'ml-auto' : ''} inline-flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center rounded-md transition-[background-color,color,transform] active:scale-95 sm:h-8 sm:w-8 motion-reduce:transition-none
-              ${canSubmit ? 'bg-[var(--accent)] text-white shadow-sm hover:bg-[var(--accent-strong)]' : 'bg-[var(--bg-input)] text-[var(--text-muted)] cursor-not-allowed'}
+              ${canSubmit ? 'bg-[var(--accent)] accent-button shadow-sm hover:bg-[var(--accent-strong)]' : 'bg-[var(--bg-input)] text-[var(--text-muted)] cursor-not-allowed'}
             `}
           >
             {isBookComposer ? <Check size={16} /> : <Send size={15} />}

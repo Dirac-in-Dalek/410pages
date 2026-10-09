@@ -96,7 +96,7 @@ export function SettingsSelection<Value extends string>({
         aria-label={`현재 ${label}: ${selectedOption.label}`}
         aria-expanded={isOpen}
         aria-controls={isOpen ? listId : undefined}
-        className="settings-selection-trigger ui-btn ui-btn-row ui-btn--ghost min-h-14 gap-3 rounded-lg px-3 py-3 text-left"
+        className="settings-selection-trigger settings-value-row ui-btn ui-btn-row ui-btn--ghost min-h-14 gap-3 rounded-lg px-3 py-3 text-left"
         onClick={() => isOpen ? close() : open()}
       >
         <span className="ui-label shrink-0">{label}</span>

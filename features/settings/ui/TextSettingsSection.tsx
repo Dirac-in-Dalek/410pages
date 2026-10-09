@@ -49,9 +49,10 @@ export const TextSettingsSection: React.FC<TextSettingsSectionProps> = ({
       <div className="divide-y divide-[var(--border-main)] rounded-xl bg-[var(--bg-main)] px-1">
         <FontSelectionList selectedFontFamily={fontFamily} onFontFamilyChange={onFontFamilyChange} />
         <div className="px-3 pb-2 pt-3">
-          <div className="flex items-center justify-between gap-3">
+          <div className="settings-value-row border border-transparent">
             <label htmlFor={fontSizeId} className="ui-label">글자 크기</label>
             <output htmlFor={fontSizeId} aria-live="polite" className="ui-label min-w-12 text-right tabular-nums text-[var(--text-secondary)]">{baseFontPt}pt</output>
+            <span aria-hidden="true" />
           </div>
           <input
             id={fontSizeId}
