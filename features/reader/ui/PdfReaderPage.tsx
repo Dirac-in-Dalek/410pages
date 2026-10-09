@@ -1,5 +1,7 @@
+import { PdfMetadataDialog } from './PdfMetadataDialog';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Document, Page } from 'react-pdf';
+import { PdfDocumentCanvas } from './PdfDocumentCanvas';
+import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
 import { configurePdfWorker } from '../../../lib/pdfWorker';
 import { CitationEditor } from '../../citation-entry/ui/CitationEditor';
 import { CitationList } from '../../archive/ui/CitationList';
@@ -505,15 +507,7 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
 
     setSaveError('Failed to save the citation. Please try again.');
     clearDraggingState();
-  }, [
-    addInlineHighlightToCitation,
-    constrainPreviewRects,
-    getLiveSelectionPayload,
-    isMetaConfirmed,
-    meta.author,
-    meta.title,
-    onAddCitation,
-  ]);
+  }, [addInlineHighlightToCitation, constrainPreviewRects, getLiveSelectionPayload, isMetaConfirmed, meta.author, meta.bookId, meta.title, onAddCitation]);
 
   useEffect(() => {
     const onMouseDown = (event: MouseEvent) => {
@@ -715,7 +709,7 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
     setIsMetaEditorOpen(false);
   };
 
-  const handleDocumentLoadSuccess = async (pdf: any) => {
+  const handleDocumentLoadSuccess = async (pdf: PDFDocumentProxy) => {
     setNumPages(pdf.numPages);
     const resumedPage = clamp(resumePageRef.current || 1, 1, pdf.numPages);
     setCurrentPage(resumedPage);
@@ -736,9 +730,9 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
     }
   };
 
-  const handlePageLoadSuccess = useCallback((page: any, pageNumber: number) => {
-    const originalWidth = page?.originalWidth || page?.width || 0;
-    const originalHeight = page?.originalHeight || page?.height || 0;
+  const handlePageLoadSuccess = useCallback((page: PDFPageProxy & { originalWidth: number; originalHeight: number }, pageNumber: number) => {
+    const originalWidth = page.originalWidth;
+    const originalHeight = page.originalHeight;
 
     if (!Number.isFinite(originalWidth) || !Number.isFinite(originalHeight) || originalWidth <= 0 || originalHeight <= 0) {
       return;
@@ -824,98 +818,7 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
 
             {pdfUrl && (
               <div className="w-full flex justify-center">
-                <Document
-                  file={pdfUrl}
-                  onLoadSuccess={handleDocumentLoadSuccess}
-                  onLoadError={(error) =>
-                    setLoadError(`Unable to open PDF. ${error?.message || 'Please choose the file again.'}`)
-                  }
-                  loading={<div className="p-6 text-sm text-[var(--text-muted)]">Loading PDF...</div>}
-                  className="w-full flex flex-col items-center"
-                >
-                  {Array.from({ length: numPages }, (_, index) => {
-                    const pageNumber = index + 1;
-                    const shouldRender = pageNumber >= visibleRange.start && pageNumber <= visibleRange.end;
-                    const pageMarks = highlights.filter((item) => item.pageIndex === pageNumber - 1);
-                    const pageUnderlineMarks = pageMarks.filter((item) => (item.kind || 'underline') !== 'highlight');
-                    const pageHighlightMarks = pageMarks.filter((item) => (item.kind || 'underline') === 'highlight');
-                    const pageSelectionPreview = selectionPreview.find((item) => item.pageIndex === pageNumber - 1);
-                    const estimatedHeight = getEstimatedPageHeight(pageNumber);
-
-                    return (
-                      <div
-                        key={`reader-page-${pageNumber}`}
-                        ref={(node) => setPageContainerRef(pageNumber, node)}
-                        data-reader-page-number={pageNumber}
-                        className="relative w-full flex justify-center mb-5"
-                      >
-                        <div
-                          className="relative inline-block shadow-lg rounded-sm overflow-hidden bg-white"
-                          style={{ width: pageWidth ? `${pageWidth}px` : 'min(100%, 920px)', minHeight: `${estimatedHeight}px` }}
-                        >
-                          {shouldRender ? (
-                            <>
-                              <Page
-                                pageNumber={pageNumber}
-                                width={pageWidth}
-                                renderAnnotationLayer
-                                renderTextLayer
-                                onLoadSuccess={(page) => handlePageLoadSuccess(page, pageNumber)}
-                                loading={<div className="p-6 text-sm text-[var(--text-muted)]">Preparing page...</div>}
-                              />
-                              <div className="pointer-events-none absolute inset-0 z-20">
-                                {pageHighlightMarks.map((highlight) =>
-                                  highlight.rects.map((rect, highlightIndex) => (
-                                    <div
-                                      key={`${highlight.id}-${highlightIndex}`}
-                                      className="absolute bg-yellow-300/45"
-                                      style={{
-                                        left: `${rect.leftPct * 100}%`,
-                                        top: `${rect.topPct * 100}%`,
-                                        width: `${rect.widthPct * 100}%`,
-                                        height: `${rect.heightPct * 100}%`
-                                      }}
-                                    />
-                                  ))
-                                )}
-                                {pageUnderlineMarks.map((highlight) =>
-                                  highlight.rects.map((rect, underlineIndex) => (
-                                    <div
-                                      key={`${highlight.id}-u-${underlineIndex}`}
-                                      className="absolute border-b-2 border-amber-500/90"
-                                      style={{
-                                        left: `${rect.leftPct * 100}%`,
-                                        top: `${rect.topPct * 100}%`,
-                                        width: `${rect.widthPct * 100}%`,
-                                        height: `${rect.heightPct * 100}%`
-                                      }}
-                                    />
-                                  ))
-                                )}
-                                {isPointerSelecting &&
-                                  pageSelectionPreview &&
-                                  pageSelectionPreview.rects.map((rect, previewIndex) => (
-                                    <div
-                                      key={`preview-${pageNumber}-${previewIndex}`}
-                                      className={`absolute ${selectionPreviewKind === 'highlight' ? 'bg-yellow-300/45' : 'border-b-2 border-amber-500/90'}`}
-                                      style={{
-                                        left: `${rect.leftPct * 100}%`,
-                                        top: `${rect.topPct * 100}%`,
-                                        width: `${rect.widthPct * 100}%`,
-                                        height: `${rect.heightPct * 100}%`
-                                      }}
-                                    />
-                                  ))}
-                              </div>
-                            </>
-                          ) : (
-                            <div className="w-full bg-white" style={{ height: `${estimatedHeight}px` }} />
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </Document>
+                <PdfDocumentCanvas pdfUrl={pdfUrl} numPages={numPages} visibleRange={visibleRange} pageWidth={pageWidth} highlights={highlights} selectionPreview={selectionPreview} isPointerSelecting={isPointerSelecting} selectionPreviewKind={selectionPreviewKind} getEstimatedPageHeight={getEstimatedPageHeight} setPageContainerRef={setPageContainerRef} handleDocumentLoadSuccess={handleDocumentLoadSuccess} handlePageLoadSuccess={handlePageLoadSuccess} setLoadError={setLoadError} />
               </div>
             )}
           </div>
@@ -1001,91 +904,7 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
         </aside>
       </div>
 
-      {isMetaEditorOpen && (
-        <div className="fixed inset-0 z-50 bg-black/45 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-[var(--bg-card)] rounded-xl border border-[var(--border-main)] shadow-2xl">
-            <div className="px-5 py-4 border-b border-[var(--border-main)]">
-              <h3 className="text-lg font-semibold">PDF Metadata</h3>
-              <p className="text-xs text-[var(--text-muted)] mt-1">Author is required. Title is auto-filled from the file name.</p>
-            </div>
-
-            <div className="p-5 space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1">Author *</label>
-                <input
-                  autoFocus
-                  value={metaForm.author}
-                  onChange={(event) => setMetaForm((prev) => ({ ...prev, author: event.target.value }))}
-                  placeholder={`e.g. ${username}`}
-                  className="w-full rounded-md border border-[var(--border-main)] bg-[var(--bg-input)] px-3 py-2 text-sm"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1">Title</label>
-                <input
-                  value={metaForm.title}
-                  onChange={(event) => setMetaForm((prev) => ({ ...prev, title: event.target.value }))}
-                  placeholder="Document title"
-                  className="w-full rounded-md border border-[var(--border-main)] bg-[var(--bg-input)] px-3 py-2 text-sm"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1">PDF start page</label>
-                  <input
-                    value={metaForm.pdfStartPage}
-                    onChange={(event) => setMetaForm((prev) => ({ ...prev, pdfStartPage: event.target.value }))}
-                    placeholder="e.g. 9"
-                    inputMode="numeric"
-                    className="w-full rounded-md border border-[var(--border-main)] bg-[var(--bg-input)] px-3 py-2 text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-[var(--text-muted)] mb-1">Book start page</label>
-                  <input
-                    value={metaForm.bookStartPage}
-                    onChange={(event) => setMetaForm((prev) => ({ ...prev, bookStartPage: event.target.value }))}
-                    placeholder="e.g. 1"
-                    inputMode="numeric"
-                    className="w-full rounded-md border border-[var(--border-main)] bg-[var(--bg-input)] px-3 py-2 text-sm"
-                  />
-                </div>
-              </div>
-
-              <p className="text-[11px] text-[var(--text-muted)]">
-                Mapping is optional. If set, book page numbers are computed even when PDF page labels are missing.
-              </p>
-
-              {metaError && <p className="text-xs text-red-600">{metaError}</p>}
-            </div>
-
-            <div className="px-5 py-4 border-t border-[var(--border-main)] flex justify-end gap-2">
-              <button
-                disabled={isMetaSaving}
-                onClick={() => {
-                  if (isMetaSaving) return;
-                  setMetaError(null);
-                  setIsMetaEditorOpen(false);
-                }}
-                className="px-3 py-2 text-sm rounded-md border border-[var(--border-main)] text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)] disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Cancel
-              </button>
-              <button
-                disabled={isMetaSaving}
-                onClick={() => {
-                  void handleMetaConfirm();
-                }}
-                className="px-3 py-2 text-sm rounded-md bg-[var(--accent)] accent-button hover:bg-[var(--accent-strong)] disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {isMetaSaving ? 'Updating...' : 'Confirm'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {isMetaEditorOpen && <PdfMetadataDialog metaForm={metaForm} setMetaForm={setMetaForm} metaError={metaError} setMetaError={setMetaError} isMetaSaving={isMetaSaving} setIsMetaEditorOpen={setIsMetaEditorOpen} handleMetaConfirm={handleMetaConfirm} username={username} />}
     </div>
   );
 };
