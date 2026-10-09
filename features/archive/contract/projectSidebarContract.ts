@@ -21,8 +21,6 @@ export interface ProjectSidebarProps {
   treeData: SidebarItem[];
   selectedBookId: string | null;
   selectedFilter: LibrarySelectedFilter;
-  isHomeView: boolean;
-  onHomeSelect: () => void;
   onBookSelect: (book: BookSource) => void;
   onTreeItemClick: (item: SidebarItem) => void;
   authorFolderLoading: boolean;

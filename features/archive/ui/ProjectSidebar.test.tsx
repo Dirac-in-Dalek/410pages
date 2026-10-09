@@ -27,8 +27,6 @@ describe('ProjectSidebar rename', () => {
         treeData={[]}
         selectedBookId={null}
         selectedFilter={null}
-        isHomeView
-        onHomeSelect={vi.fn()}
         onBookSelect={vi.fn()}
         onTreeItemClick={vi.fn()}
         authorFolderLoading={false}
@@ -80,8 +78,6 @@ describe('ProjectSidebar rename', () => {
         treeData={[]}
         selectedBookId={null}
         selectedFilter={null}
-        isHomeView
-        onHomeSelect={vi.fn()}
         onBookSelect={vi.fn()}
         onTreeItemClick={vi.fn()}
         authorFolderLoading={false}

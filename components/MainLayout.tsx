@@ -280,9 +280,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         <div className="flex h-[3.15rem] items-center gap-3 px-4">
           {!bookReadingWorkspace ? libraryToggle : null}
 
-          <div className="brand-wordmark shrink-0 text-[1.25rem] text-[var(--accent)]" style={{ width: 112 }}>
+          <button type="button" onClick={onHomeSelect} aria-label="410pages 홈으로 이동" title="홈으로 이동"
+            aria-current={isHomeView ? 'page' : undefined}
+            className="brand-wordmark min-h-11 shrink-0 items-center rounded-md text-left text-[1.25rem] text-[var(--accent)] transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)]" style={{ width: 112 }}>
             <span className="brand-number">410</span><span className="brand-text">pages</span>
-          </div>
+          </button>
 
           <div className="flex min-w-0 flex-1 justify-center">
             <label className="flex h-9 w-full max-w-[34rem] items-center rounded-full border border-transparent bg-[var(--bg-input)] px-4 transition-colors focus-within:border-[var(--accent-border)]">
@@ -354,8 +356,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           treeData={treeData}
           selectedBookId={selectedBookId}
           selectedFilter={selectedFilter}
-          isHomeView={isHomeView}
-          onHomeSelect={onHomeSelect}
           onBookSelect={onBookSelect}
           onTreeItemClick={onTreeItemClick}
           authorFolderLoading={authorFolderLoading}
