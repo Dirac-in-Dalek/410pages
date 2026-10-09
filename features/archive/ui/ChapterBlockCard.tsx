@@ -49,14 +49,13 @@ export const ChapterBlockCard: React.FC<ChapterBlockCardProps> = ({ id, label, d
           type="button"
           aria-label={`챕터 ${collapsed ? '펼치기' : '접기'} ${label}`}
           data-divider-toggle
-          data-chapter-anchor
           aria-expanded={!collapsed}
           onClick={onToggle}
           className="chapter-control chapter-fold"
         >
           {collapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
         </button>
-      ) : <span data-chapter-anchor className="chapter-control chapter-fold" aria-hidden="true" />}
+      ) : <span className="chapter-control chapter-fold" aria-hidden="true" />}
       {editing ? <form className="contents" onSubmit={event => { event.preventDefault(); void save(); }}>
         <div className="contents">
           <input autoFocus aria-label="챕터 제목 수정" value={draft} disabled={saving}

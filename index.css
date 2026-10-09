@@ -1095,7 +1095,6 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
 /* Reading first: quiet boundaries, compact rows, in-place editing. */
 .book-row-content::after { opacity: 0; }
 .book-row-content:hover::after, .book-row-content:focus-within::after { opacity: 0.85; }
-.chapter-list > svg { opacity: 0.7; }
 .citation-inline-detail .citation-card { margin: 0; border-radius: 0; background: transparent; box-shadow: none; --tw-ring-shadow: 0 0 #0000; }
 .citation-inline-detail .citation-card > label { display: none; }
 .citation-inline-detail .citation-card > div > div { padding-inline: 0; }
@@ -1234,7 +1233,7 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
 .book-reading-workspace [data-book-header] > div { padding-block: 34px 22px; padding-inline: 48px 44px; }
 .book-reading-workspace .book-title { font-size: calc(var(--type-body-size) * 12 / 7); }
 .book-reading-workspace .book-passage-lane { width: var(--reading-comment-width, 262px); align-items: flex-start; }
-.book-reading-workspace .book-passage-column { width: var(--reading-comment-width, 262px); }
+.book-reading-workspace .book-passage-column { width: calc(var(--reading-comment-width, 262px) * 0.9); }
 .book-reading-workspace [data-archive-scroll] { overflow-x: hidden; }
 .book-reading-memo { grid-column: 5; min-height: 0; position: relative; }
 .book-reading-memo-slide {
