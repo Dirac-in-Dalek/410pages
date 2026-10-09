@@ -47,7 +47,7 @@ export const ProjectCreateComposer: React.FC<ProjectCreateComposerProps> = ({
           }}
           className={
             compact
-              ? 'type-body-bounded flex-1 px-3 py-2.5 border border-[var(--border-main)] rounded-md bg-[var(--bg-input)]'
+              ? 'type-body-bounded min-w-0 flex-1 px-3 py-2.5 border border-[var(--border-main)] rounded-md bg-[var(--bg-input)]'
               : 'type-body-bounded w-full border-none bg-transparent px-2 py-1.5 text-[0.92rem] text-[var(--text-main)] focus:ring-0 placeholder:text-[var(--text-muted)]'
           }
         />
@@ -57,8 +57,8 @@ export const ProjectCreateComposer: React.FC<ProjectCreateComposerProps> = ({
           disabled={isSubmitting}
           className={
             compact
-              ? 'p-2.5 rounded-md bg-[var(--accent-active)] hover:bg-[var(--accent)] text-[var(--accent-active-text)] transition-colors'
-              : 'ml-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-white transition-colors hover:bg-[var(--accent-strong)]'
+              ? 'flex h-11 w-11 shrink-0 items-center justify-center rounded-md accent-button transition-colors'
+              : 'ml-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] accent-button transition-colors hover:bg-[var(--accent-strong)]'
           }
           title="만들기"
         >
@@ -85,7 +85,7 @@ export const ProjectCreateComposer: React.FC<ProjectCreateComposerProps> = ({
       className={
         compact
           ? 'type-label-bounded mt-3 w-full flex items-center justify-center gap-2 border border-[var(--border-main)] rounded-md p-2.5 text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]'
-          : 'type-label-bounded mt-2.5 flex h-10 w-full items-center justify-center rounded-full border border-transparent bg-[var(--accent)] px-3.5 py-2.5 text-[0.94rem] font-semibold text-white shadow-[0_10px_24px_rgba(209,15,37,0.22)] transition-all hover:bg-[var(--accent-strong)] hover:text-white active:scale-[0.985]'
+          : 'type-label-bounded mt-2.5 flex h-10 w-full items-center justify-center rounded-full border border-transparent bg-[var(--accent)] px-3.5 py-2.5 text-[0.94rem] font-semibold accent-button shadow-[0_10px_24px_rgba(209,15,37,0.22)] transition-all hover:bg-[var(--accent-strong)] active:scale-[0.985]'
       }
     >
       <Plus size={14} className={compact ? '' : 'mr-2.5'} />

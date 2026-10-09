@@ -157,6 +157,7 @@ describe('MainLayout right panel', () => {
   });
 
   it('resizes both boundaries, clamps at the approved limits, and restores browser widths', () => {
+    vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(1440);
     localStorage.clear();
     const view = render(<MainLayout {...baseProps} rightPanel={<div>메모</div>}><div data-book-column>본문</div></MainLayout>);
     fireEvent.mouseDown(screen.getByRole('separator', { name: '홈 패널 너비 조절' }), { clientX: 272 });
@@ -178,6 +179,19 @@ describe('MainLayout right panel', () => {
     fireEvent.mouseUp(window);
     expect(localStorage.getItem('leftSidebarWidth')).toBe('232');
     expect(document.body.style.cursor).not.toBe('col-resize');
+  });
+
+  it('keeps room for gallery content when a stored sidebar width is too large for the viewport', () => {
+    vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(1024);
+    localStorage.setItem('leftSidebarWidth', '960');
+    render(<MainLayout {...baseProps}><div>책 목록</div></MainLayout>);
+    const handle = screen.getByRole('separator', { name: '홈 패널 너비 조절' });
+    expect(handle.getAttribute('aria-valuenow')).toBe('704');
+    expect(handle.getAttribute('aria-valuemax')).toBe('704');
+    fireEvent.mouseDown(handle, { clientX: 704 });
+    fireEvent.mouseMove(window, { clientX: 2000 });
+    fireEvent.mouseUp(window);
+    expect(localStorage.getItem('leftSidebarWidth')).toBe('704');
   });
 
   it('isolates library fixture resizing and never writes a reading memo width', () => {

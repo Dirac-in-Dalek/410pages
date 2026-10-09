@@ -1,9 +1,10 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { AuthorSource, BookSource } from '../../../types';
 import { AuthorBooks } from './AuthorBooks';
+import { LibraryCreateDraftStore } from '../logic/libraryCreateDrafts';
 
 const author: AuthorSource = {
   id: 'author-1', name: '정희진', sortIndex: 0, createdAt: 100, isSelf: false,
@@ -36,6 +37,55 @@ const renderBooks = (overrides: Partial<React.ComponentProps<typeof AuthorBooks>
 );
 
 describe('AuthorBooks', () => {
+  it('retains an open book draft across layout remounts and isolates drafts by author', async () => {
+    const user = userEvent.setup();
+    const createDrafts = new LibraryCreateDraftStore();
+    const desktop = renderBooks({ createDrafts });
+    await user.click(screen.getByRole('button', { name: '책 추가' }));
+    await user.type(screen.getByRole('textbox', { name: '책 제목' }), '작성 중인 제목');
+    desktop.unmount();
+
+    const mobile = renderBooks({ createDrafts, isMobileApp: true });
+    expect((screen.getByRole('textbox', { name: '책 제목' }) as HTMLInputElement).value).toBe('작성 중인 제목');
+    expect(screen.queryByRole('button', { name: 'PDF로 추가하기' })).toBeNull();
+    mobile.unmount();
+
+    const otherAuthor = renderBooks({ createDrafts, author: { ...author, id: 'another-author' } });
+    await user.click(screen.getByRole('button', { name: '책 추가' }));
+    expect((screen.getByRole('textbox', { name: '책 제목' }) as HTMLInputElement).value).toBe('');
+    otherAuthor.unmount();
+
+    renderBooks({ createDrafts });
+    expect((screen.getByRole('textbox', { name: '책 제목' }) as HTMLInputElement).value).toBe('작성 중인 제목');
+    await user.click(screen.getByRole('button', { name: '취소' }));
+    await user.click(screen.getByRole('button', { name: '책 추가' }));
+    expect((screen.getByRole('textbox', { name: '책 제목' }) as HTMLInputElement).value).toBe('');
+  });
+
+  it('keeps a pending submission locked through remounts and restores the draft on failure', async () => {
+    const user = userEvent.setup();
+    const createDrafts = new LibraryCreateDraftStore();
+    let finish!: (book: BookSource | undefined) => void;
+    const onCreateBook = vi.fn(() => new Promise<BookSource | undefined>(resolve => { finish = resolve; }));
+    const onBookSelect = vi.fn();
+    const desktop = renderBooks({ createDrafts, onCreateBook, onBookSelect });
+    await user.click(screen.getByRole('button', { name: '책 추가' }));
+    await user.type(screen.getByRole('textbox', { name: '책 제목' }), '아직 저장 중');
+    await user.click(screen.getByRole('button', { name: '시작' }));
+    desktop.unmount();
+    renderBooks({ createDrafts, onCreateBook, onBookSelect, isMobileApp: true });
+    expect((screen.getByRole('textbox', { name: '책 제목' }) as HTMLInputElement).disabled).toBe(true);
+    await user.click(screen.getByRole('button', { name: '시작' }));
+    expect(onCreateBook).toHaveBeenCalledTimes(1);
+    await act(async () => finish(undefined));
+    expect((screen.getByRole('textbox', { name: '책 제목' }) as HTMLInputElement).value).toBe('아직 저장 중');
+    expect((screen.getByRole('button', { name: '시작' }) as HTMLButtonElement).disabled).toBe(false);
+    await user.click(screen.getByRole('button', { name: '시작' }));
+    await act(async () => finish(book));
+    expect(onBookSelect).toHaveBeenCalledWith(book);
+    expect(screen.getByRole('button', { name: '책 추가' })).toBeTruthy();
+  });
+
   it('creates a book with the selected author id and opens its citation view', async () => {
     const user = userEvent.setup();
     const onCreateBook = vi.fn().mockResolvedValue(book);

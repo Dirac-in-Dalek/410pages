@@ -20,6 +20,20 @@ const authorFolderProps = {
 };
 
 describe('MobileLayout header actions', () => {
+  it('returns home from the brand button with pointer and keyboard activation', async () => {
+    const user = userEvent.setup();
+    const onHomeSelect = vi.fn();
+    render(<MobileLayout {...authorFolderProps} title="410pages" onHomeSelect={onHomeSelect}
+      projects={[]} selectedProjectId={null} onProjectSelect={vi.fn()} onCreateProject={vi.fn()}
+      treeData={[]} onTreeItemClick={vi.fn()} onOpenSettings={vi.fn()}><div>저자의 책</div></MobileLayout>);
+    const logo = screen.getByRole('button', { name: '410pages 홈으로 이동' });
+    await user.click(logo);
+    logo.focus();
+    await user.keyboard('{Enter}');
+    await user.keyboard(' ');
+    expect(onHomeSelect).toHaveBeenCalledTimes(3);
+  });
+
   it('shows scoped search results after Enter, but not during Korean composition', async () => {
     const user = userEvent.setup();
     const View = () => {

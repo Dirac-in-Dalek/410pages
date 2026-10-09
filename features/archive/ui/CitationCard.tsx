@@ -701,7 +701,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                         disabled={!newNote.trim() || isSubmittingAction}
                         className={`type-label-bounded inline-flex min-h-10 items-center gap-1 rounded-md px-2.5 py-[0.3125rem] text-[0.82rem] font-medium shadow-sm transition-[background-color,color,transform] active:scale-95 motion-reduce:transition-none ${
                           newNote.trim()
-                            ? 'bg-[var(--accent)] text-white hover:bg-[var(--accent-strong)]'
+                            ? 'bg-[var(--accent)] accent-button hover:bg-[var(--accent-strong)]'
                             : 'cursor-not-allowed bg-[var(--bg-input)] text-[var(--text-muted)] shadow-none'
                         }`}
                       >
@@ -725,7 +725,7 @@ export const CitationCard: React.FC<CitationCardProps> = ({
                 <button
                   onClick={() => void handleSave()}
                   disabled={isSubmittingAction || !editText.trim()}
-                  className="type-label-bounded flex items-center gap-1 rounded-md bg-[var(--accent)] px-2.5 py-[0.3125rem] text-[0.82rem] font-medium text-white shadow-sm transition-colors hover:bg-[var(--accent-strong)]"
+                  className="type-label-bounded flex items-center gap-1 rounded-md bg-[var(--accent)] px-2.5 py-[0.3125rem] text-[0.82rem] font-medium accent-button shadow-sm transition-colors hover:bg-[var(--accent-strong)]"
                 >
                   <Check size={14} /> 저장
                 </button>

@@ -53,6 +53,8 @@
     --accent-ring: rgba(209, 15, 37, 0.14);
     --accent-active: #d10f25;
     --accent-active-text: #ffffff;
+    --accent-solid-text: #ffffff;
+    --accent-solid-hover-text: #ffffff;
 
     --highlight-bg: rgba(209, 15, 37, 0.12);
     --shadow-sidebar: none;
@@ -89,6 +91,8 @@
     --accent-ring: rgba(255, 90, 103, 0.22);
     --accent-active: #e23a4a;
     --accent-active-text: #fff7f7;
+    --accent-solid-text: #111111;
+    --accent-solid-hover-text: #111111;
 
     --highlight-bg: rgba(255, 90, 103, 0.18);
     --shadow-sidebar: 0 1px 0 rgba(0, 0, 0, 0.28), 0 14px 32px rgba(0, 0, 0, 0.22);
@@ -121,6 +125,8 @@
     --accent-ring: rgba(159, 38, 52, 0.16);
     --accent-active: #9f2634;
     --accent-active-text: #fff8f3;
+    --accent-solid-text: #ffffff;
+    --accent-solid-hover-text: #ffffff;
 
     --highlight-bg: rgba(159, 38, 52, 0.12);
     --shadow-sidebar: 0 1px 0 rgba(87, 68, 51, 0.04), 0 10px 24px rgba(87, 68, 51, 0.06);
@@ -153,6 +159,8 @@
     --accent-ring: rgba(191, 36, 53, 0.14);
     --accent-active: #bf2435;
     --accent-active-text: #ffffff;
+    --accent-solid-text: #ffffff;
+    --accent-solid-hover-text: #ffffff;
 
     --highlight-bg: rgba(191, 36, 53, 0.11);
     --shadow-sidebar: 0 1px 0 rgba(31, 44, 54, 0.04), 0 10px 24px rgba(31, 44, 54, 0.07);
@@ -185,6 +193,8 @@
     --accent-ring: rgba(126, 226, 100, 0.22);
     --accent-active: #2f6e34;
     --accent-active-text: #ecffe9;
+    --accent-solid-text: #111111;
+    --accent-solid-hover-text: #111111;
 
     --highlight-bg: rgba(126, 226, 100, 0.16);
     --shadow-sidebar: 0 1px 0 rgba(0, 0, 0, 0.35), 0 14px 32px rgba(0, 0, 0, 0.28);
@@ -214,6 +224,8 @@
     --accent-ring: rgba(255, 56, 92, 0.18);
     --accent-active: #ff385c;
     --accent-active-text: #ffffff;
+    --accent-solid-text: #111111;
+    --accent-solid-hover-text: #ffffff;
     --highlight-bg: rgba(255, 56, 92, 0.13);
     --shadow-sidebar: 0 1px 0 rgba(87, 38, 45, 0.04), 0 10px 24px rgba(87, 38, 45, 0.06);
     --shadow-card: 0 1px 0 rgba(87, 38, 45, 0.04), 0 6px 18px rgba(87, 38, 45, 0.07);
@@ -242,6 +254,8 @@
     --accent-ring: rgba(255, 90, 120, 0.24);
     --accent-active: #d93659;
     --accent-active-text: #fff7f8;
+    --accent-solid-text: #111111;
+    --accent-solid-hover-text: #111111;
     --highlight-bg: rgba(255, 90, 120, 0.18);
     --shadow-sidebar: 0 1px 0 rgba(0, 0, 0, 0.30), 0 14px 32px rgba(0, 0, 0, 0.24);
     --shadow-card: 0 1px 0 rgba(0, 0, 0, 0.26), 0 8px 22px rgba(0, 0, 0, 0.26);
@@ -270,6 +284,8 @@
     --accent-ring: rgba(128, 98, 49, 0.14);
     --accent-active: #806231;
     --accent-active-text: #fff8e8;
+    --accent-solid-text: #ffffff;
+    --accent-solid-hover-text: #ffffff;
     --highlight-bg: rgba(128, 98, 49, 0.14);
     --shadow-sidebar: inset 0 1px 0 rgba(255, 255, 255, 0.72), 0 12px 26px rgba(58, 43, 22, 0.10);
     --shadow-card: inset 0 1px 0 rgba(255, 255, 255, 0.78), 0 1px 0 rgba(58, 43, 22, 0.08), 0 8px 20px rgba(58, 43, 22, 0.09);
@@ -301,6 +317,8 @@
     --accent-ring: rgba(213, 175, 99, 0.18);
     --accent-active: #8b6725;
     --accent-active-text: #fff8e8;
+    --accent-solid-text: #111111;
+    --accent-solid-hover-text: #111111;
     --highlight-bg: rgba(213, 175, 99, 0.18);
     --shadow-sidebar: inset 0 1px 0 rgba(241, 205, 128, 0.07), 0 14px 32px rgba(0, 0, 0, 0.32);
     --shadow-card: inset 0 1px 0 rgba(241, 205, 128, 0.08), 0 1px 0 rgba(0, 0, 0, 0.34), 0 10px 24px rgba(0, 0, 0, 0.34);
@@ -332,6 +350,8 @@
     --accent-ring: rgba(138, 38, 56, 0.20);
     --accent-active: #8a2638;
     --accent-active-text: #fff6f3;
+    --accent-solid-text: #ffffff;
+    --accent-solid-hover-text: #ffffff;
     --highlight-bg: rgba(138, 38, 56, 0.14);
     --shadow-sidebar: inset 0 1px 0 rgba(255, 255, 255, 0.70), 0 12px 26px rgba(54, 36, 42, 0.10);
     --shadow-card: inset 0 1px 0 rgba(255, 255, 255, 0.76), 0 1px 0 rgba(54, 36, 42, 0.08), 0 8px 22px rgba(54, 36, 42, 0.09);
@@ -363,6 +383,8 @@
     --accent-ring: rgba(216, 162, 79, 0.24);
     --accent-active: #9c6a26;
     --accent-active-text: #fff6f4;
+    --accent-solid-text: #111111;
+    --accent-solid-hover-text: #111111;
     --highlight-bg: rgba(216, 162, 79, 0.18);
     --shadow-sidebar: inset 0 1px 0 rgba(240, 197, 116, 0.07), 0 14px 32px rgba(0, 0, 0, 0.34);
     --shadow-card: inset 0 1px 0 rgba(240, 197, 116, 0.08), 0 1px 0 rgba(0, 0, 0, 0.34), 0 10px 24px rgba(0, 0, 0, 0.36);
@@ -394,6 +416,8 @@
     --accent-ring: rgba(169, 15, 37, 0.18);
     --accent-active: #a90f25;
     --accent-active-text: #fff7f2;
+    --accent-solid-text: #ffffff;
+    --accent-solid-hover-text: #ffffff;
     --highlight-bg: rgba(169, 15, 37, 0.14);
     --shadow-sidebar: 0 1px 0 rgba(47, 39, 31, 0.06), 0 10px 24px rgba(47, 39, 31, 0.08);
     --shadow-card: 0 1px 0 rgba(47, 39, 31, 0.06), 0 6px 18px rgba(47, 39, 31, 0.08);
@@ -422,6 +446,8 @@
     --accent-ring: rgba(200, 16, 46, 0.26);
     --accent-active: #8f0f21;
     --accent-active-text: #fff5f2;
+    --accent-solid-text: #ffffff;
+    --accent-solid-hover-text: #000000;
     --highlight-bg: rgba(200, 16, 46, 0.20);
     --shadow-sidebar: 0 1px 0 rgba(0, 0, 0, 0.38), 0 14px 32px rgba(0, 0, 0, 0.30);
     --shadow-card: 0 1px 0 rgba(0, 0, 0, 0.34), 0 8px 22px rgba(0, 0, 0, 0.32);
@@ -783,12 +809,13 @@
   .ui-btn--solid {
     border-color: var(--accent);
     background: var(--accent);
-    color: var(--accent-active-text);
+    color: var(--accent-solid-text);
   }
 
   .ui-btn--solid:hover {
     border-color: var(--accent-strong);
     background: var(--accent-strong);
+    color: var(--accent-solid-hover-text);
   }
 
   .ui-btn--ghost {
@@ -806,15 +833,15 @@
     padding: 0;
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 1023px), (pointer: coarse) {
     .ui-btn-icon {
       min-height: 2.75rem;
       width: 2.75rem;
     }
+  }
 
-    .citation-copy {
-      text-align: left;
-    }
+  @media (max-width: 640px) {
+    .citation-copy { text-align: left; }
   }
 
   .ui-btn-row {
@@ -1291,7 +1318,6 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
 .book-composer-page > svg { margin-right: 7px; }
 .book-composer-page input { height: 100%; min-height: 0; font-size: 16px; }
 .book-composer-submit { width: var(--composer-control-height); height: var(--composer-control-height); border-radius: 50%; }
-.dark .book-composer-submit:not(:disabled) { color: var(--bg-main); }
 @container (max-width: 414px) {
   .book-composer-toolbar { --composer-control-height: 44px; }
 }
@@ -1567,3 +1593,43 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
 .rich-text-surface [data-size-offset] { line-height: inherit; }
 .rich-text-surface[data-empty="true"]::before { position: absolute; content: attr(data-placeholder); color: var(--text-muted); pointer-events: none; }
 @media (pointer: coarse) { .text-format-toolbar button { min-height: 44px; } }
+
+/* Galleries respond to the space left after the library panel, rather than the viewport. */
+.library-gallery { container: library-gallery / inline-size; }
+.library-card-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem 1.25rem; }
+.library-card-grid--books { row-gap: 2.5rem; }
+@container library-gallery (min-width: 320px) {
+  .library-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container library-gallery (min-width: 540px) {
+  .library-card-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 1.75rem; }
+}
+@container library-gallery (min-width: 740px) {
+  .library-card-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@container library-gallery (min-width: 960px) {
+  .library-card-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+.library-card { container-type: inline-size; }
+.library-author-name { font-size: clamp(1.125rem, 14cqw, 1.65rem); }
+.library-book-name { font-size: clamp(1rem, 11cqw, 1.35rem); }
+
+.accent-button { background-color: var(--accent); color: var(--accent-solid-text); }
+.accent-button:hover:not(:disabled) { background-color: var(--accent-strong); color: var(--accent-solid-hover-text); }
+
+.settings-panel .settings-value-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) 1rem;
+  column-gap: 0.75rem;
+  align-items: center;
+}
+
+@media (max-width: 1023px), (pointer: coarse) {
+  .text-format-toolbar button { width: 44px; min-height: 44px; flex-shrink: 0; }
+  .passage-note-control { width: 44px; height: 44px; }
+  .passage-note-inline-composer { grid-template-columns: minmax(0, 1fr) 44px; }
+}
+@media (max-width: 399px) {
+  .text-format-toolbar { display: grid; grid-template-columns: repeat(4, 44px); }
+  .text-format-toolbar .text-format-divider { display: none; }
+}

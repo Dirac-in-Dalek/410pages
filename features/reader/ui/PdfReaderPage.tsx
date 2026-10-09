@@ -1078,7 +1078,7 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
                 onClick={() => {
                   void handleMetaConfirm();
                 }}
-                className="px-3 py-2 text-sm rounded-md bg-[var(--accent)] text-white hover:bg-[var(--accent-strong)] disabled:opacity-60 disabled:cursor-not-allowed"
+                className="px-3 py-2 text-sm rounded-md bg-[var(--accent)] accent-button hover:bg-[var(--accent-strong)] disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {isMetaSaving ? 'Updating...' : 'Confirm'}
               </button>

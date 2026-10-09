@@ -98,7 +98,7 @@ describe('PassageNotesPanel', () => {
 
     const saveButton = screen.getByRole('button', { name: '메모 저장' });
     expect(saveButton.textContent).toBe('');
-    expect(saveButton.className).toContain('w-10');
+    expect(saveButton.className).toContain('w-11');
   });
 
   it('does not save when Enter confirms an IME composition', () => {

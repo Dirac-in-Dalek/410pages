@@ -161,7 +161,9 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
     <div className="font-size-app flex h-[100dvh] w-full flex-col overflow-hidden bg-[var(--bg-main)] text-[var(--text-main)]">
       <header className="border-b border-[var(--border-main)] bg-[var(--bg-card)] pt-[env(safe-area-inset-top)]">
         <div className="flex h-[3.25rem] items-center justify-between gap-3 px-4">
-          <h1 className="type-title-bounded truncate font-semibold tracking-[-0.012em]">{title}</h1>
+          <button type="button" onClick={onHomeSelect} aria-label="410pages 홈으로 이동" title="홈으로 이동"
+            aria-current={isHomeView ? 'page' : undefined}
+            className="type-title-bounded min-h-11 min-w-0 truncate rounded-md text-left font-semibold tracking-[-0.012em] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)]">{title}</button>
           <div className="flex items-center gap-2">
             {showBookMemoAction ? (
               <EditorialToolbarButton onClick={() => onOpenBookMemo?.()} ariaLabel="책 전체 메모 열기">
@@ -242,7 +244,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
                 {isCreatingAuthorFolder ? (
                   <form className="mb-2 flex items-center gap-1.5" onKeyDown={(event) => { if (event.key === 'Enter' && event.nativeEvent.isComposing) event.preventDefault(); }} onSubmit={(event) => { event.preventDefault(); void submitAuthorFolder(); }}>
                     <input autoFocus value={newAuthorFolderName} onChange={(event) => setNewAuthorFolderName(event.target.value)} placeholder="저자 폴더 이름" aria-label="저자 폴더 이름" className="min-h-11 min-w-0 flex-1 rounded-lg border border-[var(--border-main)] bg-[var(--bg-input)] px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-ring)]" />
-                    <button type="submit" disabled={!newAuthorFolderName.trim() || isSubmittingAuthorFolder} className="min-h-11 rounded-lg bg-[var(--accent)] px-3 text-xs font-semibold text-white disabled:opacity-50">저장</button>
+                    <button type="submit" disabled={!newAuthorFolderName.trim() || isSubmittingAuthorFolder} className="min-h-11 rounded-lg bg-[var(--accent)] px-3 text-xs font-semibold accent-button disabled:opacity-50">저장</button>
                     <button type="button" onClick={() => { setIsCreatingAuthorFolder(false); setNewAuthorFolderName(''); }} className="min-h-11 rounded-lg px-2 text-xs text-[var(--text-muted)]">취소</button>
                   </form>
                 ) : null}

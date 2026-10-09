@@ -19,7 +19,7 @@ const AUTH_IN_FIELD_INPUT_CLASS = `${AUTH_INPUT_CLASS} h-16 pb-2 pt-7 text-base 
 const AUTH_IN_FIELD_LABEL_CLASS =
     'absolute left-[13px] top-2.5 cursor-text text-xs font-semibold leading-4 text-[var(--text-muted)]';
 const AUTH_PRIMARY_BUTTON_CLASS =
-    'inline-flex min-h-11 w-full touch-manipulation items-center justify-center rounded-lg bg-[var(--accent)] px-4 text-sm font-semibold text-white transition-[background-color,transform] hover:bg-[var(--accent-strong)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none';
+    'inline-flex min-h-11 w-full touch-manipulation items-center justify-center rounded-lg bg-[var(--accent)] px-4 text-sm font-semibold accent-button transition-[background-color,transform] hover:bg-[var(--accent-strong)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none';
 
 type AuthMode = 'login' | 'signup' | 'forgot';
 type AuthSuccess = 'signup' | 'reset-email' | 'password-updated' | null;

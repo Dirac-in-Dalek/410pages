@@ -5,8 +5,28 @@ import { describe, expect, it, vi } from 'vitest';
 import type { AuthorSource, Citation } from '../../../types';
 import { sortAuthorsByActivity } from '../logic/archiveTree';
 import { LibraryHome } from './LibraryHome';
+import { LibraryCreateDraftStore } from '../logic/libraryCreateDrafts';
 
 describe('LibraryHome', () => {
+  it('preserves author creation across layout remounts without sharing another session store', async () => {
+    const user = userEvent.setup();
+    const createDrafts = new LibraryCreateDraftStore();
+    const props = {
+      authors: [], books: [], citations: [], username: 'Reader', loading: false, loadError: null,
+      onRetry: vi.fn(), onCreateAuthor: vi.fn(), onAuthorSelect: vi.fn(), onRenameAuthor: vi.fn(),
+      onDeleteAuthor: vi.fn(), onPreviewAuthorDelete: vi.fn(),
+    };
+    const desktop = render(<LibraryHome {...props} createDrafts={createDrafts} isMobileApp={false} />);
+    await user.click(screen.getByRole('button', { name: '저자 추가' }));
+    await user.type(screen.getByRole('textbox', { name: '저자 이름' }), '작성 중인 저자');
+    desktop.unmount();
+    const mobile = render(<LibraryHome {...props} createDrafts={createDrafts} isMobileApp />);
+    expect((screen.getByRole('textbox', { name: '저자 이름' }) as HTMLInputElement).value).toBe('작성 중인 저자');
+    mobile.unmount();
+    render(<LibraryHome {...props} createDrafts={new LibraryCreateDraftStore()} isMobileApp={false} />);
+    expect(screen.queryByRole('textbox', { name: '저자 이름' })).toBeNull();
+  });
+
   it('shows a retry action instead of claiming the library is empty after a load failure', async () => {
     const user = userEvent.setup();
     const onRetry = vi.fn();

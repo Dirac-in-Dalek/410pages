@@ -150,7 +150,7 @@ export const PassageNotesPanel: React.FC<PassageNotesPanelProps> = ({
           {!inline && <p className="text-[0.7rem] font-medium text-[var(--accent)]">구절 메모</p>}
           <h2 id={titleId} className={inline ? 'text-xs leading-6 text-[var(--text-muted)]' : 'text-sm font-semibold'}>{inline ? `인용문 메모${citation.page ? ` · ${citation.page}쪽` : ''}` : citation.notes.length ? `${citation.notes.length}개의 메모` : '메모 없음'}</h2>
         </div>
-        <button type="button" onClick={onClose} className={`${inline ? 'h-6 w-6' : 'h-10 w-10'} flex items-center justify-center rounded-lg text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]`} aria-label="구절 메모 닫기">
+        <button type="button" onClick={onClose} className={`passage-note-control ${inline ? 'h-6 w-6' : 'h-11 w-11'} flex items-center justify-center rounded-lg text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]`} aria-label="구절 메모 닫기">
           <X size={18} />
         </button>
       </header>}
@@ -180,9 +180,9 @@ export const PassageNotesPanel: React.FC<PassageNotesPanelProps> = ({
                     }}
                     className="min-h-24 w-full resize-y rounded-lg border border-[var(--border-main)] bg-[var(--bg-input)] p-3 text-sm leading-6 focus:border-[var(--accent-border)] focus:ring-0"
                   />
-                  <div className="mt-2 flex justify-end gap-2">
-                    <button type="button" onClick={() => setEditingId(null)} className="min-h-10 rounded-lg px-3 text-sm text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]">취소</button>
-                    <button type="button" disabled={!editDraft.trim() || saving} onClick={() => void saveEdit(note.id)} className="inline-flex min-h-10 items-center gap-1 rounded-lg bg-[var(--accent)] px-3 text-sm font-semibold text-white disabled:opacity-40"><Check size={14} /> 저장</button>
+                  <div className="mt-2 flex flex-wrap justify-end gap-2">
+                    <button type="button" onClick={() => setEditingId(null)} className="min-h-11 rounded-lg px-3 text-sm text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]">취소</button>
+                    <button type="button" disabled={!editDraft.trim() || saving} onClick={() => void saveEdit(note.id)} className="inline-flex min-h-11 items-center gap-1 rounded-lg bg-[var(--accent)] px-3 text-sm font-semibold accent-button disabled:opacity-40"><Check size={14} /> 저장</button>
                   </div>
                 </div>
               ) : (
@@ -192,8 +192,8 @@ export const PassageNotesPanel: React.FC<PassageNotesPanelProps> = ({
                   <div className={`${inline ? 'mt-0.5 justify-end' : 'mt-2 justify-between'} flex items-center text-[0.7rem] text-[var(--text-muted)]`}>
                     {!inline && <time>{new Date(note.createdAt).toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</time>}
                     <div className="flex opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
-                      <button type="button" data-passage-note-trigger onClick={() => { onActivate?.(); setEditingId(note.id); setEditDraft(note.content); }} className={`${inline ? 'h-8 w-8' : 'h-10 w-10'} flex items-center justify-center rounded-lg hover:bg-[var(--sidebar-hover)]`} aria-label="메모 수정"><Pencil size={14} /></button>
-                      <button type="button" data-passage-note-trigger onClick={() => void Promise.resolve(onDeleteNote(citation.id, note.id))} className={`${inline ? 'h-8 w-8' : 'h-10 w-10'} flex items-center justify-center rounded-lg hover:bg-[var(--sidebar-hover)]`} aria-label="메모 삭제"><Trash2 size={14} /></button>
+                      <button type="button" data-passage-note-trigger onClick={() => { onActivate?.(); setEditingId(note.id); setEditDraft(note.content); }} className={`passage-note-control ${inline ? 'h-8 w-8' : 'h-11 w-11'} flex items-center justify-center rounded-lg hover:bg-[var(--sidebar-hover)]`} aria-label="메모 수정"><Pencil size={14} /></button>
+                      <button type="button" data-passage-note-trigger onClick={() => void Promise.resolve(onDeleteNote(citation.id, note.id))} className={`passage-note-control ${inline ? 'h-8 w-8' : 'h-11 w-11'} flex items-center justify-center rounded-lg hover:bg-[var(--sidebar-hover)]`} aria-label="메모 삭제"><Trash2 size={14} /></button>
                     </div>
                   </div>
                 </>
@@ -204,7 +204,7 @@ export const PassageNotesPanel: React.FC<PassageNotesPanelProps> = ({
         </div>
       </div>
 
-      {!readOnly && <div className={inline ? 'mt-auto grid grid-cols-[minmax(0,1fr)_2rem] items-end gap-1 rounded-md bg-[var(--bg-card)] p-1.5' : 'border-t border-[var(--border-main)] p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]'}>
+      {!readOnly && <div className={inline ? 'passage-note-inline-composer mt-auto grid grid-cols-[minmax(0,1fr)_2rem] items-end gap-1 rounded-md bg-[var(--bg-card)] p-1.5' : 'border-t border-[var(--border-main)] p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]'}>
         <textarea
           ref={draftRef}
           rows={inline ? 1 : undefined}
@@ -222,7 +222,7 @@ export const PassageNotesPanel: React.FC<PassageNotesPanelProps> = ({
         />
         <div className={`flex items-center gap-2 ${inline ? 'justify-end' : 'mt-2 justify-between'}`}>
           <span className={inline ? 'sr-only' : 'min-w-0 text-[0.7rem] leading-4 text-[var(--text-muted)]'}>Enter 저장 · Shift+Enter 줄바꿈</span>
-          <button type="button" disabled={!draft.trim() || saving} onClick={() => void saveNewNote()} className={`${inline ? 'h-8 w-8' : 'h-10 w-10'} inline-flex shrink-0 items-center justify-center rounded-lg transition-transform active:scale-95 disabled:opacity-40 motion-reduce:transition-none ${inline ? 'text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)]' : 'bg-[var(--accent)] text-white'}`} aria-label="메모 저장" title="저장 (Enter)">{inline ? <Send size={18} /> : <SendHorizontal size={16} />}</button>
+          <button type="button" disabled={!draft.trim() || saving} onClick={() => void saveNewNote()} className={`passage-note-control ${inline ? 'h-8 w-8' : 'h-11 w-11'} inline-flex shrink-0 items-center justify-center rounded-lg transition-transform active:scale-95 disabled:opacity-40 motion-reduce:transition-none ${inline ? 'text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)]' : 'bg-[var(--accent)] accent-button'}`} aria-label="메모 저장" title="저장 (Enter)">{inline ? <Send size={18} /> : <SendHorizontal size={16} />}</button>
         </div>
       </div>}
     </aside>

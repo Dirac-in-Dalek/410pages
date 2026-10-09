@@ -9,6 +9,7 @@ import { useBulkSelection } from '../features/archive/logic/useBulkSelection';
 import { ArchiveScreen } from '../features/archive/ui/ArchiveScreen';
 import { LibraryHome } from '../features/archive/ui/LibraryHome';
 import { AuthorBooks } from '../features/archive/ui/AuthorBooks';
+import { LibraryCreateDraftStore } from '../features/archive/logic/libraryCreateDrafts';
 import { useArchiveDataController as useArchiveData } from '../features/archive/logic/useArchiveDataController';
 import { useUserPreferences } from '../features/settings/logic/useUserPreferences';
 import { applyThemeToDocument } from '../features/settings/logic/preferencesDocument';
@@ -131,6 +132,7 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
 
   const composerDrafts = React.useRef(new BookComposerDraftStore()).current;
   const editDrafts = React.useRef(new CitationEditDraftStore()).current;
+  const [libraryCreateDrafts] = React.useState(() => new LibraryCreateDraftStore());
   const [showAllPassageNotes, setShowAllPassageNotes] = React.useState(false);
   const [passageNoteCitationId, setPassageNoteCitationId] = React.useState<string | null>(null);
   const [collapsedDividerIds, setCollapsedDividerIds] = React.useState<Set<string>>(() => new Set());
@@ -414,6 +416,7 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
   };
   const archiveContent = isHomeView ? (
     <LibraryHome
+      createDrafts={libraryCreateDrafts}
       authors={authors}
       books={books}
       citations={citations}
@@ -430,6 +433,7 @@ const AuthenticatedAppShell: React.FC<{ authStatus: AuthStatus }> = ({ authStatu
     />
   ) : isAuthorView && selectedAuthor && !searchTerm ? (
     <AuthorBooks
+      createDrafts={libraryCreateDrafts}
       author={selectedAuthor}
       username={username}
       books={books}
