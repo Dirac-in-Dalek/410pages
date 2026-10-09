@@ -1328,11 +1328,11 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
   .reading-responsive > header .brand-wordmark {
     font-size: calc(var(--reading-ui-font-size, 1rem) * 1.25);
   }
-  .reading-responsive > header > div > button:first-child,
+  .reading-responsive > header #library-toggle,
   .reading-responsive > header label {
     height: max(36px, var(--reading-control-size, 32px));
   }
-  .reading-responsive > header > div > button:first-child span {
+  .reading-responsive > header #library-toggle span {
     font-size: var(--reading-label-font-size, 0.875rem);
   }
   .reading-responsive > header > div > div:last-child > button {
