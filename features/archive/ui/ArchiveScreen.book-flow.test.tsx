@@ -5,10 +5,11 @@ import { ArchiveScreen } from './ArchiveScreen';
 import userEvent from '@testing-library/user-event';
 import { BookComposerDraftStore } from '../../citation-entry/logic/bookComposerDrafts';
 import { compareBookPositions, legacyOrderKey } from '../../../lib/bookOrder';
+import type { Citation } from '../../../types';
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
-const renderBookScreen = (overrides: Partial<React.ComponentProps<typeof ArchiveScreen>> = {}) => render(
+const bookScreen = (overrides: Partial<React.ComponentProps<typeof ArchiveScreen>> = {}) => (
   <ArchiveScreen
     isMobileApp={false}
     title="정정하는 힘"
@@ -51,8 +52,43 @@ const renderBookScreen = (overrides: Partial<React.ComponentProps<typeof Archive
     {...overrides}
   />
 );
+const renderBookScreen = (overrides: Partial<React.ComponentProps<typeof ArchiveScreen>> = {}) => render(bookScreen(overrides));
 
 describe('ArchiveScreen book flow', () => {
+  it.each([false, true])('reveals a saved quote after it renders while keeping the input ready (at end: %s)', async atEnd => {
+    const drafts = new BookComposerDraftStore();
+    drafts.patch('book-1', { insertion: { afterId: null, depth: 0 } });
+    const later: Citation = { id: 'later', kind: 'sentence', text: '뒤에 있는 문장', bookId: 'book-1',
+      author: '정희진', book: '정정하는 힘', createdAt: 30, notes: [], tags: [] };
+    const onAddCitation = vi.fn().mockResolvedValue({ ok: true, citationId: 'saved' });
+    const props = { composerDrafts: drafts, onAddCitation, citations: atEnd ? [] : [later], allCitations: atEnd ? [] : [later] };
+    const view = renderBookScreen(props);
+    const user = userEvent.setup();
+    const input = screen.getByRole('textbox', { name: '인용문 입력' });
+    await user.type(input, '새로 저장한 문장');
+    await user.click(screen.getByRole('button', { name: '문장 저장' }));
+    await waitFor(() => expect(drafts.get('book-1')?.scrollToEntryId).toBe('saved'));
+    expect(document.activeElement?.closest('[data-book-row="later"]')).toBeNull();
+    const scroll = document.querySelector<HTMLElement>('[data-archive-scroll]')!;
+    Object.defineProperties(scroll, { scrollHeight: { value: 1200 }, clientHeight: { value: 400 } });
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      return (this.hasAttribute('data-archive-scroll') ? { top: 100, height: 400, bottom: 500 }
+        : { top: 700, height: 80, bottom: 780 }) as DOMRect;
+    });
+    const saved: Citation = { ...later, ...onAddCitation.mock.calls[0][0], id: 'saved', createdAt: 20, notes: [] };
+    const citations = atEnd ? [saved] : [saved, later];
+    view.rerender(bookScreen({ ...props, citations, allCitations: citations }));
+    await waitFor(() => expect(drafts.get('book-1')?.scrollToEntryId).toBeUndefined());
+    expect(document.activeElement).toBe(input);
+    expect(scroll.scrollTop).toBe(atEnd ? 1200 : 440);
+    expect((input as HTMLTextAreaElement).value).toBe('');
+    const marker = screen.queryByTestId('book-insertion-preview');
+    if (atEnd) expect(marker).toBeNull();
+    else {
+      expect(marker?.querySelector('svg')).toBeNull();
+      expect(marker?.querySelector('span')?.className).toBe('sr-only');
+    }
+  });
   it.each([0, 2, 3])('uses arrows to add exactly one child beyond saved depth %i, retaining the draft and anchor', async savedDepth => {
     const drafts = new BookComposerDraftStore();
     const chapterBlocks = Array.from({ length: savedDepth + 1 }, (_, depth) => ({

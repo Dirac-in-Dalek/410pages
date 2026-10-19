@@ -55,8 +55,14 @@ describe('book composer kind controls', () => {
     }
   });
 
-  it('changes kind while keeping focus, text and page', async () => {
+  it.each(['mouse', 'touch'])('returns %s activation to the draft, preserving the caret, text and page', async pointerType => {
     const user = userEvent.setup();
+    const activate = async (name: string) => {
+      const label = screen.getByRole('radio', { name }).closest('label')!.querySelector('span')!;
+      if (pointerType === 'touch') {
+        await user.pointer([{ keys: '[TouchA>]', target: label }, { keys: '[/TouchA]' }]);
+      } else await user.click(label);
+    };
     function BookComposer() {
       const [chapterMode, setChapterMode] = useState(false);
       const [focusRequest, setFocusRequest] = useState(0);
@@ -67,25 +73,54 @@ describe('book composer kind controls', () => {
     render(<BookComposer />);
     const originalText = screen.getByRole('textbox', { name: '인용문 입력' });
     await user.type(originalText, '보존할 문장');
+    (originalText as HTMLTextAreaElement).setSelectionRange(2, 2);
     await user.type(screen.getByRole('textbox', { name: '페이지' }), '67');
-    await user.click(screen.getByRole('radio', { name: '인용문' }));
-    await user.click(screen.getByRole('radio', { name: '챕터' }));
+    await activate('인용문');
+    await activate('챕터');
     const chapter = screen.getByRole('radio', { name: '챕터' }) as HTMLInputElement;
     expect(chapter.checked).toBe(true);
-    expect(document.activeElement).toBe(chapter);
+    expect(document.activeElement).toBe(originalText);
+    expect((originalText as HTMLTextAreaElement).selectionStart).toBe(2);
     const depthControls = screen.getByRole('group', { name: '챕터 단계 변경' });
-    expect(depthControls.closest('.citation-composer')).toBeNull();
+    expect(depthControls.closest('.book-composer-toolbar')).toBe(chapter.closest('.book-composer-toolbar'));
     expect(screen.getByRole('textbox', { name: '챕터 제목 입력' })).toBe(originalText);
     expect(screen.queryByRole('textbox', { name: '페이지' })).toBeNull();
     expect((screen.getByRole('textbox', { name: '챕터 제목 입력' }) as HTMLTextAreaElement).value).toBe('보존할 문장');
-    await user.click(screen.getByRole('radio', { name: '인용문' }));
+    await user.keyboard('새');
+    expect((originalText as HTMLTextAreaElement).value).toBe('보존새할 문장');
+    await activate('인용문');
     const text = screen.getByRole('textbox', { name: '인용문 입력' });
     expect(text).toBe(originalText);
+    expect(document.activeElement).toBe(text);
     expect(screen.queryByRole('group', { name: '챕터 단계 변경' })).toBeNull();
     expect((screen.getByRole('textbox', { name: '페이지' }) as HTMLInputElement).value).toBe('67');
-    await user.click(text);
     await user.keyboard('{Enter}');
     expect(document.activeElement).toBe(screen.getByRole('textbox', { name: '페이지' }));
+  });
+
+  it('keeps keyboard focus on the kind controls for Space and Tab navigation', async () => {
+    const user = userEvent.setup();
+    function BookComposer() {
+      const [chapterMode, setChapterMode] = useState(false);
+      const [focusRequest, setFocusRequest] = useState(0);
+      return <CitationEditor onAddCitation={vi.fn()} username="Reader" prefillData={prefillData}
+        bookDepth={0} hideSourceFields chapterMode={chapterMode} focusRequest={focusRequest}
+        onChapterModeChange={value => { setChapterMode(value); setFocusRequest(n => n + 1); }} />;
+    }
+    render(<BookComposer />);
+    const input = screen.getByRole('textbox', { name: '인용문 입력' });
+    await user.type(input, '보존할 문장');
+    await user.tab();
+    const quote = screen.getByRole('radio', { name: '인용문' });
+    const chapter = screen.getByRole('radio', { name: '챕터' });
+    expect(document.activeElement).toBe(quote);
+    chapter.focus();
+    await user.keyboard(' ');
+    expect((chapter as HTMLInputElement).checked).toBe(true);
+    expect(document.activeElement).toBe(chapter);
+    await user.tab({ shift: true });
+    expect(document.activeElement).toBe(input);
+    expect((input as HTMLTextAreaElement).value).toBe('보존할 문장');
   });
 
   it('locks both kinds during a save and retains input after failure', async () => {

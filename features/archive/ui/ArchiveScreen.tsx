@@ -165,6 +165,31 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
     () => sortBookViewItems(toBookViewItems(allCitations.filter(c => c.bookId === bookId), chapterBlocks.filter(c => c.bookId === bookId)), 'date', 'asc'),
     [allCitations, bookId, chapterBlocks],
   );
+  useLayoutEffect(() => {
+    const savedId = composer?.scrollToEntryId;
+    const scroll = bookScrollRef.current;
+    if (!isBookView || !savedId || savingInsertion || !scroll) return;
+    const wrapper = Array.from(scroll.querySelectorAll<HTMLElement>('[data-book-row]'))
+      .find(row => row.dataset.bookRow === savedId);
+    const row = wrapper?.querySelector<HTMLElement>('[data-row-content]');
+    if (!row || wrapper?.hidden) return;
+    const frame = requestAnimationFrame(() => {
+      if (bookItems.at(-1)?.id === savedId) {
+        scroll.scrollTop = scroll.scrollHeight;
+      } else {
+        const viewport = scroll.getBoundingClientRect();
+        const bounds = row.getBoundingClientRect();
+        scroll.scrollTop += bounds.top - viewport.top - Math.max(0, (scroll.clientHeight - bounds.height) / 2);
+      }
+      // Persist the new reading anchor before workspace layout observers run.
+      scroll.dispatchEvent(new Event('scroll'));
+      if (!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+        row.animate?.([{ backgroundColor: 'var(--accent-soft)' }, { backgroundColor: 'transparent' }], { duration: 1600, easing: 'ease-out' });
+      }
+      drafts.patch(scope, { scrollToEntryId: undefined });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [bookItems, citations, composer?.scrollToEntryId, drafts, isBookView, savingInsertion, scope, collapsedDividerIds]);
   const target = useMemo(() => resolveBookInsertion(bookItems, insertion ?? { depth: 0 }), [bookItems, insertion]);
   const requestedDepth = insertion?.depth ?? target?.previousDepth ?? 0;
   const chapterPlacement = target ? getChapterDropPlacement(chapterBlocks.filter(c => c.bookId === bookId), 'book-insertion-preview', target.position, requestedDepth) : null;
@@ -219,7 +244,9 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
         ? ('citationId' in result ? result.citationId : 'id' in result ? result.id : undefined)
         : undefined;
       const nextInsertion = typeof savedId === 'string' ? { afterId: savedId, depth: previewDepth } : null;
-      drafts.patch(scope, { insertion: nextInsertion, chapterMode: false, revealInsertion: nextInsertion ?? insertion ?? { depth: requestedDepth } });
+      drafts.patch(scope, { insertion: nextInsertion, chapterMode: false,
+        revealInsertion: nextInsertion ?? insertion ?? { depth: requestedDepth },
+        scrollToEntryId: typeof savedId === 'string' ? savedId : undefined });
       return { ok: true };
     } catch {
       setInsertionError('저장하지 못했습니다. 내용과 삽입 위치를 유지했습니다. 다시 시도해 주세요.');

@@ -8,6 +8,7 @@ export type BookComposerDraft = {
   saving?: boolean;
   error?: string;
   revealInsertion?: BookInsertion;
+  scrollToEntryId?: string;
 };
 
 /** Owned by the signed-in shell, so layout and book screens can remount safely. */

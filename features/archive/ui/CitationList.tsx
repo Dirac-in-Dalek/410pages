@@ -373,10 +373,9 @@ export const CitationList: React.FC<CitationListProps> = ({
         data-insertion-position={insertionPreview.position}
         data-chapter-node={insertionPreview.chapterMode ? 'book-insertion-preview' : undefined}
         data-chapter-depth={insertionPreview.depth}
-        className="chapter-row book-insertion-preview"
+        className="book-insertion-preview"
         style={{ '--chapter-depth': insertionPreview.depth } as React.CSSProperties}>
-        <span className="chapter-control chapter-fold" aria-hidden="true" />
-        <span>{insertionPreview.label}</span>
+        <span className="sr-only">{insertionPreview.label}</span>
     </div>;
     const markerBeforeId = insertionPreview ? renderRows.find(row => !hiddenRowIds.has(row.id) && compareBookPositions(getBookPosition(row), insertionPreview.position) > 0)?.id : undefined;
 
@@ -427,7 +426,6 @@ export const CitationList: React.FC<CitationListProps> = ({
         return (
             <div className="chapter-list">
                 {leadingChapterInsert}
-                {insertionMarker}
                 <div className={[
                     'type-body py-20 text-center text-[var(--text-muted)]',
                     isBookView ? 'border-y border-[var(--border-main)]' : 'rounded-xl border-2 border-dashed border-[var(--border-main)]',
@@ -750,7 +748,6 @@ export const CitationList: React.FC<CitationListProps> = ({
                         </div>
                     );
                 })}
-                {insertionPreview && !markerBeforeId && insertionMarker}
                 {isBookView && onCreateChapterBlock && renderRows.length > 0 && !hiddenRowIds.has(renderRows[renderRows.length - 1].id) && (activeInsertId === null || activeInsertId === 'end') ? (
                     <div className={`chapter-end-divider group flex items-center justify-center ${activeInsertId === 'end' ? 'chapter-divider-editing' : 'chapter-divider-slot'}`}>
                         <ChapterBlockInsertButton

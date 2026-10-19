@@ -166,6 +166,10 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
                   checked={chapterMode === kind.value}
                   disabled={readOnly || isSubmitting}
                   onChange={() => onChapterModeChange(kind.value)}
+                  onClick={event => {
+                    // Keyboard and assistive activations keep native radio navigation.
+                    if (event.detail > 0) textareaRef.current?.focus({ preventScroll: true });
+                  }}
                 />
                 <span>{kind.label}</span>
               </label>
@@ -178,6 +182,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
             <span className={`h-4 w-4 rounded-full bg-white transition-transform ${chapterMode ? 'translate-x-4' : ''}`} />
           </span>{chapterMode ? '챕터' : '인용문'}
         </button>)}
+        {depthControls}
         {!hideSourceFields && (
           <>
             <div className="flex min-h-11 min-w-0 basis-[calc(50%_-_0.1875rem)] items-center rounded-md border border-transparent bg-[var(--bg-input)] px-2.5 transition-[border-color,box-shadow] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] sm:min-h-8 sm:flex-[1.15] sm:basis-auto motion-reduce:transition-none">
@@ -274,8 +279,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
 
   return isBookComposer ? (
     <div className="book-composer-frame" style={{ '--citation-depth': bookDepth } as React.CSSProperties}>
-      <div className="book-composer-row" data-depth-controls={Boolean(depthControls)}>
-        {depthControls}
+      <div className="book-composer-row">
         {editor}
       </div>
     </div>

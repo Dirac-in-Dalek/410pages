@@ -1195,32 +1195,33 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
 [data-book-row]:has(> .chapter-divider-slot:hover, > .chapter-divider-slot:focus-within) > .book-row-content::after { opacity: 0.85; }
 .chapter-list:has(.chapter-end-divider:hover, .chapter-end-divider:focus-within) [data-book-row]:not([hidden]):not(:has(~ [data-book-row]:not([hidden]))) > .book-row-content::after { opacity: 0.85; }
 
-.book-insertion-preview { margin-block: 0.5rem; grid-template-columns: 2.75rem minmax(0, 1fr); }
-.book-insertion-preview > span:last-child { display: flex; align-items: center; min-height: 2.75rem; padding: 0.5rem 0.75rem; border: 1px dashed var(--accent); border-radius: 0.5rem; background: var(--accent-soft); color: var(--text-main); font-size: 0.8125rem; overflow-wrap: anywhere; }
+.book-insertion-preview {
+  position: relative;
+  z-index: 2;
+  height: 0;
+  margin-inline-start: min(calc(var(--chapter-depth, 0) * var(--chapter-indent-step)), var(--chapter-indent-limit));
+  color: var(--accent);
+  pointer-events: none;
+}
+.book-insertion-preview::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: var(--chapter-text-offset, 3rem);
+  inset-inline-end: 0;
+  top: 0;
+  border-top: 1px dashed var(--accent);
+}
 
-/* Keep the input aligned with saved text while its depth controls sit outside. */
+/* Indent the draft text while keeping the input controls in a fixed place. */
 .book-composer-frame {
   --composer-indent: min(calc(var(--citation-depth, 0) * var(--chapter-indent-step, 2rem)), var(--chapter-indent-limit, 6rem));
-  width: calc(100% - var(--composer-indent));
-  margin-inline-start: var(--composer-indent);
-  transition: width 200ms ease-out, margin-inline-start 200ms ease-out;
+  width: 100%;
 }
 .book-composer-row {
-  --composer-rail: 0px;
-  display: flex;
-  flex-wrap: wrap;
-  column-gap: 12px;
-  row-gap: 8px;
-  width: calc(100% + var(--composer-rail));
-  margin-inline-start: calc(-1 * var(--composer-rail));
-}
-.book-composer-row[data-depth-controls="true"] {
-  --composer-rail: min(104px, max(0px, calc(var(--book-composer-left-room, var(--book-column-left, 12px)) + var(--composer-indent) - 4px)));
+  width: 100%;
 }
 .book-composer-row > .book-citation-composer {
-  flex: 0 0 calc(100% - var(--composer-rail));
   min-width: 0;
-  margin-inline-start: auto;
 }
 .book-citation-composer {
   container-type: inline-size;
@@ -1230,7 +1231,7 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
   transition-timing-function: ease-out;
 }
 .book-citation-composer .citation-composer-text {
-  padding-inline-start: calc(3rem - 3px);
+  padding-inline-start: calc(3rem - 3px + var(--composer-indent));
   padding-inline-end: calc(2.75rem - 3px);
 }
 .book-citation-composer textarea {
@@ -1315,38 +1316,29 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
 .book-reading-memo [data-reading-memo] > footer { padding: 8px 0 0; min-height: 44px; }
 
 /* User-selected book composer: visible kinds and a compact save action. */
+.book-composer-toolbar { flex-wrap: nowrap; gap: clamp(4px, 2cqw, 8px); }
 .book-composer-kinds { display: inline-flex; flex: none; align-items: center; gap: 2px; border: 1px solid var(--border-main); border-radius: 20px; padding: 2px; background: var(--bg-input); }
-.book-composer-kinds label { position: relative; display: grid; place-items: center; min-width: 64px; min-height: calc(var(--composer-control-height) - 6px); padding: 0 10px; border-radius: 17px; white-space: nowrap; font-size: 14px; color: var(--text-main); cursor: pointer; }
+.book-composer-kinds label { position: relative; display: grid; place-items: center; min-width: 44px; min-height: calc(var(--composer-control-height) - 6px); padding: 0 8px; border-radius: 17px; white-space: nowrap; font-size: 14px; color: var(--text-main); cursor: pointer; }
 .book-composer-kinds input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .book-composer-kinds label:has(input:checked) { background: var(--bg-card); font-weight: 600; }
 .book-composer-kinds label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 .book-composer-kinds:has(input:disabled) { opacity: 0.6; }
 .book-composer-depth-controls {
-  --composer-control-height: 32px;
-  --depth-button-count: 1;
-  --depth-controls-size: calc(var(--composer-control-height) * var(--depth-button-count) + 4px * (var(--depth-button-count) - 1));
   display: flex;
   flex: none;
   align-items: center;
-  align-self: flex-end;
   gap: 4px;
-  margin-bottom: 9px;
-  padding-inline-start: max(0px, calc(var(--composer-rail) - var(--depth-controls-size) - 12px));
 }
-.book-composer-depth-controls:has(button + button) { --depth-button-count: 2; }
 .book-composer-depth-controls button { display: grid; place-items: center; width: var(--composer-control-height); height: var(--composer-control-height); border: 0; border-radius: 999px; background: transparent; color: var(--text-main); }
 .book-composer-depth-controls button:disabled { opacity: 1; color: var(--text-muted); cursor: not-allowed; }
 .book-composer-depth-controls button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.book-composer-actions { display: flex; flex: none; align-items: center; margin-left: auto; gap: 12px; }
-.book-composer-page { width: 124px; height: var(--composer-control-height); min-height: var(--composer-control-height); border-radius: 20px; }
+.book-composer-actions { display: flex; flex: 1; min-width: 0; align-items: center; justify-content: flex-end; margin-left: auto; gap: 12px; }
+.book-composer-page { flex: 0 1 auto; min-width: 0; width: 124px; height: var(--composer-control-height); min-height: var(--composer-control-height); border-radius: 20px; }
 .book-composer-page > svg { margin-right: 7px; }
 .book-composer-page input { height: 100%; min-height: 0; font-size: 16px; }
 .book-composer-submit { width: var(--composer-control-height); height: var(--composer-control-height); border-radius: 50%; }
 @container (max-width: 414px) {
   .book-composer-toolbar { --composer-control-height: 44px; }
-}
-@media (max-width: 1023px) {
-  .book-composer-depth-controls { --composer-control-height: 44px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .book-composer-frame, .book-citation-composer { transition: none; }
@@ -1569,13 +1561,6 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
   .reading-responsive .book-composer-frame {
     --composer-indent: min(calc(var(--citation-depth, 0) * var(--reading-indent-step, 32px)), var(--reading-indent-cap, 96px));
   }
-  .reading-responsive .book-composer-row {
-    column-gap: var(--reading-editor-gap, 12px);
-    row-gap: calc(var(--reading-editor-gap, 12px) * 2 / 3);
-  }
-  .reading-responsive .book-composer-row[data-depth-controls="true"] {
-    --composer-rail: min(var(--reading-hierarchy-rail, 104px), max(0px, calc(var(--book-composer-left-room, var(--book-column-left, 12px)) + var(--composer-indent) - 4px)));
-  }
   .reading-responsive .book-citation-composer,
   .reading-responsive .book-composer-depth-controls {
     --composer-control-height: var(--reading-control-size, 32px);
@@ -1584,7 +1569,7 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
     font-size: var(--reading-body-font-size, 1rem);
   }
   .reading-responsive .book-citation-composer .citation-composer-text {
-    padding-inline-start: calc(var(--reading-body-pad-left, 48px) - 3px);
+    padding-inline-start: calc(var(--reading-body-pad-left, 48px) - 3px + var(--composer-indent));
     padding-inline-end: calc(var(--reading-body-pad-right, 44px) - 3px);
   }
   .reading-responsive .book-composer-kinds label,
