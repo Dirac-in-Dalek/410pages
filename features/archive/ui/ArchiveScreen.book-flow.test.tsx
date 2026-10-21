@@ -103,7 +103,7 @@ describe('ArchiveScreen book flow', () => {
     editor.setSelectionRange(2, 2);
     const inward = screen.getByRole('button', { name: '한 단계 하위로' }) as HTMLButtonElement;
     expect(inward.disabled).toBe(false);
-    if (savedDepth === 0) expect(screen.queryByRole('button', { name: '한 단계 상위로' })).toBeNull();
+    expect((screen.getByRole('button', { name: '한 단계 상위로' }) as HTMLButtonElement).disabled).toBe(savedDepth === 0);
     await user.click(inward);
     expect(drafts.get('book-1')?.insertion).toEqual({ afterId: anchor, depth: savedDepth + 1 });
     expect(inward.disabled).toBe(true);
@@ -120,12 +120,12 @@ describe('ArchiveScreen book flow', () => {
     expect((screen.getByRole('textbox', { name: '인용문 입력' }) as HTMLTextAreaElement).value).toBe('새 소제목');
     expect(drafts.get('book-1')?.insertion).toEqual({ afterId: anchor, depth: savedDepth });
   });
-  it('keeps the first chapter at root and moves keyboard focus when the outward button disappears', async () => {
+  it('keeps both arrows visible and moves keyboard focus when an arrow becomes disabled', async () => {
     const drafts = new BookComposerDraftStore();
     drafts.patch('book-1', { chapterMode: true });
     const view = renderBookScreen({ composerDrafts: drafts });
     expect((screen.getByRole('button', { name: '한 단계 하위로' }) as HTMLButtonElement).disabled).toBe(true);
-    expect(screen.queryByRole('button', { name: '한 단계 상위로' })).toBeNull();
+    expect((screen.getByRole('button', { name: '한 단계 상위로' }) as HTMLButtonElement).disabled).toBe(true);
     view.unmount();
     drafts.patch('book-1', { insertion: { afterId: 'root', depth: 1 } });
     renderBookScreen({ composerDrafts: drafts, chapterBlocks: [{ id: 'root', bookId: 'book-1', label: 'Root', depth: 0, createdAt: 0, createdAtSort: 10 }] });
@@ -134,7 +134,7 @@ describe('ArchiveScreen book flow', () => {
     outward.focus();
     await userEvent.setup().keyboard('{Enter}');
     await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('button', { name: '한 단계 하위로' })));
-    expect(screen.queryByRole('button', { name: '한 단계 상위로' })).toBeNull();
+    expect((screen.getByRole('button', { name: '한 단계 상위로' }) as HTMLButtonElement).disabled).toBe(true);
     expect(drafts.get('book-1')?.insertion).toEqual({ afterId: 'root', depth: 0 });
     await userEvent.setup().keyboard('{Enter}');
     await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('button', { name: '한 단계 상위로' })));

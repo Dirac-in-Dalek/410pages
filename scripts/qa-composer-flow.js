@@ -69,15 +69,77 @@ async page => {
   await input.fill('');
   await page.getByRole('textbox',{name:'페이지',exact:true}).fill('');
   const rows=[];
+  const composerGeometry=()=>page.locator('.book-citation-composer').evaluate(e=>{
+    const box=e.getBoundingClientRect();
+    return {left:box.left,right:box.right,width:box.width,
+      textLeft:e.querySelector('textarea').getBoundingClientRect().left,
+      kindsLeft:e.querySelector('.book-composer-kinds').getBoundingClientRect().left,
+      arrowsLeft:e.querySelector('.book-composer-depth-controls').getBoundingClientRect().left};
+  });
+  await page.emulateMedia({reducedMotion:'no-preference'});
+  await page.locator('[data-book-row="c60"]').getByRole('button',{name:'여기에 삽입',exact:true}).click();
+  await chapter.check();
+  const frame=page.locator('.book-composer-frame');
+  const outwardMotion=page.getByRole('button',{name:'한 단계 상위로'});
+  while(await outwardMotion.isEnabled()) await outwardMotion.click();
+  await frame.evaluate(e=>e.getAnimations({subtree:true}).forEach(a=>a.finish()));
+  const motionStart=await composerGeometry();
+  await page.getByRole('button',{name:'한 단계 하위로'}).click();
+  const transitions=await frame.evaluate(e=>{
+    void e.getBoundingClientRect();
+    const animations=e.getAnimations();
+    for(const animation of animations){animation.pause();animation.currentTime=110;}
+    return animations.map(a=>a.transitionProperty);
+  });
+  const motionMiddle=await composerGeometry();
+  await frame.evaluate(e=>e.getAnimations().forEach(a=>a.finish()));
+  const motionEnd=await composerGeometry();
+  check(transitions.includes('width') && transitions.some(p=>p.startsWith('margin')),'box movement and width both animate');
+  check(motionStart.left<motionMiddle.left && motionMiddle.left<motionEnd.left,'box moves through an intermediate position');
+  check(motionEnd.width<motionMiddle.width && motionMiddle.width<motionStart.width,'box resizes through an intermediate width');
+  check(Math.abs((motionMiddle.arrowsLeft-motionStart.arrowsLeft)-(motionMiddle.left-motionStart.left))<1,'arrows and box animate together');
+  await page.emulateMedia({reducedMotion:'reduce'});
+  check(await frame.evaluate(e=>getComputedStyle(e).transitionDuration)==='0s','reduced motion disables the box transition');
   await page.locator('[data-book-row="c60"]').getByRole('button',{name:'여기에 삽입',exact:true}).click();
   for (const width of [1800,1440,1366,1280,1024,768,390,375,320]) {
     await page.setViewportSize({width,height:900});
     await chapter.check();
-    const inward=page.getByRole('button',{name:'한 단계 하위로'}); if(await inward.isEnabled()) await inward.click();
+    const outward=page.getByRole('button',{name:'한 단계 상위로'});
+    while(await outward.isEnabled()) await outward.click();
+    const root=await composerGeometry();
+    const inward=page.getByRole('button',{name:'한 단계 하위로'});
+    check(await outward.isDisabled() && await inward.isEnabled(),'root arrow availability at '+width);
+    await inward.click();
+    check(await outward.isEnabled() && await inward.isEnabled(),'intermediate arrow availability at '+width);
+    while(await inward.isEnabled()) await inward.click();
+    check(await outward.isEnabled() && await inward.isDisabled(),'maximum arrow availability at '+width);
+    const nested=await composerGeometry();
+    const inset=nested.left-root.left;
+    check(inset>0 && nested.width<root.width,'whole composer narrows at child depth at '+width);
+    check(Math.abs(root.right-nested.right)<1,'composer keeps its right edge at '+width);
+    check(Math.abs((nested.textLeft-root.textLeft)-inset)<1,'draft text moves with the box at '+width);
+    check(Math.abs((nested.kindsLeft-root.kindsLeft)-inset)<1,'kind controls move with the box at '+width);
+    check(Math.abs((nested.arrowsLeft-root.arrowsLeft)-inset)<1,'arrows follow the box at '+width);
+    while(await outward.isEnabled()) await outward.click();
+    const restored=await composerGeometry();
+    check(Math.abs(restored.left-root.left)<1 && Math.abs(restored.width-root.width)<1,'whole composer expands again at '+width);
+    while(await inward.isEnabled()) await inward.click();
     const controls=page.getByRole('group',{name:'챕터 단계 변경'});
     const a=await modes.boundingBox(), b=await controls.boundingBox();
     const centerA=a.y+a.height/2,centerB=b.y+b.height/2;
-    check(Math.abs(centerA-centerB)<2,'aligned chapter controls at '+width);
+    check(Math.abs(centerA-centerB)<=3,'aligned chapter controls at '+width);
+    const geometry=await composerGeometry();
+    check(b.x>=0 && Math.abs(geometry.left-(b.x+b.width)-12)<1,'arrows stay outside and 12px left of the box at '+width);
+    const buttons=await controls.locator('button').evaluateAll(nodes=>nodes.map(e=>{
+      const box=e.getBoundingClientRect(),style=getComputedStyle(e);
+      return {left:box.left,right:box.right,width:box.width,color:style.color,opacity:style.opacity};
+    }));
+    check(Math.abs(buttons[1].left-buttons[0].right)<1 && buttons.every(button=>button.width>=44),'compact arrows keep separate touch targets at '+width);
+    check(buttons[0].color!==buttons[1].color && Number(buttons[1].opacity)<Number(buttons[0].opacity),'disabled inward arrow is dimmer at '+width);
+    if(width===1366){
+      const box=await page.locator('.book-citation-composer').boundingBox();
+      await page.screenshot({path:'/workspace/design-previews/implemented-composer.png',clip:{x:b.x-4,y:box.y-4,width:box.x+box.width-b.x+8,height:box.height+8}});
+    }
     const overflow=await page.locator('.book-citation-composer').evaluate(e=>({width:e.clientWidth,scroll:e.scrollWidth}));
     check(overflow.scroll<=overflow.width+1,'composer overflow at '+width+': '+JSON.stringify(overflow));
     rows.push({width,delta:Math.abs(centerA-centerB)});

@@ -67,19 +67,19 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
 
   const depthControls = isBookComposer && chapterMode && onHierarchyKey && (
     <div role="group" aria-label="챕터 단계 변경" className="book-composer-depth-controls">
-      {(bookDepth ?? 0) > 0 && <button
+      <button
         ref={outdentButtonRef}
         type="button"
         aria-label="한 단계 상위로"
-        title="한 단계 밖으로 · 상위"
-        disabled={readOnly || isSubmitting}
+        title={(bookDepth ?? 0) > 0 ? '한 단계 밖으로 · 상위' : '이미 최상위 단계입니다'}
+        disabled={readOnly || isSubmitting || (bookDepth ?? 0) === 0}
         onPointerDown={event => event.preventDefault()}
         onClick={event => {
           const restoreFocus = document.activeElement === event.currentTarget && bookDepth === 1;
           onHierarchyKey('out');
           if (restoreFocus) window.requestAnimationFrame(() => indentButtonRef.current?.focus({ preventScroll: true }));
         }}
-      ><ArrowLeft size={16} /></button>}
+      ><ArrowLeft size={16} /></button>
       <button
         ref={indentButtonRef}
         type="button"
@@ -155,6 +155,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
       </div>
 
       <div className={`flex flex-wrap items-center rounded-b-xl bg-[var(--bg-card)] p-1.5 ${isBookComposer ? 'book-composer-toolbar gap-3' : 'gap-1.5 sm:flex-nowrap'}`}>
+        {depthControls}
         {onChapterModeChange && (isBookComposer ? (
           <div ref={kindGroupRef} role="radiogroup" aria-label="입력 종류" className="book-composer-kinds">
             {[{ value: false, label: '인용문' }, { value: true, label: '챕터' }].map(kind => (
@@ -182,7 +183,6 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
             <span className={`h-4 w-4 rounded-full bg-white transition-transform ${chapterMode ? 'translate-x-4' : ''}`} />
           </span>{chapterMode ? '챕터' : '인용문'}
         </button>)}
-        {depthControls}
         {!hideSourceFields && (
           <>
             <div className="flex min-h-11 min-w-0 basis-[calc(50%_-_0.1875rem)] items-center rounded-md border border-transparent bg-[var(--bg-input)] px-2.5 transition-[border-color,box-shadow] focus-within:border-[var(--accent-border)] focus-within:ring-1 focus-within:ring-[var(--accent-ring)] sm:min-h-8 sm:flex-[1.15] sm:basis-auto motion-reduce:transition-none">
