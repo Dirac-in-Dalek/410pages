@@ -1218,6 +1218,7 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
   --composer-arrow-box-gap: 12px;
   --composer-gutter: 0px;
   --composer-min-width: 18rem;
+  --composer-content-inset: clamp(12px, calc(100vw - 328px), calc(var(--composer-reading-inset, 3rem) - 1px));
   --composer-indent: min(calc(var(--citation-depth, 0) * var(--chapter-indent-step, 2rem)), var(--chapter-indent-limit, 6rem));
   --composer-box-indent: min(var(--composer-indent), max(0px, calc(100% - var(--composer-gutter) - var(--composer-min-width))));
   width: calc(100% - var(--composer-gutter) - var(--composer-box-indent));
@@ -1225,7 +1226,7 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
   transition: width 220ms cubic-bezier(0.22, 1, 0.36, 1), margin-inline-start 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 .book-composer-frame:has(.book-composer-depth-controls) {
-  --composer-min-width: 12rem;
+  --composer-min-width: calc(180px + var(--composer-content-inset));
   /* Reserve missing left-side room so external buttons stay visible on phones. */
   --composer-gutter: max(0px, calc(2 * var(--composer-arrow-size) + var(--composer-arrow-box-gap) + 4px - var(--book-column-left, 12px)));
 }
@@ -1238,13 +1239,15 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
 .book-citation-composer {
   container-type: inline-size;
   --composer-control-height: 32px;
+  padding: 0;
   transition-property: border-color, background-color, box-shadow;
   transition-duration: 200ms;
   transition-timing-function: ease-out;
 }
 .book-citation-composer .citation-composer-text {
-  padding-inline-start: calc(3rem - 3px);
-  padding-inline-end: calc(2.75rem - 3px);
+  min-height: clamp(112px, 26cqw, 172px);
+  padding-block: clamp(16px, 3cqw, 28px) clamp(28px, 6cqw, 48px);
+  padding-inline: var(--composer-content-inset);
 }
 .book-citation-composer textarea {
   display: block;
@@ -1327,17 +1330,28 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
 .book-reading-memo [data-reading-memo] :is(textarea, .rich-text-surface) { display: block; width: 100%; min-height: 360px; overflow: hidden; font-family: var(--font-display-active); font-size: var(--type-body-size); line-height: 1.72; }
 .book-reading-memo [data-reading-memo] > footer { padding: 8px 0 0; min-height: 44px; }
 
-/* User-selected book composer: visible kinds and a compact save action. */
-.book-composer-toolbar { position: relative; flex-wrap: nowrap; gap: clamp(4px, 2cqw, 8px); }
-.book-composer-kinds { display: inline-flex; flex: none; align-items: center; gap: 2px; border: 1px solid var(--border-main); border-radius: 20px; padding: 2px; background: var(--bg-input); }
-.book-composer-kinds label { position: relative; display: grid; place-items: center; min-width: 44px; min-height: calc(var(--composer-control-height) - 6px); padding: 0 8px; border-radius: 17px; white-space: nowrap; font-size: 14px; color: var(--text-main); cursor: pointer; transition: background-color 160ms ease-out, color 160ms ease-out; }
+/* Keep the text primary and anchor secondary tools to the bottom edge. */
+.book-composer-toolbar {
+  position: relative;
+  flex-wrap: nowrap;
+  gap: clamp(4px, 2cqw, 8px);
+  min-height: 56px;
+  padding-block: 6px;
+  padding-inline: max(4px, calc(var(--composer-content-inset) - 8px)) 12px;
+  border-top: 1px solid var(--border-main);
+  background: var(--bg-sidebar);
+}
+.book-composer-kinds { display: inline-flex; flex: none; align-items: center; gap: 12px; border: 0; padding: 0; background: transparent; }
+.book-composer-kinds label { position: relative; display: flex; align-items: center; min-width: 44px; min-height: 44px; padding: 0 8px; border-radius: 4px; white-space: nowrap; font-size: 14px; color: var(--text-muted); cursor: pointer; transition: color 160ms ease-out; }
+.book-composer-kinds label::after { content: ''; position: absolute; inset-inline: 8px; bottom: 1px; height: 2px; background: var(--accent); opacity: 0; transition: opacity 160ms ease-out; }
 .book-composer-kinds input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.book-composer-kinds label:has(input:checked) { background: var(--bg-card); font-weight: 600; }
+.book-composer-kinds label:has(input:checked) { color: var(--text-secondary); }
+.book-composer-kinds label:has(input:checked)::after { opacity: 0.7; }
 .book-composer-kinds label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 .book-composer-kinds:has(input:disabled) { opacity: 0.6; }
 .book-composer-depth-controls {
   position: absolute;
-  inset-inline-end: calc(100% + var(--composer-arrow-box-gap) + 3px);
+  inset-inline-end: calc(100% + var(--composer-arrow-box-gap) + 1px);
   top: 50%;
   transform: translateY(calc(-50% + 2px));
   display: flex;
@@ -1352,16 +1366,21 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
 .book-composer-depth-controls button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @keyframes book-composer-controls-appear { from { opacity: 0; } to { opacity: 1; } }
 .book-composer-actions { display: flex; flex: 1; min-width: 0; align-items: center; justify-content: flex-end; margin-left: auto; gap: 12px; }
-.book-composer-page { flex: 0 1 auto; min-width: 0; width: 124px; height: var(--composer-control-height); min-height: var(--composer-control-height); border-radius: 20px; }
-.book-composer-page > svg { margin-right: 7px; }
-.book-composer-page input { height: 100%; min-height: 0; font-size: 16px; }
-.book-composer-submit { width: var(--composer-control-height); height: var(--composer-control-height); border-radius: 50%; }
+.book-composer-page { flex: 0 1 auto; min-width: 0; width: 104px; height: 44px; min-height: 44px; padding-inline: 6px; border-radius: 4px; background: transparent; }
+.book-composer-page > svg { display: none; }
+.book-composer-page input { height: 100%; min-height: 0; min-width: 0; font-size: 14px; text-align: end; color: var(--text-muted); }
+.book-composer-page-unit { flex: none; font-size: 14px; color: var(--text-muted); }
+.book-composer-page:focus-within input { color: var(--text-main); }
+.book-composer-submit { width: 44px; height: 44px; border-radius: 50%; box-shadow: none; background: var(--accent-soft); color: var(--text-secondary); }
+.book-composer-submit:hover:not(:disabled) { background: var(--sidebar-hover); color: var(--accent); }
+.book-composer-submit:disabled { background: transparent; color: var(--text-muted); opacity: 0.45; }
 @container (max-width: 414px) {
   .book-composer-toolbar { --composer-control-height: 44px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .book-composer-frame, .book-citation-composer, .book-composer-depth-controls,
-  .book-composer-depth-controls button, .book-composer-kinds label { transition: none; animation: none; }
+  .book-composer-depth-controls button, .book-composer-kinds label,
+  .book-composer-kinds label::after { transition: none; animation: none; }
 }
 
 /* Large-screen reading metrics. The wrapper owns every value; consumers only apply it. */
@@ -1580,9 +1599,10 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
 
   .reading-responsive .book-composer-frame {
     --composer-indent: min(calc(var(--citation-depth, 0) * var(--reading-indent-step, 32px)), var(--reading-indent-cap, 96px));
+    --composer-reading-inset: var(--reading-body-pad-left, 48px);
   }
   .reading-responsive .book-composer-frame:has(.book-composer-depth-controls) {
-    --composer-min-width: max(12rem, calc(6 * var(--reading-label-font-size, 14px) + var(--reading-control-size, 32px) + 64px));
+    --composer-min-width: max(calc(180px + var(--composer-content-inset)), calc(6 * var(--reading-label-font-size, 14px) + 44px + var(--composer-content-inset) + 32px));
   }
   .reading-responsive .book-citation-composer,
   .reading-responsive .book-composer-depth-controls {
@@ -1591,12 +1611,9 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
   .reading-responsive .book-citation-composer textarea {
     font-size: var(--reading-body-font-size, 1rem);
   }
-  .reading-responsive .book-citation-composer .citation-composer-text {
-    padding-inline-start: calc(var(--reading-body-pad-left, 48px) - 3px);
-    padding-inline-end: calc(var(--reading-body-pad-right, 44px) - 3px);
-  }
   .reading-responsive .book-composer-kinds label,
-  .reading-responsive .book-composer-page input {
+  .reading-responsive .book-composer-page input,
+  .reading-responsive .book-composer-page-unit {
     font-size: var(--reading-label-font-size, 0.875rem);
   }
   .reading-responsive .book-composer-page {

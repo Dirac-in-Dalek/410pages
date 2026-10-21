@@ -252,6 +252,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
             placeholder="페이지"
             className="type-label-bounded min-h-11 w-full border-none bg-transparent p-0 text-[var(--text-main)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-0 sm:min-h-8"
           />
+          {isBookComposer && values.page && <span aria-hidden="true" className="book-composer-page-unit">쪽</span>}
         </div>
 
         }
@@ -266,7 +267,7 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
             disabled={!canSubmit}
             className={`
               ${isBookComposer ? 'book-composer-submit' : ''} ${chapterMode ? 'ml-auto' : ''} inline-flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center rounded-md transition-[background-color,color,transform] active:scale-95 sm:h-8 sm:w-8 motion-reduce:transition-none
-              ${canSubmit ? 'bg-[var(--accent)] accent-button shadow-sm hover:bg-[var(--accent-strong)]' : 'bg-[var(--bg-input)] text-[var(--text-muted)] cursor-not-allowed'}
+              ${isBookComposer ? (canSubmit ? '' : 'cursor-not-allowed') : canSubmit ? 'bg-[var(--accent)] accent-button shadow-sm hover:bg-[var(--accent-strong)]' : 'bg-[var(--bg-input)] text-[var(--text-muted)] cursor-not-allowed'}
             `}
           >
             {isBookComposer ? <Check size={16} /> : <Send size={15} />}

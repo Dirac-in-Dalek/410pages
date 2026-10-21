@@ -71,8 +71,11 @@ async page => {
   const rows=[];
   const composerGeometry=()=>page.locator('.book-citation-composer').evaluate(e=>{
     const box=e.getBoundingClientRect();
+    const label=e.querySelector('.book-composer-kinds label span');
+    const range=document.createRange();range.selectNodeContents(label);
     return {left:box.left,right:box.right,width:box.width,
       textLeft:e.querySelector('textarea').getBoundingClientRect().left,
+      kindTextLeft:range.getBoundingClientRect().left,
       kindsLeft:e.querySelector('.book-composer-kinds').getBoundingClientRect().left,
       arrowsLeft:e.querySelector('.book-composer-depth-controls').getBoundingClientRect().left};
   });
@@ -107,6 +110,7 @@ async page => {
     const outward=page.getByRole('button',{name:'한 단계 상위로'});
     while(await outward.isEnabled()) await outward.click();
     const root=await composerGeometry();
+    check(Math.abs(root.textLeft-root.kindTextLeft)<1,'root kind text aligns with input at '+width);
     const inward=page.getByRole('button',{name:'한 단계 하위로'});
     check(await outward.isDisabled() && await inward.isEnabled(),'root arrow availability at '+width);
     await inward.click();
@@ -114,6 +118,7 @@ async page => {
     while(await inward.isEnabled()) await inward.click();
     check(await outward.isEnabled() && await inward.isDisabled(),'maximum arrow availability at '+width);
     const nested=await composerGeometry();
+    check(Math.abs(nested.textLeft-nested.kindTextLeft)<1,'nested kind text aligns with input at '+width);
     const inset=nested.left-root.left;
     check(inset>0 && nested.width<root.width,'whole composer narrows at child depth at '+width);
     check(Math.abs(root.right-nested.right)<1,'composer keeps its right edge at '+width);
@@ -145,6 +150,16 @@ async page => {
     rows.push({width,delta:Math.abs(centerA-centerB)});
     check(await controls.getByRole('button').count()===2,'both depth arrows remain available');
     await quote.check();
+    const hierarchy=await page.locator('.book-citation-composer').evaluate(e=>{
+      const input=e.querySelector('textarea'),footer=e.querySelector('.book-composer-toolbar'),kinds=e.querySelector('.book-composer-kinds');
+      const label=kinds.querySelector('label'),range=document.createRange();range.selectNodeContents(label.querySelector('span'));
+      return {leftDelta:Math.abs(input.getBoundingClientRect().left-range.getBoundingClientRect().left),
+        textSize:parseFloat(getComputedStyle(input).fontSize),toolSize:parseFloat(getComputedStyle(label).fontSize),
+        gap:footer.getBoundingClientRect().top-input.getBoundingClientRect().bottom,
+        footerRule:getComputedStyle(footer).borderTopStyle,capsuleBorder:parseFloat(getComputedStyle(kinds).borderTopWidth)};
+    });
+    check(hierarchy.leftDelta<1 && hierarchy.textSize>hierarchy.toolSize,'quote text stays primary and aligned at '+width);
+    check(hierarchy.gap>=24 && hierarchy.footerRule==='solid' && hierarchy.capsuleBorder===0,'tools sit in a separated footer without floating capsule at '+width);
     const quoteOverflow=await page.locator('.book-citation-composer').evaluate(e=>({width:e.clientWidth,scroll:e.scrollWidth}));
     check(quoteOverflow.scroll<=quoteOverflow.width+1,'quote composer overflow at '+width+': '+JSON.stringify(quoteOverflow));
   }
