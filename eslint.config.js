@@ -2,6 +2,7 @@ import js from '@eslint/js';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 import reactHooks from 'eslint-plugin-react-hooks';
+import sharedPaths from './tooling/eslint/sharedPaths.js';
 
 export default tseslint.config(
   {
@@ -31,5 +32,28 @@ export default tseslint.config(
       'react-hooks/exhaustive-deps': 'error',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
     },
-  }
+  },
+  {
+    files: [
+      'app/**/*.{ts,tsx}',
+      'components/**/*.{ts,tsx}',
+      'features/**/*.{ts,tsx}',
+      'lib/**/*.ts',
+      'shared/**/*.{ts,tsx,js}',
+    ],
+    plugins: { 'shared-paths': sharedPaths },
+    rules: {
+      'shared-paths/browser-storage': 'error',
+      'shared-paths/responsive-policy': 'error',
+      'shared-paths/typography-tokens': 'error',
+      'shared-paths/button-component': 'error',
+    },
+  },
+  {
+    files: ['app/**/*.tsx', 'components/**/*.tsx', 'features/**/*.tsx', 'shared/ui/**/*.tsx'],
+    rules: { 'shared-paths/color-tokens': 'error' },
+  },
+  { files: ['shared/lib/browserStorage.ts'], rules: { 'shared-paths/browser-storage': 'off' } },
+  { files: ['shared/policy/responsive.js'], rules: { 'shared-paths/responsive-policy': 'off' } },
+  { files: ['shared/ui/Button.tsx'], rules: { 'shared-paths/button-component': 'off' } }
 );

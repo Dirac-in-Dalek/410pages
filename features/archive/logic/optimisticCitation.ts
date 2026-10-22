@@ -1,6 +1,7 @@
+import { parseCitationPage } from '../../../shared/logic/citationPage';
 import type { CitationUpdate } from '../../../types';
 import type { AddCitationInput, Citation } from '../../../types';
-import { rebaseTextFormats, formatsWithLegacyHighlights, legacyHighlightsFromFormats } from '../../../shared/logic/textFormats';
+import { prepareCitationTextUpdate } from '../../../shared/logic/citationEditing';
 
 export const CITATION_SAVE_FAILED_MESSAGE = '저장에 실패했습니다. 다시 시도해주세요.';
 
@@ -11,12 +12,6 @@ export const attachOptimisticOrigin = (
   ...citation,
   optimisticOriginId: optimisticCitationId,
 });
-
-export const extractCitationPageSort = (page: string | undefined): number | undefined => {
-  if (!page) return undefined;
-  const match = page.match(/\d+/);
-  return match ? Number.parseInt(match[0], 10) : undefined;
-};
 
 export const createOptimisticCitation = (
   data: AddCitationInput,
@@ -38,7 +33,7 @@ export const createOptimisticCitation = (
     bookId: data.bookId,
     bookSortIndex: data.bookSortIndex,
     page,
-    pageSort: extractCitationPageSort(page),
+    pageSort: parseCitationPage(page),
     notes: [],
     tags: data.tags || [],
     highlights: data.highlights,
@@ -56,17 +51,10 @@ export const createOptimisticCitationEditPatch = (
   citation: Citation,
   data: CitationUpdate
 ): Partial<Citation> => {
-  const { page, ...rest } = data;
+  const { page, ...rest } = prepareCitationTextUpdate(citation, data);
   const patch: Partial<Citation> = { ...rest, ...(page === undefined ? {} : { page: page || undefined }) };
-  if (data.text !== undefined && data.text !== citation.text && data.textFormats === undefined) {
-    const formats = formatsWithLegacyHighlights(citation.text, citation.textFormats, citation.highlights);
-    if (formats.length) {
-      patch.textFormats = rebaseTextFormats(citation.text, data.text, formats);
-      patch.highlights = legacyHighlightsFromFormats(patch.textFormats);
-    }
-  }
   if (data.page !== undefined) {
-    patch.pageSort = extractCitationPageSort(data.page ?? undefined);
+    patch.pageSort = parseCitationPage(data.page ?? undefined);
   }
 
   const didAuthorChange =

@@ -1,3 +1,5 @@
+import { Button } from '../../../shared/ui/Button';
+import { useModalFocus } from '../../../shared/ui/useModalFocus';
 import React, { useEffect, useId, useRef, useState } from 'react';
 import type { FontPreference, UserPreferences, ThemePreference } from '../contract/userPreferences';
 import { AvatarCropModal } from './AvatarCropModal';
@@ -61,81 +63,21 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   const [avatarSelectionError, setAvatarSelectionError] = useState<string | null>(null);
   const [isEditingDisplayName, setIsEditingDisplayName] = useState(false);
   const [didSubmitDisplayName, setDidSubmitDisplayName] = useState(false);
-  const panelRef = useRef<HTMLElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const displayNameInputRef = useRef<HTMLInputElement | null>(null);
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
   const avatarChangeButtonRef = useRef<HTMLButtonElement | null>(null);
   const editDisplayNameButtonRef = useRef<HTMLButtonElement | null>(null);
-  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   const titleId = useId();
 
-  useEffect(() => {
-    if (!isOpen) {
-      return undefined;
-    }
-
-    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
-    const focusFrame = window.requestAnimationFrame(() => {
-      if (panelRef.current && !panelRef.current.contains(document.activeElement)) {
-        closeButtonRef.current?.focus();
-      }
-    });
-
-    return () => {
-      window.cancelAnimationFrame(focusFrame);
-      const previousTarget = previouslyFocusedRef.current;
-      if (previousTarget?.isConnected && previousTarget !== document.body) {
-        previousTarget.focus();
-        if (document.activeElement === previousTarget) return;
-      }
-      document.getElementById('settings-trigger')?.focus();
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen || pendingAvatarFile) {
-      return undefined;
-    }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        if (panelRef.current?.querySelector('[aria-expanded="true"]')) {
-          return;
-        }
-        onClose();
-        return;
-      }
-
-      if (event.key !== 'Tab') {
-        return;
-      }
-
-      const focusableElements = Array.from(
-        panelRef.current?.querySelectorAll<HTMLElement>(
-          'button:not([disabled]):not([tabindex="-1"]), input:not([disabled]):not([type="hidden"]):not(.hidden), [tabindex]:not([tabindex="-1"])'
-        ) ?? []
-      ) as HTMLElement[];
-
-      if (focusableElements.length === 0) {
-        return;
-      }
-
-      const firstElement = focusableElements[0];
-      const lastElement = focusableElements[focusableElements.length - 1];
-
-      if (event.shiftKey && document.activeElement === firstElement) {
-        event.preventDefault();
-        lastElement.focus();
-      } else if (!event.shiftKey && document.activeElement === lastElement) {
-        event.preventDefault();
-        firstElement.focus();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose, pendingAvatarFile]);
+  const panelRef = useModalFocus<HTMLElement>(isOpen, () => {
+    if (!pendingAvatarFile && !panelRef.current?.querySelector('[aria-expanded="true"]')) onClose();
+  }, {
+    initialFocus: () => closeButtonRef.current,
+    returnFocusFallback: () => document.getElementById('settings-trigger'),
+    keyboardPhase: 'bubble',
+    focusTiming: 'frame',
+  });
 
   useEffect(() => {
     if (!isEditingDisplayName) {
@@ -166,7 +108,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     if (panelRef.current) {
       panelRef.current.inert = Boolean(pendingAvatarFile);
     }
-  }, [pendingAvatarFile]);
+  }, [panelRef, pendingAvatarFile]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -227,15 +169,15 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           <header className="shrink-0 border-b border-[var(--border-main)] bg-[var(--bg-card)] px-5 py-4 sm:px-6">
             <div className="flex items-center justify-between gap-4">
               <h2 id={titleId} className="ui-title text-xl">설정</h2>
-              <button
+              <Button variant="ghost" size="icon"
                 ref={closeButtonRef}
                 type="button"
                 aria-label="닫기"
                 onClick={onClose}
-                className="ui-btn ui-btn-icon ui-btn--ghost min-h-11 w-11 text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                className="min-h-11 w-11 text-[var(--text-muted)] hover:text-[var(--text-main)]"
               >
                 <X size={20} aria-hidden="true" />
-              </button>
+              </Button>
             </div>
           </header>
 
@@ -253,21 +195,21 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                         initials
                       )}
                     </div>
-                    <button
+                    <Button variant="ghost" size="icon"
                       ref={avatarChangeButtonRef}
                       type="button"
                       aria-label="사진 변경"
                       title="사진 변경"
                       disabled={isSavingAvatar}
                       onClick={() => avatarInputRef.current?.click()}
-                      className={`ui-btn ui-btn-icon ui-btn--ghost settings-avatar-action ${
+                      className={`settings-avatar-action ${
                         isSavingAvatar ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
                       }`}
                     >
                       <span className="settings-avatar-action__badge" aria-hidden="true">
                         <Camera size={16} />
                       </span>
-                    </button>
+                    </Button>
                   </div>
 
                   <div className="min-w-0 flex-1 pt-2.5">
@@ -297,31 +239,31 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                           className="ui-body min-h-11 w-full rounded-lg border border-[var(--border-main)] bg-[var(--bg-input)] px-3 py-2 text-right outline-none transition-[border-color,box-shadow] focus-visible:border-[var(--accent-border)] focus-visible:ring-2 focus-visible:ring-[var(--accent-ring)]"
                         />
                         <div className="mt-2 flex justify-end gap-2">
-                          <button
+                          <Button variant="ghost"
                             type="button"
-                            className="ui-btn ui-btn--ghost min-h-11 px-3"
+                            className="min-h-11 px-3"
                             disabled={isSavingDisplayName}
                             onClick={cancelDisplayNameEdit}
                           >
                             취소
-                          </button>
-                          <button
+                          </Button>
+                          <Button variant="solid"
                             type="button"
-                            className="ui-btn ui-btn--solid min-h-11 px-3"
+                            className="min-h-11 px-3"
                             disabled={isSavingDisplayName || !hasPendingDisplayNameChange}
                             onClick={commitDisplayName}
                           >
                             저장
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     ) : (
                       <div className="flex min-h-11 items-center justify-end gap-2">
                         <p className="ui-action min-w-0 flex-1 truncate text-right">{savedDisplayName || displayName}</p>
-                        <button
+                        <Button variant="ghost"
                           ref={editDisplayNameButtonRef}
                           type="button"
-                          className="ui-btn ui-btn--ghost min-h-11 shrink-0 px-3 text-[var(--text-secondary)]"
+                          className="min-h-11 shrink-0 px-3 text-[var(--text-secondary)]"
                           disabled={isSavingDisplayName}
                           onClick={() => {
                             onDisplayNameChange(savedDisplayName);
@@ -329,7 +271,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                           }}
                         >
                           수정
-                        </button>
+                        </Button>
                       </div>
                     )}
 
@@ -342,6 +284,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 </div>
                 <input
                   ref={avatarInputRef}
+                  tabIndex={-1}
+                  aria-hidden="true"
                   type="file"
                   accept="image/*"
                   aria-label="프로필 사진 업로드"
@@ -376,7 +320,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             {preferencesError ? (
               <div role="alert" className="flex items-center justify-between gap-3 text-sm text-red-600 dark:text-red-300">
                 <p>{preferencesError}</p>
-                <button type="button" className="ui-btn ui-btn--ghost shrink-0" onClick={onRetryPreferences}>다시 시도</button>
+                <Button variant="ghost" type="button" className="shrink-0" onClick={onRetryPreferences}>다시 시도</Button>
               </div>
             ) : null}
 
@@ -392,14 +336,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             {onSignOut ? (
               <section aria-labelledby={`${titleId}-account`}>
                 <h3 id={`${titleId}-account`} className="ui-label mb-2 px-1 font-semibold text-[var(--text-muted)]">계정</h3>
-                <button
+                <Button variant="ghost"
                   type="button"
                   onClick={onSignOut}
-                  className="settings-sign-out ui-btn ui-btn--ghost min-h-11 w-full justify-start gap-2 px-3 text-[var(--text-secondary)]"
+                  className="settings-sign-out min-h-11 w-full justify-start gap-2 px-3 text-[var(--text-secondary)]"
                 >
                   <LogOut size={16} aria-hidden="true" />
                   로그아웃
-                </button>
+                </Button>
               </section>
             ) : null}
           </div>

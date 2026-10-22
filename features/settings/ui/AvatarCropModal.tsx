@@ -1,3 +1,4 @@
+import { Button } from '../../../shared/ui/Button';
 import React, { useEffect, useId, useRef, useState } from 'react';
 import type { AvatarCropFrame, AvatarCropHandle, AvatarImageRect } from '../../../lib/avatarCrop';
 import {
@@ -438,7 +439,7 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
     ? {
         background: `radial-gradient(circle ${cropFrame.size / 2}px at ${cropFrame.x + cropFrame.size / 2}px ${
           cropFrame.y + cropFrame.size / 2
-        }px, transparent ${Math.max(cropFrame.size / 2 - 1, 0)}px, rgba(0, 0, 0, 0.48) ${cropFrame.size / 2 + 1}px)`,
+        }px, transparent ${Math.max(cropFrame.size / 2 - 1, 0)}px, var(--crop-overlay-color) ${cropFrame.size / 2 + 1}px)`,
       }
     : undefined;
 
@@ -461,17 +462,17 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
               원형 밖은 실제 프로필에 보이지 않습니다. 방향키로 이동하고 Shift+방향키 또는 아래 버튼으로 크기를 조절할 수 있습니다.
             </p>
           </div>
-          <button
+          <Button variant="ghost" size="icon"
             type="button"
             onClick={onCancel}
             disabled={isInteractionLocked}
-            className="ui-btn ui-btn-icon ui-btn--ghost text-[var(--text-muted)] hover:text-[var(--text-main)]"
+            className="text-[var(--text-muted)] hover:text-[var(--text-main)]"
           >
             <span aria-hidden="true" className="block text-lg leading-none">
               ×
             </span>
             <span className="sr-only">편집 닫기</span>
-          </button>
+          </Button>
         </div>
 
         <div className="mt-5 flex justify-center">
@@ -528,45 +529,45 @@ export const AvatarCropModal: React.FC<AvatarCropModalProps> = ({
         </div>
 
         <div role="group" aria-label="자르기 영역 크기 조절" className="mt-4 flex items-center justify-center gap-2">
-          <button
+          <Button size="icon"
             type="button"
             aria-label="자르기 영역 축소"
             disabled={isInteractionLocked || !cropFrame || !imageRect}
-            className="ui-btn ui-btn-icon h-11 min-h-11 w-11 sm:h-10 sm:min-h-10 sm:w-10"
+            className="h-11 min-h-11 w-11 sm:h-10 sm:min-h-10 sm:w-10"
             onClick={() => resizeCropFrame(-8)}
           >
             <span aria-hidden="true">−</span>
-          </button>
-          <button
+          </Button>
+          <Button size="icon"
             type="button"
             aria-label="자르기 영역 확대"
             disabled={isInteractionLocked || !cropFrame || !imageRect}
-            className="ui-btn ui-btn-icon h-11 min-h-11 w-11 sm:h-10 sm:min-h-10 sm:w-10"
+            className="h-11 min-h-11 w-11 sm:h-10 sm:min-h-10 sm:w-10"
             onClick={() => resizeCropFrame(8)}
           >
             <span aria-hidden="true">+</span>
-          </button>
+          </Button>
         </div>
 
         {error ? <p role="alert" className="ui-body mt-4 text-red-600">{error}</p> : null}
 
         <div className="mt-6 flex justify-end gap-3">
-          <button
+          <Button
             type="button"
             onClick={onCancel}
             disabled={isInteractionLocked}
-            className="ui-btn"
+            className=""
           >
             취소
-          </button>
-          <button
+          </Button>
+          <Button variant="solid"
             type="button"
             onClick={handleSave}
             disabled={isInteractionLocked || !cropFrame || !imageRect}
-            className="ui-btn ui-btn--solid"
+
           >
             {isInteractionLocked ? '저장 중…' : '저장'}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

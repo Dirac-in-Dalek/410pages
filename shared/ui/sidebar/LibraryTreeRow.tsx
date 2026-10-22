@@ -79,7 +79,7 @@ export const LibraryTreeRow: React.FC<LibraryTreeRowProps> = ({
         role={item.type === 'book' ? 'group' : 'button'}
         tabIndex={0}
         className={[
-          'library-tree-row group my-0.5 flex cursor-pointer select-none items-center rounded-[0.8rem] px-2.5 py-1.5 text-[14px] transition-[background-color,color,box-shadow,transform] duration-150 active:scale-[0.985]',
+          'library-tree-row group my-0.5 flex cursor-pointer select-none items-center rounded-[0.8rem] px-2.5 py-1.5 text-[length:var(--font-tree-row)] transition-[background-color,color,box-shadow,transform] duration-150 active:scale-[0.985]',
           isActive ? activeClassName : inactiveClassName,
           baseClassName,
         ].join(' ')}

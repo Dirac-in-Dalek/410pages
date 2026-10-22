@@ -1,3 +1,4 @@
+import { safeGetStorageItem, safeSetStorageItem, safeRemoveStorageItem } from '../../../shared/lib/browserStorage';
 import type { TextFormatRange } from '../../../types';
 import { normalizeTextFormats } from '../../../shared/logic/textFormats';
 const PREFIX = 'book-memo-draft.v1';
@@ -8,12 +9,12 @@ const keyFor = (userId: string, bookId: string) =>
 
 export const readBookMemoDraftContent = (userId: string, bookId: string): { text: string; formats: TextFormatRange[] } | null => {
   try {
-    const raw = localStorage.getItem(`${keyFor(userId, bookId)}:rich.v2`);
+    const raw = safeGetStorageItem(`${keyFor(userId, bookId)}:rich.v2`);
     if (raw !== null) {
       const value = JSON.parse(raw);
       if (typeof value.text === 'string') return { text: value.text, formats: normalizeTextFormats(value.formats, value.text.length) };
     }
-    const text = localStorage.getItem(keyFor(userId, bookId));
+    const text = safeGetStorageItem(keyFor(userId, bookId));
     return text === null ? null : { text, formats: [] };
   } catch { return null; }
 };
@@ -23,16 +24,15 @@ export const readBookMemoDraft = (userId: string, bookId: string) => readBookMem
 export const storeBookMemoDraft = (userId: string, bookId: string, text: string, formats: TextFormatRange[] = []) => {
   try {
     // One atomic storage value prevents text and selection offsets becoming separated.
-    localStorage.setItem(`${keyFor(userId, bookId)}:rich.v2`, JSON.stringify({ text, formats: normalizeTextFormats(formats, text.length) }));
-    return true;
+    return safeSetStorageItem(`${keyFor(userId, bookId)}:rich.v2`, JSON.stringify({ text, formats: normalizeTextFormats(formats, text.length) }));
   } catch { return false; }
 };
 
 export const removeBookMemoDraft = (userId: string, bookId: string) => {
   try {
-    localStorage.removeItem(keyFor(userId, bookId));
-    localStorage.removeItem(`${keyFor(userId, bookId)}:rich.v2`);
-    return true;
+    const removedLegacy = safeRemoveStorageItem(keyFor(userId, bookId));
+    const removedRich = safeRemoveStorageItem(`${keyFor(userId, bookId)}:rich.v2`);
+    return removedLegacy && removedRich;
   } catch { return false; }
 };
 

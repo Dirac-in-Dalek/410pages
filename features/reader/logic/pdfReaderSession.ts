@@ -1,3 +1,4 @@
+import { safeSetStorageItem, safeRemoveStorageItem } from '../../../shared/lib/browserStorage';
 import type { PersistedReaderSession } from '../contract/pdfReaderContract';
 import { readPersistedReaderSession } from '../policy/pdfReaderPolicy';
 
@@ -34,14 +35,8 @@ export const persistPdfReaderSession = (
 ) => {
   if (typeof window === 'undefined' || clearedReaderSessionUserIds.has(userId)) return false;
   try {
-    window.localStorage.setItem(
-      getPdfReaderSessionStorageKey(userId),
-      JSON.stringify(session)
-    );
-    return true;
-  } catch {
-    return false;
-  }
+    return safeSetStorageItem(getPdfReaderSessionStorageKey(userId), JSON.stringify(session));
+  } catch { return false; }
 };
 
 export const updatePdfReaderBook = (
@@ -76,12 +71,7 @@ export const removePdfReaderCitationHighlights = (
 
 export const removePersistedPdfReaderSession = (userId: string) => {
   if (typeof window === 'undefined') return true;
-  try {
-    window.localStorage.removeItem(getPdfReaderSessionStorageKey(userId));
-    return true;
-  } catch {
-    return false;
-  }
+  return safeRemoveStorageItem(getPdfReaderSessionStorageKey(userId));
 };
 
 export const clearPdfReaderSession = (userId: string) => {

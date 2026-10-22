@@ -1,3 +1,4 @@
+import { safeGetStorageItem, safeSetStorageItem, safeRemoveStorageItem } from '../shared/lib/browserStorage';
 const AVATAR_DEBUG_STORAGE_KEY = 'avatar-debug-log';
 const MAX_AVATAR_DEBUG_ENTRIES = 50;
 
@@ -24,7 +25,7 @@ function readAvatarDebugEntries(): AvatarDebugEntry[] {
   }
 
   try {
-    const raw = window.localStorage.getItem(AVATAR_DEBUG_STORAGE_KEY);
+    const raw = safeGetStorageItem(AVATAR_DEBUG_STORAGE_KEY);
     if (!raw) {
       return [];
     }
@@ -45,7 +46,7 @@ function writeAvatarDebugEntry(entry: AvatarDebugEntry) {
     const entries = readAvatarDebugEntries();
     entries.push(entry);
     const nextEntries = entries.slice(-MAX_AVATAR_DEBUG_ENTRIES);
-    window.localStorage.setItem(AVATAR_DEBUG_STORAGE_KEY, safeStringify(nextEntries));
+    safeSetStorageItem(AVATAR_DEBUG_STORAGE_KEY, safeStringify(nextEntries));
   } catch {
     // Ignore localStorage failures while debugging.
   }
@@ -57,7 +58,7 @@ export function clearAvatarDebugLog() {
   }
 
   try {
-    window.localStorage.removeItem(AVATAR_DEBUG_STORAGE_KEY);
+    safeRemoveStorageItem(AVATAR_DEBUG_STORAGE_KEY);
   } catch {
     // Ignore localStorage failures while debugging.
   }

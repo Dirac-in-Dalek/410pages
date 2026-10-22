@@ -1,3 +1,4 @@
+import { safeGetStorageItem } from '../../../shared/lib/browserStorage';
 import type {
   AddCitationInput,
   PdfReaderMeta,
@@ -114,7 +115,7 @@ export const readPersistedReaderSession = (
 ): PersistedReaderSession | null => {
   if (typeof window === 'undefined') return null;
   try {
-    const raw = window.localStorage.getItem(storageKey);
+    const raw = safeGetStorageItem(storageKey);
     if (!raw) return null;
     return sanitizePersistedReaderSession(JSON.parse(raw));
   } catch {

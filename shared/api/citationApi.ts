@@ -1,3 +1,4 @@
+import { parseCitationPage } from '../logic/citationPage';
 import type { Tables, TablesUpdate } from './database.types';
 import type { Highlight } from '../../types';
 import { fetchAllRows } from './pagination';
@@ -11,12 +12,6 @@ import { compareBookPositions, generateBookPosition, getBookPosition, legacyOrde
 import type { AddCitationInput, BookPosition, Citation, CitationSourceInput, Note } from '../../types';
 import { requireActiveUser, getNextSortIndex, BookSourceRow, mapBookSourceRow } from './libraryApiUtils';
 import { createAppendBookOrderKey, isBookOrderConflict, mutateWithBookOrderRetry, validateBookPosition } from './bookOrderApi';
-
-const extractPageSort = (page: string | undefined): number | undefined => {
-    if (!page) return undefined;
-    const match = page.match(/\d+/);
-    return match ? parseInt(match[0], 10) : undefined;
-};
 
 type ResolvedCitationSource = {
     authorId: string;
@@ -306,7 +301,7 @@ export async function addCitation(userId: string, data: AddCitationInput) {
                 book_id: resolvedSource.bookId,
                 author_id: resolvedSource.authorId,
                 page: data.page,
-                page_sort: extractPageSort(data.page),
+                page_sort: parseCitationPage(data.page),
                 ...(data.highlights !== undefined ? { highlights: data.highlights.map(highlight => ({ ...highlight })) } : {}),
                 ...(data.textFormats !== undefined ? { text_formats: data.textFormats } : {}),
                 user_id: userId
@@ -370,9 +365,9 @@ export async function updateCitation(userId: string, id: string, data: CitationU
         }
         if (data.page !== undefined) {
             updateData.page = data.page || null;
-            updateData.page_sort = extractPageSort(data.page ?? undefined) ?? null;
+            updateData.page_sort = parseCitationPage(data.page ?? undefined) ?? null;
             localPatch.page = data.page || undefined;
-            localPatch.pageSort = extractPageSort(data.page ?? undefined);
+            localPatch.pageSort = parseCitationPage(data.page ?? undefined);
         }
         if (data.textFormats !== undefined) {
             updateData.text_formats = expectedText === undefined ? data.textFormats

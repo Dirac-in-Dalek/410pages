@@ -68,7 +68,7 @@ export const ProjectSidebarProjectsSection: React.FC<ProjectSidebarProjectsSecti
         type="button"
         onClick={onToggleExpanded}
         aria-expanded={isExpanded}
-        className="flex min-h-10 flex-1 items-center gap-2 rounded-lg px-1 text-left text-[0.78rem] font-semibold uppercase tracking-[0.09em] text-[var(--text-muted)] transition-[color,transform] active:scale-95"
+        className="flex min-h-10 flex-1 items-center gap-2 rounded-lg px-1 text-left text-[length:var(--font-compact-label)] font-semibold uppercase tracking-[0.09em] text-[var(--text-muted)] transition-[color,transform] active:scale-95"
       >
         {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
         폴더

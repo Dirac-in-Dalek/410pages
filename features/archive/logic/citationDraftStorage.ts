@@ -1,3 +1,4 @@
+import { readStorageItem, safeSetStorageItem, safeRemoveStorageItem } from '../../../shared/lib/browserStorage';
 import { normalizeTextFormats } from '../../../shared/logic/textFormats';
 import type { Citation, Highlight } from '../../../types';
 
@@ -5,15 +6,6 @@ const CITATION_DRAFT_STORAGE_PREFIX = 'citation-drafts.v1';
 
 export const getCitationDraftStorageKey = (userId: string) =>
   `${CITATION_DRAFT_STORAGE_PREFIX}:${userId}`;
-
-const getStorage = () => {
-  if (typeof window === 'undefined') return null;
-  try {
-    return window.localStorage;
-  } catch {
-    return null;
-  }
-};
 
 const optionalString = (value: unknown) => typeof value === 'string' ? value : undefined;
 const optionalNumber = (value: unknown) => typeof value === 'number' && Number.isFinite(value) ? value : undefined;
@@ -76,46 +68,43 @@ const normalizeDraft = (value: unknown): Citation | null => {
   };
 };
 
-export const readCitationDrafts = (userId: string): Citation[] => {
-  const storage = getStorage();
-  if (!storage) return [];
+const readDraftSnapshot = (userId: string): { ok: boolean; drafts: Citation[] } => {
+  const result = readStorageItem(getCitationDraftStorageKey(userId));
+  if (!result.ok) return { ok: false, drafts: [] };
   try {
-    const raw = storage.getItem(getCitationDraftStorageKey(userId));
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed)
-      ? parsed.flatMap((entry): Citation[] => {
-          const draft = normalizeDraft(entry);
-          return draft ? [draft] : [];
-        })
-      : [];
+    const parsed: unknown = result.value ? JSON.parse(result.value) : [];
+    const drafts = Array.isArray(parsed) ? parsed.flatMap((entry): Citation[] => {
+      const draft = normalizeDraft(entry);
+      return draft ? [draft] : [];
+    }) : [];
+    return { ok: true, drafts };
   } catch {
-    return [];
+    return { ok: true, drafts: [] };
   }
 };
 
+export const readCitationDrafts = (userId: string): Citation[] => readDraftSnapshot(userId).drafts;
+
 export const storeCitationDraft = (userId: string, draft: Citation) => {
-  const storage = getStorage();
-  if (!storage) return false;
-  const current = readCitationDrafts(userId);
+  const snapshot = readDraftSnapshot(userId);
+  if (!snapshot.ok) return false;
+  const current = snapshot.drafts;
   const next = [...current.filter((entry) => entry.id !== draft.id), draft];
   try {
-    storage.setItem(getCitationDraftStorageKey(userId), JSON.stringify(next));
-    return true;
+    return safeSetStorageItem(getCitationDraftStorageKey(userId), JSON.stringify(next));
   } catch {
     return false;
   }
 };
 
 export const removeCitationDrafts = (userId: string, citationIds: Iterable<string>) => {
-  const storage = getStorage();
-  if (!storage) return false;
+  const snapshot = readDraftSnapshot(userId);
+  if (!snapshot.ok) return false;
   const deletedIds = new Set(citationIds);
-  const next = readCitationDrafts(userId).filter((entry) => !deletedIds.has(entry.id));
+  const next = snapshot.drafts.filter((entry) => !deletedIds.has(entry.id));
   try {
-    if (next.length === 0) storage.removeItem(getCitationDraftStorageKey(userId));
-    else storage.setItem(getCitationDraftStorageKey(userId), JSON.stringify(next));
-    return true;
+    return next.length === 0 ? safeRemoveStorageItem(getCitationDraftStorageKey(userId))
+      : safeSetStorageItem(getCitationDraftStorageKey(userId), JSON.stringify(next));
   } catch {
     return false;
   }

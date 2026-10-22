@@ -1,3 +1,4 @@
+import { useAutosizeTextarea } from '../../../shared/ui/useAutosizeTextarea';
 import React, { useEffect, useCallback, useRef, useState, useSyncExternalStore } from 'react';
 import { BookComposerDraftStore } from './bookComposerDrafts';
 import { AddCitationInput } from '../../../types';
@@ -12,7 +13,6 @@ import {
   didCitationEntrySubmitFail,
   isCitationEntrySelfAuthor,
   isCitationEntrySequentialMode,
-  resolveCitationEntryTextareaHeight,
 } from '../policy/citationEntryPolicy';
 
 const createResetValues = (
@@ -75,45 +75,7 @@ export const useCitationEntryController = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const pageInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    const resize = () => {
-      const scrollTop = textarea.scrollTop;
-      const style = getComputedStyle(textarea);
-      const oneLineHeight = Math.ceil((parseFloat(style.lineHeight) || 0)
-        + (parseFloat(style.paddingTop) || 0) + (parseFloat(style.paddingBottom) || 0));
-      textarea.style.height = 'auto';
-      textarea.style.height = `${Math.max(oneLineHeight, resolveCitationEntryTextareaHeight(textarea.scrollHeight, values.text))}px`;
-      textarea.scrollTop = scrollTop;
-    };
-
-    resize();
-
-    let width: number | undefined;
-    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(([entry]) => {
-      const nextWidth = entry?.contentRect.width ?? textarea.getBoundingClientRect().width;
-      if (nextWidth === width) return;
-
-      width = nextWidth;
-      resize();
-    });
-    observer?.observe(textarea);
-    const preferences = new MutationObserver(resize);
-    preferences.observe(document.documentElement, { attributes: true, attributeFilter: ['style', 'data-font'] });
-    const readingScope = textarea.closest('[data-reading-responsive]');
-    if (readingScope && readingScope !== document.documentElement) {
-      preferences.observe(readingScope, { attributes: true, attributeFilter: ['style', 'class'] });
-    }
-    document.fonts?.addEventListener('loadingdone', resize);
-
-    return () => {
-      observer?.disconnect();
-      preferences.disconnect();
-      document.fonts?.removeEventListener('loadingdone', resize);
-    };
-  }, [values.text]);
+  useAutosizeTextarea(textareaRef, values.text, { variant: 'entry' });
 
   useEffect(() => {
     if (isControlled) return;

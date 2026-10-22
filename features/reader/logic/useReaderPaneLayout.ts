@@ -1,3 +1,4 @@
+import { safeGetStorageItem, safeSetStorageItem } from '../../../shared/lib/browserStorage';
 import { RefObject, useCallback, useEffect, useMemo, useState } from 'react';
 
 const LEFT_MIN = 160;
@@ -17,7 +18,7 @@ const clamp = (value: number, min: number, max: number) => Math.min(Math.max(val
 
 const readStoredNumber = (key: string, fallback: number) => {
   if (typeof window === 'undefined') return fallback;
-  const raw = window.localStorage.getItem(key);
+  const raw = safeGetStorageItem(key);
   const parsed = raw ? Number.parseInt(raw, 10) : fallback;
   if (!Number.isFinite(parsed)) return fallback;
   return parsed;
@@ -25,7 +26,7 @@ const readStoredNumber = (key: string, fallback: number) => {
 
 const readStoredBoolean = (key: string, fallback: boolean) => {
   if (typeof window === 'undefined') return fallback;
-  const raw = window.localStorage.getItem(key);
+  const raw = safeGetStorageItem(key);
   if (raw === 'true') return true;
   if (raw === 'false') return false;
   return fallback;
@@ -103,9 +104,9 @@ export const useReaderPaneLayout = (containerRef: RefObject<HTMLElement | null>)
     if (activeResize) return;
     if (typeof window === 'undefined') return;
 
-    window.localStorage.setItem('readerLeftPaneWidth', String(leftWidth));
-    window.localStorage.setItem('readerRightPaneWidth', String(rightWidth));
-    window.localStorage.setItem('readerLeftPaneCollapsed', String(isLeftCollapsed));
+    safeSetStorageItem('readerLeftPaneWidth', String(leftWidth));
+    safeSetStorageItem('readerRightPaneWidth', String(rightWidth));
+    safeSetStorageItem('readerLeftPaneCollapsed', String(isLeftCollapsed));
   }, [activeResize, isLeftCollapsed, leftWidth, rightWidth]);
 
   useEffect(() => {

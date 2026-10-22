@@ -1,3 +1,4 @@
+import { Button } from '../Button';
 import React from 'react';
 import { Search, X } from 'lucide-react';
 
@@ -8,12 +9,7 @@ type EditorialSheetProps = {
   children: React.ReactNode;
 };
 
-export const EditorialSheet: React.FC<EditorialSheetProps> = ({
-  side,
-  isOpen,
-  widthClassName,
-  children,
-}) => {
+export const EditorialSheet: React.FC<EditorialSheetProps> = ({ side, isOpen, widthClassName, children }) => {
   const sideClassName = side === 'left' ? 'left-0 border-r' : 'right-0 border-l';
   const translateClassName = isOpen
     ? 'translate-x-0'
@@ -42,22 +38,19 @@ type EditorialSheetHeaderProps = {
   onClose: () => void;
 };
 
-export const EditorialSheetHeader: React.FC<EditorialSheetHeaderProps> = ({
-  title,
-  onClose,
-}) => (
+export const EditorialSheetHeader: React.FC<EditorialSheetHeaderProps> = ({ title, onClose }) => (
   <div className="h-14 px-4 border-b border-[var(--border-main)] flex items-center justify-between gap-3 bg-[var(--bg-card)]">
-    <h2 className="type-title-bounded font-semibold tracking-[-0.012em] text-[var(--text-main)]">
-      {title}
-    </h2>
-    <button
+    <h2 className="type-title-bounded font-semibold tracking-[-0.012em] text-[var(--text-main)]">{title}</h2>
+    <Button
+      variant="ghost"
+      size="icon"
       type="button"
       onClick={onClose}
-      className="ui-btn ui-btn-icon ui-btn--ghost text-[var(--text-muted)]"
+      className="text-[var(--text-muted)]"
       aria-label={`${title} 닫기`}
     >
       <X size={16} />
-    </button>
+    </Button>
   </div>
 );
 
@@ -76,12 +69,12 @@ export const EditorialToolbarButton: React.FC<EditorialToolbarButtonProps> = ({
   ariaLabel,
   children,
 }) => (
-  <button
+  <Button
+    size="icon"
     id={id}
     type="button"
     onClick={onClick}
     className={[
-      'ui-btn ui-btn-icon',
       active
         ? 'border-transparent bg-[var(--accent-active)] text-[var(--accent-active-text)]'
         : 'text-[var(--text-muted)]',
@@ -89,7 +82,7 @@ export const EditorialToolbarButton: React.FC<EditorialToolbarButtonProps> = ({
     aria-label={ariaLabel}
   >
     {children}
-  </button>
+  </Button>
 );
 
 type EditorialSearchFieldProps = {
@@ -113,14 +106,16 @@ export const EditorialSearchField: React.FC<EditorialSearchFieldProps> = ({
       className="type-body-bounded w-full border-none bg-transparent p-0 text-[var(--text-main)] placeholder:text-[var(--text-muted)] focus:ring-0"
     />
     {value ? (
-      <button
+      <Button
+        variant="ghost"
+        size="icon"
         type="button"
         onClick={() => onChange?.('')}
-        className="ui-btn ui-btn-icon ui-btn--ghost h-7 w-7 min-h-0 text-[var(--text-muted)]"
+        className="h-7 w-7 min-h-0 text-[var(--text-muted)]"
         aria-label="검색어 지우기"
       >
         <X size={14} />
-      </button>
+      </Button>
     ) : null}
   </div>
 );
@@ -160,9 +155,7 @@ type EditorialSectionLabelProps = {
   children: React.ReactNode;
 };
 
-export const EditorialSectionLabel: React.FC<EditorialSectionLabelProps> = ({
-  children,
-}) => (
+export const EditorialSectionLabel: React.FC<EditorialSectionLabelProps> = ({ children }) => (
   <div className="type-section-bounded mb-1.5 px-1 uppercase tracking-[0.09em] text-[var(--text-muted)]">
     {children}
   </div>
@@ -191,10 +184,12 @@ export const EditorialProfileCard: React.FC<EditorialProfileCardProps> = ({
         )}
       </div>
       <div className="min-w-0">
-        <div className="type-label-bounded truncate text-[0.95rem] font-medium text-[var(--text-main)]">
+        <div className="type-label-bounded truncate text-[length:var(--font-profile-name)] font-medium text-[var(--text-main)]">
           {username}
         </div>
-        <div className="type-body-muted leading-tight text-[0.82rem] text-[var(--text-muted)]">{subtitle}</div>
+        <div className="type-body-muted leading-tight text-[length:var(--font-compact-action)] text-[var(--text-muted)]">
+          {subtitle}
+        </div>
       </div>
     </div>
     {children}

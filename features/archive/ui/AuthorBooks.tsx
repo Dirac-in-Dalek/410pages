@@ -126,7 +126,7 @@ export const AuthorBooks: React.FC<AuthorBooksProps> = ({
           <ArrowLeft size={16} /> 저자
         </button>
         <header className="mb-6 border-b border-[var(--border-main)] pb-3">
-          <p className="mb-2 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">저자 / 책</p>
+          <p className="mb-2 text-[length:var(--font-field-label)] font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">저자 / 책</p>
           <h1 className="font-[var(--font-display-active)] text-[clamp(2rem,5vw,3.4rem)] font-semibold leading-[1.08] tracking-[-0.035em] text-[var(--text-main)]">{authorName}</h1>
           <p className="mt-3 text-sm text-[var(--text-muted)]">읽을 책을 고르거나 새 책을 추가하세요.</p>
           {!isMobileApp && onContinuePdf ? (
@@ -186,11 +186,11 @@ export const AuthorBooks: React.FC<AuthorBooksProps> = ({
             ) : (
               <div key={book.id} className="library-card group relative min-w-0" onContextMenu={(event) => { event.preventDefault(); setActiveMenuBookId(book.id); }}>
               <button type="button" onClick={() => onBookSelect(book)} className="min-w-0 w-full text-left transition-transform duration-200 active:scale-95 motion-reduce:transition-none" aria-label={`${book.title} 열기`}>
-                <span className="relative block aspect-[0.69] overflow-hidden rounded-r-xl rounded-l-[0.35rem] bg-[var(--bg-card)] px-5 pb-[4.25rem] pt-6 shadow-[0_12px_26px_rgba(31,29,27,0.12),inset_1px_0_rgba(255,255,255,0.5)] transition-[transform,box-shadow] duration-200 group-hover:-translate-y-1 group-hover:shadow-[0_18px_32px_rgba(31,29,27,0.16)] motion-reduce:transition-none">
+                <span className="relative block aspect-[0.69] overflow-hidden rounded-r-xl rounded-l-[0.35rem] bg-[var(--bg-card)] px-5 pb-[4.25rem] pt-6 shadow-[var(--shadow-book-cover)] transition-[transform,box-shadow] duration-200 group-hover:-translate-y-1 group-hover:shadow-[var(--shadow-book-cover-hover)] motion-reduce:transition-none">
                   <span aria-hidden="true" className="absolute inset-y-0 left-0 w-2 bg-[var(--accent)] opacity-90" />
                   <span aria-hidden="true" className="absolute inset-y-0 left-2 w-px bg-[var(--accent-border)]" />
                   <span className="flex h-full flex-col">
-                    <span className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-[var(--accent)]">410 · {String(index + 1).padStart(2, '0')}</span>
+                    <span className="text-[length:var(--font-cover-caption)] font-semibold uppercase tracking-[0.16em] text-[var(--accent)]">410 · {String(index + 1).padStart(2, '0')}</span>
                     <span className="library-book-name mt-5 line-clamp-4 break-words font-[var(--font-display-active)] font-semibold leading-[1.35] tracking-[-0.02em] text-[var(--text-main)]">{book.title}</span>
                   </span>
                   <BookCover title={book.title} author={authorName} />

@@ -1,3 +1,4 @@
+import { safeGetStorageItem, safeSetStorageItem } from '../../shared/lib/browserStorage';
 import { useEffect, useRef, useState } from 'react';
 
 export const PANEL_MIN = 232;
@@ -8,16 +9,14 @@ const clamp = (width: number, bounds = DEFAULT_BOUNDS) => Math.min(bounds.max, M
 
 const usePanelResize = (key: string, fallback: number, right = false) => {
   const [sourceWidth, setSourceWidth] = useState(() => {
-    try {
-      const saved = Number(localStorage.getItem(key) || fallback);
-      return Number.isFinite(saved) ? clamp(saved) : fallback;
-    } catch { return fallback; }
+    const saved = Number(safeGetStorageItem(key) || fallback);
+    return Number.isFinite(saved) ? clamp(saved) : fallback;
   });
   const dragStart = useRef({ x: 0, width: fallback, scale: 1, bounds: DEFAULT_BOUNDS });
   const [resizing, setResizing] = useState(false);
   useEffect(() => {
     if (resizing) return;
-    try { localStorage.setItem(key, String(sourceWidth)); } catch { /* Resizing still works when browser storage is unavailable. */ }
+    safeSetStorageItem(key, String(sourceWidth));
   }, [key, resizing, sourceWidth]);
   useEffect(() => {
     if (!resizing) return;

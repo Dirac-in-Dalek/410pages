@@ -1,3 +1,4 @@
+import { Button } from '../Button';
 import React from 'react';
 import { Check, X } from 'lucide-react';
 
@@ -9,13 +10,16 @@ export const handleMenuKeyboardNavigation = (event: React.KeyboardEvent<HTMLElem
   if (items.length === 0) return;
   event.preventDefault();
   const currentIndex = items.indexOf(document.activeElement as HTMLElement);
-  const nextIndex = event.key === 'Home'
-    ? 0
-    : event.key === 'End'
-      ? items.length - 1
-      : event.key === 'ArrowUp'
-        ? (currentIndex <= 0 ? items.length - 1 : currentIndex - 1)
-        : (currentIndex + 1) % items.length;
+  const nextIndex =
+    event.key === 'Home'
+      ? 0
+      : event.key === 'End'
+        ? items.length - 1
+        : event.key === 'ArrowUp'
+          ? currentIndex <= 0
+            ? items.length - 1
+            : currentIndex - 1
+          : (currentIndex + 1) % items.length;
   items[nextIndex].focus();
 };
 
@@ -38,7 +42,8 @@ export const EditorialIconActionButton: React.FC<EditorialIconActionButtonProps>
   menuId,
   menuOpen = false,
 }) => (
-  <button
+  <Button
+    size="icon"
     type="button"
     onMouseDown={(event) => event.preventDefault()}
     onClick={onClick}
@@ -48,15 +53,13 @@ export const EditorialIconActionButton: React.FC<EditorialIconActionButtonProps>
     aria-controls={menuId ? `author-actions-menu-${menuId}` : undefined}
     data-author-actions-menu={menuId}
     className={[
-      'ui-btn ui-btn-icon h-[1.625rem] w-[1.625rem] min-h-0 rounded-lg border-transparent',
-      danger
-        ? 'text-red-500 hover:bg-red-100'
-        : 'text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]',
+      ' h-[1.625rem] w-[1.625rem] min-h-0 rounded-lg border-transparent',
+      danger ? 'text-red-500 hover:bg-red-100' : 'text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]',
       className,
     ].join(' ')}
   >
     {children}
-  </button>
+  </Button>
 );
 
 type EditorialInlineRenameFieldProps = {
@@ -107,12 +110,7 @@ export const EditorialInlineRenameField: React.FC<EditorialInlineRenameFieldProp
       }}
       className="type-body-bounded min-w-0 flex-1 rounded-[0.85rem] border border-[var(--accent-border)] bg-[var(--bg-card)] px-2.5 py-[0.3125rem] text-[var(--text-main)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-ring)]"
     />
-    <div
-      className={[
-        'flex gap-1',
-        actionsPlacement === 'below' ? 'justify-end' : 'items-center',
-      ].join(' ')}
-    >
+    <div className={['flex gap-1', actionsPlacement === 'below' ? 'justify-end' : 'items-center'].join(' ')}>
       <EditorialIconActionButton ariaLabel={confirmAriaLabel} onClick={() => onSubmit()}>
         <Check size={14} />
       </EditorialIconActionButton>
@@ -139,17 +137,11 @@ export const EditorialDangerConfirm: React.FC<EditorialDangerConfirmProps> = ({
   onCancel,
 }) => (
   <div className="mb-1 rounded-xl border border-red-200 bg-red-50 p-3 shadow-inner">
-    <div className="type-body-muted mb-3 text-center font-semibold leading-tight text-red-800">
-      {message}
-    </div>
+    <div className="type-body-muted mb-3 text-center font-semibold leading-tight text-red-800">{message}</div>
     <div className="flex justify-center gap-2">
-      <button
-        type="button"
-        onClick={onCancel}
-        className="ui-btn ui-btn--ghost"
-      >
+      <Button variant="ghost" type="button" onClick={onCancel}>
         {cancelLabel}
-      </button>
+      </Button>
       <button
         type="button"
         onClick={onConfirm}

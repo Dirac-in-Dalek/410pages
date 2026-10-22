@@ -1,3 +1,4 @@
+import { safeGetStorageItem, safeSetStorageItem, safeRemoveStorageItem } from '../../../shared/lib/browserStorage';
 import { useEffect, useState } from 'react';
 import { getSupabaseClient } from '../../../lib/supabase';
 
@@ -31,13 +32,13 @@ function validMetadata(value: unknown): value is BookMetadata {
 
 function readCached(key: string): BookMetadata | null {
   try {
-    const value: unknown = JSON.parse(localStorage.getItem(key) || 'null');
+    const value: unknown = JSON.parse(safeGetStorageItem(key) || 'null');
     return validMetadata(value) ? value : null;
   } catch { return null; }
 }
 
 export function forgetBookMetadata(title: string, author: string) {
-  try { localStorage.removeItem(keyFor(title, author)); } catch { /* Display still falls back when storage is unavailable. */ }
+  safeRemoveStorageItem(keyFor(title, author));
 }
 
 export async function loadBookMetadata(title: string, author: string): Promise<BookMetadata | null> {
@@ -57,7 +58,7 @@ export async function loadBookMetadata(title: string, author: string): Promise<B
       if (!response.ok) return null;
       const { metadata } = await response.json();
       if (!validMetadata(metadata)) return null;
-      try { localStorage.setItem(key, JSON.stringify(metadata)); } catch { /* A cache failure must not hide a valid cover. */ }
+      safeSetStorageItem(key, JSON.stringify(metadata));
       return metadata;
     } catch { return null; }
   });

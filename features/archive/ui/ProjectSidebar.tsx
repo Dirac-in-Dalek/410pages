@@ -416,22 +416,22 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
             >
               <Book size={14} className="shrink-0" />
               <span className="min-w-0">
-                <span className="project-sidebar-recent-title block truncate text-[0.86rem] font-medium">{book.title}</span>
-                <span className="project-sidebar-recent-meta block truncate text-[0.72rem] text-[var(--text-muted)]">{book.author}</span>
+                <span className="project-sidebar-recent-title block truncate text-[length:var(--font-sidebar-title)] font-medium">{book.title}</span>
+                <span className="project-sidebar-recent-meta block truncate text-[length:var(--font-field-label)] text-[var(--text-muted)]">{book.author}</span>
               </span>
             </button>
           )) : (
-            <p className="px-2 py-2 text-[0.78rem] text-[var(--text-muted)]">저장된 문장이 없습니다.</p>
+            <p className="px-2 py-2 text-[length:var(--font-compact-label)] text-[var(--text-muted)]">저장된 문장이 없습니다.</p>
           )}
         </div>
 
-        <p className="project-sidebar-section px-1 pt-3 text-[0.68rem] text-[var(--text-muted)]">서재 정리</p>
+        <p className="project-sidebar-section px-1 pt-3 text-[length:var(--font-sidebar-caption)] text-[var(--text-muted)]">서재 정리</p>
         <div className="flex items-center gap-1" aria-busy={authorFolderLoading}>
-          <button type="button" onClick={() => setIsAllBooksOpen((value) => !value)} aria-expanded={isAllBooksOpen} className="flex min-h-10 min-w-0 flex-1 items-center gap-2 rounded-lg px-1 text-left text-[0.78rem] font-semibold uppercase tracking-[0.09em] text-[var(--text-muted)] transition-[color,transform] active:scale-95">
+          <button type="button" onClick={() => setIsAllBooksOpen((value) => !value)} aria-expanded={isAllBooksOpen} className="flex min-h-10 min-w-0 flex-1 items-center gap-2 rounded-lg px-1 text-left text-[length:var(--font-compact-label)] font-semibold uppercase tracking-[0.09em] text-[var(--text-muted)] transition-[color,transform] active:scale-95">
             {isAllBooksOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
             저자와 책
           </button>
-          {libraryOrderSaving ? <span role="status" className="shrink-0 text-[0.7rem] text-[var(--text-muted)]">순서 저장 중…</span> : null}
+          {libraryOrderSaving ? <span role="status" className="shrink-0 text-[length:var(--font-annotation)] text-[var(--text-muted)]">순서 저장 중…</span> : null}
           <button type="button" onClick={() => { setIsCreatingAuthorFolder(true); setIsAllBooksOpen(true); }} className="flex min-h-10 shrink-0 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-[var(--text-muted)] transition-[background-color,transform] hover:bg-[var(--sidebar-hover)] active:scale-95" aria-label="저자 폴더 만들기"><Plus size={15} />폴더 추가</button>
         </div>
         {authorFolderLoadError ? (
@@ -469,7 +469,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
           />
         ) : null}
 
-        <p className="project-sidebar-section px-1 pt-4 pb-1 text-[0.68rem] text-[var(--text-muted)]">인용문 모아보기</p>
+        <p className="project-sidebar-section px-1 pt-4 pb-1 text-[length:var(--font-sidebar-caption)] text-[var(--text-muted)]">인용문 모아보기</p>
         <ProjectSidebarProjectsSection
           projects={projects}
           selectedProjectId={selectedProjectId}

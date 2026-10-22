@@ -1,3 +1,4 @@
+import { Button } from '../shared/ui/Button';
 import { CitationEditDraftStore } from '../features/archive/logic/citationEditDrafts';
 import React from 'react';
 import { MainLayout } from '../components/MainLayout';
@@ -246,7 +247,7 @@ const AuthenticatedAppShell: React.FC<{ authStatus: Omit<AuthStatus, 'session'> 
         <div
           key={error.id}
           role="alert"
-          className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 shadow-[var(--shadow-popover)] dark:border-red-500/30 dark:bg-[#2b2020] dark:text-red-100"
+          className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 shadow-[var(--shadow-popover)] dark:border-red-500/30 dark:bg-[var(--bg-alert-dark)] dark:text-red-100"
         >
           <p className="min-w-0 flex-1 leading-5">{error.message}</p>
           <button
@@ -676,8 +677,8 @@ const AuthenticatedAppShell: React.FC<{ authStatus: Omit<AuthStatus, 'session'> 
       {(readerLoading || readerLoadError) && (
         <div role={readerLoadError ? 'alert' : 'status'} className="fixed right-4 top-16 z-[90] flex w-[min(24rem,calc(100vw-2rem))] flex-wrap items-center gap-3 rounded-xl border border-[var(--border-main)] bg-[var(--bg-card)] p-4 text-sm shadow-[var(--shadow-popover)]">
           <span>{readerLoadError ? 'PDF 화면을 불러오지 못했습니다.' : 'PDF 화면을 불러오는 중…'}</span>
-          {readerLoadError && <button type="button" onClick={() => void openReader()} className="ui-btn">PDF 다시 불러오기</button>}
-          <button type="button" onClick={cancelReaderLoad} className="ui-btn">{readerLoading ? '취소' : '닫기'}</button>
+          {readerLoadError && <Button type="button" onClick={() => void openReader()} className="">PDF 다시 불러오기</Button>}
+          <Button type="button" onClick={cancelReaderLoad} className="">{readerLoading ? '취소' : '닫기'}</Button>
         </div>
       )}
       {settingsPanel}

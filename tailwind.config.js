@@ -1,3 +1,6 @@
+import { TAILWIND_SCREENS } from './shared/policy/responsive.js';
+import { READING_FONT, CITATION_WIDTH } from './shared/policy/readingDefaults.js';
+import plugin from 'tailwindcss/plugin';
 import colors from './tailwind-compat-colors.js';
 
 /** @type {import('tailwindcss').Config} */
@@ -14,6 +17,7 @@ export default {
     './shared/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
+    screens: TAILWIND_SCREENS,
     // Preserve existing sizing and colors when compiling with Tailwind 4.
     colors,
     borderRadius: {"none": "0px", "sm": "0.125rem", "DEFAULT": "0.25rem", "md": "0.375rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "3xl": "1.5rem", "full": "9999px"},
@@ -32,5 +36,10 @@ export default {
       }
     },
   },
-  plugins: [],
+  plugins: [plugin(({ addBase }) => addBase({
+    ':root': {
+      '--font-base-pt': `${READING_FONT.defaultPt}pt`,
+      '--citation-column-width': `${CITATION_WIDTH.defaultRem}rem`,
+    },
+  }))],
 }

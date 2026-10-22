@@ -28,14 +28,39 @@
   outline-offset: 2px;
 }
 
+:where(:root, .reading-responsive, .font-size-static) {
+    /* Role typography scales with the active UI font policy. */
+    --font-brand: calc(var(--type-body-bounded-size) * 1.25);
+    --font-navigation-name: calc(var(--type-body-bounded-size) * 0.88);
+    --font-panel-subtitle: calc(var(--type-body-bounded-size) * 0.74);
+    --font-archive-title: calc(var(--type-body-bounded-size) * 1.8);
+    --font-section-description: calc(var(--type-body-bounded-size) * 0.9);
+    --font-field-label: calc(var(--type-body-bounded-size) * 0.72);
+    --font-cover-caption: calc(var(--type-body-bounded-size) * 0.65);
+    --font-compact-action: calc(var(--type-body-bounded-size) * 0.82);
+    --font-citation-metadata: calc(var(--type-body-bounded-size) * 0.84);
+    --font-compact-label: calc(var(--type-body-bounded-size) * 0.78);
+    --font-drag-preview: calc(var(--type-body-bounded-size) * 0.76);
+    --font-insertion-hint: calc(var(--type-body-bounded-size) * 0.8);
+    --font-sidebar-content: calc(var(--type-body-bounded-size) * 0.84375);
+    --font-annotation: calc(var(--type-body-bounded-size) * 0.7);
+    --font-sidebar-title: calc(var(--type-body-bounded-size) * 0.86);
+    --font-sidebar-caption: calc(var(--type-body-bounded-size) * 0.68);
+    --font-folder-input: calc(var(--type-body-bounded-size) * 0.93);
+    --font-pdf-label: calc(var(--type-body-bounded-size) * 0.6875);
+    --font-pdf-caption: calc(var(--type-body-bounded-size) * 0.625);
+    --font-composer-input: calc(var(--type-body-bounded-size) * 0.92);
+    --font-composer-action: calc(var(--type-body-bounded-size) * 0.94);
+    --font-tree-row: calc(var(--type-body-bounded-size) * 0.875);
+    --font-profile-name: calc(var(--type-body-bounded-size) * 0.95);
+}
+
 @layer base {
   :root {
     --font-ui: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
     --font-display: 'Noto Serif KR', 'Iowan Old Style', 'Times New Roman', serif;
     --font-ui-active: var(--font-ui);
     --font-display-active: var(--font-display);
-    --font-base-pt: 12pt;
-    --citation-column-width: 44rem;
     --type-muted-size: calc(var(--font-base-pt) * 0.75);
     --type-label-size: calc(var(--font-base-pt) * 0.875);
     --type-body-size: calc(var(--font-base-pt) * 1);
@@ -87,6 +112,16 @@
     --shadow-panel: 0 1px 0 rgba(15, 23, 42, 0.04), 0 20px 48px rgba(15, 23, 42, 0.12);
     --shadow-popover: 0 1px 0 rgba(15, 23, 42, 0.04), 0 14px 32px rgba(15, 23, 42, 0.10);
     --shadow-toolbar: 0 8px 22px rgba(31, 29, 27, 0.06);
+    --shadow-folder-active: 0 1px 2px rgba(28, 22, 16, 0.06);
+    --shadow-tree-active: 0 1px 2px rgba(31, 29, 27, 0.05);
+    --shadow-book-cover: 0 12px 26px rgba(31, 29, 27, 0.12), inset 1px 0 rgba(255, 255, 255, 0.5);
+    --shadow-book-cover-hover: 0 18px 32px rgba(31, 29, 27, 0.16);
+    --shadow-author-cover: 0 10px 24px rgba(31, 29, 27, 0.1);
+    --shadow-author-cover-hover: 0 16px 30px rgba(31, 29, 27, 0.15);
+    --bg-alert-dark: #2b2020;
+    --crop-overlay-color: rgba(0, 0, 0, 0.48);
+    --shadow-primary-action: 0 10px 24px color-mix(in srgb, var(--accent) 22%, transparent);
+    --shadow-accent-frame: 0 8px 18px color-mix(in srgb, var(--accent) 8%, transparent);
     --theme-canvas-texture: none;
     --theme-surface-texture: none;
     --theme-texture-size: auto;
@@ -857,14 +892,14 @@
     padding: 0;
   }
 
-  @media (max-width: 1023px), (pointer: coarse) {
+  @media (width < theme(screens.lg)), (pointer: coarse) {
     .ui-btn-icon {
       min-height: 2.75rem;
       width: 2.75rem;
     }
   }
 
-  @media (max-width: 640px) {
+  @media (width <= theme(screens.sm)) {
     .citation-copy { text-align: left; }
   }
 
@@ -1116,7 +1151,7 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
 .chapter-insert-trigger:hover .chapter-insert-label, .chapter-insert-trigger:focus-visible .chapter-insert-label { opacity: 1; }
 .chapter-drop-indicator { margin-inline-start: min(calc(var(--chapter-depth, 0) * var(--chapter-indent-step)), var(--chapter-indent-limit)); }
 .chapter-drop-anchor { position: absolute; left: 0; top: -1.375rem; width: 2.75rem; height: 2.75rem; pointer-events: none; }
-@media (max-width: 639px), (pointer: coarse) {
+@media (width < theme(screens.sm)), (pointer: coarse) {
   .chapter-list, .book-writing-surface { --chapter-indent-step: 1.5rem; --chapter-indent-limit: 4.5rem; }
   .book-row-content { padding-block: 1.375rem; }
   .chapter-leading-divider { margin-top: 0.875rem; }
@@ -1161,7 +1196,7 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
 .chapter-row { z-index: 2; }
 .book-title { font-family: var(--font-display-active); }
 
-@media (max-width: 639px) {
+@media (width < theme(screens.sm)) {
   .book-title { font-size: calc(var(--type-body-size) * 1.8); }
   .chapter-title-root { font-size: calc(var(--type-body-size) * 1.4); }
   .chapter-title-child { font-size: calc(var(--type-body-size) * 1.2); }
@@ -1172,7 +1207,7 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
 .chapter-row[data-chapter-depth="0"] { --chapter-font-size: calc(var(--type-body-size) * 1.6); }
 .chapter-row[data-chapter-depth="1"] { --chapter-font-size: calc(var(--type-body-size) * 1.3); }
 .chapter-row[data-chapter-editing="false"] > .chapter-control { margin-top: calc((var(--chapter-first-line-height) - 2.25rem) / 2); }
-@media (max-width: 639px) {
+@media (width < theme(screens.sm)) {
   .chapter-row[data-chapter-depth="0"] { --chapter-font-size: calc(var(--type-body-size) * 1.4); }
   .chapter-row[data-chapter-depth="1"] { --chapter-font-size: calc(var(--type-body-size) * 1.2); }
 }
@@ -1384,7 +1419,7 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
 }
 
 /* Large-screen reading metrics. The wrapper owns every value; consumers only apply it. */
-@media (min-width: 1024px) {
+@variant lg {
   .reading-responsive {
     --type-body-size: var(--reading-body-font-size, 1rem);
     --type-body-bounded-size: var(--reading-ui-font-size, 1rem);
@@ -1673,12 +1708,12 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
   align-items: center;
 }
 
-@media (max-width: 1023px), (pointer: coarse) {
+@media (width < theme(screens.lg)), (pointer: coarse) {
   .text-format-toolbar button { width: 44px; min-height: 44px; flex-shrink: 0; }
   .passage-note-control { width: 44px; height: 44px; }
   .passage-note-inline-composer { grid-template-columns: minmax(0, 1fr) 44px; }
 }
-@media (max-width: 399px) {
+@media (width < theme(screens.xs)) {
   .text-format-toolbar { display: grid; grid-template-columns: repeat(4, 44px); }
   .text-format-toolbar .text-format-divider { display: none; }
 }
