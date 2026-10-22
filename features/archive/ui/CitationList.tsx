@@ -490,7 +490,7 @@ export const CitationList: React.FC<CitationListProps> = ({
                     aria-label={allVisibleCitationsExpanded ? '문장 모두 접기' : '문장 모두 펼치기'}
                     aria-pressed={allVisibleCitationsExpanded}
                     onClick={handleToggleAllCitationText}
-                    className="type-label-bounded inline-flex min-h-11 items-center gap-1 rounded-md px-1.5 py-1 text-[0.82rem] font-medium text-[var(--text-muted)] transition-[background-color,color,transform] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)] active:scale-95 motion-reduce:transition-none sm:min-h-8"
+                    className="type-label-bounded inline-flex min-h-11 items-center gap-1 rounded-md px-1.5 py-1 text-[length:var(--font-compact-action)] font-medium text-[var(--text-muted)] transition-[background-color,color,transform] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)] active:scale-95 motion-reduce:transition-none sm:min-h-8"
                 >
                     {allVisibleCitationsExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                     {allVisibleCitationsExpanded ? '문장 모두 접기' : '문장 모두 펼치기'}
@@ -616,7 +616,7 @@ export const CitationList: React.FC<CitationListProps> = ({
                                                     }, 0);
                                                 }}
                                             />
-                                            <span data-citation-metadata className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.76rem] text-[var(--text-muted)]">
+                                            <span data-citation-metadata className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[length:var(--font-drag-preview)] text-[var(--text-muted)]">
                                                 {item.citation.page ? <span>{item.citation.page}쪽</span> : null}
                                                 {(draftStore.get(item.id)?.isEditing || draftStore.get(item.id)?.newNote || draftStore.get(item.id)?.editingNoteId) && <span>편집 초안 있음</span>}
                                                 <button
@@ -636,7 +636,7 @@ export const CitationList: React.FC<CitationListProps> = ({
                                             </span>
                                         </div>
                                         {item.citation.saveStatus === 'failed' ? (
-                                            <div role="alert" className="mb-3 flex min-h-11 flex-wrap items-center gap-2 rounded-lg bg-red-50 px-2.5 py-1.5 text-[0.8rem] text-red-900 dark:bg-red-500/10 dark:text-red-100">
+                                            <div role="alert" className="mb-3 flex min-h-11 flex-wrap items-center gap-2 rounded-lg bg-red-50 px-2.5 py-1.5 text-[length:var(--font-insertion-hint)] text-red-900 dark:bg-red-500/10 dark:text-red-100">
                                                 <span className="mr-auto inline-flex items-center gap-1.5 font-medium">
                                                     <AlertCircle size={14} /> 저장 실패
                                                 </span>

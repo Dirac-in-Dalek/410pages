@@ -800,7 +800,7 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
             </div>
           </div>
 
-          <div className="px-5 py-2 border-b border-[var(--border-main)] flex items-center gap-2 text-[11px]">
+          <div className="px-5 py-2 border-b border-[var(--border-main)] flex items-center gap-2 text-[length:var(--font-pdf-label)]">
             {pdfUrl && <span className="text-[var(--text-muted)]">Read in continuous scroll and drag text to save.</span>}
             {!isMetaConfirmed && pdfUrl && <span className="text-amber-600">You can capture after entering metadata.</span>}
           </div>
@@ -843,13 +843,13 @@ export const PdfReaderPage: React.FC<PdfReaderPageProps> = ({
         >
           <div className="h-full min-h-0 overflow-y-auto">
             <div className="px-4 py-3 border-b border-[var(--border-main)]">
-              <div className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">Citation Capture</div>
+              <div className="text-[length:var(--font-pdf-caption)] uppercase tracking-wide text-[var(--text-muted)]">Citation Capture</div>
               <h3 className="mt-1 text-base font-semibold truncate">{meta.title || extractTitleFromFileName(pdfName || '') || 'Untitled source'}</h3>
               <p className="text-xs text-[var(--text-muted)] mt-1 truncate">
                 {meta.author ? `${meta.author}` : 'Adding an author improves document filtering.'}
               </p>
               {metaNotice && (
-                <div className="mt-2 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-[11px] text-emerald-700">
+                <div className="mt-2 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-[length:var(--font-pdf-label)] text-emerald-700">
                   {metaNotice}
                 </div>
               )}

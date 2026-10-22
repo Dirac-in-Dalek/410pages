@@ -1,3 +1,4 @@
+import { safeGetStorageItem, safeSetStorageItem, safeRemoveStorageItem } from '../../../shared/lib/browserStorage';
 import { normalizeThemePreference } from '../../../lib/themeRegistry';
 import type { UserPreferences } from '../contract/userPreferences';
 import {
@@ -7,30 +8,6 @@ import {
   PREFERENCES_STORAGE_KEY,
 } from '../policy/userPreferences';
 import { normalizePreferences } from './preferencesNormalization';
-
-export const safeGetStorageItem = (key: string) => {
-  try {
-    return window.localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-};
-
-export const safeSetStorageItem = (key: string, value: string) => {
-  try {
-    window.localStorage.setItem(key, value);
-  } catch {
-    return;
-  }
-};
-
-export const safeRemoveStorageItem = (key: string) => {
-  try {
-    window.localStorage.removeItem(key);
-  } catch {
-    return;
-  }
-};
 
 export const readStoredPreferences = (): UserPreferences => {
   const storedPreferences = safeGetStorageItem(PREFERENCES_STORAGE_KEY);

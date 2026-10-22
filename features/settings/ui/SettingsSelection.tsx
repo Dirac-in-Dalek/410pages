@@ -1,3 +1,4 @@
+import { Button } from '../../../shared/ui/Button';
 import React, { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
 
@@ -90,13 +91,13 @@ export function SettingsSelection<Value extends string>({
         setFocusedValue(options[nextIndex].id);
       }}
     >
-      <button
+      <Button variant="ghost"
         ref={triggerRef}
         type="button"
         aria-label={`현재 ${label}: ${selectedOption.label}`}
         aria-expanded={isOpen}
         aria-controls={isOpen ? listId : undefined}
-        className="settings-selection-trigger settings-value-row ui-btn ui-btn-row ui-btn--ghost min-h-14 gap-3 rounded-lg px-3 py-3 text-left"
+        className="settings-selection-trigger settings-value-row ui-btn-row min-h-14 gap-3 rounded-lg px-3 py-3 text-left"
         onClick={() => isOpen ? close() : open()}
       >
         <span className="ui-label shrink-0">{label}</span>
@@ -104,7 +105,7 @@ export function SettingsSelection<Value extends string>({
           {renderOption(selectedOption)}
         </span>
         <ChevronDown size={16} aria-hidden="true" className={`shrink-0 text-[var(--text-muted)] transition-transform motion-reduce:transition-none ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
+      </Button>
       {isOpen ? (
         <div
           ref={listRef}
@@ -119,7 +120,7 @@ export function SettingsSelection<Value extends string>({
             <div key={group.label} className="py-1 first:pt-0 last:pb-0">
               <p className="px-3 pb-1 pt-2 text-xs font-semibold text-[var(--text-muted)]">{group.label}</p>
               {group.options.map(option => (
-                <button
+                <Button
                   key={option.id}
                   ref={element => {
                     if (element) optionRefs.current.set(option.id, element);
@@ -129,13 +130,13 @@ export function SettingsSelection<Value extends string>({
                   aria-label={option.label}
                   aria-pressed={option.id === value}
                   tabIndex={option.id === focusedValue ? 0 : -1}
-                  className="settings-selection-option ui-btn ui-choice min-h-11 gap-3 rounded-lg px-3 py-2 text-left"
+                  className="settings-selection-option ui-choice min-h-11 gap-3 rounded-lg px-3 py-2 text-left"
                   onFocus={() => setFocusedValue(option.id)}
                   onClick={() => { onChange(option.id); close(); }}
                 >
                   <span className="flex min-w-0 items-center gap-2">{renderOption(option)}</span>
                   <Check size={16} aria-hidden="true" className={`shrink-0 ${option.id === value ? 'text-[var(--text-main)]' : 'invisible'}`} />
-                </button>
+                </Button>
               ))}
             </div>
           ))}

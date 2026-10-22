@@ -81,8 +81,8 @@ export const ArchiveHeader: React.FC<ArchiveHeaderProps> = ({
                 ) : null}
                 <div className="mb-2 flex items-start justify-between gap-3" style={isBookView ? { paddingInlineStart: '3rem' } : undefined}>
                     <div className="min-w-0">
-                        <h2 data-search-results-title tabIndex={-1} className={`${isBookView ? 'book-title' : 'text-[1.8rem] font-semibold'} whitespace-normal break-words tracking-[-0.03em] text-[var(--text-main)]`}>{title}</h2>
-                        {!isBookView && <p className="mt-1 text-[0.9rem] text-[var(--text-secondary)]">수집한 인용문을 정리하고 다시 읽어보세요.</p>}
+                        <h2 data-search-results-title tabIndex={-1} className={`${isBookView ? 'book-title' : 'text-[length:var(--font-archive-title)] font-semibold'} whitespace-normal break-words tracking-[-0.03em] text-[var(--text-main)]`}>{title}</h2>
+                        {!isBookView && <p className="mt-1 text-[length:var(--font-section-description)] text-[var(--text-secondary)]">수집한 인용문을 정리하고 다시 읽어보세요.</p>}
                     </div>
                     {!isBookView ? <div
                         ref={filterRef}

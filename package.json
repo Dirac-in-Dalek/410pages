@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "lint": "eslint . --max-warnings=0",
+    "lint": "eslint . --max-warnings=0 && node tooling/lintStyles.mjs",
     "db:types": "node --use-env-proxy scripts/generate-database-types.mjs"
   },
   "dependencies": {

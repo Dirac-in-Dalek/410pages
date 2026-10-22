@@ -1,3 +1,4 @@
+import { useAutosizeTextarea } from '../../../shared/ui/useAutosizeTextarea';
 import { FormattedText } from '../../../shared/ui/FormattedText';
 import type { TextFormatRange } from '../../../types';
 import React from 'react';
@@ -73,39 +74,7 @@ export const PassageNotesPanel: React.FC<PassageNotesPanelProps> = ({
     };
   }, [mobile, inline, readOnly, onClose, rootRef]);
 
-  React.useLayoutEffect(() => {
-    const input = draftRef.current;
-    if (!inline || readOnly || !input) return;
-    const resize = () => {
-      const scrollTop = input.scrollTop;
-      input.style.height = 'auto';
-      const height = `${input.scrollHeight}px`;
-      if (input.style.height !== height) input.style.height = height;
-      input.scrollTop = scrollTop;
-    };
-
-    resize();
-    let width: number | undefined;
-    const sizeObserver = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(([entry]) => {
-      const nextWidth = entry?.contentRect.width ?? input.getBoundingClientRect().width;
-      if (nextWidth === width) return;
-      width = nextWidth;
-      resize();
-    });
-    sizeObserver?.observe(input);
-    const styleObserver = new MutationObserver(resize);
-    styleObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['style', 'data-font'] });
-    const readingScope = input.closest('[data-reading-responsive]');
-    if (readingScope && readingScope !== document.documentElement) {
-      styleObserver.observe(readingScope, { attributes: true, attributeFilter: ['style', 'class'] });
-    }
-    document.fonts?.addEventListener('loadingdone', resize);
-    return () => {
-      sizeObserver?.disconnect();
-      styleObserver.disconnect();
-      document.fonts?.removeEventListener('loadingdone', resize);
-    };
-  }, [draft, inline, readOnly]);
+  useAutosizeTextarea(draftRef, draft, { enabled: inline && !readOnly, variant: 'inlineComment' });
 
   const saveNewNote = async () => {
     const content = draft.trim();
@@ -147,7 +116,7 @@ export const PassageNotesPanel: React.FC<PassageNotesPanelProps> = ({
     >
       {!inline && <header className={inline ? 'absolute -top-6 inset-x-0 flex h-6 items-start gap-3' : 'flex min-h-14 items-center gap-3 border-b border-[var(--border-main)] px-4'}>
         <div className="min-w-0 flex-1">
-          {!inline && <p className="text-[0.7rem] font-medium text-[var(--accent)]">구절 메모</p>}
+          {!inline && <p className="text-[length:var(--font-annotation)] font-medium text-[var(--accent)]">구절 메모</p>}
           <h2 id={titleId} className={inline ? 'text-xs leading-6 text-[var(--text-muted)]' : 'text-sm font-semibold'}>{inline ? `인용문 메모${citation.page ? ` · ${citation.page}쪽` : ''}` : citation.notes.length ? `${citation.notes.length}개의 메모` : '메모 없음'}</h2>
         </div>
         <button type="button" onClick={onClose} className={`passage-note-control ${inline ? 'h-6 w-6' : 'h-11 w-11'} flex items-center justify-center rounded-lg text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]`} aria-label="구절 메모 닫기">
@@ -158,9 +127,9 @@ export const PassageNotesPanel: React.FC<PassageNotesPanelProps> = ({
         className="absolute -top-5 right-0 flex h-6 w-6 items-center justify-center rounded-md text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]"><X size={16} /></button>}
 
       <div className={inline ? 'passage-notes-content px-1.5' : 'min-h-0 flex-1 overflow-y-auto'}>
-        {!inline && <blockquote className="border-b border-[var(--border-main)] px-4 py-5 font-[var(--font-display-active)] text-[0.9rem] leading-6 text-[var(--text-secondary)]">
+        {!inline && <blockquote className="border-b border-[var(--border-main)] px-4 py-5 font-[var(--font-display-active)] text-[length:var(--font-section-description)] leading-6 text-[var(--text-secondary)]">
           “{citation.text}”
-          <footer className="mt-2 text-[0.72rem] not-italic text-[var(--text-muted)]">{citation.page ? `${citation.page}쪽 · ` : ''}{new Date(citation.createdAt).toLocaleDateString('ko-KR')}</footer>
+          <footer className="mt-2 text-[length:var(--font-field-label)] not-italic text-[var(--text-muted)]">{citation.page ? `${citation.page}쪽 · ` : ''}{new Date(citation.createdAt).toLocaleDateString('ko-KR')}</footer>
         </blockquote>}
 
         <div className={inline ? 'space-y-3' : 'divide-y divide-[var(--border-main)]'}>
@@ -189,7 +158,7 @@ export const PassageNotesPanel: React.FC<PassageNotesPanelProps> = ({
                 <>
                   <p className={`whitespace-pre-wrap break-words text-sm leading-6 ${inline ? 'text-left' : ''}`}><FormattedText text={note.content} formats={note.textFormats} onSelect={onActivate}
                     onSave={readOnly && !onActivate ? undefined : formats => onUpdateNote(citation.id, note.id, note.content, formats, note.content)} /></p>
-                  <div className={`${inline ? 'mt-0.5 justify-end' : 'mt-2 justify-between'} flex items-center text-[0.7rem] text-[var(--text-muted)]`}>
+                  <div className={`${inline ? 'mt-0.5 justify-end' : 'mt-2 justify-between'} flex items-center text-[length:var(--font-annotation)] text-[var(--text-muted)]`}>
                     {!inline && <time>{new Date(note.createdAt).toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</time>}
                     <div className="flex opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
                       <button type="button" data-passage-note-trigger onClick={() => { onActivate?.(); setEditingId(note.id); setEditDraft(note.content); }} className={`passage-note-control ${inline ? 'h-8 w-8' : 'h-11 w-11'} flex items-center justify-center rounded-lg hover:bg-[var(--sidebar-hover)]`} aria-label="메모 수정"><Pencil size={14} /></button>
@@ -221,7 +190,7 @@ export const PassageNotesPanel: React.FC<PassageNotesPanelProps> = ({
           className={inline ? 'min-h-6 w-full resize-none border-0 bg-transparent p-0 text-sm leading-6 placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-0' : 'min-h-24 w-full resize-none rounded-lg border border-[var(--border-main)] bg-[var(--bg-input)] p-3 text-sm leading-6 placeholder:text-[var(--text-muted)] focus:border-[var(--accent-border)] focus:ring-0'}
         />
         <div className={`flex items-center gap-2 ${inline ? 'justify-end' : 'mt-2 justify-between'}`}>
-          <span className={inline ? 'sr-only' : 'min-w-0 text-[0.7rem] leading-4 text-[var(--text-muted)]'}>Enter 저장 · Shift+Enter 줄바꿈</span>
+          <span className={inline ? 'sr-only' : 'min-w-0 text-[length:var(--font-annotation)] leading-4 text-[var(--text-muted)]'}>Enter 저장 · Shift+Enter 줄바꿈</span>
           <button type="button" disabled={!draft.trim() || saving} onClick={() => void saveNewNote()} className={`passage-note-control ${inline ? 'h-8 w-8' : 'h-11 w-11'} inline-flex shrink-0 items-center justify-center rounded-lg transition-transform active:scale-95 disabled:opacity-40 motion-reduce:transition-none ${inline ? 'text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)]' : 'bg-[var(--accent)] accent-button'}`} aria-label="메모 저장" title="저장 (Enter)">{inline ? <Send size={18} /> : <SendHorizontal size={16} />}</button>
         </div>
       </div>}

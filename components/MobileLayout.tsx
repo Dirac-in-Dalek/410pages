@@ -1,3 +1,4 @@
+import { Button } from '../shared/ui/Button';
 import React, { useEffect, useRef, useState } from 'react';
 import { getArchiveSearchLabel } from '../features/archive/logic/archiveSort';
 import {
@@ -221,8 +222,8 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
                     >
                       <Book size={14} className="shrink-0" />
                       <span className="min-w-0">
-                        <span className="block truncate text-[0.88rem] font-medium">{book.title}</span>
-                        <span className="block truncate text-[0.74rem] text-[var(--text-muted)]">{book.author}</span>
+                        <span className="block truncate text-[length:var(--font-navigation-name)] font-medium">{book.title}</span>
+                        <span className="block truncate text-[length:var(--font-panel-subtitle)] text-[var(--text-muted)]">{book.author}</span>
                       </span>
                     </button>
                   )) : <p className="px-2 py-2 text-sm text-[var(--text-muted)]">저장된 문장이 없습니다.</p>}
@@ -323,7 +324,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
                   }}
                 >
                   <EditorialSearchField value={searchTerm} onChange={onSearch} placeholder={getArchiveSearchLabel(selectedFilter, selectedProjectId)} />
-                  <button type="submit" disabled={!searchTerm.trim()} className="ui-btn mt-2 w-full disabled:opacity-40">검색 결과 보기</button>
+                  <Button type="submit" disabled={!searchTerm.trim()} className="mt-2 w-full disabled:opacity-40">검색 결과 보기</Button>
                 </form>
                 <EditorialProfileCard username={username} avatarUrl={avatarUrl} subtitle="나의 독서 아카이브">
                   <div className="grid grid-cols-2 gap-2">

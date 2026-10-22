@@ -62,4 +62,13 @@ describe('citation draft storage', () => {
 
     expect(storeCitationDraft('user-a', draft)).toBe(false);
   });
+
+  it('does not replace existing drafts when reading storage fails', () => {
+    storeCitationDraft('user-a', draft);
+    const before = localStorage.getItem(getCitationDraftStorageKey('user-a'));
+    const read = vi.spyOn(Storage.prototype, 'getItem').mockImplementationOnce(() => { throw new Error('read blocked'); });
+    expect(storeCitationDraft('user-a', { ...draft, id: 'other' })).toBe(false);
+    read.mockRestore();
+    expect(localStorage.getItem(getCitationDraftStorageKey('user-a'))).toBe(before);
+  });
 });

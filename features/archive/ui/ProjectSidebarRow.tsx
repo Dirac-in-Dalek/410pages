@@ -94,8 +94,8 @@ export const ProjectSidebarRow: React.FC<ProjectSidebarRowProps> = ({
           className={`
             type-label-bounded group relative mb-1 flex cursor-pointer items-center rounded-[0.9rem] border px-3 py-2 transition-all duration-200 active:scale-[0.985]
             ${isManageMode && editingProjectId !== project.id ? 'flex-wrap items-start' : ''}
-            ${dragOverProjectId === project.id ? 'z-10 scale-[1.01] border-[var(--accent-border)] bg-[var(--accent-soft)] shadow-[0_8px_18px_rgba(209,15,37,0.08)]' : ''}
-            ${selectedProjectId === project.id && dragOverProjectId !== project.id ? 'border-[var(--border-main)] bg-[var(--sidebar-active)] text-[var(--text-main)] shadow-[0_1px_2px_rgba(28,22,16,0.06)]' : 'border-transparent bg-transparent text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]'}
+            ${dragOverProjectId === project.id ? 'z-10 scale-[1.01] border-[var(--accent-border)] bg-[var(--accent-soft)] shadow-[var(--shadow-accent-frame)]' : ''}
+            ${selectedProjectId === project.id && dragOverProjectId !== project.id ? 'border-[var(--border-main)] bg-[var(--sidebar-active)] text-[var(--text-main)] shadow-[var(--shadow-folder-active)]' : 'border-transparent bg-transparent text-[var(--text-secondary)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--text-main)]'}
           `}
           onClick={() => !isManageMode && onProjectSelect(project.id)}
           onContextMenu={(event) => onContextMenu(event, project.id)}
@@ -136,7 +136,7 @@ export const ProjectSidebarRow: React.FC<ProjectSidebarRowProps> = ({
                 />
               )}
 
-              <span className="min-w-0 flex-1 truncate text-[0.93rem] leading-none">
+              <span className="min-w-0 flex-1 truncate text-[length:var(--font-folder-input)] leading-none">
                 {project.name}
               </span>
 

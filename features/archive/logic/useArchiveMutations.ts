@@ -1,13 +1,10 @@
+import { prepareCitationTextUpdate } from '../../../shared/logic/citationEditing';
 import { useChapterBlockMutations } from './useChapterBlockMutations';
 import { useLibraryRecordMutations } from './useLibraryRecordMutations';
 import { useAuthorFolderMutations } from './useAuthorFolderMutations';
 import { useProjectMutations } from './useProjectMutations';
 import type { CitationUpdate } from '../../../types';
-import {
-  rebaseTextFormats,
-  formatsWithLegacyHighlights,
-  legacyHighlightsFromFormats,
-} from '../../../shared/logic/textFormats';
+import { rebaseTextFormats } from '../../../shared/logic/textFormats';
 import type { TextFormatRange } from '../../../types';
 import { useLibrarySourceMutations } from './useLibrarySourceMutations';
 import type { UseArchiveMutationsOptions } from '../contract/archiveMutationContract';
@@ -409,19 +406,7 @@ export const useArchiveMutations = (options: UseArchiveMutationsOptions): Archiv
 
       try {
         const current = citationsRef.current.find((citation) => citation.id === citationId);
-        let nextData = data;
-        if (
-          current &&
-          data.text !== undefined &&
-          data.text !== current.text &&
-          data.textFormats === undefined
-        ) {
-          const formats = formatsWithLegacyHighlights(current.text, current.textFormats, current.highlights);
-          if (formats.length) {
-            const rebased = rebaseTextFormats(current.text, data.text, formats);
-            nextData = { ...data, textFormats: rebased, highlights: legacyHighlightsFromFormats(rebased) };
-          }
-        }
+        const nextData = current ? prepareCitationTextUpdate(current, data) : data;
         const patch =
           expectedText === undefined
             ? await updateCitationRecord(session.user.id, citationId, nextData)

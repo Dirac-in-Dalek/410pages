@@ -1,3 +1,4 @@
+import { parseCitationPage } from '../../../shared/logic/citationPage';
 import { Citation } from '../../../types';
 import { OrderedLabelItem, SortDirection, SortField } from '../contract/archiveViewContract';
 
@@ -8,10 +9,7 @@ export const getArchiveSearchLabel = (filter?: { type: 'author' | 'book' } | nul
 
 export const getPageNumber = (citation: Citation): number | undefined => {
   if (typeof citation.pageSort === 'number') return citation.pageSort;
-  if (!citation.page) return undefined;
-  const match = citation.page.match(/\d+/);
-  if (!match) return undefined;
-  return Number(match[0]);
+  return parseCitationPage(citation.page);
 };
 
 export const reorderByIndex = (source: string[], dragId: string, dropIndex: number): string[] => {

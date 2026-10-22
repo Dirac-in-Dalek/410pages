@@ -32,7 +32,7 @@ export const ProjectCreateComposer: React.FC<ProjectCreateComposerProps> = ({
         className={
           compact
             ? 'mt-3 flex items-center gap-1'
-            : 'mt-2 flex items-center rounded-[0.9rem] border border-[var(--accent-border)] bg-[var(--bg-card)] p-[0.3125rem] shadow-[0_8px_18px_rgba(209,15,37,0.08)]'
+            : 'mt-2 flex items-center rounded-[0.9rem] border border-[var(--accent-border)] bg-[var(--bg-card)] p-[0.3125rem] shadow-[var(--shadow-accent-frame)]'
         }
       >
         <input
@@ -48,7 +48,7 @@ export const ProjectCreateComposer: React.FC<ProjectCreateComposerProps> = ({
           className={
             compact
               ? 'type-body-bounded min-w-0 flex-1 px-3 py-2.5 border border-[var(--border-main)] rounded-md bg-[var(--bg-input)]'
-              : 'type-body-bounded w-full border-none bg-transparent px-2 py-1.5 text-[0.92rem] text-[var(--text-main)] focus:ring-0 placeholder:text-[var(--text-muted)]'
+              : 'type-body-bounded w-full border-none bg-transparent px-2 py-1.5 text-[length:var(--font-composer-input)] text-[var(--text-main)] focus:ring-0 placeholder:text-[var(--text-muted)]'
           }
         />
         <button
@@ -85,7 +85,7 @@ export const ProjectCreateComposer: React.FC<ProjectCreateComposerProps> = ({
       className={
         compact
           ? 'type-label-bounded mt-3 w-full flex items-center justify-center gap-2 border border-[var(--border-main)] rounded-md p-2.5 text-[var(--text-muted)] hover:bg-[var(--sidebar-hover)]'
-          : 'type-label-bounded mt-2.5 flex h-10 w-full items-center justify-center rounded-full border border-transparent bg-[var(--accent)] px-3.5 py-2.5 text-[0.94rem] font-semibold accent-button shadow-[0_10px_24px_rgba(209,15,37,0.22)] transition-all hover:bg-[var(--accent-strong)] active:scale-[0.985]'
+          : 'type-label-bounded mt-2.5 flex h-10 w-full items-center justify-center rounded-full border border-transparent bg-[var(--accent)] px-3.5 py-2.5 text-[length:var(--font-composer-action)] font-semibold accent-button shadow-[var(--shadow-primary-action)] transition-all hover:bg-[var(--accent-strong)] active:scale-[0.985]'
       }
     >
       <Plus size={14} className={compact ? '' : 'mr-2.5'} />

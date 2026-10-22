@@ -111,7 +111,7 @@ export const PdfThumbnailSidebar: React.FC<PdfThumbnailSidebarProps> = ({
         >
           <ChevronRight size={14} />
         </button>
-        <div className="mt-1 text-[10px] text-[var(--text-muted)] [writing-mode:vertical-rl] rotate-180 tracking-wide">PAGES</div>
+        <div className="mt-1 text-[length:var(--font-pdf-caption)] text-[var(--text-muted)] [writing-mode:vertical-rl] rotate-180 tracking-wide">PAGES</div>
       </div>
     );
   }
@@ -161,12 +161,12 @@ export const PdfThumbnailSidebar: React.FC<PdfThumbnailSidebarProps> = ({
           </button>
         )}
 
-        {pdfName && <div className="text-[11px] text-[var(--text-muted)] truncate px-1">{pdfName}</div>}
+        {pdfName && <div className="text-[length:var(--font-pdf-label)] text-[var(--text-muted)] truncate px-1">{pdfName}</div>}
       </div>
 
       <div className="h-10 px-3 border-b border-[var(--border-main)] flex items-center justify-between">
         <div className="text-xs font-semibold tracking-wide text-[var(--text-muted)] uppercase">Pages</div>
-        <div className="text-[11px] text-[var(--text-muted)]">{numPages > 0 ? `${currentPage}/${numPages}` : '-'}</div>
+        <div className="text-[length:var(--font-pdf-label)] text-[var(--text-muted)]">{numPages > 0 ? `${currentPage}/${numPages}` : '-'}</div>
       </div>
 
       <div
@@ -206,16 +206,16 @@ export const PdfThumbnailSidebar: React.FC<PdfThumbnailSidebarProps> = ({
                         renderAnnotationLayer={false}
                         renderTextLayer={false}
                         loading={
-                          <div className="h-[156px] w-full text-[11px] text-[var(--text-muted)] flex items-center justify-center">
+                          <div className="h-[156px] w-full text-[length:var(--font-pdf-label)] text-[var(--text-muted)] flex items-center justify-center">
                             <FileText size={14} />
                           </div>
                         }
                       />
                     </div>
-                    <div className="mt-2 text-[11px] text-[var(--text-secondary)] leading-none">
+                    <div className="mt-2 text-[length:var(--font-pdf-label)] text-[var(--text-secondary)] leading-none">
                       PDF {pageNumber}
                     </div>
-                    <div className="mt-1 text-[11px] text-[var(--text-muted)] leading-none">Book {resolvePageLabel(pageNumber)}</div>
+                    <div className="mt-1 text-[length:var(--font-pdf-label)] text-[var(--text-muted)] leading-none">Book {resolvePageLabel(pageNumber)}</div>
                   </button>
                 );
               })}

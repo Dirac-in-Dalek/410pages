@@ -1,10 +1,11 @@
+import { DESKTOP_MEDIA_QUERY } from '../shared/policy/responsive';
 import { useEffect, useState } from 'react';
 
 export const useResponsiveMode = () => {
   const [isMobileApp, setIsMobileApp] = useState(false);
 
   useEffect(() => {
-    const widthQuery = window.matchMedia('(min-width: 1024px)');
+    const widthQuery = window.matchMedia(DESKTOP_MEDIA_QUERY);
     const checkMobileApp = () => setIsMobileApp(!widthQuery.matches);
 
     const addQueryListener = (query: MediaQueryList, listener: () => void) => {

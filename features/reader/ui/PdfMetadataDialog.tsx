@@ -79,7 +79,7 @@ export function PdfMetadataDialog({
             </div>
           </div>
 
-          <p className="text-[11px] text-[var(--text-muted)]">
+          <p className="text-[length:var(--font-pdf-label)] text-[var(--text-muted)]">
             Mapping is optional. If set, book page numbers are computed even when PDF page labels are missing.
           </p>
 

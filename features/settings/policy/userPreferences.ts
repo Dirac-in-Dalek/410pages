@@ -1,17 +1,18 @@
 import { DEFAULT_FONT_ID } from '../../../lib/fontRegistry';
 import { DEFAULT_THEME } from '../../../lib/themeRegistry';
 import type { TextScalePreference, UserPreferences } from '../contract/userPreferences';
+import { READING_FONT, CITATION_WIDTH } from '../../../shared/policy/readingDefaults';
 
 export const PREFERENCES_STORAGE_KEY = 'user-preferences';
 export const LEGACY_THEME_STORAGE_KEY = 'theme-preference';
 export const LEGACY_DARK_MODE_KEY = 'dark-mode';
 
-export const DEFAULT_BASE_FONT_PT = 12;
-export const MIN_BASE_FONT_PT = 7;
-export const MAX_BASE_FONT_PT = 20;
-export const DEFAULT_CITATION_WIDTH_REM = 44;
-export const MIN_CITATION_WIDTH_REM = 35;
-export const MAX_CITATION_WIDTH_REM = 50;
+export const DEFAULT_BASE_FONT_PT = READING_FONT.defaultPt;
+export const MIN_BASE_FONT_PT = READING_FONT.minPt;
+export const MAX_BASE_FONT_PT = READING_FONT.maxPt;
+export const DEFAULT_CITATION_WIDTH_REM = CITATION_WIDTH.defaultRem;
+export const MIN_CITATION_WIDTH_REM = CITATION_WIDTH.minRem;
+export const MAX_CITATION_WIDTH_REM = CITATION_WIDTH.maxRem;
 
 export const LEGACY_TEXT_SCALE_TO_BASE_FONT_PT: Record<TextScalePreference, number> = {
   sm: 14,

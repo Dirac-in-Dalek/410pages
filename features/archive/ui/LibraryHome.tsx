@@ -121,7 +121,7 @@ export const LibraryHome: React.FC<LibraryHomeProps> = ({
       <div className="mx-auto w-full max-w-[76rem] px-5 pb-12 pt-6 sm:px-8 lg:px-12 lg:pt-8">
         <header className="mb-6 flex items-end justify-between gap-4 border-b border-[var(--border-main)] pb-3">
           <div>
-            <p className="mb-2 text-[0.72rem] font-semibold text-[var(--accent)]">저자</p>
+            <p className="mb-2 text-[length:var(--font-field-label)] font-semibold text-[var(--accent)]">저자</p>
             <h1 className="font-[var(--font-display-active)] text-[clamp(2rem,5vw,3.6rem)] font-semibold leading-[1.08] tracking-[-0.035em] text-[var(--text-main)]">저자를 고르세요</h1>
             <p className="mt-3 max-w-xl text-sm leading-6 text-[var(--text-muted)]">저자를 열면 그 사람이 쓴 책과 저장한 문장이 이어집니다.</p>
           </div>
@@ -189,7 +189,7 @@ export const LibraryHome: React.FC<LibraryHomeProps> = ({
               return (
                 <div key={author.id} className="library-card group relative min-w-0" onContextMenu={(event) => { if (author.isSelf) return; event.preventDefault(); setActiveMenuAuthorId(author.id); }}>
                   <button type="button" onClick={() => onAuthorSelect(author)} aria-label={`${displayName}의 책 보기`} className="min-w-0 w-full text-left transition-transform duration-200 active:scale-95 motion-reduce:transition-none">
-                  <span className="relative flex aspect-[0.82] flex-col overflow-hidden rounded-xl bg-[var(--bg-card)] px-5 pt-5 pb-3 shadow-[0_10px_24px_rgba(31,29,27,0.1)] transition-[transform,box-shadow] duration-200 group-hover:-translate-y-1 group-hover:shadow-[0_16px_30px_rgba(31,29,27,0.15)] motion-reduce:transition-none">
+                  <span className="relative flex aspect-[0.82] flex-col overflow-hidden rounded-xl bg-[var(--bg-card)] px-5 pt-5 pb-3 shadow-[var(--shadow-author-cover)] transition-[transform,box-shadow] duration-200 group-hover:-translate-y-1 group-hover:shadow-[var(--shadow-author-cover-hover)] motion-reduce:transition-none">
                     <span aria-hidden="true" className="absolute inset-x-0 top-0 h-1.5 bg-[var(--accent)] opacity-80" />
                     <span className="flex min-h-0 flex-1 items-center justify-center text-center">
                       <span className="library-author-name line-clamp-3 break-words font-[var(--font-display-active)] font-semibold leading-[1.3] tracking-[-0.02em] text-[var(--text-main)]">{displayName}</span>

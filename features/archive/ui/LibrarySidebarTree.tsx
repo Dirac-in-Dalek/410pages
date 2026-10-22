@@ -229,7 +229,7 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
           activeClassName={
             isBookRow
               ? 'bg-[var(--sidebar-hover)] text-[var(--text-main)]'
-              : 'bg-[var(--sidebar-active)] text-[var(--text-main)] shadow-[0_1px_2px_rgba(31,29,27,0.05)]'
+              : 'bg-[var(--sidebar-active)] text-[var(--text-main)] shadow-[var(--shadow-tree-active)]'
           }
           inactiveClassName={
             isBookRow
@@ -246,7 +246,7 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
             isTouchDropFolder ? 'bg-[var(--sidebar-hover)] shadow-[inset_0_0_0_1px_var(--accent-border)]' : '',
             item.type === 'author' && isAuthorDragging && activeTreeDragMeta?.id === item.data?.authorId ? 'opacity-60' : '',
             isBookRow
-              ? 'min-h-[1.95rem] rounded-[0.8rem] py-1 text-[13.5px] font-normal text-[var(--text-muted)]'
+              ? 'min-h-[1.95rem] rounded-[0.8rem] py-1 text-[length:var(--font-sidebar-content)] font-normal text-[var(--text-muted)]'
               : '',
             editingNodeId === item.id ? (isFolderRow ? 'items-center py-1.5' : 'items-start py-2') : '',
           ]
@@ -500,7 +500,7 @@ export const LibrarySidebarTree: React.FC<LibrarySidebarTreeProps> = ({
       onDrop={(event) => handleTreePanelDrop(event, authorTreeItems)}
     >
       {!embedded ? (
-        <div className="mb-2.5 px-1 text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
+        <div className="mb-2.5 px-1 text-[length:var(--font-field-label)] font-semibold uppercase tracking-[0.14em] text-[var(--text-muted)]">
           저자와 책
         </div>
       ) : null}
