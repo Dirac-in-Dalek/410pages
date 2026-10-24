@@ -47,9 +47,11 @@ export const useCitationEntryController = ({
   readOnly = false,
   sequentialPageEntry = false,
   autoFocusText = false,
+  chapterMode = false,
+  bookDepth,
 }: Pick<
   CitationEditorProps,
-  'draftStore' | 'draftScope' | 'onAddCitation' | 'prefillData' | 'username' | 'controlledValues' | 'readOnly' | 'sequentialPageEntry' | 'autoFocusText'
+  'draftStore' | 'draftScope' | 'onAddCitation' | 'prefillData' | 'username' | 'controlledValues' | 'readOnly' | 'sequentialPageEntry' | 'autoFocusText' | 'chapterMode' | 'bookDepth'
 >) => {
   const localDraftStore = useRef(new BookComposerDraftStore()).current;
   const drafts = draftStore ?? localDraftStore;
@@ -74,8 +76,12 @@ export const useCitationEntryController = ({
   const setIsSubmitting = (saving: boolean) => drafts.patch(scope, { saving });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const pageInputRef = useRef<HTMLInputElement>(null);
+  const isBookComposer = bookDepth !== undefined;
 
-  useAutosizeTextarea(textareaRef, values.text, { variant: 'entry' });
+  useAutosizeTextarea(textareaRef, values.text, {
+    variant: isBookComposer ? 'bookEntry' : 'entry',
+    resizeOnWidthChange: !chapterMode,
+  });
 
   useEffect(() => {
     if (isControlled) return;

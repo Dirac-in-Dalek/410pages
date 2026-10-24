@@ -1,6 +1,6 @@
 export const TEXTAREA_MAX_HEIGHT = 400;
 export const TEXTAREA_EMPTY_HEIGHT = 40;
-export type TextareaVariant = 'entry' | 'edit' | 'inlineComment';
+export type TextareaVariant = 'entry' | 'bookEntry' | 'edit' | 'inlineComment';
 
 export function resolveTextareaHeight(
   scrollHeight: number,
@@ -9,7 +9,9 @@ export function resolveTextareaHeight(
   oneLineHeight = 0
 ) {
   if (variant === 'inlineComment') return scrollHeight;
+  const isEntry = variant === 'entry' || variant === 'bookEntry';
+  const emptyHeight = variant === 'bookEntry' ? oneLineHeight : TEXTAREA_EMPTY_HEIGHT;
   const height =
-    variant === 'entry' && !text.trim() ? TEXTAREA_EMPTY_HEIGHT : Math.min(scrollHeight, TEXTAREA_MAX_HEIGHT);
-  return variant === 'entry' ? Math.max(oneLineHeight, height) : height;
+    isEntry && !text.trim() ? emptyHeight : Math.min(scrollHeight, TEXTAREA_MAX_HEIGHT);
+  return isEntry ? Math.max(oneLineHeight, height) : height;
 }

@@ -5,7 +5,11 @@ import { resolveTextareaHeight, type TextareaVariant } from '../policy/textarea'
 export function useAutosizeTextarea(
   ref: RefObject<HTMLTextAreaElement | null>,
   value: string,
-  { enabled = true, variant = 'edit' }: { enabled?: boolean; variant?: TextareaVariant } = {}
+  { enabled = true, variant = 'edit', resizeOnWidthChange = true }: {
+    enabled?: boolean;
+    variant?: TextareaVariant;
+    resizeOnWidthChange?: boolean;
+  } = {}
 ) {
   useLayoutEffect(() => {
     const textarea = ref.current;
@@ -25,7 +29,7 @@ export function useAutosizeTextarea(
     resize();
     let width: number | undefined;
     const observer =
-      typeof ResizeObserver === 'undefined'
+      !resizeOnWidthChange || typeof ResizeObserver === 'undefined'
         ? null
         : new ResizeObserver(([entry]) => {
             const nextWidth = entry?.contentRect.width ?? textarea.getBoundingClientRect().width;
@@ -49,5 +53,5 @@ export function useAutosizeTextarea(
       preferences.disconnect();
       document.fonts?.removeEventListener('loadingdone', resize);
     };
-  }, [enabled, ref, value, variant]);
+  }, [enabled, ref, value, variant, resizeOnWidthChange]);
 }

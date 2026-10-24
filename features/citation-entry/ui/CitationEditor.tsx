@@ -57,6 +57,8 @@ export const CitationEditor: React.FC<CitationEditorProps> = ({
     readOnly,
     sequentialPageEntry: sequentialPageEntry && !chapterMode,
     autoFocusText,
+    chapterMode: isBookComposer && chapterMode,
+    bookDepth,
   });
 
   useEffect(() => {

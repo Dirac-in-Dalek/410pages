@@ -266,7 +266,7 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
   } as React.CSSProperties : undefined;
 
   return (
-    <div className="book-writing-surface flex h-full min-h-0 flex-col overflow-hidden" style={bookStyle}>
+    <div className={`book-writing-surface flex h-full min-h-0 flex-col ${isBookView ? 'overflow-clip' : 'overflow-hidden'}`} style={bookStyle}>
       <div ref={bookScrollRef} className="min-h-0 flex-1 overflow-y-auto" data-archive-scroll>
         <div className={inlinePassageNotes ? columnClassName : undefined}>
         <ArchiveHeader
@@ -361,7 +361,7 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
       </div>
       </div>
       {showEditor && isBookView ? (
-        <div className="shrink-0 bg-[var(--bg-main)] pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2" style={isMobileApp ? { paddingInlineEnd: bookScrollbarWidth } : undefined}>
+        <div className="shrink-0 bg-[var(--bg-main)] pt-2" style={isMobileApp ? { paddingInlineEnd: bookScrollbarWidth } : undefined}>
           <div className={columnClassName}>
             {insertionError && <p role="alert" className="mb-1 text-sm text-red-600">{insertionError}</p>}
             <CitationEditor

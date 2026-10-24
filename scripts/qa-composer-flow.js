@@ -73,7 +73,7 @@ async page => {
     const box=e.getBoundingClientRect();
     const label=e.querySelector('.book-composer-kinds label span');
     const range=document.createRange();range.selectNodeContents(label);
-    return {left:box.left,right:box.right,width:box.width,
+    return {left:box.left,right:box.right,width:box.width,height:box.height,
       textLeft:e.querySelector('textarea').getBoundingClientRect().left,
       kindTextLeft:range.getBoundingClientRect().left,
       kindsLeft:e.querySelector('.book-composer-kinds').getBoundingClientRect().left,
@@ -100,6 +100,7 @@ async page => {
   check(transitions.includes('width') && transitions.some(p=>p.startsWith('margin')),'box movement and width both animate');
   check(motionStart.left<motionMiddle.left && motionMiddle.left<motionEnd.left,'box moves through an intermediate position');
   check(motionEnd.width<motionMiddle.width && motionMiddle.width<motionStart.width,'box resizes through an intermediate width');
+  check(Math.abs(motionStart.height-motionMiddle.height)<1 && Math.abs(motionStart.height-motionEnd.height)<1,'chapter height stays fixed throughout the width animation');
   check(Math.abs((motionMiddle.arrowsLeft-motionStart.arrowsLeft)-(motionMiddle.left-motionStart.left))<1,'arrows and box animate together');
   await page.emulateMedia({reducedMotion:'reduce'});
   check(await frame.evaluate(e=>getComputedStyle(e).transitionDuration)==='0s','reduced motion disables the box transition');
@@ -121,6 +122,7 @@ async page => {
     check(Math.abs(nested.textLeft-nested.kindTextLeft)<1,'nested kind text aligns with input at '+width);
     const inset=nested.left-root.left;
     check(inset>0 && nested.width<root.width,'whole composer narrows at child depth at '+width);
+    check(Math.abs(root.height-nested.height)<1,'chapter depth keeps the same height at '+width);
     check(Math.abs(root.right-nested.right)<1,'composer keeps its right edge at '+width);
     check(Math.abs((nested.textLeft-root.textLeft)-inset)<1,'draft text moves with the box at '+width);
     check(Math.abs((nested.kindsLeft-root.kindsLeft)-inset)<1,'kind controls move with the box at '+width);
@@ -128,12 +130,26 @@ async page => {
     while(await outward.isEnabled()) await outward.click();
     const restored=await composerGeometry();
     check(Math.abs(restored.left-root.left)<1 && Math.abs(restored.width-root.width)<1,'whole composer expands again at '+width);
+    await input.fill('챕터 제목이 여러 줄로 감겨도 단계를 변경할 때 높이가 흔들리지 않아야 합니다.');
+    const longRoot=await composerGeometry();
+    while(await inward.isEnabled()) await inward.click();
+    const longNested=await composerGeometry();
+    check(Math.abs(longRoot.height-longNested.height)<1,'wrapped chapter title keeps its height at '+width);
+    await input.fill('');
     while(await inward.isEnabled()) await inward.click();
     const controls=page.getByRole('group',{name:'챕터 단계 변경'});
     const a=await modes.boundingBox(), b=await controls.boundingBox();
     const centerA=a.y+a.height/2,centerB=b.y+b.height/2;
     check(Math.abs(centerA-centerB)<=3,'aligned chapter controls at '+width);
     const geometry=await composerGeometry();
+    const dock=await page.locator('.book-citation-composer').evaluate(e=>{
+      const style=getComputedStyle(e),footer=getComputedStyle(e.querySelector('.book-composer-toolbar'));
+      return {bottom:e.getBoundingClientRect().bottom,viewport:window.innerHeight,
+        topRadius:parseFloat(style.borderTopLeftRadius),bottomLeft:parseFloat(style.borderBottomLeftRadius),bottomRight:parseFloat(style.borderBottomRightRadius),
+        borderBottom:parseFloat(style.borderBottomWidth),footerLeft:parseFloat(footer.borderBottomLeftRadius),footerRight:parseFloat(footer.borderBottomRightRadius)};
+    });
+    check(Math.abs(dock.bottom-dock.viewport)<1,'composer connects to the viewport bottom at '+width);
+    check(dock.topRadius>0 && dock.bottomLeft===0 && dock.bottomRight===0 && dock.borderBottom===0 && dock.footerLeft===0 && dock.footerRight===0,'only the top corners are rounded at '+width);
     check(b.x>=0 && Math.abs(geometry.left-(b.x+b.width)-12)<1,'arrows stay outside and 12px left of the box at '+width);
     const buttons=await controls.locator('button').evaluateAll(nodes=>nodes.map(e=>{
       const box=e.getBoundingClientRect(),style=getComputedStyle(e);
@@ -156,10 +172,12 @@ async page => {
       return {leftDelta:Math.abs(input.getBoundingClientRect().left-range.getBoundingClientRect().left),
         textSize:parseFloat(getComputedStyle(input).fontSize),toolSize:parseFloat(getComputedStyle(label).fontSize),
         gap:footer.getBoundingClientRect().top-input.getBoundingClientRect().bottom,
+        footerHeight:footer.getBoundingClientRect().height,
         footerRule:getComputedStyle(footer).borderTopStyle,capsuleBorder:parseFloat(getComputedStyle(kinds).borderTopWidth)};
     });
     check(hierarchy.leftDelta<1 && hierarchy.textSize>hierarchy.toolSize,'quote text stays primary and aligned at '+width);
-    check(hierarchy.gap>=24 && hierarchy.footerRule==='solid' && hierarchy.capsuleBorder===0,'tools sit in a separated footer without floating capsule at '+width);
+    check(Math.abs(hierarchy.gap-16)<1 && hierarchy.footerRule==='solid' && hierarchy.capsuleBorder===0,'compact 16px gap above the attached toolbar at '+width);
+    check(hierarchy.footerHeight===38 && hierarchy.toolSize===13,'compact toolbar stays 38px with 13px labels at '+width);
     const quoteOverflow=await page.locator('.book-citation-composer').evaluate(e=>({width:e.clientWidth,scroll:e.scrollWidth}));
     check(quoteOverflow.scroll<=quoteOverflow.width+1,'quote composer overflow at '+width+': '+JSON.stringify(quoteOverflow));
   }

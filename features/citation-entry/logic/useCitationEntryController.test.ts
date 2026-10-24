@@ -54,7 +54,7 @@ describe('createCitationInput', () => {
 });
 
 describe('citation entry textarea height', () => {
-  const renderTextarea = () => {
+  const renderTextarea = (chapterMode = false) => {
     const drafts = new BookComposerDraftStore();
     drafts.patch('book', {
       values: { text: 'The same chapter text', author: 'Author', book: 'Book', page: '' },
@@ -66,6 +66,7 @@ describe('citation entry textarea height', () => {
         draftScope: 'book',
         draftStore: drafts,
         onAddCitation: vi.fn(),
+        chapterMode,
       });
       return React.createElement('div', { 'data-reading-responsive': true },
         React.createElement('textarea', { ref: textareaRef, value: values.text, readOnly: true }));
@@ -75,6 +76,7 @@ describe('citation entry textarea height', () => {
     return {
       textarea: rendered.getByRole('textbox') as HTMLTextAreaElement,
       unmount: rendered.unmount,
+      drafts,
     };
   };
 
@@ -126,6 +128,27 @@ describe('citation entry textarea height', () => {
     vi.spyOn(HTMLTextAreaElement.prototype, 'scrollHeight', 'get').mockReturnValue(180);
 
     expect(renderTextarea().textarea.style.height).toBe('180px');
+  });
+
+  it('keeps a chapter title height when its width changes, but still grows for text edits', async () => {
+    let scrollHeight = 100;
+    const observe = vi.fn();
+    vi.stubGlobal('ResizeObserver', class {
+      observe = observe;
+      disconnect() {}
+    });
+    vi.spyOn(HTMLTextAreaElement.prototype, 'scrollHeight', 'get').mockImplementation(() => scrollHeight);
+    const { textarea, drafts } = renderTextarea(true);
+
+    scrollHeight = 180;
+    await act(async () => { textarea.style.width = '200px'; });
+    expect(textarea.style.height).toBe('100px');
+    expect(observe).not.toHaveBeenCalled();
+
+    await act(async () => {
+      drafts.patch('book', { values: { text: 'A longer edited title', author: 'Author', book: 'Book', page: '' } });
+    });
+    expect(textarea.style.height).toBe('180px');
   });
 
   it('remeasures after shared reading variables change without remounting the draft', async () => {
