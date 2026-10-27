@@ -52,7 +52,7 @@ type ArchiveScreenProps = {
   selectedFilter?: { type: 'author' | 'book'; authorId?: string; bookId?: string; value: string; author?: string } | null;
   isCopying: boolean;
   onSelectAll: (select: boolean) => void;
-  onCopy: () => void | Promise<unknown>;
+  onCopy: (includeNotes: boolean) => void | Promise<unknown>;
   onDeleteRequest: () => void;
   onCancelSelection: () => void;
   onAddToProject: (projectId: string) => void | Promise<unknown>;
@@ -312,7 +312,7 @@ export const ArchiveScreen: React.FC<ArchiveScreenProps> = ({
             projects={projects}
             isCopying={isCopying}
             onSelectAll={onSelectAll}
-            onCopy={async () => { await onCopy(); }}
+            onCopy={async (includeNotes) => { await onCopy(includeNotes); }}
             onDeleteRequest={onDeleteRequest}
             onCancel={onCancelSelection}
             onAddToProject={onAddToProject}

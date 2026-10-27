@@ -55,6 +55,23 @@ const bookScreen = (overrides: Partial<React.ComponentProps<typeof ArchiveScreen
 const renderBookScreen = (overrides: Partial<React.ComponentProps<typeof ArchiveScreen>> = {}) => render(bookScreen(overrides));
 
 describe('ArchiveScreen book flow', () => {
+  it.each([['본문 복사', false], ['본문과 메모 복사', true]] as const)(
+    'forwards the %s option when selected citations have chapter headings', (label, includeNotes) => {
+      const onCopy = vi.fn();
+      const quote: Citation = {
+        id: 'quote', kind: 'sentence', text: '복사할 문장', bookId: 'book-1',
+        author: '정희진', book: '정정하는 힘', createdAt: 20, tags: [],
+        notes: [{ id: 'note', content: '함께 복사할 메모', createdAt: 20 }],
+      };
+      renderBookScreen({
+        showEditor: false, citations: [quote], allCitations: [quote], selectedIds: new Set(['quote']), onCopy,
+        chapterBlocks: [{ id: 'chapter', bookId: 'book-1', label: '첫 챕터', depth: 0, createdAt: 10, createdAtSort: 10 }],
+      });
+      fireEvent.click(screen.getByRole('button', { name: '클립보드에 복사' }));
+      fireEvent.click(screen.getByRole('menuitem', { name: label }));
+      expect(onCopy).toHaveBeenCalledWith(includeNotes);
+    }
+  );
   it.each([false, true])('reveals a saved quote after it renders while keeping the input ready (at end: %s)', async atEnd => {
     const drafts = new BookComposerDraftStore();
     drafts.patch('book-1', { insertion: { afterId: null, depth: 0 } });

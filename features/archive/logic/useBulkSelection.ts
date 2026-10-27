@@ -59,15 +59,13 @@ export const useBulkSelection = (
 
     const handleBatchCopy = async (includeNotes: boolean = false) => {
         if (selectedIds.size === 0) return;
-        setIsCopying(true);
-
-        const selectedList = filteredCitations.filter(c => selectedIds.has(c.id));
-        const copyText = selectedList
-            .map(citation => formatCitationCopyText(citation, username, includeNotes))
-            .join('\n\n');
-
         try {
+            const selectedList = filteredCitations.filter(c => selectedIds.has(c.id));
+            const copyText = selectedList
+                .map(citation => formatCitationCopyText(citation, username, includeNotes))
+                .join('\n\n');
             await writeTextToClipboard(copyText);
+            setIsCopying(true);
             setBulkError(null);
             setTimeout(() => setIsCopying(false), 2000);
         } catch (err) {

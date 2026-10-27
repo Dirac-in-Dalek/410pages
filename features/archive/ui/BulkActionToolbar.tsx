@@ -70,7 +70,7 @@ export const BulkActionToolbar: React.FC<BulkActionToolbarProps> = ({
     if (selectedCount === 0) return null;
 
     return (
-        <div ref={toolbarRef} className="sticky top-0 z-20 mb-2 flex min-h-14 items-center bg-[var(--bg-main)]">
+        <div ref={toolbarRef} className="sticky top-0 z-30 mb-2 flex min-h-14 items-center bg-[var(--bg-main)]">
             <div className="w-full rounded-xl bg-[var(--bg-card)] p-1.5 shadow-[var(--shadow-toolbar)] transition-[opacity,transform] duration-200 motion-reduce:transition-none">
                 <div className="w-full flex items-center justify-between">
                     <div className="flex items-center gap-2 sm:gap-3 pl-1">

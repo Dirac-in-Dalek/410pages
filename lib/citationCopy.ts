@@ -47,14 +47,28 @@ export const formatCitationRecoveryText = (citation: Citation, username: string)
 
 export const writeTextToClipboard = async (text: string): Promise<void> => {
   if (navigator.clipboard && window.isSecureContext) {
-    await navigator.clipboard.writeText(text);
-    return;
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch {
+      // Some browsers expose the API but deny writes. Try native copying too.
+    }
   }
 
+  const previousFocus = document.activeElement;
   const textArea = document.createElement('textarea');
   textArea.value = text;
+  textArea.readOnly = true;
+  textArea.style.cssText = 'position: fixed; top: 0; left: -9999px; font-size: 16px;';
   document.body.appendChild(textArea);
-  textArea.select();
-  document.execCommand('copy');
-  document.body.removeChild(textArea);
+  try {
+    textArea.select();
+    textArea.setSelectionRange(0, text.length);
+    if (!document.execCommand('copy')) {
+      throw new Error('Failed to write text to the clipboard.');
+    }
+  } finally {
+    textArea.remove();
+    if (previousFocus instanceof HTMLElement) previousFocus.focus({ preventScroll: true });
+  }
 };

@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { useRef, useState } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Citation, Project } from '../../../types';
 import { writeTextToClipboard } from '../../../lib/citationCopy';
 import { useBulkSelection } from './useBulkSelection';
@@ -38,6 +38,7 @@ const session = { user: { id: 'user-1' } };
 
 describe('useBulkSelection mixed item actions', () => {
   beforeEach(() => vi.clearAllMocks());
+  afterEach(() => vi.restoreAllMocks());
 
   const setup = (
     resolveCitationId: (citationId: string) => Promise<string | null> = async (citationId) => citationId
@@ -80,6 +81,24 @@ describe('useBulkSelection mixed item actions', () => {
     expect(writeTextToClipboard).toHaveBeenCalledWith(
       '"A complete sentence." — Author, 『Book』\n\n"부조리" — Author, 『Book』'
     );
+  });
+
+  it('retains the selection and reports a failed copy so it can be retried', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    vi.mocked(writeTextToClipboard).mockRejectedValueOnce(new Error('Clipboard denied'));
+    const { result } = setup();
+    act(() => result.current.handleSelectAll(true));
+
+    await act(async () => result.current.handleBatchCopy());
+
+    expect(result.current.selectedIds).toEqual(new Set(['sentence-1', 'word-1']));
+    expect(result.current.bulkError).toContain('복사하지 못했습니다');
+    expect(result.current.isCopying).toBe(false);
+
+    await act(async () => result.current.handleBatchCopy());
+
+    expect(result.current.bulkError).toBeNull();
+    expect(result.current.isCopying).toBe(true);
   });
 
   it('adds mixed selected items to a folder using the existing citation ids', async () => {

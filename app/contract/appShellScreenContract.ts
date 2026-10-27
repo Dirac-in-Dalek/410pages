@@ -71,7 +71,7 @@ export interface ArchiveScreenFactoryInput {
   selectedFilter: ArchiveSelectedFilter;
   isCopying: boolean;
   onSelectAll: (select: boolean) => void;
-  onCopy: () => void | Promise<unknown>;
+  onCopy: (includeNotes: boolean) => void | Promise<unknown>;
   onBatchDeleteRequest: () => void;
   onCancelSelection: () => void;
   onAddToProject: (projectId: string) => void | Promise<unknown>;
