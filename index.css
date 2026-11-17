@@ -30,7 +30,7 @@
 
 :where(:root, .reading-responsive, .font-size-static) {
     /* Role typography scales with the active UI font policy. */
-    --font-brand: calc(var(--type-body-bounded-size) * 1.25);
+    --font-brand: 1.3125rem;
     --font-navigation-name: calc(var(--type-body-bounded-size) * 0.88);
     --font-panel-subtitle: calc(var(--type-body-bounded-size) * 0.74);
     --font-archive-title: calc(var(--type-body-bounded-size) * 1.8);
@@ -702,24 +702,6 @@
 
   button {
     touch-action: manipulation;
-  }
-
-  .brand-wordmark {
-    font-family: var(--font-ui-active);
-    font-weight: 600;
-    letter-spacing: -0.012em;
-    display: inline-flex;
-    align-items: baseline;
-    line-height: 1;
-  }
-
-  .brand-wordmark .brand-number {
-    letter-spacing: -0.015em;
-  }
-
-  .brand-wordmark .brand-text {
-    margin-left: 0.06em;
-    letter-spacing: -0.006em;
   }
 
   ::selection {
@@ -1447,7 +1429,7 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
     width: var(--reading-wordmark-width, 112px) !important;
   }
   .reading-responsive > header .brand-wordmark {
-    font-size: calc(var(--reading-ui-font-size, 1rem) * 1.25);
+    font-size: max(var(--font-brand), calc(var(--reading-ui-font-size, 1rem) * 1.5));
   }
   .reading-responsive > header #library-toggle,
   .reading-responsive > header label {
@@ -1464,7 +1446,7 @@ button.chapter-control:focus-visible, .chapter-title-input:focus-visible, .chapt
     max-width: var(--reading-search-width, 544px);
     font-size: var(--reading-ui-font-size, 1rem);
   }
-  .reading-responsive > header svg {
+  .reading-responsive > header :is(label, button:not(.brand-wordmark)) svg {
     width: var(--reading-icon-size, 16px);
     height: var(--reading-icon-size, 16px);
   }

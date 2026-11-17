@@ -40,8 +40,18 @@ async (page) => {
   await page.getByRole('button', {name: book.title+' '+author.name, exact:true}).click();
   await page.getByRole('heading',{name:book.title,exact:true}).waitFor();
   check(page.url().includes('book=b1'), 'Book URL missing');
+  const checkWordmark = async () => {
+    const button = page.getByRole('button', { name: '410pages 홈으로 이동' });
+    const mark = button.locator('svg[aria-label="410pages"]');
+    await mark.waitFor();
+    const [graphic, hitbox] = await Promise.all([mark.boundingBox(), button.boundingBox()]);
+    check(graphic && hitbox && graphic.height >= 21 && graphic.width > graphic.height * 3
+      && graphic.width <= hitbox.width && graphic.height <= hitbox.height, 'Header wordmark is clipped or undersized');
+  };
+  await checkWordmark();
   await page.setViewportSize({width:375,height:812});
   await page.getByRole('button',{name:'탐색 열기',exact:true}).waitFor();
+  await checkWordmark();
   await page.evaluate(()=>document.fonts.ready);
   const metrics=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,buttons:[...document.querySelectorAll('button')].filter(e=>/챕터/.test(e.getAttribute('aria-label')||'')).map(e=>({name:e.getAttribute('aria-label'),height:e.getBoundingClientRect().height})),title:[...document.querySelectorAll('h2')].filter(e=>e.hasAttribute('data-search-results-title')).map(e=>({width:e.clientWidth,scroll:e.scrollWidth}))}));
   check(metrics.scroll===375,'Mobile page overflow');

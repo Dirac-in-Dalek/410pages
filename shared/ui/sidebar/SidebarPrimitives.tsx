@@ -35,12 +35,13 @@ export const EditorialSheet: React.FC<EditorialSheetProps> = ({ side, isOpen, wi
 
 type EditorialSheetHeaderProps = {
   title: string;
+  titleContent?: React.ReactNode;
   onClose: () => void;
 };
 
-export const EditorialSheetHeader: React.FC<EditorialSheetHeaderProps> = ({ title, onClose }) => (
+export const EditorialSheetHeader: React.FC<EditorialSheetHeaderProps> = ({ title, titleContent, onClose }) => (
   <div className="h-14 px-4 border-b border-[var(--border-main)] flex items-center justify-between gap-3 bg-[var(--bg-card)]">
-    <h2 className="type-title-bounded font-semibold tracking-[-0.012em] text-[var(--text-main)]">{title}</h2>
+    <h2 className="text-[length:var(--font-brand)] text-[var(--text-main)]">{titleContent ?? title}</h2>
     <Button
       variant="ghost"
       size="icon"
