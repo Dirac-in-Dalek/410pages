@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ChevronLeft, ChevronRight, FileText, Pencil, Upload } from 'lucide-react';
 import { Document, Page } from 'react-pdf';
+import { BrandWordmark } from '../../../shared/ui/BrandWordmark';
 
 interface PdfThumbnailSidebarProps {
   pdfUrl: string | null;
@@ -126,7 +127,7 @@ export const PdfThumbnailSidebar: React.FC<PdfThumbnailSidebarProps> = ({
                 <path d="M7 6 L12 3 H18 V18 L13 21 H7 V6" />
               </svg>
             </div>
-            <h2 className="text-sm font-semibold truncate">410pages</h2>
+            <h2 className="min-w-0 text-[length:var(--font-brand)]"><BrandWordmark /></h2>
           </div>
           <button
             onClick={onToggleCollapse}

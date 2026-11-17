@@ -8,6 +8,7 @@ import {
     setRememberedEmail,
 } from '../../../lib/authStorage';
 import { getSupabaseClient } from '../../../lib/supabase';
+import { BrandWordmark } from '../../../shared/ui/BrandWordmark';
 
 const AUTH_SCREEN_CLASS =
     'font-size-static flex min-h-[100dvh] flex-col items-center justify-center bg-[var(--bg-main)] px-4 py-6 font-sans sm:px-6 sm:py-8';
@@ -233,8 +234,8 @@ export const Auth: React.FC<AuthProps> = ({
                             <path d="M7 6 L12 3 H18 V18 L13 21 H7 V6" />
                         </svg>
                     </div>
-                    <div className="brand-wordmark mb-5 text-3xl font-semibold text-[var(--text-main)]">
-                        <span className="brand-number">410</span><span className="brand-text">pages</span>
+                    <div className="mb-5 text-3xl text-[var(--text-main)]">
+                        <BrandWordmark />
                     </div>
                     <h1 id="auth-title" className="text-balance text-xl font-semibold tracking-[-0.012em] text-[var(--text-main)]">{title}</h1>
                     <p className="mt-1.5 text-center text-sm text-[var(--text-muted)]">{subtitle}</p>

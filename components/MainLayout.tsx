@@ -1,4 +1,5 @@
 import React from 'react';
+import { BrandWordmark } from '../shared/ui/BrandWordmark';
 import { getArchiveSearchLabel } from '../features/archive/logic/archiveSort';
 import { PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Search, UserCircle2 } from 'lucide-react';
 import { AuthorDeletePreview, BookSource, Citation, DeleteAuthorCascadeResult, Project, SidebarItem } from '../types';
@@ -281,8 +282,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
           <button type="button" onClick={onHomeSelect} aria-label="410pages 홈으로 이동" title="홈으로 이동"
             aria-current={isHomeView ? 'page' : undefined}
-            className="brand-wordmark min-h-11 shrink-0 items-center rounded-md text-left text-[length:var(--font-brand)] text-[var(--accent)] transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)]" style={{ width: 112 }}>
-            <span className="brand-number">410</span><span className="brand-text">pages</span>
+            className="brand-wordmark inline-flex min-h-11 shrink-0 items-center rounded-md text-left text-[length:var(--font-brand)] text-[var(--accent)] transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)]" style={{ width: 112 }}>
+            <BrandWordmark />
           </button>
 
           <div className="flex min-w-0 flex-1 justify-center">

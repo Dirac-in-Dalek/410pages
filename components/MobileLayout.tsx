@@ -1,3 +1,4 @@
+import { BrandWordmark } from '../shared/ui/BrandWordmark';
 import { Button } from '../shared/ui/Button';
 import React, { useEffect, useRef, useState } from 'react';
 import { getArchiveSearchLabel } from '../features/archive/logic/archiveSort';
@@ -164,7 +165,9 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
         <div className="flex h-[3.25rem] items-center justify-between gap-3 px-4">
           <button type="button" onClick={onHomeSelect} aria-label="410pages 홈으로 이동" title="홈으로 이동"
             aria-current={isHomeView ? 'page' : undefined}
-            className="type-title-bounded min-h-11 min-w-0 truncate rounded-md text-left font-semibold tracking-[-0.012em] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)]">{title}</button>
+            className="inline-flex min-h-11 min-w-0 items-center rounded-md text-left text-[length:var(--font-brand)] text-[var(--accent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)]">
+            {title === '410pages' ? <BrandWordmark /> : <span className="type-title-bounded truncate font-semibold text-[var(--text-main)]">{title}</span>}
+          </button>
           <div className="flex items-center gap-2">
             {showBookMemoAction ? (
               <EditorialToolbarButton onClick={() => onOpenBookMemo?.()} ariaLabel="책 전체 메모 열기">
@@ -188,7 +191,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
           <button type="button" className="fixed inset-0 z-40 bg-black/35" onClick={closeNavigation} aria-label="탐색 닫기" />
           <EditorialSheet side="left" isOpen widthClassName="w-[88vw] max-w-[21rem]">
             <div ref={navigationDialogRef} role="dialog" aria-modal="true" aria-label="탐색" tabIndex={-1} className="flex h-full flex-col pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]">
-              <EditorialSheetHeader title="410pages" onClose={closeNavigation} />
+              <EditorialSheetHeader title="410pages" titleContent={<BrandWordmark />} onClose={closeNavigation} />
               <div data-library-sidebar-scroll="true" className="flex-1 overflow-y-auto p-3 overscroll-contain">
                 <EditorialListButton
                   active={isHomeView}
