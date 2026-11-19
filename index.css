@@ -31,6 +31,7 @@
 :where(:root, .reading-responsive, .font-size-static) {
     /* Role typography scales with the active UI font policy. */
     --font-brand: 1.3125rem;
+    --font-auth-label: 0.8125rem;
     --font-navigation-name: calc(var(--type-body-bounded-size) * 0.88);
     --font-panel-subtitle: calc(var(--type-body-bounded-size) * 0.74);
     --font-archive-title: calc(var(--type-body-bounded-size) * 1.8);
