@@ -11,7 +11,7 @@ import { getSupabaseClient } from '../../../lib/supabase';
 import { BrandWordmark } from '../../../shared/ui/BrandWordmark';
 
 const AUTH_SCREEN_CLASS =
-    'font-size-static flex min-h-[100dvh] flex-col items-center justify-center bg-[var(--bg-main)] px-4 py-6 font-sans sm:px-6 sm:py-8';
+    'font-size-static [--font-ui-active:var(--font-ui)] flex min-h-[100dvh] flex-col items-center justify-center bg-[var(--bg-main)] px-4 py-6 font-sans sm:px-6 sm:py-8';
 const AUTH_CARD_CLASS =
     'w-full max-w-md rounded-2xl bg-[var(--bg-card)] p-6 shadow-[var(--shadow-card)] sm:p-8';
 const AUTH_INPUT_CLASS =
@@ -216,14 +216,15 @@ export const Auth: React.FC<AuthProps> = ({
         );
     }
 
-    const title = isPasswordRecovery ? '새 비밀번호 설정' : mode === 'signup' ? '계정 만들기' : mode === 'forgot' ? '비밀번호 찾기' : 'La Biblioteca de Babel';
+    const isLogin = !isPasswordRecovery && mode === 'login';
+    const title = isPasswordRecovery ? '새 비밀번호 설정' : mode === 'signup' ? '계정 만들기' : mode === 'forgot' ? '비밀번호 찾기' : 'La biblioteca de Babel';
     const subtitle = isPasswordRecovery
         ? '앞으로 사용할 새 비밀번호를 입력하세요.'
         : mode === 'signup'
           ? '읽고 남긴 문장을 한곳에 모아보세요.'
           : mode === 'forgot'
             ? '가입한 이메일로 재설정 링크를 보내드립니다.'
-            : '이런 방식으로 당신은 스물세 글자의 변형체들을 볼 수 있을 것이다.';
+            : '“이 방법으로 스물세 글자의 여러 조합을 살펴볼 수 있다…”';
 
     return (
         <div className={AUTH_SCREEN_CLASS}>
@@ -237,8 +238,20 @@ export const Auth: React.FC<AuthProps> = ({
                     <div className="mb-5 text-3xl text-[var(--text-main)]">
                         <BrandWordmark />
                     </div>
-                    <h1 id="auth-title" className="text-balance text-xl font-semibold tracking-[-0.012em] text-[var(--text-main)]">{title}</h1>
-                    <p className="mt-1.5 text-center text-sm text-[var(--text-muted)]">{subtitle}</p>
+                    <h1
+                        id="auth-title"
+                        lang={isLogin ? 'es' : undefined}
+                        className={isLogin
+                            ? 'text-balance text-lg font-normal italic [font-family:Georgia,serif] text-[var(--text-main)]'
+                            : 'text-balance text-xl font-semibold tracking-[-0.012em] text-[var(--text-main)]'}
+                    >{title}</h1>
+                    <p className={isLogin
+                        ? 'mt-2 max-w-[17rem] text-balance break-keep text-center text-sm leading-[1.65] text-[var(--text-muted)]'
+                        : 'mt-1.5 text-center text-sm text-[var(--text-muted)]'}
+                    >{subtitle}</p>
+                    {isLogin ? (
+                        <p className="mt-1.5 text-center text-xs leading-normal text-[var(--text-muted)]">로버트 버턴, 『우울의 해부』</p>
+                    ) : null}
                 </div>
 
                 {isPasswordRecovery ? (
