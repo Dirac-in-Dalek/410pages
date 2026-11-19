@@ -37,8 +37,9 @@ describe('Auth', () => {
   it('renders Korean account controls inside the static font-size scope', () => {
     const { container } = render(<Auth />);
 
-    expect(screen.getByRole('heading', { name: 'La Biblioteca de Babel' })).toBeTruthy();
-    expect(screen.getByText('이런 방식으로 당신은 스물세 글자의 변형체들을 볼 수 있을 것이다.')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'La biblioteca de Babel' })).toBeTruthy();
+    expect(screen.getByText('“이 방법으로 스물세 글자의 여러 조합을 살펴볼 수 있다…”')).toBeTruthy();
+    expect(screen.getByText('로버트 버턴, 『우울의 해부』')).toBeTruthy();
     expect(screen.getByLabelText('아이디 기억')).toBeTruthy();
     expect(screen.getByLabelText('자동 로그인')).toBeTruthy();
     expect(container.firstElementChild?.className).toContain('font-size-static');
