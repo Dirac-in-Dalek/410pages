@@ -1,0 +1,173 @@
+/* Shared semantic roles are scoped to one proposal. Values in rem follow browser text scaling. */
+[data-ds] {
+  --ds-ui-font: var(
+    --font-ui,
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif
+  );
+  --ds-reader-font: var(
+    --font-display-active,
+    "Nanum Myeongjo",
+    Georgia,
+    serif
+  );
+  --ds-reader-size: var(--type-body-size, 1rem);
+  --ds-reader-line: 1.85;
+  --ds-field-height: 3.125rem;
+  --ds-field-radius: 0.375rem;
+  --ds-label-size: 0.8125rem;
+  --ds-field-font: 1rem;
+  --ds-touch: 2.75rem;
+  --ds-on-danger: #ffffff;
+  --ds-focus-width: 2px;
+  --ds-focus-offset: 2px;
+  --ds-motion: 160ms;
+  --ds-line-width: 1px;
+}
+
+[data-ds="A"] {
+  color-scheme: light;
+  --ds-height: 2.75rem;
+  --ds-radius: 0.375rem;
+  --ds-panel-radius: 0.75rem;
+  --ds-gap: 1rem;
+  --ds-icon: 1.125rem;
+  --ds-pad: 1.5rem;
+  --ds-ui-size: 0.875rem;
+  --ds-button-font: 0.875rem;
+  --ds-button-pad-x: 1rem;
+  --ds-bg: #f8f7f5;
+  --ds-surface: #ffffff;
+  --ds-alt: #f0ede9;
+  --ds-text: #1f1d1b;
+  --ds-muted: #625b54;
+  --ds-line: #e2dcd3;
+  --ds-control-border: #8c857c;
+  --ds-primary: #d10f25;
+  --ds-hover: #ad0b1e;
+  --ds-on-primary: #ffffff;
+  --ds-soft: #fcebed;
+  --ds-danger: #a51627;
+  --ds-success: #39674b;
+  --ds-focus: #b20d25;
+  --ds-shadow: 0 4px 12px rgba(31, 29, 27, 0.07);
+}
+
+[data-ds="A"][data-mode="dark"] {
+  color-scheme: dark;
+  --ds-bg: #181614;
+  --ds-surface: #24211f;
+  --ds-alt: #2e2925;
+  --ds-text: #f4eee7;
+  --ds-muted: #bbb0a5;
+  --ds-line: #494038;
+  --ds-control-border: #918477;
+  --ds-primary: #ff8390;
+  --ds-hover: #ffabb3;
+  --ds-on-primary: #291013;
+  --ds-soft: #43282d;
+  --ds-danger: #ff9aaa;
+  --ds-on-danger: #291013;
+  --ds-success: #96d6ab;
+  --ds-focus: #ff9caa;
+  --ds-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+[data-ds="B"] {
+  color-scheme: light;
+  --ds-height: 2.5rem;
+  --ds-radius: 0.125rem;
+  --ds-panel-radius: 0.25rem;
+  --ds-gap: 0.75rem;
+  --ds-icon: 1rem;
+  --ds-pad: 1.25rem;
+  --ds-ui-size: 0.875rem;
+  --ds-button-font: 0.875rem;
+  --ds-button-pad-x: 0.875rem;
+  --ds-bg: #f4f1e9;
+  --ds-surface: #fffcf5;
+  --ds-alt: #ebe6db;
+  --ds-text: #292623;
+  --ds-muted: #625a50;
+  --ds-line: #d5cebf;
+  --ds-control-border: #8c8273;
+  --ds-primary: #292623;
+  --ds-hover: #4a4238;
+  --ds-on-primary: #fffcf5;
+  --ds-soft: #e7e1d5;
+  --ds-danger: #a51627;
+  --ds-success: #3f654b;
+  --ds-focus: #6a4b28;
+  --ds-shadow: none;
+}
+
+[data-ds="B"][data-mode="dark"] {
+  color-scheme: dark;
+  --ds-bg: #191917;
+  --ds-surface: #23231f;
+  --ds-alt: #30302a;
+  --ds-text: #eeeadf;
+  --ds-muted: #b7b2a4;
+  --ds-line: #4b4a41;
+  --ds-control-border: #999482;
+  --ds-primary: #e5dfcf;
+  --ds-hover: #ffffff;
+  --ds-on-primary: #23231f;
+  --ds-soft: #35352d;
+  --ds-danger: #ffa5ae;
+  --ds-on-danger: #291013;
+  --ds-success: #a0d7ad;
+  --ds-focus: #e0c496;
+  --ds-shadow: none;
+}
+
+[data-ds="C"] {
+  color-scheme: light;
+  --ds-height: 3rem;
+  --ds-radius: 0.625rem;
+  --ds-panel-radius: 1rem;
+  --ds-gap: 1.25rem;
+  --ds-icon: 1.25rem;
+  --ds-pad: 1.75rem;
+  --ds-ui-size: 0.9375rem;
+  --ds-button-font: 0.9375rem;
+  --ds-button-pad-x: 1.25rem;
+  --ds-bg: #f3f6f8;
+  --ds-surface: #ffffff;
+  --ds-alt: #eaf0f4;
+  --ds-text: #1c2733;
+  --ds-muted: #536575;
+  --ds-line: #d4dfe7;
+  --ds-control-border: #7c8d9b;
+  --ds-primary: #315d79;
+  --ds-hover: #23475e;
+  --ds-on-primary: #ffffff;
+  --ds-soft: #e3eef5;
+  --ds-danger: #ac233a;
+  --ds-success: #35664f;
+  --ds-focus: #315d79;
+  --ds-shadow: 0 8px 24px rgba(28, 48, 65, 0.08);
+}
+
+[data-ds="C"][data-mode="dark"] {
+  color-scheme: dark;
+  --ds-bg: #111c25;
+  --ds-surface: #1b2a36;
+  --ds-alt: #263a49;
+  --ds-text: #edf4f9;
+  --ds-muted: #aec0cf;
+  --ds-line: #3b5161;
+  --ds-control-border: #88a3b7;
+  --ds-primary: #9ccbe8;
+  --ds-hover: #c4e4f7;
+  --ds-on-primary: #102b3d;
+  --ds-soft: #294657;
+  --ds-danger: #ffa5b8;
+  --ds-on-danger: #291013;
+  --ds-success: #98d8bc;
+  --ds-focus: #b2ddf4;
+  --ds-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
